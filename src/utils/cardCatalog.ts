@@ -1,5 +1,5 @@
 import type { CardData } from '../types';
-import { JESKAI_COLORS, isWithinIdentity } from './colorIdentity';
+import { JESKAI_COLORS, isWithinIdentity } from './colorIdentity.mjs';
 
 /**
  * The catalog is every Commander-legal card in the Jeskai color identity —

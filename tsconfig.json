@@ -8,6 +8,9 @@
 
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    // src/utils/colorIdentity.mjs is shared with the build script, which runs
+    // under bare node and can't read .ts. Its JSDoc types are checked here.
+    "allowJs": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

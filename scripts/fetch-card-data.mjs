@@ -6,6 +6,7 @@
  *
  * Usage:
  *   npm run fetch-cards
+ *   npm run fetch-cards -- --force   # re-download instead of reusing the cache
  *
  * The output lands in public/ rather than src/ on purpose. It is a few
  * megabytes, so it ships as a separate static asset the app fetches at
@@ -16,27 +17,24 @@
  * handful of cards would produce a green build serving a broken app.
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { JESKAI_COLORS, isWithinIdentity } from '../src/utils/colorIdentity.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT_PATH = path.join(ROOT, 'public', 'cards.json');
+const CACHE_DIR = path.join(ROOT, '.cache');
+const BULK_CACHE_PATH = path.join(CACHE_DIR, 'oracle-cards.json');
+
+/** How long a downloaded bulk file is considered good enough to reuse. */
+const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const USER_AGENT = 'mtg-time-tracker/0.1 (personal Commander companion app)';
 
 /** Overridable so the pipeline can be exercised against a local mirror or fixture. */
 const BULK_INDEX_URL = process.env.SCRYFALL_BULK_INDEX ?? 'https://api.scryfall.com/bulk-data';
-
-/** This deck's color identity — White/Blue/Red. */
-const JESKAI_COLORS = ['W', 'U', 'R'];
-
-/** Colorless cards (no color identity at all) are legal in any color identity. */
-function isWithinIdentity(colors, allowed) {
-  if (!colors || colors.length === 0) return true;
-  return colors.every(c => allowed.includes(c));
-}
 
 /**
  * Oracle text is only consulted to pre-fill a starting count, so it is kept
@@ -69,11 +67,55 @@ async function fetchBulkDataUrl() {
   return entry.download_uri;
 }
 
-async function fetchBulkCards(downloadUri) {
+/**
+ * Describes the cached bulk file if it's recent enough to reuse, else null.
+ *
+ * Re-pulling ~190MB is by far the slowest part of a run, and the fields this
+ * script reads only change when Scryfall republishes (roughly daily), so a
+ * week-old copy is fine while iterating locally. Deploys are unaffected: Render
+ * builds from a clean checkout with no .cache directory, so the download always
+ * happens there and a deployed catalog is never stale.
+ */
+async function readFreshCache() {
+  let stats;
+  try {
+    stats = await stat(BULK_CACHE_PATH);
+  } catch {
+    return null;
+  }
+  if (stats.size === 0) return null; // a truncated download is worse than none
+
+  const ageMs = Date.now() - stats.mtimeMs;
+  if (ageMs >= MAX_AGE_MS) return null;
+
+  return {
+    ageHours: Math.floor(ageMs / (60 * 60 * 1000)),
+    sizeMb: (stats.size / 1024 / 1024).toFixed(1),
+  };
+}
+
+/** Returns the parsed bulk card array, downloading it only when needed. */
+async function fetchBulkCards(force) {
+  const cached = force ? null : await readFreshCache();
+  if (cached) {
+    console.log(
+      `Reusing cached bulk file (${cached.sizeMb}MB, ${cached.ageHours}h old).\n` +
+        '  Pass --force to download a fresh copy.',
+    );
+    return JSON.parse(await readFile(BULK_CACHE_PATH, 'utf8'));
+  }
+
+  const downloadUri = await fetchBulkDataUrl();
   console.log(`Downloading Scryfall Oracle Cards bulk file…\n  ${downloadUri}`);
   const res = await fetch(downloadUri, { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } });
   if (!res.ok) throw new Error(`Bulk data download failed: ${await describeFailure(res)}`);
-  return res.json();
+
+  const buffer = Buffer.from(await res.arrayBuffer());
+  await mkdir(CACHE_DIR, { recursive: true });
+  await writeFile(BULK_CACHE_PATH, buffer);
+  console.log(`Cached to ${path.relative(ROOT, BULK_CACHE_PATH)}.`);
+
+  return JSON.parse(buffer.toString('utf8'));
 }
 
 /** Reads a field from the card, falling back to combining its faces for DFCs/MDFCs. */
@@ -121,8 +163,8 @@ function isCommanderLegal(card) {
 }
 
 async function main() {
-  const bulkUrl = await fetchBulkDataUrl();
-  const allCards = await fetchBulkCards(bulkUrl);
+  const force = process.argv.includes('--force');
+  const allCards = await fetchBulkCards(force);
   console.log(`Loaded ${allCards.length} unique cards from Scryfall.`);
 
   const commanderLegal = allCards.filter(isCommanderLegal);

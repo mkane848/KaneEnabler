@@ -18,6 +18,26 @@
   --color-danger: #e0644a;
   --color-danger-soft: #4a2a22;
 
+  /* Mana pips — each colour's disc, paired with ink that stays legible on it.
+     The dark discs need a light glyph and the pale ones a dark glyph, and a
+     hybrid can pair one of each, so the two always travel together. */
+  --pip-w: #f8f4e3;
+  --pip-w-ink: rgba(20, 16, 10, 0.82);
+  --pip-u: #0f6ab5;
+  --pip-u-ink: rgba(248, 244, 227, 0.92);
+  --pip-b: #2c2620;
+  --pip-b-ink: rgba(248, 244, 227, 0.92);
+  --pip-r: #c6362a;
+  --pip-r-ink: rgba(248, 244, 227, 0.92);
+  --pip-g: #1f7a45;
+  --pip-g-ink: rgba(248, 244, 227, 0.92);
+  --pip-c: #8c7a63;
+  --pip-c-ink: rgba(20, 16, 10, 0.82);
+  --pip-s: #c2d4e0;
+  --pip-s-ink: rgba(20, 16, 10, 0.82);
+  --pip-generic: #b3aaa1;
+  --pip-generic-ink: rgba(20, 16, 10, 0.82);
+
   --mechanic-suspend: #d4a24c;
   --mechanic-vanishing: #8ba3e0;
   --mechanic-fading: #cd8567;
