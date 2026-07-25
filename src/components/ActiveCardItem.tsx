@@ -7,10 +7,16 @@ import styles from './ActiveCardItem.module.css';
 interface ActiveCardItemProps {
   card: TrackedCard;
   onSetCount: (instanceId: string, count: number) => void;
+  onAdjustCount: (instanceId: string, delta: number) => void;
   onRemove: (instanceId: string) => void;
 }
 
-export default function ActiveCardItem({ card, onSetCount, onRemove }: ActiveCardItemProps) {
+export default function ActiveCardItem({
+  card,
+  onSetCount,
+  onAdjustCount,
+  onRemove,
+}: ActiveCardItemProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(card.count));
 
@@ -30,7 +36,9 @@ export default function ActiveCardItem({ card, onSetCount, onRemove }: ActiveCar
   }
 
   function step(delta: number) {
-    onSetCount(card.instanceId, card.count + delta);
+    // Relative, so back-to-back taps accumulate instead of each recomputing
+    // from the count this render happened to capture.
+    onAdjustCount(card.instanceId, delta);
   }
 
   return (

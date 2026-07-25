@@ -1,32 +1,34 @@
-import { useState } from 'react';
 import AddCardPanel from './components/AddCardPanel';
 import ActiveCardsList from './components/ActiveCardsList';
 import ChangeSummaryModal from './components/ChangeSummaryModal';
 import Header from './components/Header';
 import { useGameState } from './hooks/useGameState';
-import type { TurnChange } from './types';
 
 export default function App() {
-  const { state, addCard, removeCard, setCount, setTurn, nextTurn, resetGame } = useGameState();
-  const [changeSummary, setChangeSummary] = useState<TurnChange[] | null>(null);
-
-  function handleNextTurn() {
-    const changes = nextTurn();
-    // Only interrupt the player when something actually happened at upkeep.
-    setChangeSummary(changes.length > 0 ? changes : null);
-  }
-
-  function handleResolveFromModal(instanceId: string) {
-    removeCard(instanceId);
-    setChangeSummary(prev => (prev ? prev.filter(c => c.instanceId !== instanceId) : prev));
-  }
+  const {
+    state,
+    lastUpkeep,
+    addCard,
+    removeCard,
+    setCount,
+    adjustCount,
+    setTurn,
+    nextTurn,
+    dismissUpkeep,
+    resetGame,
+  } = useGameState();
 
   return (
     <>
-      <Header turn={state.turn} onSetTurn={setTurn} onNextTurn={handleNextTurn} onReset={resetGame} />
+      <Header turn={state.turn} onSetTurn={setTurn} onNextTurn={nextTurn} onReset={resetGame} />
       <main>
         <AddCardPanel onAdd={addCard} />
-        <ActiveCardsList cards={state.cards} onSetCount={setCount} onRemove={removeCard} />
+        <ActiveCardsList
+          cards={state.cards}
+          onSetCount={setCount}
+          onAdjustCount={adjustCount}
+          onRemove={removeCard}
+        />
       </main>
       <footer
         style={{
@@ -38,12 +40,12 @@ export default function App() {
       >
         Card data via Scryfall. Magic: The Gathering is © Wizards of the Coast.
       </footer>
-      {changeSummary && (
+      {lastUpkeep && lastUpkeep.length > 0 && (
         <ChangeSummaryModal
-          changes={changeSummary}
+          changes={lastUpkeep}
           turn={state.turn}
-          onResolve={handleResolveFromModal}
-          onClose={() => setChangeSummary(null)}
+          onResolve={removeCard}
+          onClose={dismissUpkeep}
         />
       )}
     </>

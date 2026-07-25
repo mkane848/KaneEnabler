@@ -5,10 +5,16 @@ import styles from './ActiveCardsList.module.css';
 interface ActiveCardsListProps {
   cards: TrackedCard[];
   onSetCount: (instanceId: string, count: number) => void;
+  onAdjustCount: (instanceId: string, delta: number) => void;
   onRemove: (instanceId: string) => void;
 }
 
-export default function ActiveCardsList({ cards, onSetCount, onRemove }: ActiveCardsListProps) {
+export default function ActiveCardsList({
+  cards,
+  onSetCount,
+  onAdjustCount,
+  onRemove,
+}: ActiveCardsListProps) {
   if (cards.length === 0) {
     return (
       <div className={styles.wrap}>
@@ -31,7 +37,13 @@ export default function ActiveCardsList({ cards, onSetCount, onRemove }: ActiveC
     <div className={styles.wrap}>
       <p className={styles.sectionLabel}>Tracking {cards.length} card{cards.length === 1 ? '' : 's'}</p>
       {sorted.map(card => (
-        <ActiveCardItem key={card.instanceId} card={card} onSetCount={onSetCount} onRemove={onRemove} />
+        <ActiveCardItem
+          key={card.instanceId}
+          card={card}
+          onSetCount={onSetCount}
+          onAdjustCount={onAdjustCount}
+          onRemove={onRemove}
+        />
       ))}
     </div>
   );
