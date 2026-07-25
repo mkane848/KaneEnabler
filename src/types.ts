@@ -1,17 +1,19 @@
 /** A time-counter mechanic this app knows how to auto-decrement. */
 export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'custom';
 
-/** Card data as bundled from Scryfall (see scripts/fetch-card-data.mjs). */
+/**
+ * Card data as generated from Scryfall (see scripts/fetch-card-data.mjs).
+ * Only fields the UI actually reads are carried — across ~16k cards, unused
+ * fields cost megabytes.
+ */
 export interface CardData {
   id: string;
   name: string;
   manaCost?: string;
-  cmc?: number;
   typeLine?: string;
+  /** Kept only for cards with a time-counter mechanic; it feeds detectMechanic. */
   oracleText?: string;
   imageSmall?: string;
-  imageNormal?: string;
-  colors?: string[];
   /** Commander color identity (colors + any color symbols in rules/cost text). */
   colorIdentity?: string[];
   artist?: string;
@@ -24,7 +26,6 @@ export interface TrackedCard {
   cardId: string;
   name: string;
   imageSmall?: string;
-  imageNormal?: string;
   mechanic: Mechanic;
   /** Label shown for mechanic === 'custom', e.g. "Age counter". */
   customLabel?: string;

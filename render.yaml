@@ -2,5 +2,8 @@ services:
   - type: web
     runtime: static
     name: drwho-companion-edh
-    buildCommand: npm install --include=dev && npm run build
+    # fetch-cards regenerates public/cards.json from Scryfall so the deployed
+    # catalog is current. It fails the build loudly if Scryfall is unreachable,
+    # rather than quietly shipping the small committed seed.
+    buildCommand: npm install --include=dev && npm run fetch-cards && npm run build
     staticPublishPath: dist

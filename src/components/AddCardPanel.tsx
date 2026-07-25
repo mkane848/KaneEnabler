@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import type { CardData, Mechanic } from '../types';
-import { catalogSize, searchCards } from '../utils/cardCatalog';
+import { searchCards } from '../utils/cardCatalog';
+import { useCardCatalog } from '../hooks/useCardCatalog';
 import { MECHANIC_COLOR, MECHANIC_LABEL, defaultResolveNote, detectMechanic } from '../utils/counters';
 import type { AddCardInput } from '../hooks/useGameState';
 import ManaCost from './ManaCost';
@@ -15,6 +16,7 @@ interface AddCardPanelProps {
 type Stage = 'closed' | 'search' | 'configure';
 
 export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
+  const { cards: catalog, error: catalogError, loading: catalogLoading } = useCardCatalog();
   const [stage, setStage] = useState<Stage>('closed');
   const [query, setQuery] = useState('');
   const [manualMode, setManualMode] = useState(false);
@@ -28,7 +30,11 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
   const [autoDecrement, setAutoDecrement] = useState(true);
   const [resolveNote, setResolveNote] = useState('');
 
-  const results = stage === 'search' ? searchCards(query) : [];
+  // ~16k cards, so only re-scan when the query or the catalog actually changes.
+  const results = useMemo(
+    () => (stage === 'search' && catalog ? searchCards(catalog, query) : []),
+    [stage, catalog, query],
+  );
 
   function resetAll() {
     setStage('closed');
@@ -111,11 +117,11 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               autoFocus
               className="input"
               type="text"
-              placeholder="Search your deck list…"
+              placeholder={catalogLoading ? 'Loading card catalog…' : 'Search any Jeskai card…'}
               value={query}
               onChange={e => setQuery(e.target.value)}
             />
-            {query.trim().length > 0 && (
+            {query.trim().length > 0 && catalog && (
               <ul className={styles.results}>
                 {results.map(card => (
                   <li key={card.id}>
@@ -131,19 +137,20 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 {results.length === 0 && (
                   <li>
                     <div className={styles.resultItem} style={{ color: 'var(--color-text-faint)' }}>
-                      No matches in the loaded deck list.
+                      No Jeskai-legal card matches that name.
                     </div>
                   </li>
                 )}
               </ul>
             )}
             <p className={styles.emptyHint}>
-              {catalogSize() === 0 && (
+              {catalogLoading && <>Loading every Commander-legal Jeskai card… </>}
+              {catalogError && (
                 <>
-                  No card data loaded yet — run <code>npm run fetch-cards</code> to pull your deck list from
-                  Scryfall, or{' '}
+                  Couldn&apos;t load the card catalog ({catalogError}). You can still add cards by name.{' '}
                 </>
               )}
+              {catalog && <>Searching {catalog.length.toLocaleString()} Jeskai-legal cards. </>}
               Can&apos;t find it?{' '}
               <button type="button" className={styles.manualLink} onClick={() => setManualMode(true)}>
                 Add it by name

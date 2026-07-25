@@ -53,7 +53,6 @@ export function useGameState() {
         cardId: input.card.id,
         name: input.card.name,
         imageSmall: input.card.imageSmall,
-        imageNormal: input.card.imageNormal,
         mechanic: input.mechanic,
         customLabel: input.customLabel,
         count: input.startingCount,

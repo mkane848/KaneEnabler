@@ -1,16 +1,22 @@
-import { getCardByName } from '../utils/cardCatalog';
+import { useCardCatalog } from '../hooks/useCardCatalog';
+import { findCardByName } from '../utils/cardCatalog';
 import styles from './CommanderBanner.module.css';
 
 const COMMANDER_NAMES = ['The Tenth Doctor', 'Rose Tyler'];
 
 /**
- * A quiet caption crediting this deck's commanders. Portraits only appear
- * once cards.json actually has art for them (run `npm run fetch-cards`
- * with their names in decklist.txt) — until then this degrades to plain text.
+ * A quiet caption crediting this deck's commanders. Portraits appear once the
+ * card catalog has loaded and has art for them; until then this degrades to
+ * plain text rather than reserving empty space.
  */
 export default function CommanderBanner() {
-  const commanders = COMMANDER_NAMES.map(name => getCardByName(name));
-  const portraits = commanders.filter((c): c is NonNullable<typeof c> => Boolean(c?.imageSmall));
+  const { cards: catalog } = useCardCatalog();
+
+  const portraits = catalog
+    ? COMMANDER_NAMES.map(name => findCardByName(catalog, name)).filter(
+        (c): c is NonNullable<typeof c> => Boolean(c?.imageSmall),
+      )
+    : [];
 
   return (
     <div className={styles.wrap}>

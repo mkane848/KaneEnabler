@@ -11,14 +11,37 @@
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Both stylesheets below are loaded non-render-blocking, via the
+      media="print" swap trick. They come from third-party CDNs, and a plain
+      <link rel="stylesheet"> would hold up first paint until the request
+      resolves — measured at ~13s of white screen when a CDN hangs, which is a
+      real risk on the venue wifi this app gets used on. Loaded this way the UI
+      paints immediately in fallback fonts and restyles when the CSS arrives.
+      The <noscript> copies keep them working without JavaScript.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
     />
     <!-- Mana font — the open-source (SIL OFL) mana-symbol icon set the MTG fan-tool
          community standardizes on (Scryfall's own API docs point developers to it).
          https://github.com/andrewgioia/mana -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mana-font@latest/css/mana.css" />
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://cdn.jsdelivr.net/npm/mana-font@latest/css/mana.css"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mana-font@latest/css/mana.css" />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
