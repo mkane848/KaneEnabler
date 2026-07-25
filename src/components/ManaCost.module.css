@@ -1,0 +1,8 @@
+.row {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}

@@ -3,6 +3,7 @@ import type { CardData, Mechanic } from '../types';
 import { catalogSize, searchCards } from '../utils/cardCatalog';
 import { MECHANIC_COLOR, MECHANIC_LABEL, defaultResolveNote, detectMechanic } from '../utils/counters';
 import type { AddCardInput } from '../hooks/useGameState';
+import ManaCost from './ManaCost';
 import styles from './AddCardPanel.module.css';
 
 const MECHANICS: Mechanic[] = ['suspend', 'vanishing', 'fading', 'custom'];
@@ -119,7 +120,10 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 {results.map(card => (
                   <li key={card.id}>
                     <button type="button" className={styles.resultItem} onClick={() => selectCard(card)}>
-                      <span>{card.name}</span>
+                      <span className={styles.resultName}>
+                        {card.name}
+                        <ManaCost cost={card.manaCost} />
+                      </span>
                       {card.typeLine && <span className={styles.resultType}>{card.typeLine}</span>}
                     </button>
                   </li>
@@ -185,6 +189,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 <div className={styles.selectedThumbFallback} />
               )}
               <span className={styles.selectedName}>{selected.name}</span>
+              <ManaCost cost={selected.manaCost} />
               <button type="button" className={styles.changeBtn} onClick={() => setStage('search')}>
                 Change
               </button>

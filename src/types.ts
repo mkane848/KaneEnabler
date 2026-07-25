@@ -12,6 +12,9 @@ export interface CardData {
   imageSmall?: string;
   imageNormal?: string;
   colors?: string[];
+  /** Commander color identity (colors + any color symbols in rules/cost text). */
+  colorIdentity?: string[];
+  artist?: string;
 }
 
 /** A card instance currently being tracked on the board/in exile. */

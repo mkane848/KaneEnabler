@@ -90,6 +90,13 @@
   background: var(--color-surface-hover);
 }
 
+.resultName {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+}
+
 .resultType {
   color: var(--color-text-faint);
   font-size: 0.76rem;

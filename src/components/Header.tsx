@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import CommanderBanner from './CommanderBanner';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -37,6 +38,7 @@ export default function Header({ turn, onSetTurn, onNextTurn, onReset }: HeaderP
         <div className={styles.titleBlock}>
           <span className={styles.eyebrow}>Commander companion</span>
           <h1 className={styles.title}>Time Counters</h1>
+          <CommanderBanner />
         </div>
         <button type="button" className={styles.resetBtn} onClick={handleReset}>
           New game

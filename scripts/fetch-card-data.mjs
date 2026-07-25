@@ -11,6 +11,10 @@
  * If decklist.txt has no card names in it, this falls back to grabbing
  * every card whose rules text includes Suspend, Vanishing, or Fading —
  * useful for poking at the app before you've entered your real decklist.
+ *
+ * Every result is also filtered down to the Jeskai (White/Blue/Red) color
+ * identity — this deck's commanders are The Tenth Doctor and Rose Tyler —
+ * so anything outside that identity never makes it into the bundled catalog.
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -23,6 +27,15 @@ const DECKLIST_PATH = path.join(ROOT, 'decklist.txt');
 const OUTPUT_PATH = path.join(ROOT, 'src', 'data', 'cards.json');
 
 const USER_AGENT = 'mtg-time-tracker/0.1 (personal Commander companion app)';
+
+/** This deck's color identity — White/Blue/Red. */
+const JESKAI_COLORS = ['W', 'U', 'R'];
+
+/** Colorless cards (no color identity at all) are legal in any color identity. */
+function isWithinIdentity(colors, allowed) {
+  if (!colors || colors.length === 0) return true;
+  return colors.every(c => allowed.includes(c));
+}
 
 async function readDecklist() {
   let raw = '';
@@ -85,6 +98,8 @@ function toCardData(card) {
     imageSmall: imageField(card, 'small'),
     imageNormal: imageField(card, 'normal'),
     colors: card.colors ?? [],
+    colorIdentity: card.color_identity ?? [],
+    artist: card.artist,
   };
 }
 
@@ -112,6 +127,13 @@ async function main() {
       const text = faceField(c, 'oracle_text') || '';
       return /suspend \d|vanishing(?:\s+\d)?\b|fading \d/i.test(text);
     });
+  }
+
+  const beforeColorFilter = filtered.length;
+  filtered = filtered.filter(c => isWithinIdentity(c.color_identity, JESKAI_COLORS));
+  const excludedByColor = beforeColorFilter - filtered.length;
+  if (excludedByColor > 0) {
+    console.log(`Excluded ${excludedByColor} card(s) outside the Jeskai (W/U/R) color identity.`);
   }
 
   const output = filtered.map(toCardData).sort((a, b) => a.name.localeCompare(b.name));

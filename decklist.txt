@@ -2,16 +2,16 @@
 # Lines starting with # are ignored, as are blank lines. Matching against
 # Scryfall is case-insensitive but otherwise exact, so spelling matters.
 #
-# Example:
-# Ancestral Vision
-# Lotus Bloom
-# Rift Bolt
-# Hypergenesis
-#
 # Once your list is ready, run:
 #   npm run fetch-cards
 #
 # That pulls Scryfall's Oracle Cards bulk file and filters it down to just
-# these cards, saving the result to src/data/cards.json. Left empty, the
-# script instead grabs every card with Suspend, Vanishing, or Fading text —
-# good enough for trying the app out first.
+# these cards, saving the result to src/data/cards.json. Every result is
+# also filtered to this deck's Jeskai (White/Blue/Red) color identity —
+# see scripts/fetch-card-data.mjs.
+
+# Commanders
+The Tenth Doctor
+Rose Tyler
+
+# Add the rest of your 99 below.
