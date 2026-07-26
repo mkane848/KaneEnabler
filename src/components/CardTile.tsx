@@ -56,8 +56,9 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
         {card.imageSmall ? (
           <img className={styles.art} src={card.imageSmall} alt={card.name} />
         ) : (
-          <div className={styles.artFallback}>
+          <div className={`${styles.artFallback} ${card.isToken ? styles.artFallbackToken : ''}`}>
             <span className={styles.artFallbackName}>{card.name}</span>
+            {card.isToken && <span className={styles.artFallbackTokenTag}>TOKEN</span>}
           </div>
         )}
         <span className={styles.badge} style={{ background: color }}>
@@ -72,6 +73,7 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
             <span className={styles.mechanicTag} style={{ ['--tag-color' as string]: color }}>
               {label}
             </span>
+            {card.isToken && <span className={styles.tokenTag}>Token</span>}
             {!card.autoAdjust && <span className={styles.manualNote}>manual only</span>}
           </div>
 

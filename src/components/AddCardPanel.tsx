@@ -39,6 +39,10 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
   const [manualMode, setManualMode] = useState(false);
   const [manualName, setManualName] = useState('');
   const [quickSuspend, setQuickSuspend] = useState(false);
+  // Tokens (e.g. the Human Noble token from The Girl in the Fireplace) aren't
+  // real cards, so they're never in the Scryfall catalog — this skips search
+  // entirely and goes straight to naming one by hand.
+  const [creatingToken, setCreatingToken] = useState(false);
 
   const [selected, setSelected] = useState<CardData | null>(null);
   const [mechanic, setMechanic] = useState<Mechanic>('custom');
@@ -62,6 +66,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     setManualMode(false);
     setManualName('');
     setQuickSuspend(false);
+    setCreatingToken(false);
     setSelected(null);
     setCustomLabel('');
     setStartingCount('');
@@ -74,6 +79,11 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
 
   function openQuickSuspend() {
     setQuickSuspend(true);
+    setStage('search');
+  }
+
+  function openCreateToken() {
+    setCreatingToken(true);
     setStage('search');
   }
 
@@ -98,7 +108,11 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     e.preventDefault();
     const name = manualName.trim();
     if (!name) return;
-    selectCard({ id: `manual:${name.toLowerCase()}`, name });
+    if (creatingToken) {
+      selectCard({ id: `token:${name.toLowerCase()}`, name, isToken: true });
+    } else {
+      selectCard({ id: `manual:${name.toLowerCase()}`, name });
+    }
   }
 
   function changeMechanic(next: Mechanic) {
@@ -141,6 +155,9 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
         <button type="button" className={styles.quickLink} onClick={openQuickSuspend}>
           Suspend a card via an effect (e.g. The Tenth Doctor) →
         </button>
+        <button type="button" className={styles.quickLink} onClick={openCreateToken}>
+          Create a token (e.g. The Girl in the Fireplace) →
+        </button>
       </div>
     );
   }
@@ -150,14 +167,20 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
       <div className={styles.panel}>
         <div className={styles.panelHeader}>
           <span className={styles.panelTitle}>
-            {stage === 'search' ? (quickSuspend ? 'Suspend a card via an effect' : 'Add a card') : 'Set up counters'}
+            {stage === 'search'
+              ? quickSuspend
+                ? 'Suspend a card via an effect'
+                : creatingToken
+                  ? 'Create a token'
+                  : 'Add a card'
+              : 'Set up counters'}
           </span>
           <button type="button" className={styles.closeBtn} onClick={resetAll}>
             Close
           </button>
         </div>
 
-        {stage === 'search' && !manualMode && (
+        {stage === 'search' && !manualMode && !creatingToken && (
           <>
             <input
               autoFocus
@@ -206,10 +229,10 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
           </>
         )}
 
-        {stage === 'search' && manualMode && (
+        {stage === 'search' && (manualMode || creatingToken) && (
           <form onSubmit={handleManualSubmit}>
             <label className={styles.fieldLabel} htmlFor="manual-name">
-              Card name
+              {creatingToken ? 'Token name' : 'Card name'}
             </label>
             <div className={styles.manualRow}>
               <input
@@ -217,7 +240,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 autoFocus
                 className="input"
                 type="text"
-                placeholder="e.g. Ancestral Vision"
+                placeholder={creatingToken ? 'e.g. Human Noble' : 'e.g. Ancestral Vision'}
                 value={manualName}
                 onChange={e => setManualName(e.target.value)}
               />
@@ -225,11 +248,18 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 Next
               </button>
             </div>
-            <p className={styles.emptyHint}>
-              <button type="button" className={styles.manualLink} onClick={() => setManualMode(false)}>
-                ← Back to search
-              </button>
-            </p>
+            {creatingToken ? (
+              <p className={styles.emptyHint}>
+                Tokens aren&apos;t cataloged cards, so there&apos;s no art or oracle text — just name it and
+                pick its mechanic next (e.g. Vanishing 3 for the token The Girl in the Fireplace creates).
+              </p>
+            ) : (
+              <p className={styles.emptyHint}>
+                <button type="button" className={styles.manualLink} onClick={() => setManualMode(false)}>
+                  ← Back to search
+                </button>
+              </p>
+            )}
           </form>
         )}
 
