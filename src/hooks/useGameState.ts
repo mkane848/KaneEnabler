@@ -89,10 +89,11 @@ export function useGameState() {
         autoAdjust: input.autoAdjust,
         resolveNote: input.resolveNote?.trim() || defaultResolveNote(input.mechanic),
         turnAdded: prev.game.turn,
+        isToken: input.card.isToken,
       };
       const log = appendLog(prev.game.log, {
         turn: prev.game.turn,
-        title: 'Added to tracker',
+        title: tracked.isToken ? 'Token created' : 'Added to tracker',
         detail: `${tracked.name} — ${mechanicName(tracked.mechanic, tracked.customLabel)}, starting at ${tracked.count}`,
       });
       return { ...prev, game: { ...prev.game, cards: [...prev.game.cards, tracked], log } };

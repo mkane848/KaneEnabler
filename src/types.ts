@@ -26,6 +26,12 @@ export interface CardData {
   /** Commander color identity (colors + any color symbols in rules/cost text). */
   colorIdentity?: string[];
   artist?: string;
+  /**
+   * A token created by another card's effect (e.g. the Human Noble token
+   * from The Girl in the Fireplace) rather than a card in its own right —
+   * it won't be in the Scryfall catalog, so it's always named by hand.
+   */
+  isToken?: boolean;
 }
 
 /** A card instance currently being tracked on the board/in exile. */
@@ -58,6 +64,8 @@ export interface TrackedCard {
   /** What happens at the target count, shown to the player. */
   resolveNote: string;
   turnAdded: number;
+  /** A token created by an effect rather than a card of its own — see CardData.isToken. */
+  isToken?: boolean;
 }
 
 /** One card's count change from a single Next Turn action. */

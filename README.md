@@ -36,6 +36,13 @@ Scryfall's bulk data, and game state lives in your browser's `localStorage`.
   does the same generically. This shortcut skips straight to the Suspend
   setup with a note that it came from an effect, since the app only needs to
   know how many time counters the card has, not which spell put them there.
+- **Create a token** covers creature tokens an effect makes, which aren't in
+  the card catalog since they're not cards in their own right — Scryfall
+  only lists cards legal in Commander, and a token isn't one. This deck's
+  The Girl in the Fireplace does exactly this: its first chapter makes a
+  1/1 Human Noble token with vanishing 3. Name the token, pick its mechanic
+  the same way you would for a real card, and it's tracked identically from
+  there — just tagged "Token" on its tile, since it has no Scryfall art.
 - **Starting counts are auto-filled** by reading the card's oracle text for
   Suspend, Vanishing, or Fading, but every field is editable before you
   confirm. Anything else falls back to a "Custom" counter you name yourself,
@@ -215,6 +222,11 @@ Scryfall's own `keyword:"time travel"` index):
 - **Wibbly-wobbly, Timey-wimey** and **Time Beetle** also confirmed to use
   Time Travel — the former as a spell ("Time travel. … Draw a card."), the
   latter off combat damage.
+- **The Girl in the Fireplace** is a Saga: chapter I creates a 1/1 white
+  Human Noble creature token with vanishing 3 (damage-prevented); chapter II
+  creates a 2/2 white Horse token; chapter III triggers Time Travel on
+  combat damage. The chapter I token is the reason this app supports
+  tracking tokens at all — see "Create a token" above.
 - **All of History, All at Once** appears in Scryfall's own index of cards
   with the Time Travel keyword, though its exact full text wasn't pulled.
 - **Delay** and **Clockspinning** are real Time Spiral–block cards that

@@ -41,8 +41,10 @@
 
 .artFallback {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.4rem;
   width: 100%;
   aspect-ratio: 63 / 88;
   background: var(--color-bg);
@@ -50,11 +52,30 @@
   text-align: center;
 }
 
+.artFallbackToken {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-bg),
+    var(--color-bg) 10px,
+    var(--color-surface) 10px,
+    var(--color-surface) 20px
+  );
+  border: 1px dashed var(--color-border);
+}
+
 .artFallbackName {
   font-family: var(--font-display);
   font-size: 0.8rem;
   color: var(--color-text-muted);
   line-height: 1.3;
+}
+
+.artFallbackTokenTag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--color-text-faint);
+  letter-spacing: 0.1em;
 }
 
 .badge {
@@ -103,6 +124,17 @@
   color: var(--tag-color, var(--color-text-muted));
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.tokenTag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.05em 0.4em;
 }
 
 .manualNote {
