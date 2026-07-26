@@ -8,10 +8,11 @@ interface ActiveCardsListProps {
   onSetCount: (instanceId: string, count: number) => void;
   onAdjustCount: (instanceId: string, delta: number) => void;
   onRemove: (instanceId: string) => void;
+  onOpenTimeTravel: () => void;
 }
 
 /** Built-in mechanics group first, in this order; custom counter names follow, alphabetically. */
-const MECHANIC_ORDER: Mechanic[] = ['suspend', 'vanishing', 'fading', 'saga', 'level', 'custom'];
+const MECHANIC_ORDER: Mechanic[] = ['suspend', 'vanishing', 'fading', 'custom'];
 
 /** Cards sharing a mechanic sit together; 'custom' cards also split by their own counter name — an Age counter and a Charge counter aren't the same thing just because both fell back to 'custom'. */
 function groupKey(card: TrackedCard): string {
@@ -66,7 +67,13 @@ function buildGroups(cards: TrackedCard[]): Group[] {
   });
 }
 
-export default function ActiveCardsList({ cards, onSetCount, onAdjustCount, onRemove }: ActiveCardsListProps) {
+export default function ActiveCardsList({
+  cards,
+  onSetCount,
+  onAdjustCount,
+  onRemove,
+  onOpenTimeTravel,
+}: ActiveCardsListProps) {
   if (cards.length === 0) {
     return (
       <div className={styles.wrap}>
@@ -84,7 +91,12 @@ export default function ActiveCardsList({ cards, onSetCount, onAdjustCount, onRe
 
   return (
     <div className={styles.wrap}>
-      <p className={styles.sectionLabel}>Tracking {cards.length} card{cards.length === 1 ? '' : 's'}</p>
+      <div className={styles.sectionRow}>
+        <p className={styles.sectionLabel}>Tracking {cards.length} card{cards.length === 1 ? '' : 's'}</p>
+        <button type="button" className={styles.timeTravelLink} onClick={onOpenTimeTravel}>
+          Time Travel →
+        </button>
+      </div>
       {groups.map(group => (
         <MechanicGroup
           key={group.key}

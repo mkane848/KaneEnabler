@@ -8,6 +8,8 @@ export function loadState(): GameState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as GameState;
     if (typeof parsed.turn !== 'number' || !Array.isArray(parsed.cards)) return null;
+    // Games saved before the game log existed won't have this field.
+    if (!Array.isArray(parsed.log)) parsed.log = [];
     return parsed;
   } catch {
     return null;

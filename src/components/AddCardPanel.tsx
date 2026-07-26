@@ -5,7 +5,6 @@ import { useCardCatalog } from '../hooks/useCardCatalog';
 import {
   MECHANIC_COLOR,
   MECHANIC_LABEL,
-  defaultAutoAdjust,
   defaultResolveNote,
   detectMechanic,
   mechanicDirection,
@@ -15,7 +14,7 @@ import type { AddCardInput } from '../hooks/useGameState';
 import ManaCost from './ManaCost';
 import styles from './AddCardPanel.module.css';
 
-const MECHANICS: Mechanic[] = ['suspend', 'vanishing', 'fading', 'saga', 'level', 'custom'];
+const MECHANICS: Mechanic[] = ['suspend', 'vanishing', 'fading', 'custom'];
 
 interface AddCardPanelProps {
   onAdd: (input: AddCardInput) => void;
@@ -89,7 +88,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     setDetectedCount(detection?.count ?? null);
     setStartingCount(detection?.count != null ? String(detection.count) : '');
     setTargetCount(detection?.targetCount != null ? String(detection.targetCount) : '');
-    setAutoAdjust(defaultAutoAdjust(nextMechanic));
+    setAutoAdjust(true);
     setResolveNote(quickSuspend ? SUSPENDED_BY_EFFECT_NOTE : defaultResolveNote(nextMechanic));
     setCustomLabel('');
     setStage('configure');
@@ -106,7 +105,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     setMechanic(next);
     setDirection(mechanicDirection(next, direction));
     setResolveNote(defaultResolveNote(next));
-    setAutoAdjust(defaultAutoAdjust(next));
+    setAutoAdjust(true);
     // Keep the detected count/target only if it still applies to the newly chosen mechanic.
     if (!detectedCount) setStartingCount('');
     if (next !== mechanic) setTargetCount('');

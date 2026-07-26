@@ -5,11 +5,12 @@ import styles from './Header.module.css';
 interface HeaderProps {
   turn: number;
   onSetTurn: (turn: number) => void;
-  onTimeTravel: () => void;
+  onNextTurn: () => void;
   onReset: () => void;
+  onOpenLog: () => void;
 }
 
-export default function Header({ turn, onSetTurn, onTimeTravel, onReset }: HeaderProps) {
+export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog }: HeaderProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(turn));
 
@@ -40,9 +41,14 @@ export default function Header({ turn, onSetTurn, onTimeTravel, onReset }: Heade
           <h1 className={styles.title}>Time Counters</h1>
           <CommanderBanner />
         </div>
-        <button type="button" className={styles.resetBtn} onClick={handleReset}>
-          New game
-        </button>
+        <div className={styles.topActions}>
+          <button type="button" className={styles.logBtn} onClick={onOpenLog}>
+            Game Log
+          </button>
+          <button type="button" className={styles.resetBtn} onClick={handleReset}>
+            New game
+          </button>
+        </div>
       </div>
 
       <div className={styles.turnRow}>
@@ -76,13 +82,8 @@ export default function Header({ turn, onSetTurn, onTimeTravel, onReset }: Heade
           )}
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={onTimeTravel}
-          title="Advance to your next turn and see what changed"
-        >
-          Time Travel →
+        <button type="button" className="btn btn-primary" onClick={onNextTurn}>
+          Next turn →
         </button>
       </div>
     </header>

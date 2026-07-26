@@ -1,5 +1,5 @@
 /** A time-counter mechanic this app knows how to auto-adjust. */
-export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'saga' | 'level' | 'custom';
+export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'custom';
 
 /** Which way a mechanic's counters move each turn. */
 export type Direction = 'increment' | 'decrement';
@@ -34,23 +34,27 @@ export interface TrackedCard {
   customLabel?: string;
   count: number;
   startingCount: number;
-  /** Which way this card's counters move on Time Travel. */
+  /**
+   * Which way this card's counters move on Next Turn. Suspend, Vanishing,
+   * and Fading are always decrement; Custom can go either way (an
+   * increment counter is still a time counter — the Time Travel keyword
+   * action can add one to a suspended card or a Vanishing/Fading permanent).
+   */
   direction: Direction;
   /**
    * The count that triggers this card's final ability — 0 is implicit for
-   * decrement mechanics and not stored. For increment mechanics this is the
-   * chapter/level that sacrifices or otherwise resolves the card; undefined
-   * means open-ended (e.g. Level Up creatures, which never auto-resolve).
+   * decrement mechanics and not stored. For an increment Custom counter this
+   * is the count that resolves it; undefined means open-ended.
    */
   targetCount?: number;
-  /** Whether this card's count changes automatically on Time Travel. */
+  /** Whether this card's count changes automatically on Next Turn. */
   autoAdjust: boolean;
   /** What happens at the target count, shown to the player. */
   resolveNote: string;
   turnAdded: number;
 }
 
-/** One card's count change from a single Time Travel action. */
+/** One card's count change from a single Next Turn action. */
 export interface TurnChange {
   instanceId: string;
   name: string;
@@ -61,7 +65,33 @@ export interface TurnChange {
   resolveNote: string;
 }
 
+/** One card's count change within a game-log entry (Next Turn, a Time Travel pass). */
+export interface LogChange {
+  name: string;
+  mechanic: Mechanic;
+  from: number;
+  to: number;
+}
+
+/**
+ * One row in the game log — every effect that changed something, in the
+ * order it happened. Multi-card events (Next Turn, a Time Travel pass) carry
+ * a `changes` list; single-card or metadata events (adding a card, a manual
+ * edit, changing the turn number) use `detail` instead.
+ */
+export interface LogEntry {
+  id: string;
+  /** The turn this happened on — Next Turn entries use the turn just arrived at. */
+  turn: number;
+  /** Wall-clock time, for stable ordering within a turn. */
+  timestamp: number;
+  title: string;
+  detail?: string;
+  changes?: LogChange[];
+}
+
 export interface GameState {
   turn: number;
   cards: TrackedCard[];
+  log: LogEntry[];
 }

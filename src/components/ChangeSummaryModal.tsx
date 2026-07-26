@@ -23,17 +23,17 @@ export default function ChangeSummaryModal({ changes, turn, onResolve, onClose }
       >
         <div className={styles.header}>
           <h2 id="change-summary-title" className={styles.title}>
-            Time Travel — arrived at turn {turn}
+            Upkeep — turn {turn}
           </h2>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
             Done
           </button>
         </div>
-        <p className={styles.subtitle}>
-          {readyCount > 0
-            ? `${readyCount} card${readyCount === 1 ? '' : 's'} ready to resolve`
-            : "Here's what changed along the way."}
-        </p>
+        {readyCount > 0 && (
+          <p className={styles.subtitle}>
+            {readyCount} card{readyCount === 1 ? '' : 's'} ready to resolve
+          </p>
+        )}
 
         <div className={styles.list}>
           {changes.map(c => (
