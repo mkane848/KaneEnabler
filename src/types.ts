@@ -1,5 +1,8 @@
-/** A time-counter mechanic this app knows how to auto-decrement. */
-export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'custom';
+/** A time-counter mechanic this app knows how to auto-adjust. */
+export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'saga' | 'level' | 'custom';
+
+/** Which way a mechanic's counters move each turn. */
+export type Direction = 'increment' | 'decrement';
 
 /**
  * Card data as generated from Scryfall (see scripts/fetch-card-data.mjs).
@@ -31,20 +34,30 @@ export interface TrackedCard {
   customLabel?: string;
   count: number;
   startingCount: number;
-  /** Whether this card loses a counter automatically on Next Turn. */
-  autoDecrement: boolean;
-  /** What to do when the count hits 0, shown to the player. */
+  /** Which way this card's counters move on Time Travel. */
+  direction: Direction;
+  /**
+   * The count that triggers this card's final ability — 0 is implicit for
+   * decrement mechanics and not stored. For increment mechanics this is the
+   * chapter/level that sacrifices or otherwise resolves the card; undefined
+   * means open-ended (e.g. Level Up creatures, which never auto-resolve).
+   */
+  targetCount?: number;
+  /** Whether this card's count changes automatically on Time Travel. */
+  autoAdjust: boolean;
+  /** What happens at the target count, shown to the player. */
   resolveNote: string;
   turnAdded: number;
 }
 
-/** One card's count change from a single Next Turn action. */
+/** One card's count change from a single Time Travel action. */
 export interface TurnChange {
   instanceId: string;
   name: string;
+  mechanic: Mechanic;
   from: number;
   to: number;
-  hitZero: boolean;
+  hitTarget: boolean;
   resolveNote: string;
 }
 

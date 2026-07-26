@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { CardData, GameState, Mechanic, TrackedCard, TurnChange } from '../types';
+import type { CardData, Direction, GameState, Mechanic, TrackedCard, TurnChange } from '../types';
 import { defaultResolveNote } from '../utils/counters';
 import { clearState, loadState, saveState } from '../utils/storage';
 
@@ -9,9 +9,21 @@ function makeId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-/** Counters are whole numbers and never drop below zero. */
-function clampCount(count: number): number {
-  return Number.isFinite(count) ? Math.max(0, Math.round(count)) : 0;
+/**
+ * Counters are whole numbers, never negative, and an increment mechanic with
+ * a known target (e.g. a Saga's final chapter) can't be pushed past it — that
+ * would represent a game state that can't actually happen.
+ */
+function clampCount(count: number, direction: Direction, targetCount?: number): number {
+  const rounded = Number.isFinite(count) ? Math.max(0, Math.round(count)) : 0;
+  if (direction === 'increment' && targetCount != null) return Math.min(rounded, targetCount);
+  return rounded;
+}
+
+/** True once this card's counter has reached whatever ends it. */
+function hasHitTarget(count: number, direction: Direction, targetCount?: number): boolean {
+  if (direction === 'decrement') return count <= 0;
+  return targetCount != null && count >= targetCount;
 }
 
 export interface AddCardInput {
@@ -19,7 +31,9 @@ export interface AddCardInput {
   mechanic: Mechanic;
   customLabel?: string;
   startingCount: number;
-  autoDecrement: boolean;
+  direction: Direction;
+  targetCount?: number;
+  autoAdjust: boolean;
   resolveNote?: string;
 }
 
@@ -55,9 +69,11 @@ export function useGameState() {
         imageSmall: input.card.imageSmall,
         mechanic: input.mechanic,
         customLabel: input.customLabel,
-        count: input.startingCount,
+        count: clampCount(input.startingCount, input.direction, input.targetCount),
         startingCount: input.startingCount,
-        autoDecrement: input.autoDecrement,
+        direction: input.direction,
+        targetCount: input.targetCount,
+        autoAdjust: input.autoAdjust,
         resolveNote: input.resolveNote?.trim() || defaultResolveNote(input.mechanic),
         turnAdded: prev.game.turn,
       };
@@ -80,7 +96,7 @@ export function useGameState() {
       game: {
         ...prev.game,
         cards: prev.game.cards.map(c =>
-          c.instanceId === instanceId ? { ...c, count: clampCount(count) } : c,
+          c.instanceId === instanceId ? { ...c, count: clampCount(count, c.direction, c.targetCount) } : c,
         ),
       },
     }));
@@ -97,7 +113,9 @@ export function useGameState() {
       game: {
         ...prev.game,
         cards: prev.game.cards.map(c =>
-          c.instanceId === instanceId ? { ...c, count: clampCount(c.count + delta) } : c,
+          c.instanceId === instanceId
+            ? { ...c, count: clampCount(c.count + delta, c.direction, c.targetCount) }
+            : c,
         ),
       },
     }));
@@ -109,31 +127,33 @@ export function useGameState() {
   }, []);
 
   /**
-   * Advances to the player's next turn, removing one counter from every
-   * auto-decrementing card that still has counters left — Suspend and
-   * Vanishing both lose exactly one time counter at the beginning of their
-   * owner's upkeep. The summary of what changed is stored alongside the new
-   * game state so the two can never disagree.
+   * Time Travel — advances to the player's next turn, adjusting every
+   * auto-adjusting card's counter by one step in its own direction: Suspend,
+   * Vanishing, and Fading count down; Saga counts up toward its final
+   * chapter. A card that has already hit its target is left alone rather
+   * than re-triggering. The summary of what changed is stored alongside the
+   * new game state so the two can never disagree.
    */
   const nextTurn = useCallback(() => {
     setTracker(prev => {
       const changes: TurnChange[] = [];
       const cards = prev.game.cards.map(c => {
-        if (!c.autoDecrement || c.count <= 0) return c;
-        const to = c.count - 1;
+        if (!c.autoAdjust || hasHitTarget(c.count, c.direction, c.targetCount)) return c;
+        const to = clampCount(c.count + (c.direction === 'decrement' ? -1 : 1), c.direction, c.targetCount);
         changes.push({
           instanceId: c.instanceId,
           name: c.name,
+          mechanic: c.mechanic,
           from: c.count,
           to,
-          hitZero: to === 0,
+          hitTarget: hasHitTarget(to, c.direction, c.targetCount),
           resolveNote: c.resolveNote,
         });
         return { ...c, count: to };
       });
       return {
         game: { turn: prev.game.turn + 1, cards },
-        // Only interrupt the player when something actually happened at upkeep.
+        // Only interrupt the player when something actually happened.
         lastUpkeep: changes.length > 0 ? changes : null,
       };
     });

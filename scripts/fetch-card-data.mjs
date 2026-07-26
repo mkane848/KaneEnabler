@@ -38,11 +38,12 @@ const BULK_INDEX_URL = process.env.SCRYFALL_BULK_INDEX ?? 'https://api.scryfall.
 
 /**
  * Oracle text is only consulted to pre-fill a starting count, so it is kept
- * just for cards that mention a time-counter mechanic. This pattern is
- * deliberately broader than the app's detection regexes: over-matching costs
- * a few kilobytes, under-matching would silently break auto-detection.
+ * just for cards that mention a time-counter mechanic — Suspend, Vanishing,
+ * Fading, Saga (lore counters), and Level Up. This pattern is deliberately
+ * broader than the app's detection regexes: over-matching costs a few
+ * kilobytes, under-matching would silently break auto-detection.
  */
-const TIME_COUNTER_TEXT = /suspend|vanishing|fading|time counter|fade counter/i;
+const TIME_COUNTER_TEXT = /suspend|vanishing|fading|time counter|fade counter|lore counter|level up/i;
 
 /** Scryfall returns an HTML error page often enough that the body is worth logging. */
 async function describeFailure(res) {
