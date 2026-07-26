@@ -60,6 +60,9 @@ Scryfall's bulk data, and game state lives in your browser's `localStorage`.
   you pull up and dismiss rather than a fixed pane. It persists with the
   rest of the game state, so it survives a reload and only clears on New
   Game.
+- **Two visual themes** — a Doctor Who–skinned look (the default) and the
+  app's original styling, kept as a "Claude" option. Switch anytime with the
+  "Theme:" button in the header; see [Themes](#themes) below.
 
 ## Setup
 
@@ -116,9 +119,11 @@ src/types.ts                  Shared TypeScript types
 src/utils/counters.ts         Mechanic detection, labels, colors, resolve text
 src/utils/colorIdentity.mjs   Jeskai color-identity filter (shared with the fetch script)
 src/utils/cardCatalog.ts      Catalog fetching and name search
-src/utils/storage.ts          localStorage persistence
+src/utils/storage.ts          localStorage persistence (game state)
+src/utils/theme.ts            localStorage persistence (theme preference)
 src/hooks/useCardCatalog.ts   Loads the catalog once, shared by consumers
 src/hooks/useGameState.ts     Turn number, tracked cards, game log, Next Turn and Time Travel logic
+src/hooks/useTheme.ts         Reads/writes/applies the active theme
 src/components/CardTile.tsx        One card's tile: art, badge, expandable controls
 src/components/MechanicGroup.tsx   One counter type's labeled section of the board
 src/components/ActiveCardsList.tsx Groups and sorts tracked cards into sections
@@ -126,7 +131,46 @@ src/components/AddCardPanel.tsx    Search, mechanic setup, quick-suspend action
 src/components/ChangeSummaryModal.tsx  The Next Turn upkeep summary
 src/components/TimeTravelPanel.tsx     Walks through N passes of the Time Travel keyword action
 src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
+src/components/ThemeToggle.tsx         Switches between the two themes
 ```
+
+## Themes
+
+Two visual themes, switchable anytime from the header — the choice is a
+device preference (its own localStorage key), so New Game doesn't reset it:
+
+- **Doctor Who** (default) — a TARDIS-blue palette with an electric-cyan
+  accent, and sci-fi/HUD typography: [Orbitron](https://fonts.google.com/specimen/Orbitron)
+  for headings, [Titillium Web](https://fonts.google.com/specimen/Titillium+Web)
+  for body text, [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)
+  for numbers and counts. All three are free/open (SIL OFL or Apache 2.0),
+  loaded the same non-render-blocking way the app's other fonts already are.
+
+  This is deliberately an original color-and-type language, not a
+  reproduction of any BBC-owned asset — the Doctor Who logo wordmark and the
+  TARDIS box shape are both design-trademarked, so neither appears anywhere
+  in this theme. It's meant to read as "a Magic tool with a Doctor Who
+  skin," the same way the rest of the app already leans on Scryfall art and
+  the community-standard [mana-font](https://github.com/andrewgioia/mana)
+  project for its MTG identity.
+
+- **Claude** — the app's original styling (the dark "exile zone at night"
+  palette with an amber accent, Fraunces/Inter/IBM Plex Mono), kept exactly
+  as-is and selectable rather than replaced.
+
+A few colors are deliberately **not** themed, because they carry functional
+meaning that shouldn't change with the skin: mana pip colors always match
+MTG's own White/Blue/Black/Red/Green, and mechanic badge colors (Suspend =
+gold, Vanishing = blue, Fading = coral) stay the same across both themes so
+that color-to-mechanic association doesn't have to be relearned when
+switching.
+
+Switching applies instantly — every component reads color and font values
+from CSS custom properties (`--color-*`, `--font-*`) rather than hardcoding
+them, so the whole app reskins from one attribute change
+(`<html data-theme="...">`). A small inline script in `index.html` applies
+the stored preference before React mounts, so a returning visitor who picked
+Claude doesn't see a flash of the Doctor Who default first.
 
 ## Counter mechanics
 

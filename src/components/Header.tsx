@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import CommanderBanner from './CommanderBanner';
+import ThemeToggle from './ThemeToggle';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -42,6 +43,7 @@ export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog
           <CommanderBanner />
         </div>
         <div className={styles.topActions}>
+          <ThemeToggle />
           <button type="button" className={styles.logBtn} onClick={onOpenLog}>
             Game Log
           </button>
