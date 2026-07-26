@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import AboutModal from './components/AboutModal';
 import AddCardPanel from './components/AddCardPanel';
 import ActiveCardsList from './components/ActiveCardsList';
 import ChangeSummaryModal from './components/ChangeSummaryModal';
@@ -23,6 +24,7 @@ export default function App() {
   } = useGameState();
   const [timeTravelOpen, setTimeTravelOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
     <>
@@ -32,6 +34,7 @@ export default function App() {
         onNextTurn={nextTurn}
         onReset={resetGame}
         onOpenLog={() => setLogOpen(true)}
+        onOpenAbout={() => setAboutOpen(true)}
       />
       <main>
         <AddCardPanel onAdd={addCard} />
@@ -65,6 +68,7 @@ export default function App() {
         <TimeTravelPanel cards={state.cards} onApply={applyTimeTravel} onClose={() => setTimeTravelOpen(false)} />
       )}
       {logOpen && <GameLogPanel log={state.log} currentTurn={state.turn} onClose={() => setLogOpen(false)} />}
+      {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
     </>
   );
 }

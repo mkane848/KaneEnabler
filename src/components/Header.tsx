@@ -9,9 +9,10 @@ interface HeaderProps {
   onNextTurn: () => void;
   onReset: () => void;
   onOpenLog: () => void;
+  onOpenAbout: () => void;
 }
 
-export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog }: HeaderProps) {
+export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog, onOpenAbout }: HeaderProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(turn));
 
@@ -46,6 +47,9 @@ export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog
           <ThemeToggle />
           <button type="button" className={styles.logBtn} onClick={onOpenLog}>
             Game Log
+          </button>
+          <button type="button" className={styles.logBtn} onClick={onOpenAbout}>
+            About
           </button>
           <button type="button" className={styles.resetBtn} onClick={handleReset}>
             New game
