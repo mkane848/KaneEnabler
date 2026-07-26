@@ -20,7 +20,7 @@ export default function App() {
 
   return (
     <>
-      <Header turn={state.turn} onSetTurn={setTurn} onNextTurn={nextTurn} onReset={resetGame} />
+      <Header turn={state.turn} onSetTurn={setTurn} onTimeTravel={nextTurn} onReset={resetGame} />
       <main>
         <AddCardPanel onAdd={addCard} />
         <ActiveCardsList

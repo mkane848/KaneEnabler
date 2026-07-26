@@ -38,5 +38,21 @@
     "manaCost": "{3}{U}{U}",
     "colorIdentity": ["U"],
     "oracleText": "Flying\nVanishing 3 (This creature enters the battlefield with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen Wormfang Manta enters the battlefield, exchange control of Wormfang Manta and target creature."
+  },
+  {
+    "id": "demo-history-of-benalia",
+    "name": "History of Benalia",
+    "typeLine": "Enchantment — Saga",
+    "manaCost": "{1}{W}{W}",
+    "colorIdentity": ["W"],
+    "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Create a 2/2 white Knight creature token with vigilance.\nIII — Knights you control get +2/+1 until end of turn."
+  },
+  {
+    "id": "demo-student-of-warfare",
+    "name": "Student of Warfare",
+    "typeLine": "Creature — Human Soldier",
+    "manaCost": "{W}",
+    "colorIdentity": ["W"],
+    "oracleText": "Level up {W} ({W}: Put a level counter on this. Level up only as a sorcery.)\nLEVEL 1-2\n2/1\nFirst strike\nLEVEL 3+\n4/4\nFirst strike, vigilance"
   }
 ]

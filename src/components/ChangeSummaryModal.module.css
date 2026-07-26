@@ -86,6 +86,10 @@
   max-width: 32ch;
 }
 
+.readyLabel {
+  font-weight: 700;
+}
+
 .right {
   display: flex;
   align-items: center;

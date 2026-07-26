@@ -1,4 +1,5 @@
 import type { TurnChange } from '../types';
+import { triggerLabel } from '../utils/counters';
 import styles from './ChangeSummaryModal.module.css';
 
 interface ChangeSummaryModalProps {
@@ -9,7 +10,7 @@ interface ChangeSummaryModalProps {
 }
 
 export default function ChangeSummaryModal({ changes, turn, onResolve, onClose }: ChangeSummaryModalProps) {
-  const readyCount = changes.filter(c => c.hitZero).length;
+  const readyCount = changes.filter(c => c.hitTarget).length;
 
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
@@ -22,30 +23,34 @@ export default function ChangeSummaryModal({ changes, turn, onResolve, onClose }
       >
         <div className={styles.header}>
           <h2 id="change-summary-title" className={styles.title}>
-            Upkeep — turn {turn}
+            Time Travel — arrived at turn {turn}
           </h2>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
             Done
           </button>
         </div>
-        {readyCount > 0 && (
-          <p className={styles.subtitle}>
-            {readyCount} card{readyCount === 1 ? '' : 's'} ready to resolve
-          </p>
-        )}
+        <p className={styles.subtitle}>
+          {readyCount > 0
+            ? `${readyCount} card${readyCount === 1 ? '' : 's'} ready to resolve`
+            : "Here's what changed along the way."}
+        </p>
 
         <div className={styles.list}>
           {changes.map(c => (
-            <div key={c.instanceId} className={`${styles.row} ${c.hitZero ? styles.rowReady : ''}`}>
+            <div key={c.instanceId} className={`${styles.row} ${c.hitTarget ? styles.rowReady : ''}`}>
               <div>
                 <div className={styles.name}>{c.name}</div>
-                {c.hitZero && <div className={styles.readyNote}>{c.resolveNote}</div>}
+                {c.hitTarget && (
+                  <div className={styles.readyNote}>
+                    <span className={styles.readyLabel}>{triggerLabel(c.mechanic)}:</span> {c.resolveNote}
+                  </div>
+                )}
               </div>
               <div className={styles.right}>
                 <span className={styles.change}>
                   {c.from} → {c.to}
                 </span>
-                {c.hitZero && (
+                {c.hitTarget && (
                   <button type="button" className="btn btn-sm btn-ghost" onClick={() => onResolve(c.instanceId)}>
                     Done
                   </button>
