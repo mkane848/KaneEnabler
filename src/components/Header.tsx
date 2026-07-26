@@ -7,9 +7,10 @@ interface HeaderProps {
   onSetTurn: (turn: number) => void;
   onNextTurn: () => void;
   onReset: () => void;
+  onOpenLog: () => void;
 }
 
-export default function Header({ turn, onSetTurn, onNextTurn, onReset }: HeaderProps) {
+export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog }: HeaderProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(turn));
 
@@ -40,9 +41,14 @@ export default function Header({ turn, onSetTurn, onNextTurn, onReset }: HeaderP
           <h1 className={styles.title}>Time Counters</h1>
           <CommanderBanner />
         </div>
-        <button type="button" className={styles.resetBtn} onClick={handleReset}>
-          New game
-        </button>
+        <div className={styles.topActions}>
+          <button type="button" className={styles.logBtn} onClick={onOpenLog}>
+            Game Log
+          </button>
+          <button type="button" className={styles.resetBtn} onClick={handleReset}>
+            New game
+          </button>
+        </div>
       </div>
 
       <div className={styles.turnRow}>

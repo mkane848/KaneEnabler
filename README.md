@@ -50,6 +50,16 @@ Scryfall's bulk data, and game state lives in your browser's `localStorage`.
   isn't something you have to go looking for.
 - **Every counter can be manually overridden** at any time with the +/−
   steppers or by tapping the number directly.
+- **The Game Log** ("Game Log" in the header) is a SpellTable-style history
+  of every effect that changed something, grouped by turn with the current
+  turn tagged and newest first — adding a card, a Next Turn upkeep, a Time
+  Travel pass, a manual edit, resolving or removing a card, changing the
+  turn number. It's a slide-in drawer rather than a permanently docked
+  sidebar: this app is mobile-first, and there's no spare width to keep a
+  sidebar open alongside the board on a phone, so it's reference material
+  you pull up and dismiss rather than a fixed pane. It persists with the
+  rest of the game state, so it survives a reload and only clears on New
+  Game.
 
 ## Setup
 
@@ -108,13 +118,14 @@ src/utils/colorIdentity.mjs   Jeskai color-identity filter (shared with the fetc
 src/utils/cardCatalog.ts      Catalog fetching and name search
 src/utils/storage.ts          localStorage persistence
 src/hooks/useCardCatalog.ts   Loads the catalog once, shared by consumers
-src/hooks/useGameState.ts     Turn number, tracked cards, Next Turn and Time Travel logic
+src/hooks/useGameState.ts     Turn number, tracked cards, game log, Next Turn and Time Travel logic
 src/components/CardTile.tsx        One card's tile: art, badge, expandable controls
 src/components/MechanicGroup.tsx   One counter type's labeled section of the board
 src/components/ActiveCardsList.tsx Groups and sorts tracked cards into sections
 src/components/AddCardPanel.tsx    Search, mechanic setup, quick-suspend action
 src/components/ChangeSummaryModal.tsx  The Next Turn upkeep summary
 src/components/TimeTravelPanel.tsx     Walks through N passes of the Time Travel keyword action
+src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
 ```
 
 ## Counter mechanics

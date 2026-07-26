@@ -7,7 +7,7 @@ type Delta = -1 | 0 | 1;
 
 interface TimeTravelPanelProps {
   cards: TrackedCard[];
-  onApply: (choices: { instanceId: string; delta: Delta }[]) => void;
+  onApply: (choices: { instanceId: string; delta: Delta }[], passInfo: { current: number; total: number }) => void;
   onClose: () => void;
 }
 
@@ -46,7 +46,10 @@ export default function TimeTravelPanel({ cards, onApply, onClose }: TimeTravelP
   }
 
   function commitPass() {
-    onApply(cards.map(c => ({ instanceId: c.instanceId, delta: choices[c.instanceId] ?? 0 })));
+    onApply(
+      cards.map(c => ({ instanceId: c.instanceId, delta: choices[c.instanceId] ?? 0 })),
+      { current: currentPass, total: totalPasses },
+    );
     if (currentPass >= totalPasses) {
       onClose();
     } else {

@@ -65,7 +65,33 @@ export interface TurnChange {
   resolveNote: string;
 }
 
+/** One card's count change within a game-log entry (Next Turn, a Time Travel pass). */
+export interface LogChange {
+  name: string;
+  mechanic: Mechanic;
+  from: number;
+  to: number;
+}
+
+/**
+ * One row in the game log — every effect that changed something, in the
+ * order it happened. Multi-card events (Next Turn, a Time Travel pass) carry
+ * a `changes` list; single-card or metadata events (adding a card, a manual
+ * edit, changing the turn number) use `detail` instead.
+ */
+export interface LogEntry {
+  id: string;
+  /** The turn this happened on — Next Turn entries use the turn just arrived at. */
+  turn: number;
+  /** Wall-clock time, for stable ordering within a turn. */
+  timestamp: number;
+  title: string;
+  detail?: string;
+  changes?: LogChange[];
+}
+
 export interface GameState {
   turn: number;
   cards: TrackedCard[];
+  log: LogEntry[];
 }
