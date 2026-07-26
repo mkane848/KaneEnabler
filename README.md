@@ -70,6 +70,9 @@ Scryfall's bulk data, and game state lives in your browser's `localStorage`.
 - **Two visual themes** — a Doctor Who–skinned look (the default) and the
   app's original styling, kept as a "Claude" option. Switch anytime with the
   "Theme:" button in the header; see [Themes](#themes) below.
+- **About** (in the header) shows the current version, credits, and links to
+  the source repo and the [changelog](CHANGELOG.md). The app follows
+  [Semantic Versioning](https://semver.org/) starting at v1.0.0.
 
 ## Setup
 
@@ -139,6 +142,7 @@ src/components/ChangeSummaryModal.tsx  The Next Turn upkeep summary
 src/components/TimeTravelPanel.tsx     Walks through N passes of the Time Travel keyword action
 src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
 src/components/ThemeToggle.tsx         Switches between the two themes
+src/components/AboutModal.tsx          Version, credits, and repo/changelog links
 ```
 
 ## Themes
