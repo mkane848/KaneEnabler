@@ -43,8 +43,11 @@
 .topActions {
   display: flex;
   align-items: baseline;
-  gap: 0.7rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.6rem;
   flex-shrink: 0;
+  max-width: 40%;
 }
 
 .logBtn {

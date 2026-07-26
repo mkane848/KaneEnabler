@@ -5,6 +5,12 @@ export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'custom';
 export type Direction = 'increment' | 'decrement';
 
 /**
+ * Visual theme. 'who' (Doctor Who skin) is the default; 'claude' is the
+ * app's original styling, kept as a selectable option rather than replaced.
+ */
+export type Theme = 'claude' | 'who';
+
+/**
  * Card data as generated from Scryfall (see scripts/fetch-card-data.mjs).
  * Only fields the UI actually reads are carried — across ~16k cards, unused
  * fields cost megabytes.

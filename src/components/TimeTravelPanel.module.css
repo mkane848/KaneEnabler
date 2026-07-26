@@ -142,7 +142,7 @@
 
 .choiceBtnActive {
   background: var(--color-accent);
-  color: #201607;
+  color: var(--color-accent-ink);
 }
 
 .actions {

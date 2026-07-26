@@ -3,22 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#14162b" />
+    <meta name="theme-color" content="#071627" />
     <title>Time Counters — Commander Companion</title>
     <meta
       name="description"
       content="Track Suspend, Vanishing, and other time counters for your Commander deck, turn by turn."
     />
+    <!--
+      Sets the theme attribute before first paint, so a returning visitor who
+      picked the Claude theme doesn't see a flash of the Doctor Who default
+      while React mounts. Doctor Who is the default, and its palette is what
+      the bare :root already renders, so the only case this needs to handle
+      is "the stored preference says Claude" — everything else is a no-op.
+    -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('mtg-time-tracker:theme:v1') === 'claude') {
+            document.documentElement.setAttribute('data-theme', 'claude');
+          }
+        } catch (e) {
+          /* private browsing, etc. — Doctor Who default renders fine either way */
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!--
-      The stylesheet below is loaded non-render-blocking, via the media="print"
-      swap trick. It comes from a third-party CDN, and a plain
+      Both stylesheets below are loaded non-render-blocking, via the
+      media="print" swap trick. They come from a third-party CDN, and a plain
       <link rel="stylesheet"> would hold up first paint until the request
       resolves — measured at ~13s of white screen when a CDN hangs, which is a
       real risk on the venue wifi this app gets used on. Loaded this way the UI
       paints immediately in fallback fonts and restyles when the CSS arrives.
-      The <noscript> copy keeps it working without JavaScript.
+      The <noscript> copies keep them working without JavaScript. Both theme's
+      fonts load up front (not just the active theme's) so switching themes
+      doesn't wait on a network request.
 
       Mana symbols used to be loaded the same way. They are now drawn from path
       data bundled into the app (see src/utils/manaGlyphs.ts), so there is no
@@ -31,10 +51,26 @@
       onload="this.media='all'"
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
     />
+    <!-- Doctor Who theme fonts — Orbitron (display), Titillium Web (body), and
+         JetBrains Mono (mono). All three are free/open (SIL OFL and Apache 2.0),
+         chosen for a sci-fi/HUD character without copying any BBC-owned asset
+         (the Doctor Who logo wordmark and the TARDIS shape itself are both
+         design-trademarked, so neither is reproduced here — only an original,
+         community-familiar sci-fi color-and-type language). -->
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Titillium+Web:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    />
     <noscript>
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Titillium+Web:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
       />
     </noscript>
   </head>

@@ -1,26 +1,13 @@
 :root {
   color-scheme: dark;
 
-  /* Palette — an exile zone at night, counted down in brass and glass. */
-  --color-bg: #14162b;
-  --color-bg-gradient: radial-gradient(ellipse 120% 60% at 50% -10%, #1c2049 0%, #14162b 55%);
-  --color-surface: #1e2140;
-  --color-surface-hover: #262a4d;
-  --color-surface-raised: #262a52;
-  --color-border: #33375f;
-  --color-border-soft: #292c50;
-  --color-text: #edeae0;
-  --color-text-muted: #9498c2;
-  --color-text-faint: #6b6f9a;
-  --color-accent: #d4a24c;
-  --color-accent-strong: #eabd72;
-  --color-accent-soft: #4a3d22;
-  --color-danger: #e0644a;
-  --color-danger-soft: #4a2a22;
-
-  /* Mana pips — each colour's disc, paired with ink that stays legible on it.
-     The dark discs need a light glyph and the pale ones a dark glyph, and a
-     hybrid can pair one of each, so the two always travel together. */
+  /* Mana pips — MTG's own White/Blue/Black/Red/Green colors. These stay
+     fixed across themes on purpose: a blue pip should always read as blue
+     mana no matter which skin is active, the same way suit colors on a
+     playing card don't change with the table felt. Paired with ink that
+     stays legible on each disc — dark discs need a light glyph, pale ones
+     a dark glyph, and a hybrid can pair one of each, so the two always
+     travel together. */
   --pip-w: #f8f4e3;
   --pip-w-ink: rgba(20, 16, 10, 0.82);
   --pip-u: #0f6ab5;
@@ -38,20 +25,82 @@
   --pip-generic: #b3aaa1;
   --pip-generic-ink: rgba(20, 16, 10, 0.82);
 
+  /* Mechanic badge colors are likewise shared across themes — Suspend
+     reading as gold and Vanishing as blue is a mental model worth keeping
+     stable while everything else around it reskins. */
   --mechanic-suspend: #d4a24c;
   --mechanic-vanishing: #8ba3e0;
   --mechanic-fading: #cd8567;
   --mechanic-custom: #9498c2;
-
-  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  /* Dark text for badges filled with a mechanic color — those colors are
+     all light/mid-tone, so one fixed dark ink reads on any of them. */
+  --mechanic-badge-ink: #14162b;
 
   --radius-sm: 7px;
   --radius-md: 12px;
   --radius-lg: 18px;
   --shadow-card: 0 2px 14px rgba(6, 7, 20, 0.45);
   --shadow-modal: 0 12px 40px rgba(6, 7, 20, 0.6);
+}
+
+/* ==========================================================================
+   Doctor Who theme — the default. TARDIS-blue chrome with an electric-cyan
+   "time vortex" accent; sci-fi/HUD typography (Orbitron, Titillium Web,
+   JetBrains Mono — all free/open, SIL OFL or Apache 2.0). Deliberately
+   original rather than a copy of any BBC-owned asset: the Doctor Who logo
+   wordmark and the TARDIS shape itself are both design-trademarked, so
+   neither appears here — this is a color-and-type language a fan would
+   recognize, not a reproduction of protected show assets.
+   ========================================================================== */
+:root,
+:root[data-theme='who'] {
+  --color-bg: #071627;
+  --color-bg-gradient: radial-gradient(ellipse 120% 60% at 50% -10%, #0e3252 0%, #071627 55%);
+  --color-surface: #0d2338;
+  --color-surface-hover: #123049;
+  --color-surface-raised: #143355;
+  --color-border: #1f4d70;
+  --color-border-soft: #142f47;
+  --color-text: #eaf4fa;
+  --color-text-muted: #85aec9;
+  --color-text-faint: #4f7793;
+  --color-accent: #35d0e0;
+  --color-accent-strong: #7de8f0;
+  --color-accent-soft: #123c42;
+  --color-accent-ink: #052226;
+  --color-danger: #e5484f;
+  --color-danger-soft: #451a1d;
+
+  --font-display: 'Orbitron', 'Michroma', system-ui, sans-serif;
+  --font-body: 'Titillium Web', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+/* ==========================================================================
+   Claude theme — the app's original styling, kept as a selectable option.
+   ========================================================================== */
+:root[data-theme='claude'] {
+  /* An exile zone at night, counted down in brass and glass. */
+  --color-bg: #14162b;
+  --color-bg-gradient: radial-gradient(ellipse 120% 60% at 50% -10%, #1c2049 0%, #14162b 55%);
+  --color-surface: #1e2140;
+  --color-surface-hover: #262a4d;
+  --color-surface-raised: #262a52;
+  --color-border: #33375f;
+  --color-border-soft: #292c50;
+  --color-text: #edeae0;
+  --color-text-muted: #9498c2;
+  --color-text-faint: #6b6f9a;
+  --color-accent: #d4a24c;
+  --color-accent-strong: #eabd72;
+  --color-accent-soft: #4a3d22;
+  --color-accent-ink: #201607;
+  --color-danger: #e0644a;
+  --color-danger-soft: #4a2a22;
+
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
 * {
@@ -71,6 +120,7 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 #root {
@@ -135,7 +185,7 @@ button:disabled {
 
 .btn-primary {
   background: var(--color-accent);
-  color: #201607;
+  color: var(--color-accent-ink);
 }
 
 .btn-primary:hover {
