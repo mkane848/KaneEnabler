@@ -5,11 +5,11 @@ import styles from './Header.module.css';
 interface HeaderProps {
   turn: number;
   onSetTurn: (turn: number) => void;
-  onTimeTravel: () => void;
+  onNextTurn: () => void;
   onReset: () => void;
 }
 
-export default function Header({ turn, onSetTurn, onTimeTravel, onReset }: HeaderProps) {
+export default function Header({ turn, onSetTurn, onNextTurn, onReset }: HeaderProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(turn));
 
@@ -76,13 +76,8 @@ export default function Header({ turn, onSetTurn, onTimeTravel, onReset }: Heade
           )}
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={onTimeTravel}
-          title="Advance to your next turn and see what changed"
-        >
-          Time Travel →
+        <button type="button" className="btn btn-primary" onClick={onNextTurn}>
+          Next turn →
         </button>
       </div>
     </header>

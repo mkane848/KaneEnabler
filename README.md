@@ -8,37 +8,48 @@ Scryfall's bulk data, and game state lives in your browser's `localStorage`.
 ## How it works
 
 - **Turn tracking is yours only.** Commander is multiplayer, but Suspend,
-  Vanishing, Fading, and Saga chapters all trigger at the beginning of (or
-  during) *their owner's* turn — not every player's. So the app just tracks
-  "my turn number" and adjusts counters once per Time Travel, regardless of
-  how many opponents take turns in between.
-- **Time Travel** is the turn-advance button. It steps every auto-adjusting
-  card's counter once — down for Suspend/Vanishing/Fading, up for Saga — and
-  opens a changelog of exactly what moved and what, if anything, just
-  triggered.
+  Vanishing, and Fading all remove a time counter at the beginning of *their
+  owner's* upkeep — not every player's. So the app just tracks "my turn
+  number" and decrements counters once per Next Turn, regardless of how many
+  opponents take turns in between.
+- **Next Turn** is the automatic upkeep trigger every Suspend, Vanishing, and
+  Fading card has on its own — it removes one time counter from every
+  tracked card and opens a summary of what changed and what, if anything,
+  just resolved.
+- **Time Travel** is a separate, deliberately manual action, because it's a
+  real (and different) Magic keyword: *"For each suspended card you own and
+  each permanent you control with a time counter on it, you may add or
+  remove a time counter."* It isn't tied to the turn counter at all — it's
+  something specific cards grant (this deck has three: The Tenth Doctor's
+  {7} activated ability does it three times, Wibbly-wobbly, Timey-wimey
+  triggers it once off a spell, and Time Beetle triggers it on combat
+  damage). Tap Time Travel, say how many times you're resolving it, and the
+  app walks you through that many passes, one card at a time, letting you
+  add, remove, or skip each one — so you always know how many passes are
+  left instead of losing count mid-resolution.
 - **Add a card any time** via the "Add a card" panel — it's always the first
   thing on the page, whether it's the middle of your turn or someone else's.
   A second, smaller action — "Suspend a card via an effect" — covers a card
   that got exiled with time counters by something other than its own Suspend
-  cost (this deck's The Tenth Doctor does that; so do cards like Delay and
-  Clockspinning). It skips straight to the Suspend setup with a note that
-  it came from an effect, since the app only needs to know how many time
-  counters it has, not which spell put them there.
+  cost. This deck's The Tenth Doctor does exactly that: attacking exiles a
+  card and suspends it with three time counters, no Suspend cost paid. Delay
+  does the same generically. This shortcut skips straight to the Suspend
+  setup with a note that it came from an effect, since the app only needs to
+  know how many time counters the card has, not which spell put them there.
 - **Starting counts are auto-filled** by reading the card's oracle text for
-  Suspend, Vanishing, Fading, Saga (lore counters), or Level Up, but every
-  field is editable before you confirm. Anything else falls back to a
-  "Custom" counter you name yourself, with your own choice of counts up or
-  counts down and an optional target.
+  Suspend, Vanishing, or Fading, but every field is editable before you
+  confirm. Anything else falls back to a "Custom" counter you name yourself,
+  with your own choice of counts up or counts down and an optional target —
+  for age counters (As Foretold) or any other one-off this app doesn't know
+  by name.
 - **Cards live on a virtual tabletop.** Tracked cards show as their card art
-  in a grid, grouped by counter type — so every Suspend card sits together,
-  every Saga sits together, and so on — with a color-coded badge over each
-  image showing its count (or count/target for Saga). Tap a card to expand
-  its controls; a card that's hit its target expands on its own so the
-  "what to do now" callout isn't something you have to go looking for.
+  in a grid, grouped by counter type — every Suspend card sits together,
+  every Vanishing card sits together, and so on — with a color-coded badge
+  over each image showing its count. Tap a card to expand its controls; a
+  card that's hit zero expands on its own so the "what to do now" callout
+  isn't something you have to go looking for.
 - **Every counter can be manually overridden** at any time with the +/−
-  steppers or by tapping the number directly. An increment counter with a
-  known target (a Saga's final chapter) can't be pushed past it, since that
-  isn't a state the game can actually be in.
+  steppers or by tapping the number directly.
 
 ## Setup
 
@@ -97,71 +108,72 @@ src/utils/colorIdentity.mjs   Jeskai color-identity filter (shared with the fetc
 src/utils/cardCatalog.ts      Catalog fetching and name search
 src/utils/storage.ts          localStorage persistence
 src/hooks/useCardCatalog.ts   Loads the catalog once, shared by consumers
-src/hooks/useGameState.ts     Turn number, tracked cards, Time Travel logic
+src/hooks/useGameState.ts     Turn number, tracked cards, Next Turn and Time Travel logic
 src/components/CardTile.tsx        One card's tile: art, badge, expandable controls
 src/components/MechanicGroup.tsx   One counter type's labeled section of the board
 src/components/ActiveCardsList.tsx Groups and sorts tracked cards into sections
 src/components/AddCardPanel.tsx    Search, mechanic setup, quick-suspend action
-src/components/ChangeSummaryModal.tsx  The Time Travel changelog
+src/components/ChangeSummaryModal.tsx  The Next Turn upkeep summary
+src/components/TimeTravelPanel.tsx     Walks through N passes of the Time Travel keyword action
 ```
 
 ## Counter mechanics
 
-Built in, with auto-detection from oracle text:
+The app only tracks **time counters** — the counter type Suspend, Vanishing,
+and Fading use — not Magic's many other counter types (+1/+1, loyalty, lore,
+level, and so on). Built in, with auto-detection from oracle text:
 
-| Mechanic  | Direction | Auto-adjusts on Time Travel | Target                        |
-| --------- | --------- | ---------------------------- | ------------------------------ |
-| Suspend   | down      | yes                           | 0 (cast for free from exile)   |
-| Vanishing | down      | yes                           | 0 (sacrifice)                  |
-| Fading    | down      | yes                           | 0 (sacrifice)                  |
-| Saga      | up        | yes                           | final chapter (e.g. 3)         |
-| Level Up  | up        | no — it's a paid ability, not a turn trigger | none (open-ended) |
+| Mechanic  | Direction | Auto-adjusts on Next Turn | Target                      |
+| --------- | --------- | --------------------------- | ---------------------------- |
+| Suspend   | down      | yes                          | 0 (cast for free from exile) |
+| Vanishing | down      | yes                          | 0 (sacrifice)                |
+| Fading    | down      | yes                          | 0 (sacrifice)                |
 
 Anything else is a **Custom** counter: name it, pick a direction, and
-optionally give it a target. That covers age counters (As Foretold),
-charge counters, or any other one-off — the app doesn't need to recognize
-a mechanic by name to track it correctly, since increment/decrement and an
-optional target is the whole shape of every time-relevant counter mechanic
-in the game.
+optionally give it a target. That covers age counters (As Foretold) or any
+other one-off this app doesn't recognize by name — you tell it the counter
+type and direction instead of it guessing wrong. The increment option
+exists here specifically because Time Travel can *add* a time counter to
+any of these cards, not just remove one, so the data model has to allow it
+even though none of the three built-in mechanics move that way on their own.
 
-**Not covered on purpose:** +1/+1-style counters (Amass, Bolster,
-Monstrosity, Adapt, Backup, …). Those track a creature's stats, not a
-countdown to a trigger, and the app's whole model — Time Travel steps a
-counter and tells you what happened — doesn't fit them. This is a *time*
-counter tracker, not a general-purpose counter tracker.
+**Not covered on purpose:** every other counter type in Magic (+1/+1, loyalty,
+charge, lore, level, and so on). This is a *time* counter tracker, matching
+what the app's name says — not a general-purpose counter tracker.
 
 ### About the decklist scan
 
-This deck's decklist was checked for cards with counter mechanics against
-the rules text I'm confident about — well-established, standardized Magic
-templating (Suspend, Vanishing, Fading, Saga, Level Up all print consistent
-reminder text, which is what the detection regexes match on). A handful of
-cards are worth a second look that I could **not** verify, because this
-environment has no network access to Scryfall to check their actual oracle
-text:
+This environment has no network access to Scryfall, so oracle text can't be
+fetched directly — but web search access became available partway through
+building this app, which made it possible to verify some of what was
+previously just an educated guess. Cross-checked against multiple
+independent sources (MTG Wiki, Card Kingdom's mechanics writeup, and
+Scryfall's own `keyword:"time travel"` index):
 
-- **Delay** and **Clockspinning** are real Time Spiral–block cards I'm
-  confident *do* interact with time counters (Delay suspends a spell with
-  three counters; Clockspinning moves a counter to or from a suspended
-  card) — the quick "Suspend a card via an effect" action covers Delay
-  directly.
-- **The Tenth Doctor**, **Crack in Time**, **Out of Time**,
-  **Wibbly-wobbly, Timey-wimey**, **Trenzalore Clocktower**, **The
-  Pandorica**, and a few other `(who)`-set cards have names that strongly
-  suggest a time or counter mechanic, but I don't have reliable enough
-  knowledge of their exact printed text to say so with confidence — Doctor
-  Who Commander is a 2023 Universes Beyond product, not something I could
-  cross-check here.
-- **Jhoira's Timebug** (Time Spiral) plausibly involves time counters based
-  on its flavor, but I'm not confident enough in the exact ability to say so.
+- **The Tenth Doctor's** real ability is confirmed: *"Whenever you attack,
+  exile cards from the top of your library until you exile a nonland card,
+  then put three time counters on it. If it doesn't have suspend, it gains
+  suspend."* Plus *"Timey-Wimey — {7}: Time travel three times. Activate
+  only as a sorcery."* The quick "Suspend a card via an effect" action is
+  the right shortcut for the first ability, and Time Travel now exists as
+  its own feature for the second.
+- **Wibbly-wobbly, Timey-wimey** and **Time Beetle** also confirmed to use
+  Time Travel — the former as a spell ("Time travel. … Draw a card."), the
+  latter off combat damage.
+- **All of History, All at Once** appears in Scryfall's own index of cards
+  with the Time Travel keyword, though its exact full text wasn't pulled.
+- **Delay** and **Clockspinning** are real Time Spiral–block cards that
+  manipulate time counters directly (Delay suspends a spell with three
+  counters; Clockspinning moves a counter to or from a suspended card) —
+  the quick-suspend action covers Delay directly.
 
-None of this blocks the deck from working with the app today: the generic
-Custom mechanic and the quick-suspend action handle anything the built-in
-detection doesn't recognize, with no loss of accuracy — you just tell the
-app the counter type and direction yourself instead of it guessing wrong.
-Once `npm run fetch-cards` runs somewhere with real network access, the
-real oracle text takes over and auto-detection will catch whichever of
-these actually have a supported mechanic.
+Still unverified — **Crack in Time**, **Out of Time**, **Trenzalore
+Clocktower**, **The Pandorica**, and **Jhoira's Timebug** have names or
+flavor that suggest a time-counter connection, but I don't have their exact
+oracle text confirmed. None of this blocks the deck from working today: the
+Custom mechanic handles anything the built-in detection doesn't recognize,
+and `npm run fetch-cards` with real network access will pull the actual
+text for all of these and let auto-detection take over properly.
 
 ## Deploying
 

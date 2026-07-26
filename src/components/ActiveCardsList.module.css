@@ -7,12 +7,29 @@
   gap: 0.7rem;
 }
 
+.sectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0.3rem 0 -0.1rem;
+}
+
 .sectionLabel {
   font-size: 0.78rem;
   color: var(--color-text-faint);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin: 0.3rem 0 -0.1rem;
+}
+
+.timeTravelLink {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-faint);
+}
+
+.timeTravelLink:hover {
+  color: var(--color-accent);
 }
 
 .empty {

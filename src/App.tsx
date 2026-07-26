@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import AddCardPanel from './components/AddCardPanel';
 import ActiveCardsList from './components/ActiveCardsList';
 import ChangeSummaryModal from './components/ChangeSummaryModal';
 import Header from './components/Header';
+import TimeTravelPanel from './components/TimeTravelPanel';
 import { useGameState } from './hooks/useGameState';
 
 export default function App() {
@@ -14,13 +16,15 @@ export default function App() {
     adjustCount,
     setTurn,
     nextTurn,
+    applyTimeTravel,
     dismissUpkeep,
     resetGame,
   } = useGameState();
+  const [timeTravelOpen, setTimeTravelOpen] = useState(false);
 
   return (
     <>
-      <Header turn={state.turn} onSetTurn={setTurn} onTimeTravel={nextTurn} onReset={resetGame} />
+      <Header turn={state.turn} onSetTurn={setTurn} onNextTurn={nextTurn} onReset={resetGame} />
       <main>
         <AddCardPanel onAdd={addCard} />
         <ActiveCardsList
@@ -28,6 +32,7 @@ export default function App() {
           onSetCount={setCount}
           onAdjustCount={adjustCount}
           onRemove={removeCard}
+          onOpenTimeTravel={() => setTimeTravelOpen(true)}
         />
       </main>
       <footer
@@ -47,6 +52,9 @@ export default function App() {
           onResolve={removeCard}
           onClose={dismissUpkeep}
         />
+      )}
+      {timeTravelOpen && (
+        <TimeTravelPanel cards={state.cards} onApply={applyTimeTravel} onClose={() => setTimeTravelOpen(false)} />
       )}
     </>
   );
