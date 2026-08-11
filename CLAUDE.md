@@ -26,8 +26,19 @@ not what the code does.
 - `npm run fetch-cards` — rebuilds the real card catalog from Scryfall
   (network access required; not available in this environment — see
   README's "About the decklist scan")
-- No test suite or linter is configured. Verify changes by running
-  `npm run build` (typecheck) and exercising the UI in a browser.
+- `npm test` — runs the Vitest suite once (`npm run test:watch` for watch
+  mode). No linter is configured. `.github/workflows/ci.yml` runs
+  `npm run build` and `npm test` on every push/PR so a broken build or
+  failing test shows up before Render attempts a deploy.
+- Tests live next to what they cover (`*.test.ts`/`*.test.tsx`), using
+  Vitest + `@testing-library/react` in jsdom (`vitest.config.ts`,
+  `src/test/setup.ts`). `src/utils/counters.test.ts` and
+  `src/utils/storage.test.ts` cover the rules-detection and persistence
+  helpers directly; `src/hooks/useGameState.test.ts` exercises the mutation
+  logic via `renderHook`; `src/App.test.tsx` is a smoke test that mounts
+  the whole app (with `fetch` stubbed) to catch render-breaking regressions
+  no unit test would. Verify changes by running `npm run build` (typecheck),
+  `npm test`, and exercising the UI in a browser.
 
 ## Architecture
 
