@@ -20,6 +20,7 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import { JESKAI_COLORS, isWithinIdentity } from '../src/utils/colorIdentity.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -66,7 +67,12 @@ async function fetchBulkDataUrl() {
   const body = await res.json();
   const entry = body.data.find(d => d.type === 'oracle_cards');
   if (!entry) throw new Error('Could not find an "oracle_cards" entry in the Scryfall bulk-data index.');
-  return entry.download_uri;
+  // Scryfall used to publish a plain-JSON `download_uri`; it now only
+  // publishes a gzip-compressed JSON-Lines file (see fetchBulkCards).
+  if (!entry.jsonl_download_uri) {
+    throw new Error('The "oracle_cards" bulk-data entry has no jsonl_download_uri — Scryfall changed its format again.');
+  }
+  return entry.jsonl_download_uri;
 }
 
 /**
@@ -109,15 +115,23 @@ async function fetchBulkCards(force) {
 
   const downloadUri = await fetchBulkDataUrl();
   console.log(`Downloading Scryfall Oracle Cards bulk file…\n  ${downloadUri}`);
-  const res = await fetch(downloadUri, { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } });
+  const res = await fetch(downloadUri, { headers: { 'User-Agent': USER_AGENT } });
   if (!res.ok) throw new Error(`Bulk data download failed: ${await describeFailure(res)}`);
 
-  const buffer = Buffer.from(await res.arrayBuffer());
+  // The file is gzip-compressed JSON Lines (one card object per line), not
+  // a single JSON array — Scryfall retired the plain-JSON bulk download.
+  const compressed = Buffer.from(await res.arrayBuffer());
+  const cards = gunzipSync(compressed)
+    .toString('utf8')
+    .split('\n')
+    .filter(line => line.trim().length > 0)
+    .map(line => JSON.parse(line));
+
   await mkdir(CACHE_DIR, { recursive: true });
-  await writeFile(BULK_CACHE_PATH, buffer);
+  await writeFile(BULK_CACHE_PATH, JSON.stringify(cards));
   console.log(`Cached to ${path.relative(ROOT, BULK_CACHE_PATH)}.`);
 
-  return JSON.parse(buffer.toString('utf8'));
+  return cards;
 }
 
 /** Reads a field from the card, falling back to combining its faces for DFCs/MDFCs. */

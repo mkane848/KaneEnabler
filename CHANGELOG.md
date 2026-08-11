@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-08-11
+
+### Fixed
+
+- **Render deploys were failing at the `fetch-cards` build step.** Scryfall
+  retired the plain-JSON `download_uri` on its bulk-data index in favor of
+  a gzip-compressed JSON-Lines `jsonl_download_uri`, so the catalog build
+  was fetching `undefined` and crashing before `vite build` ever ran.
+  `scripts/fetch-card-data.mjs` now reads the new field and decompresses/
+  parses the JSON-Lines file; verified against the live Scryfall API
+  (18,407 Jeskai-legal cards written).
+
 ## [1.1.0] - 2026-08-11
 
 ### Added
