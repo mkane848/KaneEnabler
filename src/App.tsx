@@ -2,18 +2,17 @@ import { useState } from 'react';
 import AboutModal from './components/AboutModal';
 import AddCardPanel from './components/AddCardPanel';
 import ActiveCardsList from './components/ActiveCardsList';
+import type { CommanderFieldCard } from './components/CommanderFieldTile';
 import ChangeSummaryModal from './components/ChangeSummaryModal';
-import CommanderTaxModal, { type CommanderId } from './components/CommanderTaxModal';
+import CommanderTaxModal from './components/CommanderTaxModal';
 import GameLogPanel from './components/GameLogPanel';
 import Header from './components/Header';
 import TimeTravelPanel, { type TimeTravelTarget } from './components/TimeTravelPanel';
+import { useCommanderCards } from './hooks/useCommanderCards';
 import { useGameState } from './hooks/useGameState';
+import type { CommanderId } from './types';
+import { COMMANDER_IDS, COMMANDER_NAME } from './utils/commanders';
 import { MECHANIC_LABEL, usesTimeCounters } from './utils/counters';
-
-const COMMANDER_NAME: Record<CommanderId, string> = {
-  tenthDoctor: 'The Tenth Doctor',
-  roseTyler: 'Rose Tyler',
-};
 
 export default function App() {
   const {
@@ -28,14 +27,25 @@ export default function App() {
     applyTimeTravel,
     dismissUpkeep,
     castCommander,
+    returnCommanderToCommandZone,
     adjustRoseTimeCounters,
     roseAttacks,
     resetGame,
   } = useGameState();
+  const commanderCatalog = useCommanderCards();
   const [timeTravelOpen, setTimeTravelOpen] = useState<{ initialPasses?: number } | false>(false);
   const [logOpen, setLogOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [openCommander, setOpenCommander] = useState<{ id: CommanderId; imageSmall?: string } | null>(null);
+
+  const commanderFieldCards: CommanderFieldCard[] = COMMANDER_IDS.filter(
+    id => state.commanders[id].onBattlefield,
+  ).map(id => ({
+    id,
+    name: COMMANDER_NAME[id],
+    imageSmall: commanderCatalog[id]?.imageSmall,
+    castCount: state.commanders[id].castCount,
+  }));
 
   // Time Travel only applies to real time counters — Suspend/Vanishing cards
   // and Rose Tyler's own Bad Wolf counters (once she has any). Fading uses
@@ -82,10 +92,13 @@ export default function App() {
         <AddCardPanel onAdd={addCard} />
         <ActiveCardsList
           cards={state.cards}
+          commanderCards={commanderFieldCards}
           onSetCount={setCount}
           onAdjustCount={adjustCount}
           onRemove={removeCard}
           onOpenTimeTravel={() => setTimeTravelOpen({})}
+          onManageCommander={(id, imageSmall) => setOpenCommander({ id, imageSmall })}
+          onReturnCommanderToCommandZone={returnCommanderToCommandZone}
         />
       </main>
       <footer
@@ -122,7 +135,9 @@ export default function App() {
           name={COMMANDER_NAME[openCommander.id]}
           imageSmall={openCommander.imageSmall}
           castCount={state.commanders[openCommander.id].castCount}
+          onBattlefield={state.commanders[openCommander.id].onBattlefield}
           onCast={() => castCommander(openCommander.id)}
+          onReturnToCommandZone={() => returnCommanderToCommandZone(openCommander.id)}
           onClose={() => setOpenCommander(null)}
           roseState={openCommander.id === 'roseTyler' ? state.commanders.roseTyler : undefined}
           onAdjustRoseTimeCounters={openCommander.id === 'roseTyler' ? adjustRoseTimeCounters : undefined}

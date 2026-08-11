@@ -134,6 +134,39 @@ describe('useGameState — commander tax', () => {
     expect(result.current.state.commanders.roseTyler.castCount).toBe(1);
     expect(result.current.state.commanders.tenthDoctor.castCount).toBe(0);
   });
+
+  it('castCommander puts the commander on the battlefield', () => {
+    const { result } = renderHook(() => useGameState());
+    expect(result.current.state.commanders.tenthDoctor.onBattlefield).toBe(false);
+    act(() => result.current.castCommander('tenthDoctor'));
+    expect(result.current.state.commanders.tenthDoctor.onBattlefield).toBe(true);
+  });
+
+  it('returnCommanderToCommandZone leaves the battlefield without touching tax', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.castCommander('tenthDoctor'));
+    act(() => result.current.returnCommanderToCommandZone('tenthDoctor'));
+    expect(result.current.state.commanders.tenthDoctor.onBattlefield).toBe(false);
+    expect(result.current.state.commanders.tenthDoctor.castCount).toBe(1);
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry.title).toBe('Returned to command zone');
+  });
+
+  it('returnCommanderToCommandZone is a no-op when the commander is not on the battlefield', () => {
+    const { result } = renderHook(() => useGameState());
+    const before = result.current.state;
+    act(() => result.current.returnCommanderToCommandZone('tenthDoctor'));
+    expect(result.current.state).toBe(before);
+  });
+
+  it('casting again after returning to the command zone keeps accruing tax', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.castCommander('tenthDoctor'));
+    act(() => result.current.returnCommanderToCommandZone('tenthDoctor'));
+    act(() => result.current.castCommander('tenthDoctor'));
+    expect(result.current.state.commanders.tenthDoctor.castCount).toBe(2);
+    expect(result.current.state.commanders.tenthDoctor.onBattlefield).toBe(true);
+  });
 });
 
 describe('useGameState — Bad Wolf / Rose Tyler', () => {
@@ -167,7 +200,10 @@ describe('useGameState — resetGame', () => {
       turn: 1,
       cards: [],
       log: [],
-      commanders: { tenthDoctor: { castCount: 0 }, roseTyler: { castCount: 0, timeCounters: 0 } },
+      commanders: {
+        tenthDoctor: { castCount: 0, onBattlefield: false },
+        roseTyler: { castCount: 0, timeCounters: 0, onBattlefield: false },
+      },
     });
   });
 });

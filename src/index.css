@@ -33,6 +33,9 @@
   --mechanic-fading: #cd8567;
   --mechanic-saga: #6fae7c;
   --mechanic-custom: #9498c2;
+  /* Not a counter mechanic — a commander's presence on the battlefield. Kept
+     visually distinct (violet) from every counter color above. */
+  --mechanic-commander: #b98ee0;
   /* Dark text for badges filled with a mechanic color — those colors are
      all light/mid-tone, so one fixed dark ink reads on any of them. */
   --mechanic-badge-ink: #14162b;

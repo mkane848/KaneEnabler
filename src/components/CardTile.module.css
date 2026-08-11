@@ -3,6 +3,7 @@
   flex-direction: column;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-top: 3px solid var(--tile-accent, var(--color-border));
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-card);

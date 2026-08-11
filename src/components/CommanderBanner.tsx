@@ -1,12 +1,8 @@
 import { useCardCatalog } from '../hooks/useCardCatalog';
+import type { CommanderId } from '../types';
 import { findCardByName } from '../utils/cardCatalog';
-import type { CommanderId } from './CommanderTaxModal';
+import { COMMANDER_IDS, COMMANDER_NAME } from '../utils/commanders';
 import styles from './CommanderBanner.module.css';
-
-const COMMANDERS: { id: CommanderId; name: string }[] = [
-  { id: 'tenthDoctor', name: 'The Tenth Doctor' },
-  { id: 'roseTyler', name: 'Rose Tyler' },
-];
 
 interface CommanderBannerProps {
   onOpenCommander: (id: CommanderId, imageSmall?: string) => void;
@@ -22,7 +18,7 @@ export default function CommanderBanner({ onOpenCommander }: CommanderBannerProp
   const { cards: catalog } = useCardCatalog();
 
   const portraits = catalog
-    ? COMMANDERS.map(c => ({ ...c, card: findCardByName(catalog, c.name) })).filter(
+    ? COMMANDER_IDS.map(id => ({ id, name: COMMANDER_NAME[id], card: findCardByName(catalog, COMMANDER_NAME[id]) })).filter(
         (c): c is typeof c & { card: NonNullable<typeof c.card> } => Boolean(c.card?.imageSmall),
       )
     : [];

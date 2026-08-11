@@ -45,14 +45,22 @@ not what the code does.
 - `src/types.ts` — shared types; the source of truth for the data model.
   `Mechanic` is `'suspend' | 'vanishing' | 'fading' | 'saga' | 'custom'`.
   `GameState.commanders` holds per-commander state (command-zone cast
-  count/tax, Rose Tyler's own Bad Wolf time counters) that doesn't belong
-  on the tracked-cards board.
+  count/tax, `onBattlefield`, Rose Tyler's own Bad Wolf time counters) —
+  a commander's tax and Bad Wolf counters live here, not as a
+  `TrackedCard`, but `onBattlefield` is what puts it on the board as a
+  card (via `CommanderFieldTile`) alongside everything else.
+  `CommanderId` is `keyof Commanders`.
 - `src/hooks/useGameState.ts` — all game-state mutation logic (add/remove
   cards, manual count edits, Next Turn, Time Travel, commander tax/Bad
   Wolf actions, the game log). Every mutation derives its next value from
   `prev` inside `setTracker`, never from a render-time snapshot — preserve
   that pattern for any new mutation, since it's what keeps rapid taps from
   clobbering each other.
+  - `castCommander(id)` bumps `castCount` (rule 903.10 tax) and always
+    sets `onBattlefield = true` — casting puts a permanent onto the
+    battlefield. `returnCommanderToCommandZone(id)` is the inverse:
+    clears `onBattlefield` without touching `castCount`, since the tax
+    persists for the whole game regardless of zone changes.
   - `nextTurn()` runs two ordered steps as one atomic update: **upkeep**
     (Suspend/Vanishing/Fading count down) then **precombat main** (Sagas
     gain a lore counter, firing any chapter ability newly reached). Each
@@ -84,9 +92,18 @@ not what the code does.
   theme values from CSS custom properties (`--color-*`, `--font-*`, set by
   `data-theme` on `<html>`)
   - `CommanderTaxModal.tsx` — opened by tapping a commander portrait/name
-    in `CommanderBanner.tsx`; commander tax for both, plus Rose Tyler's
-    Bad Wolf section and The Tenth Doctor's Timey-Wimey → Time Travel
-    shortcut (`initialPasses={3}` on `TimeTravelPanel`).
+    in `CommanderBanner.tsx`, or a commander's field tile once it's cast;
+    commander tax for both (with a Cast/Return-to-command-zone button that
+    toggles on `onBattlefield`), plus Rose Tyler's Bad Wolf section and
+    The Tenth Doctor's Timey-Wimey → Time Travel shortcut
+    (`initialPasses={3}` on `TimeTravelPanel`).
+  - `ActiveCardsList.tsx` renders **one flat grid**, not a section per
+    mechanic — `CommanderFieldTile`s for any commander on the battlefield,
+    then `CardTile`s sorted by mechanic/urgency. There's no group header
+    breaking it into rows; each tile's own colored top accent and badge
+    (driven by `MECHANIC_COLOR` / `--mechanic-commander`) is what
+    distinguishes mechanics now. Keep new tile types consistent with that —
+    color + a compact badge, not a wrapping section.
 - `src/utils/storage.ts` / `src/utils/theme.ts` — the only two
   `localStorage` touchpoints (game state, theme preference respectively).
   `storage.ts` default-fills `commanders` for saves from before that field

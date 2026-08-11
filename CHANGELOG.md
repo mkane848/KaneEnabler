@@ -4,6 +4,26 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-08-11
+
+### Added
+
+- **Casting a commander now shows it as a card on the board**, right
+  alongside everything else being tracked, until it's sent back to the
+  command zone (a one-tap action from its field tile or the tax modal).
+  Returning to the command zone never resets the tax (rule 903.10) —
+  that persists for the whole game regardless of zone changes.
+
+### Changed
+
+- **The board is now one flat grid instead of a section per counter
+  mechanic.** Each mechanic's own header + grid was wasting a lot of
+  vertical space on mobile, especially with only a card or two in a
+  section. Cards are still sorted by mechanic and urgency, but the sole
+  cue distinguishing them now is each tile's colored top accent and badge
+  (a new violet for a commander's field tile, the existing per-mechanic
+  colors for everything else) instead of a row break.
+
 ## [1.1.1] - 2026-08-11
 
 ### Fixed

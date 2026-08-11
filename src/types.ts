@@ -135,6 +135,8 @@ export interface LogEntry {
 export interface CommanderState {
   /** Times cast from the command zone this game (rule 903.10) — next cast costs an extra {2} per previous cast. */
   castCount: number;
+  /** Whether this commander is currently on the battlefield — shown as a card on the board when true. Casting always sets this; it doesn't affect castCount, which persists for the whole game regardless of zone changes. */
+  onBattlefield: boolean;
 }
 
 /** Rose Tyler additionally carries real time counters from her own Bad Wolf trigger — she gets +1/+1 per counter. */
@@ -146,6 +148,8 @@ export interface Commanders {
   tenthDoctor: CommanderState;
   roseTyler: RoseTylerState;
 }
+
+export type CommanderId = keyof Commanders;
 
 export interface GameState {
   turn: number;

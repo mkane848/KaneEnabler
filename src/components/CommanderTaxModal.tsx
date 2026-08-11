@@ -1,15 +1,15 @@
-import type { RoseTylerState } from '../types';
+import type { CommanderId, RoseTylerState } from '../types';
 import styles from './CommanderTaxModal.module.css';
-
-export type CommanderId = 'tenthDoctor' | 'roseTyler';
 
 interface CommanderTaxModalProps {
   commanderId: CommanderId;
   name: string;
   imageSmall?: string;
   castCount: number;
+  onBattlefield: boolean;
   roseState?: RoseTylerState;
   onCast: () => void;
+  onReturnToCommandZone: () => void;
   onClose: () => void;
   onAdjustRoseTimeCounters?: (delta: number) => void;
   onRoseAttacks?: () => void;
@@ -34,8 +34,10 @@ export default function CommanderTaxModal({
   name,
   imageSmall,
   castCount,
+  onBattlefield,
   roseState,
   onCast,
+  onReturnToCommandZone,
   onClose,
   onAdjustRoseTimeCounters,
   onRoseAttacks,
@@ -74,10 +76,17 @@ export default function CommanderTaxModal({
                 Next cast costs an extra <strong>{'{'}{nextTax}{'}'}</strong>.
               </>
             )}
+            {onBattlefield && ' Currently on the battlefield.'}
           </p>
-          <button type="button" className="btn btn-primary btn-sm" onClick={onCast}>
-            Cast {name} from the command zone
-          </button>
+          {onBattlefield ? (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onReturnToCommandZone}>
+              Return {name} to the command zone
+            </button>
+          ) : (
+            <button type="button" className="btn btn-primary btn-sm" onClick={onCast}>
+              Cast {name} from the command zone
+            </button>
+          )}
         </section>
 
         {roseState && onAdjustRoseTimeCounters && onRoseAttacks && (
