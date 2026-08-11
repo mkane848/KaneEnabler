@@ -1,34 +1,51 @@
 import { useState, type FormEvent } from 'react';
-import type { TrackedCard } from '../types';
-import { MECHANIC_COLOR, MECHANIC_LABEL } from '../utils/counters';
+import type { Mechanic, TrackedCard } from '../types';
+import type { TimeTravelTargetId } from '../hooks/useGameState';
+import { MECHANIC_COLOR } from '../utils/counters';
 import styles from './TimeTravelPanel.module.css';
 
 type Delta = -1 | 0 | 1;
 
+/** One object eligible for a Time Travel choice — a tracked Suspend/Vanishing card, or Rose Tyler's own Bad Wolf counters. */
+export interface TimeTravelTarget {
+  id: TimeTravelTargetId;
+  name: string;
+  mechanic: Mechanic;
+  label: string;
+  count: number;
+  direction: TrackedCard['direction'];
+  targetCount?: number;
+}
+
 interface TimeTravelPanelProps {
-  cards: TrackedCard[];
-  onApply: (choices: { instanceId: string; delta: Delta }[], passInfo: { current: number; total: number }) => void;
+  targets: TimeTravelTarget[];
+  initialPasses?: number;
+  onApply: (choices: { id: TimeTravelTargetId; delta: Delta }[], passInfo: { current: number; total: number }) => void;
   onClose: () => void;
 }
 
 /**
  * Time Travel: "For each suspended card you own and each permanent you
  * control with a time counter on it, you may add or remove a time
- * counter." One pass is one independent choice per card, not a free
- * stepper — the whole point is that you can only ever move a counter by
- * one in either direction per invocation.
+ * counter." One pass is one independent choice per eligible object, not a
+ * free stepper — the whole point is that you can only ever move a counter
+ * by one in either direction per invocation. Fading and Saga cards are
+ * never eligible (fade counters and lore counters aren't time counters —
+ * see usesTimeCounters in utils/counters.ts), so the caller only ever
+ * passes Suspend/Vanishing cards and, when she has any, Rose Tyler.
  *
  * Some sources of Time Travel say "time travel N times" (The Tenth
- * Doctor's Timey-Wimey ability, for {7}, does it three times), so this
- * asks up front how many passes are being resolved and walks through them
- * one at a time — each pass's choices apply immediately, so nothing is
- * lost if the sheet gets closed partway through, and the player always
- * knows how many passes are left instead of losing count.
+ * Doctor's Timey-Wimey ability, for {7}, does it three times — pass
+ * `initialPasses={3}` from that shortcut), so this asks up front how many
+ * passes are being resolved and walks through them one at a time — each
+ * pass's choices apply immediately, so nothing is lost if the sheet gets
+ * closed partway through, and the player always knows how many passes are
+ * left instead of losing count.
  */
-export default function TimeTravelPanel({ cards, onApply, onClose }: TimeTravelPanelProps) {
-  const [stage, setStage] = useState<'setup' | 'pass'>('setup');
-  const [timesDraft, setTimesDraft] = useState('1');
-  const [totalPasses, setTotalPasses] = useState(1);
+export default function TimeTravelPanel({ targets, initialPasses, onApply, onClose }: TimeTravelPanelProps) {
+  const [stage, setStage] = useState<'setup' | 'pass'>(initialPasses ? 'pass' : 'setup');
+  const [timesDraft, setTimesDraft] = useState(String(initialPasses ?? 1));
+  const [totalPasses, setTotalPasses] = useState(initialPasses ?? 1);
   const [currentPass, setCurrentPass] = useState(1);
   const [choices, setChoices] = useState<Record<string, Delta>>({});
 
@@ -41,13 +58,13 @@ export default function TimeTravelPanel({ cards, onApply, onClose }: TimeTravelP
     setStage('pass');
   }
 
-  function setChoice(instanceId: string, delta: Delta) {
-    setChoices(prev => ({ ...prev, [instanceId]: prev[instanceId] === delta ? 0 : delta }));
+  function setChoice(id: string, delta: Delta) {
+    setChoices(prev => ({ ...prev, [id]: prev[id] === delta ? 0 : delta }));
   }
 
   function commitPass() {
     onApply(
-      cards.map(c => ({ instanceId: c.instanceId, delta: choices[c.instanceId] ?? 0 })),
+      targets.map(t => ({ id: t.id, delta: choices[t.id] ?? 0 })),
       { current: currentPass, total: totalPasses },
     );
     if (currentPass >= totalPasses) {
@@ -120,37 +137,38 @@ export default function TimeTravelPanel({ cards, onApply, onClose }: TimeTravelP
             </p>
 
             <div className={styles.list}>
-              {cards.map(card => {
-                const color = MECHANIC_COLOR[card.mechanic];
-                const label =
-                  card.mechanic === 'custom' ? card.customLabel || 'Custom' : MECHANIC_LABEL[card.mechanic];
-                const choice = choices[card.instanceId] ?? 0;
-                const canRemove = card.count > 0;
+              {targets.length === 0 && (
+                <p className={styles.subtitle}>No suspended cards, Vanishing permanents, or Bad Wolf counters to choose from right now.</p>
+              )}
+              {targets.map(target => {
+                const color = MECHANIC_COLOR[target.mechanic];
+                const choice = choices[target.id] ?? 0;
+                const canRemove = target.count > 0;
                 const canAdd = !(
-                  card.direction === 'increment' &&
-                  card.targetCount != null &&
-                  card.count >= card.targetCount
+                  target.direction === 'increment' &&
+                  target.targetCount != null &&
+                  target.count >= target.targetCount
                 );
 
                 return (
-                  <div key={card.instanceId} className={styles.row}>
+                  <div key={target.id} className={styles.row}>
                     <div className={styles.rowMeta}>
-                      <div className={styles.name}>{card.name}</div>
+                      <div className={styles.name}>{target.name}</div>
                       <span className={styles.tag} style={{ ['--tag-color' as string]: color }}>
-                        {label}
+                        {target.label}
                       </span>
                     </div>
                     <div className={styles.rowRight}>
                       <span className={styles.preview}>
-                        {choice !== 0 ? `${card.count} → ${card.count + choice}` : card.count}
+                        {choice !== 0 ? `${target.count} → ${target.count + choice}` : target.count}
                       </span>
                       <div className={styles.choiceRow}>
                         <button
                           type="button"
                           className={`${styles.choiceBtn} ${choice === -1 ? styles.choiceBtnActive : ''}`}
-                          onClick={() => setChoice(card.instanceId, -1)}
+                          onClick={() => setChoice(target.id, -1)}
                           disabled={!canRemove}
-                          aria-label={`Remove one time counter from ${card.name}`}
+                          aria-label={`Remove one time counter from ${target.name}`}
                           aria-pressed={choice === -1}
                         >
                           −1
@@ -158,8 +176,8 @@ export default function TimeTravelPanel({ cards, onApply, onClose }: TimeTravelP
                         <button
                           type="button"
                           className={`${styles.choiceBtn} ${choice === 0 ? styles.choiceBtnActive : ''}`}
-                          onClick={() => setChoice(card.instanceId, 0)}
-                          aria-label={`Leave ${card.name} unchanged`}
+                          onClick={() => setChoice(target.id, 0)}
+                          aria-label={`Leave ${target.name} unchanged`}
                           aria-pressed={choice === 0}
                         >
                           skip
@@ -167,9 +185,9 @@ export default function TimeTravelPanel({ cards, onApply, onClose }: TimeTravelP
                         <button
                           type="button"
                           className={`${styles.choiceBtn} ${choice === 1 ? styles.choiceBtnActive : ''}`}
-                          onClick={() => setChoice(card.instanceId, 1)}
+                          onClick={() => setChoice(target.id, 1)}
                           disabled={!canAdd}
-                          aria-label={`Add one time counter to ${card.name}`}
+                          aria-label={`Add one time counter to ${target.name}`}
                           aria-pressed={choice === 1}
                         >
                           +1

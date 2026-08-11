@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import CommanderBanner from './CommanderBanner';
+import type { CommanderId } from './CommanderTaxModal';
 import ThemeToggle from './ThemeToggle';
 import styles from './Header.module.css';
 
@@ -10,9 +11,18 @@ interface HeaderProps {
   onReset: () => void;
   onOpenLog: () => void;
   onOpenAbout: () => void;
+  onOpenCommander: (id: CommanderId, imageSmall?: string) => void;
 }
 
-export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog, onOpenAbout }: HeaderProps) {
+export default function Header({
+  turn,
+  onSetTurn,
+  onNextTurn,
+  onReset,
+  onOpenLog,
+  onOpenAbout,
+  onOpenCommander,
+}: HeaderProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(turn));
 
@@ -41,7 +51,7 @@ export default function Header({ turn, onSetTurn, onNextTurn, onReset, onOpenLog
         <div className={styles.titleBlock}>
           <span className={styles.eyebrow}>Commander companion</span>
           <h1 className={styles.title}>Time Counters</h1>
-          <CommanderBanner />
+          <CommanderBanner onOpenCommander={onOpenCommander} />
         </div>
         <div className={styles.topActions}>
           <ThemeToggle />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { TrackedCard } from '../types';
-import { MECHANIC_COLOR, MECHANIC_LABEL, triggerLabel } from '../utils/counters';
+import { MECHANIC_COLOR, MECHANIC_LABEL, chapterRoman, triggerLabel } from '../utils/counters';
 import styles from './CardTile.module.css';
 
 interface CardTileProps {
@@ -26,6 +26,10 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
   const isReady = card.direction === 'decrement' ? card.count <= 0 : card.targetCount != null && card.count >= card.targetCount;
   const expanded = manuallyExpanded || isReady;
   const badgeText = card.direction === 'increment' && card.targetCount != null ? `${card.count}/${card.targetCount}` : String(card.count);
+  // The chapter this Saga is currently sitting on — the most recent one its lore count has reached,
+  // shown as a standing reference so "what's active right now" never depends on remembering the last
+  // precombat-main popup. Doesn't require isReady, since only the *final* chapter counts as ready.
+  const currentChapter = card.mechanic === 'saga' && card.chapters && card.count > 0 ? card.chapters[card.count - 1] : null;
 
   function startEditing() {
     setDraft(String(card.count));
@@ -129,9 +133,21 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
             </button>
           </div>
 
+          {currentChapter && !isReady && (
+            <div className={styles.resolveBox}>
+              <span className={styles.resolveLabel}>Chapter {chapterRoman(card.count)}</span>
+              <span className={styles.resolveText}>{currentChapter}</span>
+            </div>
+          )}
+
           {isReady && card.resolveNote && (
             <div className={styles.resolveBox}>
               <span className={styles.resolveLabel}>{triggerLabel(card.mechanic)}</span>
+              {currentChapter && (
+                <span className={styles.resolveText}>
+                  Chapter {chapterRoman(card.count)} — {currentChapter}
+                </span>
+              )}
               <span className={styles.resolveText}>{card.resolveNote}</span>
               <button type="button" className="btn btn-sm btn-ghost" onClick={() => onRemove(card.instanceId)}>
                 Done
