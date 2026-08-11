@@ -111,9 +111,25 @@ not what the code does.
   full multi-player turn order.
 - Keep `README.md`'s "Project layout" table and "Counter mechanics"
   section in sync with any structural or rules-model changes.
-- Bump `CHANGELOG.md` (Keep a Changelog format, semver) and the version
-  shown in `AboutModal.tsx` for user-visible feature work, matching how
-  `1.0.0` was recorded.
+- **Versioning: this project follows [Semantic Versioning](https://semver.org/)
+  and keeps `CHANGELOG.md` in [Keep a Changelog](https://keepachangelog.com/)
+  format.** `package.json`'s `version` field is the single source of truth —
+  `vite.config.ts` bakes it into `__APP_VERSION__` at build time, which is
+  all `AboutModal.tsx` reads to display it, so bumping `package.json` is
+  the only place the app's own version needs to change.
+  - Bump the version and add a dated `CHANGELOG.md` entry for any
+    user-visible change: new features/mechanics (minor, e.g. `1.1.0` →
+    `1.2.0`) or bug fixes/behavior corrections (patch, e.g. `1.1.0` →
+    `1.1.1`) — Keep a Changelog's `Added`/`Changed`/`Fixed`/`Removed`
+    headings, whichever apply. See `1.1.0`'s entry for the level of
+    detail expected.
+  - Skip the bump for changes with no user-visible effect — test
+    infrastructure, CI config, refactors, docs-only edits — even in the
+    same PR as a feature; only the feature side of that PR needs an entry.
+  - Pre-1.0 breaking changes aren't a concern here (the project is past
+    `1.0.0`); a genuine breaking change to saved-game compatibility or
+    core behavior would warrant a major bump and a migration note in
+    `storage.ts`, but none has been needed yet.
 
 ## Confirmed rules facts (as of the turn-cycle/commander-tax feature)
 
