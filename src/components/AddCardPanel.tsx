@@ -5,6 +5,7 @@ import { useCardCatalog } from '../hooks/useCardCatalog';
 import {
   MECHANIC_COLOR,
   MECHANIC_LABEL,
+  chapterRoman,
   defaultResolveNote,
   detectMechanic,
   mechanicDirection,
@@ -14,7 +15,8 @@ import type { AddCardInput } from '../hooks/useGameState';
 import ManaCost from './ManaCost';
 import styles from './AddCardPanel.module.css';
 
-const MECHANICS: Mechanic[] = ['suspend', 'vanishing', 'fading', 'custom'];
+const MECHANICS: Mechanic[] = ['suspend', 'vanishing', 'fading', 'saga', 'custom'];
+const DEFAULT_CHAPTER_ROWS = ['', '', ''];
 
 interface AddCardPanelProps {
   onAdd: (input: AddCardInput) => void;
@@ -53,6 +55,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
   const [targetCount, setTargetCount] = useState('');
   const [autoAdjust, setAutoAdjust] = useState(true);
   const [resolveNote, setResolveNote] = useState('');
+  const [chapters, setChapters] = useState<string[]>(DEFAULT_CHAPTER_ROWS);
 
   // ~16k cards, so only re-scan when the query or the catalog actually changes.
   const results = useMemo(
@@ -75,6 +78,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     setAutoAdjust(true);
     setResolveNote('');
     setDetectedCount(null);
+    setChapters(DEFAULT_CHAPTER_ROWS);
   }
 
   function openQuickSuspend() {
@@ -121,15 +125,48 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     setResolveNote(defaultResolveNote(next));
     setAutoAdjust(true);
     // Keep the detected count/target only if it still applies to the newly chosen mechanic.
-    if (!detectedCount) setStartingCount('');
+    if (!detectedCount) setStartingCount(next === 'saga' ? '0' : '');
     if (next !== mechanic) setTargetCount('');
+    if (next === 'saga' && chapters.length === 0) setChapters(DEFAULT_CHAPTER_ROWS);
   }
+
+  function setChapterText(index: number, text: string) {
+    setChapters(prev => prev.map((c, i) => (i === index ? text : c)));
+  }
+
+  function addChapterRow() {
+    setChapters(prev => [...prev, '']);
+  }
+
+  function removeChapterRow(index: number) {
+    setChapters(prev => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+  }
+
+  const trimmedChapters = chapters.map(c => c.trim());
+  const sagaReady = mechanic !== 'saga' || (trimmedChapters.length > 0 && trimmedChapters.every(c => c.length > 0));
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!selected) return;
     const count = Number(startingCount);
     if (!Number.isFinite(count) || count < 0) return;
+
+    if (mechanic === 'saga') {
+      if (!sagaReady) return;
+      onAdd({
+        card: selected,
+        mechanic,
+        startingCount: Math.round(count),
+        direction: 'increment',
+        targetCount: trimmedChapters.length,
+        autoAdjust,
+        resolveNote,
+        chapters: trimmedChapters,
+      });
+      resetAll();
+      return;
+    }
+
     const target = targetCount.trim() === '' ? undefined : Number(targetCount);
     if (target != null && (!Number.isFinite(target) || target <= 0)) return;
 
@@ -336,10 +373,45 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               </>
             )}
 
+            {mechanic === 'saga' && (
+              <div className={styles.field}>
+                <span className={styles.fieldLabel}>Chapters</span>
+                <p className={styles.emptyHint}>
+                  A lore counter is added as your precombat main begins, not at upkeep — this Saga's chapter
+                  abilities fire in order as that lore count reaches each chapter, one at a time, with the last
+                  chapter followed by sacrificing the Saga.
+                </p>
+                {chapters.map((text, i) => (
+                  <div key={i} className={styles.manualRow}>
+                    <input
+                      className="input"
+                      type="text"
+                      placeholder={`Chapter ${chapterRoman(i + 1)} — what happens`}
+                      value={text}
+                      onChange={e => setChapterText(i, e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className={styles.changeBtn}
+                      onClick={() => removeChapterRow(i)}
+                      disabled={chapters.length <= 1}
+                      aria-label={`Remove chapter ${chapterRoman(i + 1)}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button type="button" className={styles.manualLink} onClick={addChapterRow}>
+                  + Add chapter {chapterRoman(chapters.length + 1)}
+                </button>
+              </div>
+            )}
+
             <div className={styles.countStartRow}>
               <div className={styles.field}>
                 <label className={styles.fieldLabel} htmlFor="starting-count">
-                  Starting counters
+                  {mechanic === 'saga' ? 'Starting lore counters' : 'Starting counters'}
                 </label>
                 <input
                   id="starting-count"
@@ -352,7 +424,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                   required
                 />
               </div>
-              {direction === 'increment' && (
+              {direction === 'increment' && mechanic !== 'saga' && (
                 <div className={styles.field}>
                   <label className={styles.fieldLabel} htmlFor="target-count">
                     Target count (optional)
@@ -374,28 +446,34 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
             <div className={styles.field}>
               <label className={styles.checkboxRow}>
                 <input type="checkbox" checked={autoAdjust} onChange={e => setAutoAdjust(e.target.checked)} />
-                {direction === 'decrement' ? 'Remove one each of my upkeeps' : 'Add one each of my upkeeps'}
+                {mechanic === 'saga'
+                  ? 'Add a lore counter each of my precombat mains'
+                  : direction === 'decrement'
+                    ? 'Remove one each of my upkeeps'
+                    : 'Add one each of my upkeeps'}
               </label>
             </div>
 
-            <div className={styles.field}>
-              <label className={styles.fieldLabel} htmlFor="resolve-note">
-                {resolveFieldLabel(direction, targetCount.trim() === '' ? undefined : Number(targetCount))}
-              </label>
-              <textarea
-                id="resolve-note"
-                className="input"
-                rows={2}
-                value={resolveNote}
-                onChange={e => setResolveNote(e.target.value)}
-              />
-            </div>
+            {mechanic !== 'saga' && (
+              <div className={styles.field}>
+                <label className={styles.fieldLabel} htmlFor="resolve-note">
+                  {resolveFieldLabel(direction, targetCount.trim() === '' ? undefined : Number(targetCount))}
+                </label>
+                <textarea
+                  id="resolve-note"
+                  className="input"
+                  rows={2}
+                  value={resolveNote}
+                  onChange={e => setResolveNote(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className={styles.actions}>
               <button type="button" className="btn btn-ghost" onClick={resetAll}>
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary" disabled={!sagaReady}>
                 Add to tracker
               </button>
             </div>

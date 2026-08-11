@@ -28,7 +28,9 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         <p className={styles.appName}>
           Time Counters <span className={styles.version}>v{__APP_VERSION__}</span>
         </p>
-        <p className={styles.tagline}>A Commander companion for tracking Suspend, Vanishing, and Fading.</p>
+        <p className={styles.tagline}>
+          A Commander companion for tracking Suspend, Vanishing, Fading, Sagas, and commander tax.
+        </p>
 
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Credits</h3>

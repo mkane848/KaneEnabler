@@ -1,9 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { CardData, Direction, GameState, LogEntry, Mechanic, TrackedCard, TurnChange } from '../types';
-import { MECHANIC_LABEL, defaultResolveNote } from '../utils/counters';
+import type {
+  CardData,
+  Commanders,
+  Direction,
+  GameState,
+  LogEntry,
+  Mechanic,
+  TrackedCard,
+  TurnChange,
+} from '../types';
+import { MECHANIC_LABEL, defaultResolveNote, newlyTriggeredChapters, usesTimeCounters } from '../utils/counters';
 import { clearState, loadState, saveState } from '../utils/storage';
 
-const INITIAL_STATE: GameState = { turn: 1, cards: [], log: [] };
+const INITIAL_COMMANDERS: Commanders = {
+  tenthDoctor: { castCount: 0 },
+  roseTyler: { castCount: 0, timeCounters: 0 },
+};
+
+const INITIAL_STATE: GameState = { turn: 1, cards: [], log: [], commanders: INITIAL_COMMANDERS };
 
 /** The log is a session history, not an unbounded database — oldest entries drop first. */
 const MAX_LOG_ENTRIES = 300;
@@ -48,7 +62,12 @@ export interface AddCardInput {
   targetCount?: number;
   autoAdjust: boolean;
   resolveNote?: string;
+  /** Saga only — chapter I, II, III... text, one entry per chapter. */
+  chapters?: string[];
 }
+
+/** A Time Travel choice targets either a tracked card (by instanceId) or Rose Tyler's own Bad Wolf time counters (the 'rose' sentinel). */
+export type TimeTravelTargetId = string | 'rose';
 
 /**
  * The persisted game plus the most recent upkeep summary, held together in
@@ -90,6 +109,8 @@ export function useGameState() {
         resolveNote: input.resolveNote?.trim() || defaultResolveNote(input.mechanic),
         turnAdded: prev.game.turn,
         isToken: input.card.isToken,
+        chapters: input.mechanic === 'saga' ? input.chapters : undefined,
+        triggeredChapters: input.mechanic === 'saga' ? [] : undefined,
       };
       const log = appendLog(prev.game.log, {
         turn: prev.game.turn,
@@ -178,28 +199,40 @@ export function useGameState() {
   }, []);
 
   /**
-   * Advances to the player's next turn, adjusting every auto-adjusting
-   * card's counter by one step in its own direction — Suspend, Vanishing,
-   * and Fading all count down. A card that has already hit its target is
-   * left alone rather than re-triggering. The summary of what changed is
-   * stored alongside the new game state so the two can never disagree.
+   * Advances to the player's next turn. This runs the two turn steps that
+   * matter for the mechanics this app tracks, in the order they actually
+   * happen, as one atomic update:
+   *
+   * 1. Upkeep — Suspend, Vanishing, and Fading counters tick down one step.
+   * 2. Precombat main — each tracked Saga gains a lore counter, and any
+   *    chapter ability that lore count newly reaches triggers individually
+   *    (not just the final one), matching how Sagas actually work: a
+   *    chapter ability triggers the moment its number is reached, well
+   *    before the Saga is sacrificed at the end of its final chapter.
+   *
+   * A card that has already hit its target is left alone rather than
+   * re-triggering. The summary of what changed is stored alongside the new
+   * game state so the two can never disagree.
    *
    * This is distinct from the Time Travel keyword action (see
    * applyTimeTravel below): Next Turn is the automatic, once-per-turn
-   * upkeep trigger every Suspend/Vanishing/Fading card has on its own.
-   * Time Travel is a separate, optional effect specific cards grant —
-   * it isn't tied to the turn counter at all.
+   * upkeep/precombat-main trigger every tracked mechanic has on its own.
+   * Time Travel is a separate, optional effect specific cards grant — it
+   * isn't tied to the turn counter at all.
    */
   const nextTurn = useCallback(() => {
     setTracker(prev => {
       const changes: TurnChange[] = [];
-      const cards = prev.game.cards.map(c => {
-        if (!c.autoAdjust || hasHitTarget(c.count, c.direction, c.targetCount)) return c;
+
+      // Step 1 — upkeep: Suspend/Vanishing/Fading count down.
+      const afterUpkeep = prev.game.cards.map(c => {
+        if (c.mechanic === 'saga' || !c.autoAdjust || hasHitTarget(c.count, c.direction, c.targetCount)) return c;
         const to = clampCount(c.count + (c.direction === 'decrement' ? -1 : 1), c.direction, c.targetCount);
         changes.push({
           instanceId: c.instanceId,
           name: c.name,
           mechanic: c.mechanic,
+          step: 'upkeep',
           from: c.count,
           to,
           hitTarget: hasHitTarget(to, c.direction, c.targetCount),
@@ -207,10 +240,51 @@ export function useGameState() {
         });
         return { ...c, count: to };
       });
+
+      // Step 2 — precombat main: Sagas gain a lore counter; crossed chapters trigger.
+      const cards = afterUpkeep.map(c => {
+        if (c.mechanic !== 'saga' || !c.autoAdjust || hasHitTarget(c.count, c.direction, c.targetCount)) return c;
+        const to = clampCount(c.count + 1, c.direction, c.targetCount);
+        const chapters = c.chapters ?? [];
+        const triggeredNow = newlyTriggeredChapters(chapters, c.count, to, c.triggeredChapters ?? []);
+        const hitTarget = hasHitTarget(to, c.direction, c.targetCount);
+        if (triggeredNow.length === 0) {
+          changes.push({
+            instanceId: c.instanceId,
+            name: c.name,
+            mechanic: c.mechanic,
+            step: 'precombatMain',
+            from: c.count,
+            to,
+            hitTarget,
+            resolveNote: c.resolveNote,
+          });
+        } else {
+          for (const chapter of triggeredNow) {
+            changes.push({
+              instanceId: c.instanceId,
+              name: c.name,
+              mechanic: c.mechanic,
+              step: 'precombatMain',
+              from: c.count,
+              to,
+              hitTarget: hitTarget && chapter.number === chapters.length,
+              resolveNote: c.resolveNote,
+              chapter,
+            });
+          }
+        }
+        return {
+          ...c,
+          count: to,
+          triggeredChapters: [...(c.triggeredChapters ?? []), ...triggeredNow.map(t => t.number)],
+        };
+      });
+
       const turn = prev.game.turn + 1;
       const log = appendLog(prev.game.log, {
         turn,
-        title: 'Next Turn',
+        title: 'Next Turn — upkeep & precombat main',
         detail: changes.length === 0 ? 'No auto-adjusting cards to update.' : undefined,
         changes: changes.map(c => ({ name: c.name, mechanic: c.mechanic, from: c.from, to: c.to })),
       });
@@ -230,29 +304,48 @@ export function useGameState() {
    * keyword's per-object choice. Unlike Next Turn this never touches the
    * turn counter, and the +1/−1 choice isn't limited by a card's own
    * direction — the keyword can add a counter to a Suspend card just as
-   * freely as removing one. All chosen deltas apply in a single update, so
-   * choosing several at once can't land the double-tap-style desync that
-   * per-card calls made possible before.
+   * freely as removing one.
+   *
+   * Only Suspend and Vanishing cards are eligible targets — Fading uses
+   * fade counters and Saga uses lore counters, neither of which is a time
+   * counter (see usesTimeCounters in utils/counters.ts), so the caller
+   * (TimeTravelPanel via App.tsx) never offers them a choice here. Rose
+   * Tyler's own Bad Wolf time counters are a legitimate target too — she's
+   * "a permanent you control with a time counter on it" — passed with the
+   * 'rose' sentinel id instead of a card instanceId.
    */
   const applyTimeTravel = useCallback(
-    (choices: { instanceId: string; delta: -1 | 0 | 1 }[], passInfo: { current: number; total: number }) => {
+    (choices: { id: TimeTravelTargetId; delta: -1 | 0 | 1 }[], passInfo: { current: number; total: number }) => {
       setTracker(prev => {
         const nonZero = choices.filter(c => c.delta !== 0);
         const logChanges: { name: string; mechanic: Mechanic; from: number; to: number }[] = [];
+
         const cards = prev.game.cards.map(c => {
-          const choice = nonZero.find(d => d.instanceId === c.instanceId);
+          const choice = nonZero.find(d => d.id === c.instanceId);
           if (!choice) return c;
           const to = clampCount(c.count + choice.delta, c.direction, c.targetCount);
           if (to !== c.count) logChanges.push({ name: c.name, mechanic: c.mechanic, from: c.count, to });
           return { ...c, count: to };
         });
+
+        let commanders = prev.game.commanders;
+        const roseChoice = nonZero.find(d => d.id === 'rose');
+        if (roseChoice) {
+          const from = commanders.roseTyler.timeCounters;
+          const to = Math.max(0, from + roseChoice.delta);
+          if (to !== from) {
+            logChanges.push({ name: 'Rose Tyler — Bad Wolf counters', mechanic: 'custom', from, to });
+            commanders = { ...commanders, roseTyler: { ...commanders.roseTyler, timeCounters: to } };
+          }
+        }
+
         const log = appendLog(prev.game.log, {
           turn: prev.game.turn,
           title: `Time Travel — pass ${passInfo.current} of ${passInfo.total}`,
           detail: logChanges.length === 0 ? 'No counters added or removed this pass.' : undefined,
           changes: logChanges,
         });
-        return { ...prev, game: { ...prev.game, cards, log } };
+        return { ...prev, game: { ...prev.game, cards, commanders, log } };
       });
     },
     [],
@@ -260,6 +353,85 @@ export function useGameState() {
 
   const dismissUpkeep = useCallback(() => {
     setTracker(prev => (prev.lastUpkeep === null ? prev : { ...prev, lastUpkeep: null }));
+  }, []);
+
+  /**
+   * Records a cast of a commander from the command zone — the only thing
+   * that increases its tax (rule 903.10): +{2} for each *previous* cast
+   * this game, so the number shown after this call is what the *next* cast
+   * will add.
+   */
+  const castCommander = useCallback((id: 'tenthDoctor' | 'roseTyler') => {
+    setTracker(prev => {
+      const commander = prev.game.commanders[id];
+      const castCount = commander.castCount + 1;
+      const name = id === 'tenthDoctor' ? 'The Tenth Doctor' : 'Rose Tyler';
+      const log = appendLog(prev.game.log, {
+        turn: prev.game.turn,
+        title: 'Cast from command zone',
+        detail: `${name} — cast ${castCount} time${castCount === 1 ? '' : 's'} this game; next cast costs an extra {${castCount * 2}}.`,
+      });
+      return {
+        ...prev,
+        game: { ...prev.game, commanders: { ...prev.game.commanders, [id]: { ...commander, castCount } }, log },
+      };
+    });
+  }, []);
+
+  /** Manual override for Rose Tyler's own Bad Wolf time counters (she gets +1/+1 per counter). */
+  const adjustRoseTimeCounters = useCallback((delta: number) => {
+    setTracker(prev => {
+      const from = prev.game.commanders.roseTyler.timeCounters;
+      const to = Math.max(0, from + delta);
+      if (to === from) return prev;
+      const log = appendLog(prev.game.log, {
+        turn: prev.game.turn,
+        title: 'Manual adjustment',
+        detail: `Rose Tyler's Bad Wolf counters ${to > from ? '+1' : '−1'} → ${to}`,
+      });
+      return {
+        ...prev,
+        game: {
+          ...prev.game,
+          commanders: { ...prev.game.commanders, roseTyler: { ...prev.game.commanders.roseTyler, timeCounters: to } },
+          log,
+        },
+      };
+    });
+  }, []);
+
+  /**
+   * Rose Tyler's Bad Wolf: "Whenever Rose Tyler attacks, put a time counter
+   * on it for each suspended card you own and each other permanent you
+   * control with a time counter on it." Counts every tracked Suspend card
+   * plus every tracked Vanishing card currently on the board (both use real
+   * time counters — Fading and Saga don't, see usesTimeCounters), and adds
+   * that many counters to Rose in one step instead of the player counting
+   * the board by hand.
+   */
+  const roseAttacks = useCallback(() => {
+    setTracker(prev => {
+      const contributing = prev.game.cards.filter(c => usesTimeCounters(c.mechanic) && c.count > 0);
+      const gained = contributing.length;
+      const from = prev.game.commanders.roseTyler.timeCounters;
+      const to = from + gained;
+      const log = appendLog(prev.game.log, {
+        turn: prev.game.turn,
+        title: 'Bad Wolf — Rose Tyler attacks',
+        detail:
+          gained === 0
+            ? 'No suspended cards or time-counter permanents to count — no counters added.'
+            : `+${gained} time counter${gained === 1 ? '' : 's'} (${contributing.map(c => c.name).join(', ')}) → Rose Tyler now has ${to}.`,
+      });
+      return {
+        ...prev,
+        game: {
+          ...prev.game,
+          commanders: { ...prev.game.commanders, roseTyler: { ...prev.game.commanders.roseTyler, timeCounters: to } },
+          log,
+        },
+      };
+    });
   }, []);
 
   const resetGame = useCallback(() => {
@@ -278,6 +450,9 @@ export function useGameState() {
     nextTurn,
     applyTimeTravel,
     dismissUpkeep,
+    castCommander,
+    adjustRoseTimeCounters,
+    roseAttacks,
     resetGame,
   };
 }

@@ -1,5 +1,12 @@
-/** A time-counter mechanic this app knows how to auto-adjust. */
-export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'custom';
+/**
+ * A counter mechanic this app knows how to auto-adjust. Suspend and
+ * Vanishing use real time counters; Fading uses fade counters (a distinct
+ * counter type, rule 702.32) even though it's tracked the same way in this
+ * UI; Saga uses lore counters and advances on a different turn step
+ * entirely (precombat main, not upkeep) — see `TIME_COUNTER_MECHANICS` and
+ * `TURN_STEP_FOR_MECHANIC` in utils/counters.ts.
+ */
+export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'saga' | 'custom';
 
 /** Which way a mechanic's counters move each turn. */
 export type Direction = 'increment' | 'decrement';
@@ -66,17 +73,32 @@ export interface TrackedCard {
   turnAdded: number;
   /** A token created by an effect rather than a card of its own — see CardData.isToken. */
   isToken?: boolean;
+  /**
+   * Saga chapter text, one entry per chapter (index 0 = chapter I). Only
+   * set for mechanic === 'saga'. `targetCount` is always `chapters.length`
+   * for a Saga — the lore counter that triggers the final chapter and
+   * causes it to be sacrificed once that chapter resolves.
+   */
+  chapters?: string[];
+  /** Chapter numbers (1-based) whose ability has already triggered, so a chapter isn't shown as pending after it's fired. */
+  triggeredChapters?: number[];
 }
+
+/** Which turn step produced a given change — Suspend/Vanishing/Fading tick down at upkeep; Sagas gain a lore counter as precombat main begins. */
+export type TurnStep = 'upkeep' | 'precombatMain';
 
 /** One card's count change from a single Next Turn action. */
 export interface TurnChange {
   instanceId: string;
   name: string;
   mechanic: Mechanic;
+  step: TurnStep;
   from: number;
   to: number;
   hitTarget: boolean;
   resolveNote: string;
+  /** Saga only: the chapter ability that just triggered this change, if any. */
+  chapter?: { number: number; text: string };
 }
 
 /** One card's count change within a game-log entry (Next Turn, a Time Travel pass). */
@@ -104,8 +126,30 @@ export interface LogEntry {
   changes?: LogChange[];
 }
 
+/**
+ * Per-commander bookkeeping that doesn't fit the tracked-cards board: the
+ * command-zone tax accumulates for the whole game regardless of what
+ * happens on the battlefield, and Rose Tyler's Bad Wolf time counters are a
+ * property of the commander card itself, not a card someone chose to add.
+ */
+export interface CommanderState {
+  /** Times cast from the command zone this game (rule 903.10) — next cast costs an extra {2} per previous cast. */
+  castCount: number;
+}
+
+/** Rose Tyler additionally carries real time counters from her own Bad Wolf trigger — she gets +1/+1 per counter. */
+export interface RoseTylerState extends CommanderState {
+  timeCounters: number;
+}
+
+export interface Commanders {
+  tenthDoctor: CommanderState;
+  roseTyler: RoseTylerState;
+}
+
 export interface GameState {
   turn: number;
   cards: TrackedCard[];
   log: LogEntry[];
+  commanders: Commanders;
 }

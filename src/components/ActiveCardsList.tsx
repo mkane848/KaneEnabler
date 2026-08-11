@@ -12,7 +12,7 @@ interface ActiveCardsListProps {
 }
 
 /** Built-in mechanics group first, in this order; custom counter names follow, alphabetically. */
-const MECHANIC_ORDER: Mechanic[] = ['suspend', 'vanishing', 'fading', 'custom'];
+const MECHANIC_ORDER: Mechanic[] = ['suspend', 'vanishing', 'fading', 'saga', 'custom'];
 
 /** Cards sharing a mechanic sit together; 'custom' cards also split by their own counter name — an Age counter and a Charge counter aren't the same thing just because both fell back to 'custom'. */
 function groupKey(card: TrackedCard): string {

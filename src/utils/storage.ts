@@ -10,6 +10,10 @@ export function loadState(): GameState | null {
     if (typeof parsed.turn !== 'number' || !Array.isArray(parsed.cards)) return null;
     // Games saved before the game log existed won't have this field.
     if (!Array.isArray(parsed.log)) parsed.log = [];
+    // Games saved before commander tax/Bad Wolf tracking won't have this field.
+    if (!parsed.commanders) {
+      parsed.commanders = { tenthDoctor: { castCount: 0 }, roseTyler: { castCount: 0, timeCounters: 0 } };
+    }
     return parsed;
   } catch {
     return null;

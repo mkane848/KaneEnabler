@@ -75,6 +75,8 @@ export function defaultResolveNote(mechanic: Mechanic): string {
     case 'vanishing':
     case 'fading':
       return 'Sacrifice this permanent.';
+    case 'saga':
+      return 'Final chapter resolves, then sacrifice this Saga.';
     default:
       return 'Check this card for what happens now.';
   }
@@ -88,9 +90,56 @@ export function triggerLabel(mechanic: Mechanic): string {
     case 'vanishing':
     case 'fading':
       return 'Ready to sacrifice';
+    case 'saga':
+      return 'Final chapter';
     default:
       return 'Ready to resolve';
   }
+}
+
+/**
+ * Mechanics that use real *time counters* — the object Time Travel and
+ * Rose Tyler's Bad Wolf both care about. Fading uses fade counters (rule
+ * 702.32) and Saga uses lore counters — neither is a time counter, so both
+ * are excluded here even though this app auto-adjusts them the same way.
+ */
+export const TIME_COUNTER_MECHANICS: readonly Mechanic[] = ['suspend', 'vanishing'];
+
+export function usesTimeCounters(mechanic: Mechanic): boolean {
+  return TIME_COUNTER_MECHANICS.includes(mechanic);
+}
+
+/** Which turn step auto-adjusts a given mechanic's counter — see TurnStep in types.ts. */
+export function turnStepForMechanic(mechanic: Mechanic): 'upkeep' | 'precombatMain' {
+  return mechanic === 'saga' ? 'precombatMain' : 'upkeep';
+}
+
+/** Ordinal chapter numbers as Magic prints them, for chapter-ability labels. */
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+
+export function chapterRoman(chapterNumber: number): string {
+  return ROMAN_NUMERALS[chapterNumber - 1] ?? String(chapterNumber);
+}
+
+/**
+ * Which chapter abilities newly trigger when a Saga's lore count moves from
+ * `from` to `to` — normally just one (a lore counter is added one at a
+ * time), but this stays correct if a manual edit or Time Travel jumps the
+ * count by more than one. Chapters already in `triggered` are skipped so a
+ * manual edit that dips down and back up can't refire one.
+ */
+export function newlyTriggeredChapters(
+  chapters: string[],
+  from: number,
+  to: number,
+  triggered: number[] = [],
+): { number: number; text: string }[] {
+  const result: { number: number; text: string }[] = [];
+  for (let n = Math.max(from, 0) + 1; n <= to; n++) {
+    if (n > chapters.length || triggered.includes(n)) continue;
+    result.push({ number: n, text: chapters[n - 1] });
+  }
+  return result;
 }
 
 /**
@@ -109,6 +158,7 @@ export const MECHANIC_LABEL: Record<Mechanic, string> = {
   suspend: 'Suspend',
   vanishing: 'Vanishing',
   fading: 'Fading',
+  saga: 'Saga',
   custom: 'Custom',
 };
 
@@ -116,14 +166,16 @@ export const MECHANIC_COLOR: Record<Mechanic, string> = {
   suspend: 'var(--mechanic-suspend)',
   vanishing: 'var(--mechanic-vanishing)',
   fading: 'var(--mechanic-fading)',
+  saga: 'var(--mechanic-saga)',
   custom: 'var(--mechanic-custom)',
 };
 
-/** Fixed defaults for the mechanics this app has built-in rules for — all three are decrement-to-0. */
+/** Fixed defaults for the mechanics this app has built-in rules for. Suspend/Vanishing/Fading count down to 0; Saga counts up to its final chapter. */
 const BUILTIN_DIRECTION: Record<Exclude<Mechanic, 'custom'>, Direction> = {
   suspend: 'decrement',
   vanishing: 'decrement',
   fading: 'decrement',
+  saga: 'increment',
 };
 
 /** The fixed direction for a built-in mechanic; 'custom' has no fixed direction, so this defaults it. */

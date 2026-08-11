@@ -1,21 +1,24 @@
 # Time Counters — Commander Companion
 
 A lightweight, single-page companion app for tracking Suspend, Vanishing,
-Fading, and other time-counter mechanics across a Commander game. No backend,
-no database — card data is a static file generated at build time from
-Scryfall's bulk data, and game state lives in your browser's `localStorage`.
+Fading, and Saga counters — plus commander tax — across a Commander game.
+No backend, no database — card data is a static file generated at build
+time from Scryfall's bulk data, and game state lives in your browser's
+`localStorage`.
 
 ## How it works
 
 - **Turn tracking is yours only.** Commander is multiplayer, but Suspend,
-  Vanishing, and Fading all remove a time counter at the beginning of *their
-  owner's* upkeep — not every player's. So the app just tracks "my turn
-  number" and decrements counters once per Next Turn, regardless of how many
-  opponents take turns in between.
-- **Next Turn** is the automatic upkeep trigger every Suspend, Vanishing, and
-  Fading card has on its own — it removes one time counter from every
-  tracked card and opens a summary of what changed and what, if anything,
-  just resolved.
+  Vanishing, and Fading all remove a counter at the beginning of *their
+  owner's* upkeep, and a Saga gains a lore counter as *their owner's*
+  precombat main begins — not every player's. So the app just tracks "my
+  turn number," not a full multi-player turn order.
+- **Next Turn runs two steps, in order, as one action:** upkeep (Suspend,
+  Vanishing, and Fading counters tick down) and then precombat main (each
+  tracked Saga gains a lore counter, firing any chapter ability that lore
+  count newly reaches). The summary modal groups what changed by step, so a
+  Saga's chapter ability is never mixed in with an unrelated upkeep trigger
+  or shown before the turn has actually reached that point.
 - **Time Travel** is a separate, deliberately manual action, because it's a
   real (and different) Magic keyword: *"For each suspended card you own and
   each permanent you control with a time counter on it, you may add or
@@ -26,7 +29,22 @@ Scryfall's bulk data, and game state lives in your browser's `localStorage`.
   damage). Tap Time Travel, say how many times you're resolving it, and the
   app walks you through that many passes, one card at a time, letting you
   add, remove, or skip each one — so you always know how many passes are
-  left instead of losing count mid-resolution.
+  left instead of losing count mid-resolution. Only objects with a real
+  *time counter* are offered: Suspend and Vanishing cards, and Rose Tyler's
+  own Bad Wolf counters once she has any — Fading (fade counters) and Saga
+  (lore counters) are never eligible, since neither is actually a time
+  counter.
+- **Commander tax and Rose Tyler's Bad Wolf counters** live behind the
+  commander portraits in the header, not on the card board — tap either
+  portrait (or name) to open a tracker for that commander: how many times
+  it's been cast from the command zone this game and the resulting tax
+  (rule 903.10, +{2} per previous cast), with a one-tap "Cast from the
+  command zone" action. Rose Tyler's modal additionally tracks her own time
+  counters (she's +1/+1 for each) with manual +/− controls and a "Rose
+  attacks" action that counts this game's tracked Suspend cards and
+  Vanishing permanents for you and applies that many counters in one tap.
+  The Tenth Doctor's modal has a Timey-Wimey shortcut straight into Time
+  Travel, pre-set to his ability's three passes.
 - **Add a card any time** via the "Add a card" panel — it's always the first
   thing on the page, whether it's the middle of your turn or someone else's.
   A second, smaller action — "Suspend a card via an effect" — covers a card
@@ -138,8 +156,9 @@ src/components/CardTile.tsx        One card's tile: art, badge, expandable contr
 src/components/MechanicGroup.tsx   One counter type's labeled section of the board
 src/components/ActiveCardsList.tsx Groups and sorts tracked cards into sections
 src/components/AddCardPanel.tsx    Search, mechanic setup, quick-suspend action
-src/components/ChangeSummaryModal.tsx  The Next Turn upkeep summary
+src/components/ChangeSummaryModal.tsx  The Next Turn summary, grouped by upkeep vs. precombat main
 src/components/TimeTravelPanel.tsx     Walks through N passes of the Time Travel keyword action
+src/components/CommanderTaxModal.tsx   Per-commander tax tracker, opened from a portrait in the header
 src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
 src/components/ThemeToggle.tsx         Switches between the two themes
 src/components/AboutModal.tsx          Version, credits, and repo/changelog links
@@ -172,9 +191,9 @@ device preference (its own localStorage key), so New Game doesn't reset it:
 A few colors are deliberately **not** themed, because they carry functional
 meaning that shouldn't change with the skin: mana pip colors always match
 MTG's own White/Blue/Black/Red/Green, and mechanic badge colors (Suspend =
-gold, Vanishing = blue, Fading = coral) stay the same across both themes so
-that color-to-mechanic association doesn't have to be relearned when
-switching.
+gold, Vanishing = blue, Fading = coral, Saga = green) stay the same across
+both themes so that color-to-mechanic association doesn't have to be
+relearned when switching.
 
 Switching applies instantly — every component reads color and font values
 from CSS custom properties (`--color-*`, `--font-*`) rather than hardcoding
@@ -185,27 +204,46 @@ Claude doesn't see a flash of the Doctor Who default first.
 
 ## Counter mechanics
 
-The app only tracks **time counters** — the counter type Suspend, Vanishing,
-and Fading use — not Magic's many other counter types (+1/+1, loyalty, lore,
-level, and so on). Built in, with auto-detection from oracle text:
+The app tracks the counter types this deck actually uses — Suspend and
+Vanishing (real *time counters*), Fading (*fade counters*, a distinct
+counter type — rule 702.32), and Saga (*lore counters*) — not Magic's many
+other counter types (+1/+1, loyalty, charge, level, and so on). Built in,
+with auto-detection from oracle text where that's possible:
 
-| Mechanic  | Direction | Auto-adjusts on Next Turn | Target                      |
-| --------- | --------- | --------------------------- | ---------------------------- |
-| Suspend   | down      | yes                          | 0 (cast for free from exile) |
-| Vanishing | down      | yes                          | 0 (sacrifice)                |
-| Fading    | down      | yes                          | 0 (sacrifice)                |
+| Mechanic  | Direction | Auto-adjusts on | Target                              |
+| --------- | --------- | ---------------- | ------------------------------------ |
+| Suspend   | down      | upkeep            | 0 (cast for free from exile)         |
+| Vanishing | down      | upkeep            | 0 (sacrifice)                        |
+| Fading    | down      | upkeep            | 0 (sacrifice)                        |
+| Saga      | up        | precombat main    | final chapter (resolves, sacrifice)  |
+
+Suspend, Vanishing, and Fading all trigger at *your own upkeep*. A Saga
+gains its lore counter as *your own precombat main* begins instead — a
+different step, and one step later in the turn — and each chapter ability
+fires the instant the lore count reaches that chapter's number, not only at
+the final one. Next Turn runs both steps, in that order, as one action; see
+[How it works](#how-it-works).
+
+Because Fading and Saga don't use time counters, they're never offered as
+targets for the Time Travel keyword action or counted toward Rose Tyler's
+Bad Wolf trigger — only Suspend, Vanishing, and Rose's own counters are.
 
 Anything else is a **Custom** counter: name it, pick a direction, and
 optionally give it a target. That covers age counters (As Foretold) or any
 other one-off this app doesn't recognize by name — you tell it the counter
 type and direction instead of it guessing wrong. The increment option
-exists here specifically because Time Travel can *add* a time counter to
-any of these cards, not just remove one, so the data model has to allow it
-even though none of the three built-in mechanics move that way on their own.
+exists here specifically because Time Travel can *add* a time counter to a
+Suspend or Vanishing card, not just remove one, so the data model has to
+allow it even though neither built-in decrement mechanic moves that way on
+its own. A Custom counter is *not* offered to Time Travel or Bad Wolf,
+since the app has no way to know whether a given Custom counter is
+actually a time counter (Rose's own counters are handled separately, in
+her commander modal, specifically because hers are).
 
-**Not covered on purpose:** every other counter type in Magic (+1/+1, loyalty,
-charge, lore, level, and so on). This is a *time* counter tracker, matching
-what the app's name says — not a general-purpose counter tracker.
+**Not covered on purpose:** every other counter type in Magic (+1/+1,
+loyalty, charge, level, and so on) besides the four above. This is a *time
+counter and Saga* tracker, matching what this deck needs — not a
+general-purpose counter tracker.
 
 ### About the decklist scan
 
@@ -222,7 +260,17 @@ Scryfall's own `keyword:"time travel"` index):
   suspend."* Plus *"Timey-Wimey — {7}: Time travel three times. Activate
   only as a sorcery."* The quick "Suspend a card via an effect" action is
   the right shortcut for the first ability, and Time Travel now exists as
-  its own feature for the second.
+  its own feature for the second — with a one-tap shortcut into it,
+  pre-set to three passes, from his commander tax modal.
+- **Rose Tyler's** ability is confirmed: *"Rose Tyler gets +1/+1 for each
+  time counter on it. Bad Wolf — Whenever Rose Tyler attacks, put a time
+  counter on it for each suspended card you own and each other permanent
+  you control with a time counter on it."* Her commander tax modal tracks
+  those counters directly, with a "Rose attacks" action that counts the
+  board for you.
+- **Commander tax** (rule 903.10) is confirmed as +{2} per previous cast
+  of that specific commander from the command zone this game, tracked
+  independently for each of the two commanders — implemented as-is.
 - **Wibbly-wobbly, Timey-wimey** and **Time Beetle** also confirmed to use
   Time Travel — the former as a spell ("Time travel. … Draw a card."), the
   latter off combat damage.
