@@ -35,16 +35,19 @@ time from Scryfall's bulk data, and game state lives in your browser's
   (lore counters) are never eligible, since neither is actually a time
   counter.
 - **Commander tax and Rose Tyler's Bad Wolf counters** live behind the
-  commander portraits in the header, not on the card board — tap either
-  portrait (or name) to open a tracker for that commander: how many times
+  commander portraits in the header, or the field tile once a commander is
+  cast — tap either to open a tracker for that commander: how many times
   it's been cast from the command zone this game and the resulting tax
   (rule 903.10, +{2} per previous cast), with a one-tap "Cast from the
-  command zone" action. Rose Tyler's modal additionally tracks her own time
-  counters (she's +1/+1 for each) with manual +/− controls and a "Rose
-  attacks" action that counts this game's tracked Suspend cards and
-  Vanishing permanents for you and applies that many counters in one tap.
-  The Tenth Doctor's modal has a Timey-Wimey shortcut straight into Time
-  Travel, pre-set to his ability's three passes.
+  command zone" action. Casting puts the commander on the board as a card,
+  right alongside everything else being tracked, until it's sent back to
+  the command zone (which never resets the tax — that persists for the
+  whole game regardless of zone changes). Rose Tyler's modal additionally
+  tracks her own time counters (she's +1/+1 for each) with manual +/−
+  controls and a "Rose attacks" action that counts this game's tracked
+  Suspend cards and Vanishing permanents for you and applies that many
+  counters in one tap. The Tenth Doctor's modal has a Timey-Wimey shortcut
+  straight into Time Travel, pre-set to his ability's three passes.
 - **Add a card any time** via the "Add a card" panel — it's always the first
   thing on the page, whether it's the middle of your turn or someone else's.
   A second, smaller action — "Suspend a card via an effect" — covers a card
@@ -147,18 +150,20 @@ src/types.ts                  Shared TypeScript types
 src/utils/counters.ts         Mechanic detection, labels, colors, resolve text
 src/utils/colorIdentity.mjs   Jeskai color-identity filter (shared with the fetch script)
 src/utils/cardCatalog.ts      Catalog fetching and name search
+src/utils/commanders.ts       Commander id/name lookup, shared by App/CommanderBanner/CommanderTaxModal
 src/utils/storage.ts          localStorage persistence (game state)
 src/utils/theme.ts            localStorage persistence (theme preference)
-src/hooks/useCardCatalog.ts   Loads the catalog once, shared by consumers
-src/hooks/useGameState.ts     Turn number, tracked cards, game log, Next Turn and Time Travel logic
-src/hooks/useTheme.ts         Reads/writes/applies the active theme
-src/components/CardTile.tsx        One card's tile: art, badge, expandable controls
-src/components/MechanicGroup.tsx   One counter type's labeled section of the board
-src/components/ActiveCardsList.tsx Groups and sorts tracked cards into sections
-src/components/AddCardPanel.tsx    Search, mechanic setup, quick-suspend action
+src/hooks/useCardCatalog.ts     Loads the catalog once, shared by consumers
+src/hooks/useCommanderCards.ts  Looks up each commander's catalog entry (for its art) by name
+src/hooks/useGameState.ts       Turn number, tracked cards, game log, Next Turn and Time Travel logic
+src/hooks/useTheme.ts           Reads/writes/applies the active theme
+src/components/CardTile.tsx            One tracked card's tile: art, badge, expandable controls
+src/components/CommanderFieldTile.tsx  A commander's tile while it's on the battlefield
+src/components/ActiveCardsList.tsx     One flat, sorted grid of commander + tracked-card tiles
+src/components/AddCardPanel.tsx        Search, mechanic setup, quick-suspend action
 src/components/ChangeSummaryModal.tsx  The Next Turn summary, grouped by upkeep vs. precombat main
 src/components/TimeTravelPanel.tsx     Walks through N passes of the Time Travel keyword action
-src/components/CommanderTaxModal.tsx   Per-commander tax tracker, opened from a portrait in the header
+src/components/CommanderTaxModal.tsx   Per-commander tax tracker, opened from a portrait or field tile
 src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
 src/components/ThemeToggle.tsx         Switches between the two themes
 src/components/AboutModal.tsx          Version, credits, and repo/changelog links

@@ -12,7 +12,17 @@ export function loadState(): GameState | null {
     if (!Array.isArray(parsed.log)) parsed.log = [];
     // Games saved before commander tax/Bad Wolf tracking won't have this field.
     if (!parsed.commanders) {
-      parsed.commanders = { tenthDoctor: { castCount: 0 }, roseTyler: { castCount: 0, timeCounters: 0 } };
+      parsed.commanders = {
+        tenthDoctor: { castCount: 0, onBattlefield: false },
+        roseTyler: { castCount: 0, timeCounters: 0, onBattlefield: false },
+      };
+    }
+    // Games saved before a commander's battlefield presence was tracked won't have this field.
+    if (typeof parsed.commanders.tenthDoctor.onBattlefield !== 'boolean') {
+      parsed.commanders.tenthDoctor.onBattlefield = false;
+    }
+    if (typeof parsed.commanders.roseTyler.onBattlefield !== 'boolean') {
+      parsed.commanders.roseTyler.onBattlefield = false;
     }
     return parsed;
   } catch {

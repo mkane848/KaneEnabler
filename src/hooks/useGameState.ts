@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type {
   CardData,
+  CommanderId,
   Commanders,
   Direction,
   GameState,
@@ -9,12 +10,13 @@ import type {
   TrackedCard,
   TurnChange,
 } from '../types';
+import { COMMANDER_NAME } from '../utils/commanders';
 import { MECHANIC_LABEL, defaultResolveNote, newlyTriggeredChapters, usesTimeCounters } from '../utils/counters';
 import { clearState, loadState, saveState } from '../utils/storage';
 
 const INITIAL_COMMANDERS: Commanders = {
-  tenthDoctor: { castCount: 0 },
-  roseTyler: { castCount: 0, timeCounters: 0 },
+  tenthDoctor: { castCount: 0, onBattlefield: false },
+  roseTyler: { castCount: 0, timeCounters: 0, onBattlefield: false },
 };
 
 const INITIAL_STATE: GameState = { turn: 1, cards: [], log: [], commanders: INITIAL_COMMANDERS };
@@ -359,13 +361,14 @@ export function useGameState() {
    * Records a cast of a commander from the command zone — the only thing
    * that increases its tax (rule 903.10): +{2} for each *previous* cast
    * this game, so the number shown after this call is what the *next* cast
-   * will add.
+   * will add. Casting always puts the commander onto the battlefield, so it
+   * now shows up as a card on the board until it leaves again.
    */
-  const castCommander = useCallback((id: 'tenthDoctor' | 'roseTyler') => {
+  const castCommander = useCallback((id: CommanderId) => {
     setTracker(prev => {
       const commander = prev.game.commanders[id];
       const castCount = commander.castCount + 1;
-      const name = id === 'tenthDoctor' ? 'The Tenth Doctor' : 'Rose Tyler';
+      const name = COMMANDER_NAME[id];
       const log = appendLog(prev.game.log, {
         turn: prev.game.turn,
         title: 'Cast from command zone',
@@ -373,7 +376,38 @@ export function useGameState() {
       });
       return {
         ...prev,
-        game: { ...prev.game, commanders: { ...prev.game.commanders, [id]: { ...commander, castCount } }, log },
+        game: {
+          ...prev.game,
+          commanders: { ...prev.game.commanders, [id]: { ...commander, castCount, onBattlefield: true } },
+          log,
+        },
+      };
+    });
+  }, []);
+
+  /**
+   * A commander leaving the battlefield for the command zone is a choice
+   * the owner makes, not something rules-forced — this app just tracks that
+   * it happened. Unlike castCommander, this never touches castCount: the
+   * command-zone tax (rule 903.10) accumulates for the whole game and isn't
+   * reset by zone changes.
+   */
+  const returnCommanderToCommandZone = useCallback((id: CommanderId) => {
+    setTracker(prev => {
+      const commander = prev.game.commanders[id];
+      if (!commander.onBattlefield) return prev;
+      const log = appendLog(prev.game.log, {
+        turn: prev.game.turn,
+        title: 'Returned to command zone',
+        detail: `${COMMANDER_NAME[id]} left the battlefield for the command zone.`,
+      });
+      return {
+        ...prev,
+        game: {
+          ...prev.game,
+          commanders: { ...prev.game.commanders, [id]: { ...commander, onBattlefield: false } },
+          log,
+        },
       };
     });
   }, []);
@@ -451,6 +485,7 @@ export function useGameState() {
     applyTimeTravel,
     dismissUpkeep,
     castCommander,
+    returnCommanderToCommandZone,
     adjustRoseTimeCounters,
     roseAttacks,
     resetGame,

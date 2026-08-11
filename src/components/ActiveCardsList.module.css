@@ -32,6 +32,12 @@
   color: var(--color-accent);
 }
 
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 0.6rem;
+}
+
 .empty {
   text-align: center;
   padding: 3rem 1rem;

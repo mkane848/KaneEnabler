@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import CommanderBanner from './CommanderBanner';
-import type { CommanderId } from './CommanderTaxModal';
+import type { CommanderId } from '../types';
 import ThemeToggle from './ThemeToggle';
 import styles from './Header.module.css';
 

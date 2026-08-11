@@ -4,13 +4,21 @@ import { clearState, loadState, saveState } from './storage';
 
 const KEY = 'mtg-time-tracker:game-state:v1';
 
+const FRESH_COMMANDERS = {
+  tenthDoctor: { castCount: 0, onBattlefield: false },
+  roseTyler: { castCount: 0, timeCounters: 0, onBattlefield: false },
+};
+
 describe('storage', () => {
   it('round-trips a saved game state', () => {
     const state: GameState = {
       turn: 5,
       cards: [],
       log: [],
-      commanders: { tenthDoctor: { castCount: 1 }, roseTyler: { castCount: 0, timeCounters: 2 } },
+      commanders: {
+        tenthDoctor: { castCount: 1, onBattlefield: true },
+        roseTyler: { castCount: 0, timeCounters: 2, onBattlefield: false },
+      },
     };
     saveState(state);
     expect(loadState()).toEqual(state);
@@ -31,7 +39,23 @@ describe('storage', () => {
       turn: 2,
       cards: [],
       log: [],
-      commanders: { tenthDoctor: { castCount: 0 }, roseTyler: { castCount: 0, timeCounters: 0 } },
+      commanders: FRESH_COMMANDERS,
+    });
+  });
+
+  it('defaults onBattlefield for saves from before commander battlefield presence was tracked', () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        turn: 3,
+        cards: [],
+        log: [],
+        commanders: { tenthDoctor: { castCount: 2 }, roseTyler: { castCount: 1, timeCounters: 3 } },
+      }),
+    );
+    expect(loadState()?.commanders).toEqual({
+      tenthDoctor: { castCount: 2, onBattlefield: false },
+      roseTyler: { castCount: 1, timeCounters: 3, onBattlefield: false },
     });
   });
 
@@ -41,14 +65,14 @@ describe('storage', () => {
       JSON.stringify({
         turn: 1,
         cards: [],
-        commanders: { tenthDoctor: { castCount: 0 }, roseTyler: { castCount: 0, timeCounters: 0 } },
+        commanders: FRESH_COMMANDERS,
       }),
     );
     expect(loadState()?.log).toEqual([]);
   });
 
   it('clearState removes the saved game', () => {
-    saveState({ turn: 1, cards: [], log: [], commanders: { tenthDoctor: { castCount: 0 }, roseTyler: { castCount: 0, timeCounters: 0 } } });
+    saveState({ turn: 1, cards: [], log: [], commanders: FRESH_COMMANDERS });
     clearState();
     expect(loadState()).toBeNull();
   });

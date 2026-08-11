@@ -49,7 +49,10 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
   }
 
   return (
-    <div className={`${styles.tile} ${isReady ? styles.tileReady : ''}`}>
+    <div
+      className={`${styles.tile} ${isReady ? styles.tileReady : ''}`}
+      style={{ ['--tile-accent' as string]: color }}
+    >
       <button
         type="button"
         className={styles.artButton}
