@@ -1,0 +1,6 @@
+[submodule "HardlyKnowHer"]
+	path = HardlyKnowHer
+	url = https://github.com/mkane848/HardlyKnowHer
+[submodule "DrWhoCompanionEDH"]
+	path = DrWhoCompanionEDH
+	url = https://github.com/mkane848/DrWhoCompanionEDH
