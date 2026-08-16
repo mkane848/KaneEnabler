@@ -152,6 +152,24 @@ function faceField(card, field) {
   return undefined;
 }
 
+/**
+ * The front face's own value for a field, falling back to the top-level
+ * field for single-faced cards. Unlike faceField, this never combines both
+ * faces — mana cost is a per-face characteristic, and a modal DFC is cast
+ * as one face or the other, never both, so joining "{1}{G}" and "{3}{G}{G}"
+ * into "{1}{G} // {3}{G}{G}" produced five pips for what should show one
+ * cost. Same front-face principle as commander eligibility elsewhere in
+ * this codebase (CR 712.4): a card outside the battlefield is its front
+ * face only.
+ */
+function frontFaceField(card, field) {
+  if (card[field] !== undefined) return card[field];
+  if (Array.isArray(card.card_faces) && card.card_faces.length > 0) {
+    return card.card_faces[0][field];
+  }
+  return undefined;
+}
+
 function imageSmall(card) {
   if (card.image_uris?.small) return card.image_uris.small;
   if (Array.isArray(card.card_faces) && card.card_faces[0]?.image_uris?.small) {
@@ -165,13 +183,13 @@ function imageSmall(card) {
  * sizes were dropped after an audit showed nothing rendered them; across
  * ~16k cards those add up to megabytes of dead payload.
  */
-function toCardData(card) {
+export function toCardData(card) {
   const oracleText = faceField(card, 'oracle_text');
   const out = {
     id: card.id,
     name: card.name,
     typeLine: card.type_line,
-    manaCost: faceField(card, 'mana_cost') || '',
+    manaCost: frontFaceField(card, 'mana_cost') || '',
     colorIdentity: card.color_identity ?? [],
   };
   const img = imageSmall(card);
@@ -226,7 +244,11 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nfetch-cards failed:', err.message);
-  process.exit(1);
-});
+// Only run the fetch when this file is executed directly (npm run fetch-cards),
+// not when a test imports its pure functions (toCardData, etc.).
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error('\nfetch-cards failed:', err.message);
+    process.exit(1);
+  });
+}

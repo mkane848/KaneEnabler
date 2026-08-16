@@ -38,6 +38,16 @@ this project follows [Semantic Versioning](https://semver.org/).
   stayed clickable. Both Suspend and Vanishing cards now drop off the
   target list entirely once they're out of counters, instead of sitting
   there with only half their buttons disabled.
+- **A modal double-faced card's mana cost could show up to five pips
+  instead of one.** `scripts/fetch-card-data.mjs` fell back to joining
+  both faces' mana costs with " // " when a card had none at the top
+  level — which every modal DFC doesn't, since it's cast as one face or
+  the other, never both. `"{1}{G} // {3}{G}{G}"` then read as five
+  separate symbols to the mana-cost renderer. Now takes the front face's
+  own cost only, the same front-face principle already used for commander
+  eligibility elsewhere in this project's sibling app. Takes effect on the
+  next `pnpm run fetch-cards`; the committed catalog is unaffected until
+  then, since this environment can't reach Scryfall's bulk data.
 
 ## [1.2.0] - 2026-08-11
 
