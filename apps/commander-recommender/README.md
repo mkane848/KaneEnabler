@@ -67,20 +67,22 @@ in the API response; only its display is switched off (see
 
 ## Setup
 
+This app lives in the `KaneEnabler` monorepo and is installed/run via pnpm from the
+**repo root** — see [`../../CLAUDE.md`](../../CLAUDE.md) for the full command reference.
+
 ### 1. Install dependencies
 
 ```bash
-npm install
-npm run install:all
+pnpm install
 ```
 
-(`install:all` runs `npm install` in both `server/` and `client/`; the root
-`npm install` is just for the `concurrently` dev script.)
+(Installs the whole workspace from the root `pnpm-lock.yaml` — there's no separate
+per-app install step.)
 
 ### 2. Get the Scryfall card data
 
 ```bash
-cd server && npm run prepare-data
+cd server && pnpm run prepare-data
 ```
 
 This downloads Scryfall's **Oracle Cards** bulk file (~25MB gzipped, one entry
@@ -93,7 +95,7 @@ reuses what's on disk and tells you how old it is, so iterating locally
 doesn't mean pulling the file every time. To force a fresh pull:
 
 ```bash
-npm run prepare-data:fresh
+pnpm run prepare-data:fresh
 ```
 
 You rarely need to. Scryfall regenerates the file roughly daily, but the
@@ -109,27 +111,29 @@ copy is never stale.
 ### 3. Run the app
 
 ```bash
-npm run dev
+pnpm --filter mtg-recommender-server dev
+pnpm --filter mtg-recommender-client dev
 ```
 
-This starts the Express API on `http://localhost:4000` and the Vite dev
-server on `http://localhost:5173` (which proxies `/api` to the backend).
-Open `http://localhost:5173`.
+(Or both at once via `pnpm dev` from the repo root, which starts every app's dev
+server concurrently.) This starts the Express API on `http://localhost:4000` and
+the Vite dev server on `http://localhost:5173` (which proxies `/api` to the
+backend). Open `http://localhost:5173`.
 
 ### 4. Run the tests
 
 ```bash
-cd server && npm test
-cd client && npm test
+cd server && pnpm test
+cd client && pnpm test
 ```
 
-Both are dependency-free (`node:assert` + [`tsx`](https://github.com/privatenumber/tsx),
-no test framework) and run in a few seconds. See each `scripts/test-*.ts`
-file for what's covered — deck-list parsing, Commander Spellbook response
-normalisation, Bracket estimation, Partner/Background pairing, and the
-scoring engine (including the union-across-a-pair semantics) on the server;
-color ordering, the "still has supporting cards" display filter, filter-bar
-matching, and sort ordering on the client.
+Both run on [Vitest](https://vitest.dev) and run in a few seconds. See each
+`src/services/*.test.ts` / `src/lib/*.test.ts` file for what's covered — deck-list
+parsing, Commander Spellbook response normalisation, Bracket estimation,
+Partner/Background pairing, and the scoring engine (including the
+union-across-a-pair semantics) on the server; color ordering, the "still has
+supporting cards" display filter, filter-bar matching, and sort ordering on the
+client.
 
 ## Card list format
 
@@ -303,10 +307,10 @@ client/                     Vite + React + TS + Zustand + TanStack Query/Table
   src/
     api/                       fetchRecommendations/fetchCombos, wakeServer, TanStack Query hooks
     components/                 CommanderCard, filters, dialogs, upload panel, About panel
-    lib/                         WUBRG ordering, filter/sort logic, "visible support" helpers
+    lib/                         WUBRG ordering, filter/sort logic, "visible support" helpers;
+                                  *.test.ts colocated here (Vitest)
     store/                       client-only state (textarea contents, dismissals)
     types/                       DTOs mirroring the server's response shape
-  scripts/                     npm test — dependency-free node:assert + tsx test files
 
 server/                     Express + TS + better-sqlite3
   src/
@@ -318,12 +322,15 @@ server/                     Express + TS + better-sqlite3
       synergy.ts                  Collection profiling + commander scoring
       bracket.ts                  Bracket estimate heuristic
       spellbook.ts                Commander Spellbook adapter (cache, backoff, normalisation)
+      *.test.ts                    Vitest, colocated next to what each file covers
   scripts/
     fetch-scryfall.ts           Downloads the Oracle Cards bulk file (skips if recent)
     import-scryfall.ts          Seeds cards.sqlite from the downloaded bulk file
-    test-*.ts                    npm test — dependency-free node:assert + tsx test files
   data/                         (gitignored) oracle-cards.jsonl + cards.sqlite live here
 ```
+
+See [`../../docs/commander-recommender.md`](../../docs/commander-recommender.md) for the full,
+kept-current file map.
 
 ## Deploying
 
@@ -341,7 +348,7 @@ See [`DEPLOY.md`](./DEPLOY.md) for a free, one-click Render setup (the repo's
   `amplifies`) is provisional. It has no way to express "enables" — Goblin
   Sharpshooter combos with any sacrifice outlet, but contains no loop of its
   own, and is currently filed only as a creature-death payoff. See
-  `handoff.md`.
+  [`../../docs/commander-recommender.md`](../../docs/commander-recommender.md).
 - Changelings are every creature type by rule, but their type line reads
   `Creature — Shapeshifter`, so they won't count toward any kindred signal.
 - Suggestions have no minimum score — a commander with one bare-minimum
@@ -354,20 +361,20 @@ See [`DEPLOY.md`](./DEPLOY.md) for a free, one-click Render setup (the repo's
   fuzzy-match fallback would be a good next step.
 - EDHREC integration is not implemented — see the EDHRec placeholder button
   above.
-- `better-sqlite3` is a native module. `npm install` should fetch a
-  prebuilt binary for most platforms; if it tries to compile from source
-  and fails, you'll need a C++ toolchain (Xcode Command Line Tools on
-  macOS, `build-essential` on Linux, or the "Desktop development with C++"
-  workload on Windows).
+- `better-sqlite3` is a native module and ships prebuilt binaries for the common
+  platforms (no compilation needed in the normal case); if `pnpm install` ever
+  falls back to compiling from source and fails, you'll need a C++ toolchain
+  (Xcode Command Line Tools on macOS, `build-essential` on Linux, or the
+  "Desktop development with C++" workload on Windows).
 
 ## Contributing
 
 This started as a solo hobby project — issues and pull requests are
-welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup and
-conventions, and [`handoff.md`](./handoff.md) for the fuller design
-rationale and known risk areas if you're picking up unfamiliar parts of the
-codebase. `CHANGELOG.md` tracks notable changes; please add an entry under
-`[Unreleased]` alongside any user-facing change.
+welcome. See [`CLAUDE.md`](./CLAUDE.md) for dev setup and conventions, and
+[`../../docs/commander-recommender.md`](../../docs/commander-recommender.md)
+for the fuller design rationale and known risk areas if you're picking up
+unfamiliar parts of the codebase. `CHANGELOG.md` tracks notable changes;
+please add an entry under `[Unreleased]` alongside any user-facing change.
 
 ## License
 

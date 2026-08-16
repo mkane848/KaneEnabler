@@ -37,7 +37,7 @@ Two records track this, deliberately separate:
 They can legitimately disagree: a download that hasn't been imported yet.
 Merging them would make that state unrepresentable.
 
-With both current, `npm run prepare-data` takes ~2s and transfers almost
+With both current, `pnpm run prepare-data` takes ~2s and transfers almost
 nothing. `--force` overrides either step.
 
 > **`IMPORT_VERSION` in `src/services/dataSnapshot.ts` must be bumped whenever

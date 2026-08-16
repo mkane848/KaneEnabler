@@ -9,26 +9,33 @@ deck built around **The Tenth Doctor // Rose Tyler** as partner commanders.
 No backend — card data is a static JSON file built at build time from
 Scryfall's bulk data, and all game state lives in the browser's
 `localStorage`. React 19 + TypeScript + Vite, CSS Modules for styling, no
-component library, no test framework configured.
+component library.
 
 Read `README.md` first — it documents the product behavior (Next Turn vs.
 Time Travel, themes, counter mechanics, project layout table) in more
 depth than this file repeats. This file is about how to work in the code,
-not what the code does.
+not what the code does. This app lives in the `KaneEnabler` monorepo;
+[`../../CLAUDE.md`](../../CLAUDE.md) covers workspace-wide commands and
+conventions this file doesn't repeat.
 
 ## Commands
 
-- `npm run dev` — local dev server (runs `ensure-catalog` first, which
+Run from `apps/time-counters/`, or via `pnpm --filter mtg-time-tracker <script>`
+from the repo root.
+
+- `pnpm run dev` — local dev server (runs `ensure-catalog` first, which
   seeds `public/cards.json` from `scripts/seed-cards.json` if it's missing)
-- `npm run build` — `tsc -b && vite build`; treat a failing typecheck as a
-  real error, not noise — `strict`, `noUnusedLocals`, and
-  `noUnusedParameters` are all on in `tsconfig.json`
-- `npm run fetch-cards` — rebuilds the real card catalog from Scryfall
+- `pnpm run build` — `tsc -b && vite build`; treat a failing typecheck as a
+  real error, not noise — `strict`, `noUnusedLocals`, `noUnusedParameters`,
+  and `noUncheckedIndexedAccess` are all on in `tsconfig.json`
+- `pnpm run fetch-cards` — rebuilds the real card catalog from Scryfall
   (network access required; not available in this environment — see
   README's "About the decklist scan")
-- `npm test` — runs the Vitest suite once (`npm run test:watch` for watch
-  mode). No linter is configured. `.github/workflows/ci.yml` runs
-  `npm run build` and `npm test` on every push/PR so a broken build or
+- `pnpm run lint` — ESLint (`packages/config/eslint.react.js`; no
+  type-aware rules — see that package for why)
+- `pnpm test` — runs the Vitest suite once (`pnpm run test:watch` for watch
+  mode). `.github/workflows/ci.yml` (root-level, shared with the other app)
+  runs the full turbo pipeline on every push/PR so a broken build or
   failing test shows up before Render attempts a deploy.
 - Tests live next to what they cover (`*.test.ts`/`*.test.tsx`), using
   Vitest + `@testing-library/react` in jsdom (`vitest.config.ts`,
@@ -37,8 +44,8 @@ not what the code does.
   helpers directly; `src/hooks/useGameState.test.ts` exercises the mutation
   logic via `renderHook`; `src/App.test.tsx` is a smoke test that mounts
   the whole app (with `fetch` stubbed) to catch render-breaking regressions
-  no unit test would. Verify changes by running `npm run build` (typecheck),
-  `npm test`, and exercising the UI in a browser.
+  no unit test would. Verify changes by running `pnpm run build` (typecheck),
+  `pnpm test`, and exercising the UI in a browser.
 
 ## Architecture
 

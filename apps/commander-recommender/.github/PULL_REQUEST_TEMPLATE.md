@@ -4,9 +4,9 @@
 
 ## Testing
 
-- [ ] `npm test` passes in `server/`
-- [ ] `npm test` passes in `client/`
-- [ ] Typechecks clean (`npm run build` or `tsc --noEmit`/`tsc -b`) in both
+- [ ] `pnpm test` passes in `server/`
+- [ ] `pnpm test` passes in `client/`
+- [ ] Typechecks clean (`pnpm run typecheck` or `tsc`/`tsc -b`) in both
 - [ ] Ran the app and checked the actual change, not just the type/test checks
 - [ ] Added/updated a `CHANGELOG.md` entry under `[Unreleased]` (for
       user-facing changes)

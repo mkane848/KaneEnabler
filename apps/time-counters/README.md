@@ -97,10 +97,13 @@ time from Scryfall's bulk data, and game state lives in your browser's
 
 ## Setup
 
+This app lives in the `KaneEnabler` monorepo — `pnpm install` at the repo root installs
+the whole workspace (see [`../../CLAUDE.md`](../../CLAUDE.md)).
+
 ```bash
-npm install
-npm run fetch-cards   # pulls the full Jeskai card pool — see below
-npm run dev
+pnpm install
+pnpm run fetch-cards   # pulls the full Jeskai card pool — see below
+pnpm run dev
 ```
 
 ## The card catalog
@@ -111,7 +114,7 @@ this deck's commanders. Anything outside that identity is filtered out at
 generation time and again when the app loads, so an off-color card can
 never appear in the picker.
 
-`npm run fetch-cards` builds that catalog: it downloads Scryfall's Oracle
+`pnpm run fetch-cards` builds that catalog: it downloads Scryfall's Oracle
 Cards bulk file, keeps the cards that are Commander-legal and Jeskai, and
 writes `public/cards.json`. It's a build step — the running app never calls
 the Scryfall API itself.
@@ -126,19 +129,21 @@ A few things worth knowing about the shape of that file:
 - Only the fields the UI reads are kept. Oracle text in particular is stored
   just for cards with a time-counter mechanic, since that is the only thing
   that reads it — which drops several megabytes.
-- The repo commits a five-card seed so `npm run dev` works before you have
+- The repo commits a five-card seed so `pnpm run dev` works before you have
   ever run `fetch-cards`. Render regenerates the real catalog on every
   deploy (see `render.yaml`), and `fetch-cards` fails the build loudly
   rather than quietly shipping that seed.
 
 ## Scripts
 
-| Command               | What it does                                      |
-| --------------------- | ------------------------------------------------- |
-| `npm run dev`         | Start the local dev server                        |
-| `npm run build`       | Type-check and build a static bundle into `dist/` |
-| `npm run preview`     | Preview the production build locally              |
-| `npm run fetch-cards` | Rebuild `public/cards.json` from Scryfall         |
+| Command                | What it does                                      |
+| ---------------------- | ------------------------------------------------- |
+| `pnpm run dev`         | Start the local dev server                        |
+| `pnpm run build`       | Type-check and build a static bundle into `dist/` |
+| `pnpm run preview`     | Preview the production build locally              |
+| `pnpm run fetch-cards` | Rebuild `public/cards.json` from Scryfall         |
+| `pnpm run lint`        | ESLint                                            |
+| `pnpm test`            | Run the Vitest suite once                         |
 
 ## Project layout
 
@@ -296,12 +301,12 @@ Clocktower**, **The Pandorica**, and **Jhoira's Timebug** have names or
 flavor that suggest a time-counter connection, but I don't have their exact
 oracle text confirmed. None of this blocks the deck from working today: the
 Custom mechanic handles anything the built-in detection doesn't recognize,
-and `npm run fetch-cards` with real network access will pull the actual
+and `pnpm run fetch-cards` with real network access will pull the actual
 text for all of these and let auto-detection take over properly.
 
 ## Deploying
 
-`npm run build` produces a static `dist/` folder — drop it on any static
+`pnpm run build` produces a static `dist/` folder — drop it on any static
 host (Vercel, Netlify, GitHub Pages, a spare S3 bucket, etc.). There's
 nothing server-side to configure.
 
