@@ -81,8 +81,8 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   against a different pasted list would be surprising, but a page-size choice should outlive the
   tab.
 - **`client/src/lib/mtg.ts`** — WUBRG ordering and color-identity naming ("Golgari", never
-  "Black/Green"). **`client/src/lib/manaSymbols.ts`** — inlined SVG mana glyph paths (see
-  `docs/rules-audit.md` item 16 — this file is a Phase 2 migration target for `@mtg/mana`).
+  "Black/Green"). Mana glyph paths and cost parsing live in `@mtg/mana` (`packages/mana`), shared
+  with the sibling app — this client has no `manaSymbols.ts` of its own anymore.
 - A suggestion is a `CommanderUnit` (1-2 `CardRow`s), not a single card — every DTO, filter, and
   sort in the client threads through that union, not a flattened card.
 

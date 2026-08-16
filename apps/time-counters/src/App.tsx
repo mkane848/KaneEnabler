@@ -107,7 +107,6 @@ export default function App() {
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
       {openCommander && (
         <CommanderTaxModal
-          commanderId={openCommander.id}
           name={COMMANDER_NAME[openCommander.id]}
           imageSmall={openCommander.imageSmall}
           castCount={state.commanders[openCommander.id].castCount}

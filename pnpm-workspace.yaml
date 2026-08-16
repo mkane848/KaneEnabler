@@ -10,6 +10,7 @@ allowBuilds:
 # Phase 1 (docs/handoff.md): one declared version per shared dependency
 # instead of hand-synchronised copies drifting apart across packages.
 catalog:
+  '@radix-ui/react-dialog': ^1.1.23
   '@testing-library/jest-dom': ^6.9.1
   '@testing-library/react': ^16.3.2
   '@types/node': ^22.18.0

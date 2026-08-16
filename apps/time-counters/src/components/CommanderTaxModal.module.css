@@ -4,13 +4,21 @@
   background: rgba(6, 7, 20, 0.55);
   backdrop-filter: blur(2px);
   z-index: 50;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
 }
 
+/*
+ * Radix portals Dialog.Overlay and Dialog.Content as siblings, not
+ * parent/child, so .sheet positions itself instead of relying on
+ * .backdrop's old flex centering — the standard "center a fixed element of
+ * unknown width" trick (left: 50% + translateX(-50%) works for both the
+ * 100%-wide and max-width-capped cases).
+ */
 .sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 51;
+  transform: translateX(-50%);
   width: 100%;
   max-width: 640px;
   background: var(--color-surface);
@@ -26,11 +34,11 @@
 
 @keyframes slideUp {
   from {
-    transform: translateY(24px);
+    transform: translateX(-50%) translateY(24px);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
     opacity: 1;
   }
 }

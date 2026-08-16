@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@radix-ui/react-dialog':
+      specifier: ^1.1.23
+      version: 1.1.23
     '@testing-library/jest-dom':
       specifier: ^6.9.1
       version: 6.9.1
@@ -75,7 +78,7 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/mana
       '@radix-ui/react-dialog':
-        specifier: ^1.1.23
+        specifier: 'catalog:'
         version: 1.1.23(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@radix-ui/react-hover-card':
         specifier: ^1.1.23
@@ -175,6 +178,9 @@ importers:
       '@mtg/mana':
         specifier: workspace:*
         version: link:../../packages/mana
+      '@mtg/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       react:
         specifier: 'catalog:'
         version: 19.2.8
@@ -261,6 +267,49 @@ importers:
       mana-font:
         specifier: 1.18.0
         version: 1.18.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.10(@types/node@22.20.1)(jsdom@27.4.0)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(tsx@4.23.12))
+
+  packages/ui:
+    dependencies:
+      '@radix-ui/react-dialog':
+        specifier: 'catalog:'
+        version: 1.1.23(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+    devDependencies:
+      '@mtg/config':
+        specifier: workspace:*
+        version: link:../config
+      '@testing-library/jest-dom':
+        specifier: 'catalog:'
+        version: 6.9.1
+      '@testing-library/react':
+        specifier: 'catalog:'
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.4(@types/react@19.2.18)
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5
+      globals:
+        specifier: ^15.14.0
+        version: 15.15.0
+      jsdom:
+        specifier: 'catalog:'
+        version: 27.4.0
+      react:
+        specifier: 'catalog:'
+        version: 19.2.8
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.8(react@19.2.8)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

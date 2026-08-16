@@ -48,6 +48,15 @@ this project follows [Semantic Versioning](https://semver.org/).
   eligibility elsewhere in this project's sibling app. Takes effect on the
   next `pnpm run fetch-cards`; the committed catalog is unaffected until
   then, since this environment can't reach Scryfall's bulk data.
+- **The five modal panels (Commander tax, Time Travel, Game Log, Turn
+  summary, About) now trap focus, restore it on close, and close on
+  Escape.** Each was a hand-rolled backdrop and dialog pair that asserted
+  `aria-modal="true"` without enforcing it: Tab could reach the page behind
+  an open dialog, closing one left focus stranded with nowhere to go, and
+  there was no keyboard way to dismiss one at all. All five now share
+  `@mtg/ui`'s `Modal` component (built on Radix Dialog), which also adds
+  scroll lock behind an open dialog — previously the page could scroll out
+  from under it.
 
 ## [1.2.0] - 2026-08-11
 

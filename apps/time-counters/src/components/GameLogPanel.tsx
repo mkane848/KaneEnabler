@@ -1,3 +1,4 @@
+import { Modal, ModalClose, ModalTitle } from '@mtg/ui';
 import type { LogEntry, Mechanic } from '../types';
 import { MECHANIC_COLOR, MECHANIC_LABEL } from '../utils/counters';
 import styles from './GameLogPanel.module.css';
@@ -42,66 +43,60 @@ export default function GameLogPanel({ log, currentTurn, onClose }: GameLogPanel
   const groups = groupByTurn(log);
 
   return (
-    <div className={styles.backdrop} onClick={onClose} role="presentation">
-      <div
-        className={styles.drawer}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="game-log-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className={styles.header}>
-          <h2 id="game-log-title" className={styles.title}>
-            Game Log
-          </h2>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+    <Modal onClose={onClose} overlayClassName={styles.backdrop} contentClassName={styles.drawer}>
+      <div className={styles.header}>
+        <ModalTitle asChild>
+          <h2 className={styles.title}>Game Log</h2>
+        </ModalTitle>
+        <ModalClose asChild>
+          <button type="button" className="btn btn-ghost btn-sm">
             Close
           </button>
-        </div>
-
-        {groups.length === 0 ? (
-          <p className={styles.empty}>
-            Nothing logged yet — actions you take show up here as you play.
-          </p>
-        ) : (
-          <div className={styles.groups}>
-            {groups.map((group) => (
-              <section key={group.turn} className={styles.group}>
-                <h3 className={styles.turnHeading}>
-                  Turn {group.turn}
-                  {group.turn === currentTurn && <span className={styles.currentTag}>current</span>}
-                </h3>
-                <div className={styles.entries}>
-                  {group.entries.map((entry) => (
-                    <div key={entry.id} className={styles.entry}>
-                      <div className={styles.entryTitle}>{entry.title}</div>
-                      {entry.changes && entry.changes.length > 0 ? (
-                        <ul className={styles.changeList}>
-                          {entry.changes.map((c, i) => (
-                            <li key={i} className={styles.changeRow}>
-                              <span
-                                className={styles.changeDot}
-                                style={{ background: mechanicColor(c.mechanic) }}
-                                title={MECHANIC_LABEL[c.mechanic]}
-                              />
-                              <span className={styles.changeName}>{c.name}</span>
-                              <span className={styles.changeValue}>
-                                {c.from} → {c.to}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        entry.detail && <p className={styles.entryDetail}>{entry.detail}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+        </ModalClose>
       </div>
-    </div>
+
+      {groups.length === 0 ? (
+        <p className={styles.empty}>
+          Nothing logged yet — actions you take show up here as you play.
+        </p>
+      ) : (
+        <div className={styles.groups}>
+          {groups.map((group) => (
+            <section key={group.turn} className={styles.group}>
+              <h3 className={styles.turnHeading}>
+                Turn {group.turn}
+                {group.turn === currentTurn && <span className={styles.currentTag}>current</span>}
+              </h3>
+              <div className={styles.entries}>
+                {group.entries.map((entry) => (
+                  <div key={entry.id} className={styles.entry}>
+                    <div className={styles.entryTitle}>{entry.title}</div>
+                    {entry.changes && entry.changes.length > 0 ? (
+                      <ul className={styles.changeList}>
+                        {entry.changes.map((c, i) => (
+                          <li key={i} className={styles.changeRow}>
+                            <span
+                              className={styles.changeDot}
+                              style={{ background: mechanicColor(c.mechanic) }}
+                              title={MECHANIC_LABEL[c.mechanic]}
+                            />
+                            <span className={styles.changeName}>{c.name}</span>
+                            <span className={styles.changeValue}>
+                              {c.from} → {c.to}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      entry.detail && <p className={styles.entryDetail}>{entry.detail}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </Modal>
   );
 }

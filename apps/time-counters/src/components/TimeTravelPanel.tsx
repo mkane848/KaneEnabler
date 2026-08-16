@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Modal, ModalClose, ModalTitle } from '@mtg/ui';
 import type { Mechanic, RoseTylerState, TrackedCard } from '../types';
 import type { TimeTravelTargetId } from '../hooks/useGameState';
 import { MECHANIC_COLOR, MECHANIC_LABEL, usesTimeCounters } from '../utils/counters';
@@ -128,137 +129,135 @@ export default function TimeTravelPanel({
   const isLastPass = remaining <= 0;
 
   return (
-    <div className={styles.backdrop} onClick={onClose} role="presentation">
-      <div
-        className={styles.sheet}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="time-travel-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {stage === 'setup' ? (
-          <form onSubmit={startPasses}>
-            <div className={styles.header}>
-              <h2 id="time-travel-title" className={styles.title}>
-                Time Travel
-              </h2>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+    <Modal onClose={onClose} overlayClassName={styles.backdrop} contentClassName={styles.sheet}>
+      {stage === 'setup' ? (
+        <form onSubmit={startPasses}>
+          <div className={styles.header}>
+            <ModalTitle asChild>
+              <h2 className={styles.title}>Time Travel</h2>
+            </ModalTitle>
+            <ModalClose asChild>
+              <button type="button" className="btn btn-ghost btn-sm">
                 Cancel
               </button>
-            </div>
-            <p className={styles.subtitle}>
-              For each card, you may add or remove one time counter. How many times are you
-              resolving Time Travel?
-            </p>
-            <label className={styles.fieldLabel} htmlFor="times-count">
-              Number of times
-            </label>
-            <input
-              id="times-count"
-              autoFocus
-              className="input"
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={timesDraft}
-              onChange={(e) => setTimesDraft(e.target.value)}
-            />
-            <div className={styles.actions}>
-              <button type="submit" className="btn btn-primary">
-                Start
-              </button>
-            </div>
-          </form>
-        ) : (
-          <>
-            <div className={styles.header}>
-              <h2 id="time-travel-title" className={styles.title}>
+            </ModalClose>
+          </div>
+          <p className={styles.subtitle}>
+            For each card, you may add or remove one time counter. How many times are you resolving
+            Time Travel?
+          </p>
+          <label className={styles.fieldLabel} htmlFor="times-count">
+            Number of times
+          </label>
+          <input
+            id="times-count"
+            autoFocus
+            className="input"
+            type="number"
+            min={1}
+            inputMode="numeric"
+            value={timesDraft}
+            onChange={(e) => setTimesDraft(e.target.value)}
+          />
+          <div className={styles.actions}>
+            <button type="submit" className="btn btn-primary">
+              Start
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <div className={styles.header}>
+            <ModalTitle asChild>
+              <h2 className={styles.title}>
                 Time Travel — pass {currentPass} of {totalPasses}
               </h2>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+            </ModalTitle>
+            <ModalClose asChild>
+              <button type="button" className="btn btn-ghost btn-sm">
                 Stop here
               </button>
-            </div>
-            <p className={styles.subtitle}>
-              {isLastPass
-                ? 'Last pass.'
-                : `${remaining} more pass${remaining === 1 ? '' : 'es'} after this one.`}
-            </p>
+            </ModalClose>
+          </div>
+          <p className={styles.subtitle}>
+            {isLastPass
+              ? 'Last pass.'
+              : `${remaining} more pass${remaining === 1 ? '' : 'es'} after this one.`}
+          </p>
 
-            <div className={styles.list}>
-              {targets.length === 0 && (
-                <p className={styles.subtitle}>
-                  No suspended cards, Vanishing permanents, or Bad Wolf counters to choose from
-                  right now.
-                </p>
-              )}
-              {targets.map((target) => {
-                const color = MECHANIC_COLOR[target.mechanic];
-                const choice = choices[target.id] ?? 0;
-                const canRemove = target.count > 0;
-                const canAdd = !(
-                  target.direction === 'increment' &&
-                  target.targetCount != null &&
-                  target.count >= target.targetCount
-                );
+          <div className={styles.list}>
+            {targets.length === 0 && (
+              <p className={styles.subtitle}>
+                No suspended cards, Vanishing permanents, or Bad Wolf counters to choose from right
+                now.
+              </p>
+            )}
+            {targets.map((target) => {
+              const color = MECHANIC_COLOR[target.mechanic];
+              const choice = choices[target.id] ?? 0;
+              const canRemove = target.count > 0;
+              const canAdd = !(
+                target.direction === 'increment' &&
+                target.targetCount != null &&
+                target.count >= target.targetCount
+              );
 
-                return (
-                  <div key={target.id} className={styles.row}>
-                    <div className={styles.rowMeta}>
-                      <div className={styles.name}>{target.name}</div>
-                      <span className={styles.tag} style={{ ['--tag-color' as string]: color }}>
-                        {target.label}
-                      </span>
-                    </div>
-                    <div className={styles.rowRight}>
-                      <span className={styles.preview}>
-                        {choice !== 0 ? `${target.count} → ${target.count + choice}` : target.count}
-                      </span>
-                      <div className={styles.choiceRow}>
-                        <button
-                          type="button"
-                          className={`${styles.choiceBtn} ${choice === -1 ? styles.choiceBtnActive : ''}`}
-                          onClick={() => setChoice(target.id, -1)}
-                          disabled={!canRemove}
-                          aria-label={`Remove one time counter from ${target.name}`}
-                          aria-pressed={choice === -1}
-                        >
-                          −1
-                        </button>
-                        <button
-                          type="button"
-                          className={`${styles.choiceBtn} ${choice === 0 ? styles.choiceBtnActive : ''}`}
-                          onClick={() => setChoice(target.id, 0)}
-                          aria-label={`Leave ${target.name} unchanged`}
-                          aria-pressed={choice === 0}
-                        >
-                          skip
-                        </button>
-                        <button
-                          type="button"
-                          className={`${styles.choiceBtn} ${choice === 1 ? styles.choiceBtnActive : ''}`}
-                          onClick={() => setChoice(target.id, 1)}
-                          disabled={!canAdd}
-                          aria-label={`Add one time counter to ${target.name}`}
-                          aria-pressed={choice === 1}
-                        >
-                          +1
-                        </button>
-                      </div>
+              return (
+                <div key={target.id} className={styles.row}>
+                  <div className={styles.rowMeta}>
+                    <div className={styles.name}>{target.name}</div>
+                    <span className={styles.tag} style={{ ['--tag-color' as string]: color }}>
+                      {target.label}
+                    </span>
+                  </div>
+                  <div className={styles.rowRight}>
+                    <span className={styles.preview}>
+                      {choice !== 0 ? `${target.count} → ${target.count + choice}` : target.count}
+                    </span>
+                    <div className={styles.choiceRow}>
+                      <button
+                        type="button"
+                        className={`${styles.choiceBtn} ${choice === -1 ? styles.choiceBtnActive : ''}`}
+                        onClick={() => setChoice(target.id, -1)}
+                        disabled={!canRemove}
+                        aria-label={`Remove one time counter from ${target.name}`}
+                        aria-pressed={choice === -1}
+                      >
+                        −1
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.choiceBtn} ${choice === 0 ? styles.choiceBtnActive : ''}`}
+                        onClick={() => setChoice(target.id, 0)}
+                        aria-label={`Leave ${target.name} unchanged`}
+                        aria-pressed={choice === 0}
+                      >
+                        skip
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.choiceBtn} ${choice === 1 ? styles.choiceBtnActive : ''}`}
+                        onClick={() => setChoice(target.id, 1)}
+                        disabled={!canAdd}
+                        aria-label={`Add one time counter to ${target.name}`}
+                        aria-pressed={choice === 1}
+                      >
+                        +1
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
+          </div>
 
-            <div className={styles.actions}>
-              <button type="button" className="btn btn-primary" onClick={commitPass}>
-                {isLastPass ? 'Finish' : `Continue to pass ${currentPass + 1} of ${totalPasses}`}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+          <div className={styles.actions}>
+            <button type="button" className="btn btn-primary" onClick={commitPass}>
+              {isLastPass ? 'Finish' : `Continue to pass ${currentPass + 1} of ${totalPasses}`}
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }
