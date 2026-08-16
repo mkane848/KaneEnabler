@@ -251,6 +251,11 @@ function findProducedTokenTypes(text: string, vocab: Vocabulary): string[] {
  * seeded before the catalog existed gets — narrower than nothing, and it
  * degrades rather than failing.
  */
+// "Time Lord" is the only multi-word entry in Scryfall's creature-type
+// catalog (verified against the live catalog/creature-types endpoint) —
+// bump this if that ever stops being true.
+const MAX_CREATURE_TYPE_SPAN = 2;
+
 export function parseCreatureTypes(typeLine: string, knownTypes?: Set<string>): string[] {
   const [typePart, subtypePart] = typeLine.split('—');
   if (!subtypePart) return [];
@@ -261,7 +266,27 @@ export function parseCreatureTypes(typeLine: string, knownTypes?: Set<string>): 
   if (!/\b(Creature|Kindred|Tribal)\b/.test(typePart!)) return [];
 
   const words = subtypePart.trim().split(/\s+/).filter(Boolean);
-  return knownTypes ? words.filter((word) => knownTypes.has(word)) : words;
+  if (!knownTypes) return words;
+
+  // A plain word-by-word filter can never recognize a multi-word type like
+  // "Time Lord" — neither "Time" nor "Lord" is a type by itself. Try the
+  // longest word-run starting at each position first, falling back to a
+  // single word, so a run that almost matches ("Time" followed by anything
+  // but "Lord") doesn't get kept on the strength of its first word alone.
+  const found: string[] = [];
+  for (let i = 0; i < words.length;) {
+    let consumed = 1;
+    for (let span = MAX_CREATURE_TYPE_SPAN; span >= 1; span--) {
+      const candidate = words.slice(i, i + span).join(' ');
+      if (knownTypes.has(candidate)) {
+        found.push(candidate);
+        consumed = span;
+        break;
+      }
+    }
+    i += consumed;
+  }
+  return found;
 }
 
 /**

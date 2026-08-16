@@ -468,4 +468,32 @@ describe('creature types: the vocabulary the rest of this depends on', () => {
     assert.deepStrictEqual(parseCreatureTypes('Battle — Control Point'), []);
     assert.deepStrictEqual(parseCreatureTypes('Creature — Goblin Wizard'), ['Goblin', 'Wizard']);
   });
+
+  it('recognizes a multi-word creature type from the catalog instead of splitting it into two words', () => {
+    // "Time Lord" is Scryfall's only multi-word creature type today (verified
+    // against the live catalog/creature-types endpoint) — a word-by-word
+    // filter can never match it, since neither "Time" nor "Lord" is a type
+    // on its own.
+    const types = new Set(['Time Lord', 'Doctor', 'Wizard']);
+    assert.deepStrictEqual(parseCreatureTypes('Legendary Creature — Time Lord Doctor', types), [
+      'Time Lord',
+      'Doctor',
+    ]);
+  });
+
+  it('still recognizes ordinary single-word types alongside a multi-word one', () => {
+    const types = new Set(['Time Lord', 'Doctor', 'Wizard']);
+    assert.deepStrictEqual(
+      parseCreatureTypes('Legendary Creature — Time Lord Doctor Wizard', types),
+      ['Time Lord', 'Doctor', 'Wizard'],
+    );
+  });
+
+  it('drops a word that almost starts a multi-word type but does not complete it', () => {
+    // "Time Wizard" isn't a real type in this fixture's catalog — "Time"
+    // must not be kept on its own just because it's the first word of a
+    // different known multi-word type ("Time Lord").
+    const types = new Set(['Time Lord', 'Wizard']);
+    assert.deepStrictEqual(parseCreatureTypes('Creature — Time Wizard', types), ['Wizard']);
+  });
 });

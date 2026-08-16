@@ -9,6 +9,18 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Multi-word creature types like Time Lord were silently dropped.**
+  `parseCreatureTypes` filtered the type line word-by-word against Scryfall's
+  creature-type catalog, so a two-word type could never survive — neither
+  "Time" nor "Lord" is a type on its own, only "Time Lord" together is. That
+  made every Time Lord creature (the whole premise of a Doctor's companion
+  pairing) invisible to Kindred detection and to the Doctor's-companion
+  partner check. Now tries the longest word-run at each position before
+  falling back to a single word, so a two-word type is recognized as one
+  type instead of being lost entirely.
+
 ## [1.7.1] — 2026-08-01
 
 ### Fixed
