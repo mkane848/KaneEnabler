@@ -7,7 +7,7 @@
   flex-shrink: 0;
 }
 
-/* Coloured disc here, glyph inlined as SVG (see manaGlyphs.ts). Mirrors how
+/* Coloured disc here, glyph inlined as SVG (see @mtg/mana's glyphs.ts). Mirrors how
    printed symbols look — coloured circle, contrasting glyph, soft shadow.
    overflow keeps the hybrid gradient inside the circle. */
 .pip {

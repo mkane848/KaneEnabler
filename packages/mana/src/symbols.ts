@@ -1,4 +1,4 @@
-import { MANA_GLYPHS } from './manaGlyphs';
+import { MANA_GLYPHS } from './glyphs';
 
 /**
  * Turning Scryfall's `mana_cost` string into something drawable.

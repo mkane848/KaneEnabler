@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Regenerates src/utils/manaGlyphs.ts from the mana-font SVG sources.
+ * Regenerates src/glyphs.ts from the mana-font SVG sources.
  *
  * Usage:
- *   npm run gen-glyphs
+ *   pnpm --filter @mtg/mana run gen-glyphs
  *
  * mana-font is a devDependency purely so this script has a pinned, verifiable
  * copy of the artwork to read — none of it ships. The app bundles the emitted
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const SVG_DIR = path.join(ROOT, 'node_modules', 'mana-font', 'svg');
-const OUT_PATH = path.join(ROOT, 'src', 'utils', 'manaGlyphs.ts');
+const OUT_PATH = path.join(ROOT, 'src', 'glyphs.ts');
 
 // Only symbols that can appear in a mana cost. Tap, untap, and energy are
 // ability-cost and resource symbols — they never show up in mana_cost, so

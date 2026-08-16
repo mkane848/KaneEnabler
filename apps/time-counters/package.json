@@ -15,11 +15,11 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "fetch-cards": "node scripts/fetch-card-data.mjs",
-    "gen-glyphs": "node scripts/gen-mana-glyphs.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@mtg/mana": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
@@ -34,7 +34,6 @@
     "eslint": "catalog:",
     "globals": "^15.14.0",
     "jsdom": "catalog:",
-    "mana-font": "1.18.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

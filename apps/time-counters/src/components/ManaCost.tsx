@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
-import { MANA_GLYPHS, MANA_VIEWBOX } from '../utils/manaGlyphs';
-import { parseManaCost, toPip, type Face } from '../utils/manaSymbols';
+import { MANA_GLYPHS, MANA_VIEWBOX, parseManaCost, toPip, type Face } from '@mtg/mana';
 import styles from './ManaCost.module.css';
 
 interface ManaCostProps {
