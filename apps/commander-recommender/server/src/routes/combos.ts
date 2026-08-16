@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { isSeeded, findCardsByNames } from '../db';
+import { isCommanderLegal } from '../services/legality';
 import { parseCardList } from '../services/parseList';
 import { findCombos, SpellbookError } from '../services/spellbook';
 import type { CardRow } from '../types';
@@ -62,14 +63,14 @@ router.post('/combos', async (req, res) => {
   }
 
   // Only cards that fit the commander unit's color identity (union across
-  // both cards, per 702.124e) — the rest could not go in the deck, so a
-  // combo involving them would be misleading.
+  // both cards, per 702.124e) and are actually legal — neither could go in
+  // the deck, so a combo involving either would be misleading.
   const identity = new Set(commanders.flatMap((c) => parseJsonArray(c.color_identity)));
   const commanderOracleIds = new Set(commanders.map((c) => c.oracle_id));
   const deckCards: string[] = [];
   for (const entry of parsed) {
     const row = nameMap.get(entry.name.toLowerCase());
-    if (!row || commanderOracleIds.has(row.oracle_id)) continue;
+    if (!row || commanderOracleIds.has(row.oracle_id) || !isCommanderLegal(row)) continue;
     if (parseJsonArray(row.color_identity).every((c) => identity.has(c))) {
       deckCards.push(row.name);
     }

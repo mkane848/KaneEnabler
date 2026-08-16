@@ -8,11 +8,11 @@ import {
   getBackgroundCards,
 } from '../db';
 import { parseCardList } from '../services/parseList';
+import { partitionSubmittedCards } from '../services/legality';
 import {
   buildCollectionProfile,
   scoreCommanders,
   selectSuggestions,
-  type OwnedCard,
   type SupportingCard,
 } from '../services/synergy';
 import { buildCommanderUnits, unitKey } from '../services/partners';
@@ -52,18 +52,7 @@ router.post('/recommend', (req, res) => {
 
   const parsed = parseCardList(list);
   const nameMap = findCardsByNames(parsed.map((p) => p.name));
-
-  const submitted: OwnedCard[] = [];
-  const notFound: string[] = [];
-
-  for (const entry of parsed) {
-    const row = nameMap.get(entry.name.toLowerCase());
-    if (row) {
-      submitted.push({ row, quantity: entry.quantity });
-    } else {
-      notFound.push(entry.name);
-    }
-  }
+  const { submitted, notFound, banned } = partitionSubmittedCards(parsed, nameMap);
 
   // Recommend against a legal Commander deck, not the raw paste. A list
   // exported from a collection can hold several copies of a card, and
@@ -149,13 +138,15 @@ router.post('/recommend', (req, res) => {
 
   res.json({
     // What was submitted, versus what was actually scored. These differ by
-    // the cards we could not find *and* the copies the format does not
-    // allow, so `ignoredCopies` is reported alongside rather than folded in
-    // — otherwise a legal-but-trimmed list would look like a failed lookup.
+    // the cards we could not find, the ones banned in Commander, *and* the
+    // copies the format does not allow, so each is reported separately
+    // rather than folded in — otherwise a legal-but-trimmed list would look
+    // like a failed lookup.
     totalParsed: parsed.reduce((sum, p) => sum + p.quantity, 0),
     totalMatched: owned.reduce((sum, c) => sum + c.quantity, 0),
     ignoredCopies,
     notFound,
+    banned,
     // True when no commander showed a real pattern and these are just the
     // closest few. The client says so rather than presenting them as
     // confident recommendations.

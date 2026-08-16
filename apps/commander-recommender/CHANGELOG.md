@@ -20,6 +20,14 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   partner check. Now tries the longest word-run at each position before
   falling back to a single word, so a two-word type is recognized as one
   type instead of being lost entirely.
+- **A banned card in your list still counted as synergy support.** Only
+  commander candidates were filtered by Commander legality — a card in the
+  submitted list itself was matched and scored regardless, so a banned card
+  could be cited as a reason for a suggestion. Submitted cards are now
+  filtered the same way, and reported separately in the response (`banned`,
+  alongside the existing `notFound`) so the match count still adds up
+  instead of a banned card silently vanishing. Also applies to combo search,
+  which no longer treats a banned card as available for the deck.
 
 ## [1.7.1] — 2026-08-01
 

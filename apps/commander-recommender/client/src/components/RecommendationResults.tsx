@@ -185,6 +185,20 @@ export function RecommendationResults() {
             </ul>
           </details>
         )}
+        {/* Also called out separately from "not found": these were
+            recognised too, just not usable — banned cards don't count as
+            synergy support, so silently dropping them without saying so
+            would look like the list matched fewer cards than it did. */}
+        {result.banned.length > 0 && (
+          <details>
+            <summary>{result.banned.length} banned in Commander</summary>
+            <ul>
+              {result.banned.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+          </details>
+        )}
         {dismissed.length > 0 && (
           <span className="dismissed-note">
             {dismissed.length} dismissed

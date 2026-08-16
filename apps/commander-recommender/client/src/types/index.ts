@@ -169,6 +169,8 @@ export interface RecommendResponse {
   /** Copies dropped because Commander is singleton — see services/singleton.ts. */
   ignoredCopies: number;
   notFound: string[];
+  /** Found in the database, but not legal in Commander — see services/legality.ts. */
+  banned: string[];
   /** True when no commander showed a real pattern, so `suggestions` is just
    * the closest few rather than a confident ranking. */
   weakMatchesOnly: boolean;
