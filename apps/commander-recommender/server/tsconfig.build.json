@@ -1,0 +1,21 @@
+{
+  // Build config. Compiles only src/, with src/ as the root, so the layout
+  // under dist/ mirrors src/ exactly: dist/index.js, dist/db.js, and so on.
+  //
+  // That matters beyond tidiness — db.ts locates the card database with
+  // path.join(__dirname, '..', 'data'). Keeping src/ as the root means the
+  // compiled db.js sits at dist/db.js and resolves that to server/data, the
+  // same directory the dev server and the import script use. Rooting the
+  // build any higher nests it (dist/src/db.js) and it silently reads from a
+  // dist/data/ that nothing ever writes to.
+  //
+  // scripts/ is deliberately excluded: those run through tsx, never from
+  // dist. tsconfig.json still type-checks them (see "npm run typecheck").
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}

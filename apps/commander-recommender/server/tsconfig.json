@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    // node16 rather than the old CommonJS/Node pair: moduleResolution "node10"
+    // is deprecated in TypeScript 6 and stops working in 7. This still emits
+    // CommonJS, because server/package.json has no "type": "module" — which
+    // is what the handoff's "CommonJS, not ESM" decision was about, and that
+    // is unchanged.
+    "module": "node16",
+    "moduleResolution": "node16",
+    "noEmit": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src", "scripts"]
+}

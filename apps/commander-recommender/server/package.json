@@ -1,0 +1,36 @@
+{
+  "name": "mtg-recommender-server",
+  "private": true,
+  "version": "1.7.1",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc",
+    "test": "tsx scripts/test-parse-list.ts && tsx scripts/test-spellbook.ts && tsx scripts/test-bracket.ts && tsx scripts/test-partners.ts && tsx scripts/test-card-names.ts && tsx scripts/test-eligibility.ts && tsx scripts/test-signals.ts && tsx scripts/test-singleton.ts && tsx scripts/test-synergy.ts && tsx scripts/test-deck-analysis.ts && tsx scripts/test-packages.ts && tsx scripts/test-card-index.ts",
+    "start": "node dist/index.js",
+    "fetch-scryfall": "tsx scripts/fetch-scryfall.ts",
+    "import-scryfall": "tsx scripts/import-scryfall.ts",
+    "prepare-data": "npm run fetch-scryfall && npm run import-scryfall",
+    "prepare-data:fresh": "tsx scripts/fetch-scryfall.ts --force && npm run import-scryfall"
+  },
+  "dependencies": {
+    "@types/compression": "^1.8.1",
+    "better-sqlite3": "^13.0.1",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.1",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,37 @@
+services:
+  # Express API — builds its own SQLite card database from Scryfall's bulk
+  # data during the build step, since the free plan's filesystem is
+  # ephemeral. The data is static reference data (never written to at
+  # runtime), so rebuilding it on every deploy is the right tradeoff: no
+  # persistent disk needed, and the ban list / Game Changers list stay
+  # current each time you redeploy.
+  - type: web
+    name: mtg-recommender-server
+    runtime: node
+    plan: free
+    rootDir: server
+    # --include=dev is required here: NODE_ENV=production (set below) makes
+    # plain `npm install` skip devDependencies, but prepare-data/build need
+    # tsx and tsc, which are devDependencies.
+    buildCommand: npm install --include=dev && npm run prepare-data && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  # Static Vite build. VITE_API_URL is wired to the server service's
+  # hostname automatically so you don't have to hardcode it. Static sites
+  # have no "plan" field — they're served free via CDN, not run on a
+  # compute instance like the server above.
+  - type: web
+    runtime: static
+    name: mtg-recommender-client
+    rootDir: client
+    buildCommand: npm install && VITE_API_URL="https://${SERVER_HOST}.onrender.com" npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: SERVER_HOST
+        fromService:
+          name: mtg-recommender-server
+          type: web
+          property: host

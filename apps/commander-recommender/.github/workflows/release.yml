@@ -1,0 +1,61 @@
+name: Release
+
+# Runs after every push to main (in practice: every merge). It's a no-op
+# unless the root package.json's version doesn't have a matching git tag
+# yet — so an ordinary feature PR that doesn't touch the version changes
+# nothing here. Cutting a release is still a deliberate act (bump the
+# version, move the CHANGELOG's [Unreleased] entries under it, merge that);
+# this workflow only automates the mechanical last step — tag + GitHub
+# release — once that decision has already been made and merged.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from package.json
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether this version is already tagged
+        id: check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract this version's CHANGELOG section
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          awk -v ver="${{ steps.version.outputs.version }}" '
+            $0 ~ ("^## \\[" ver "\\]") { flag=1; next }
+            flag && /^## \[/ { flag=0 }
+            flag { print }
+          ' CHANGELOG.md > release_notes.md
+          # Fall back to a minimal note if the version has no CHANGELOG
+          # section yet, rather than publishing an empty release body.
+          if [ ! -s release_notes.md ]; then
+            echo "See CHANGELOG.md." > release_notes.md
+          fi
+
+      - name: Create tag and GitHub release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --title "v${{ steps.version.outputs.version }}" \
+            --notes-file release_notes.md \
+            --target "${{ github.sha }}"
