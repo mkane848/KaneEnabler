@@ -211,6 +211,16 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
     test-suggestions.ts         "still has supporting cards" filter cases
     test-filters.ts             SuggestionFilters matching + availableFilterValues cases
     test-sort.ts                sort mode ordering cases, incl. Partner-pair name/mana-value ties
+    test-rehydrate.ts           wire-response -> card-object rehydration cases (see rehydrate.ts)
+  src/lib/rehydrate.ts        swaps the wire response's cardIndex positions back for full card
+                               objects at the API boundary — see cardIndex.ts below
+  src/components/
+    DeckSummary.tsx            renders deckAnalysis.ts's themes/lifecycle output: what the list is
+                                trying to do and what's missing, independent of any commander
+    ConfirmDialog.tsx           generic destructive-action confirmation (Radix Dialog)
+    Pagination.tsx               shared pager, reused by the suggestion grid and each combo group
+    SupportingCards.tsx          cited-card name + hover art preview list, factored out of
+                                  CommanderCard.tsx
 
 server/                Express + TS + better-sqlite3
   src/
@@ -229,14 +239,49 @@ server/                Express + TS + better-sqlite3
                                truncating server-side would make both of those lie.
       combos.ts                POST /api/combos — proxies to Commander Spellbook, on request only;
                                 takes `commanderNames: string[]` (1-2) for a Partner unit
+      meta.ts                   GET /api/meta — how current the card data is (reads
+                                 importedSnapshot.ts); deliberately separate from /api/health,
+                                 which stays a trivial liveness probe
     services/
       parseList.ts            decklist text -> [{name, quantity}]; handles the major export formats
       singleton.ts             merges repeated cards and trims copies to what 903.5b allows,
                                 before anything is scored
       partners.ts              builds every legal `CommanderUnit` (solo + Partner-family pairs)
                                 from the candidate pool — see "Partner/Background" below
+      signals.ts               the signal model: what a card contributes to a deck's plan and in
+                                what capacity (role vocabulary is/produces/consumes/rewards/
+                                amplifies — see "Known risk areas"). Superseded the old flat
+                                "theme" regex-co-occurrence model. 879 lines; the largest file in
+                                the app and where most kindred/theme/keyword detection logic lives.
       synergy.ts               profile-building + commander scoring (the core logic), operating on
-                                `CommanderUnit`s (1-2 cards), not single cards
+                                `CommanderUnit`s (1-2 cards), not single cards. Per-archetype
+                                weights are 16–22 (kindred 15, keyword 8) — see signals.ts, not a
+                                single flat `kindred*15 + theme*10 + keyword*8 + archetype*20`
+                                formula; that describes an earlier version of this logic.
+      deckAnalysis.ts          what the submitted list is trying to do, independent of any
+                                commander: strongest archetypes (themes) + what's missing
+                                (lifecycle gaps), both off the same pass over signals.ts's output
+      lifecycle.ts              what an archetype needs to actually function (e.g. Aristocrats
+                                 needs fodder + an outlet + a payoff) — the roles signals.ts
+                                 assigns say what a card *does*; this says what a working deck
+                                 *needs*, which is what makes a missing-piece diagnosis possible
+      packages.ts               fills the holes deckAnalysis.ts finds: every card playing the
+                                 missing role, in the list's own colors — a fit heuristic, not a
+                                 play-rate-ranked "best card" suggestion
+      cardIndex.ts               dedupes cited cards by position instead of serializing each cited
+                                  card once per commander that cites it (the 12.2MB -> 0.25MB
+                                  response fix — see CHANGELOG 1.7.1); client/src/lib/rehydrate.ts
+                                  is the inverse operation
+      cardNames.ts                which names a card can be written down as (single-face lookup
+                                   for DFCs) — lives apart from import-scryfall.ts so the rule can
+                                   be tested without running an import
+      dataSnapshot.ts             which Scryfall bulk snapshot the local data on disk came from,
+                                   compared by content-addressed URL + published `updated_at`
+                                   rather than a time-based heuristic
+      importedSnapshot.ts          which snapshot the database itself was built from, recorded
+                                    inside the database — deliberately separate from
+                                    dataSnapshot.ts, since "downloaded but not yet imported" is a
+                                    real, distinct state
       bracket.ts               Game-Changer-count -> Bracket estimate (still computed and
                                 still on the API response, but its UI is hidden — see below)
       eligibility.ts           front-face-only commander eligibility (CR 712.4); the reason
@@ -255,6 +300,12 @@ server/                Express + TS + better-sqlite3
     test-eligibility.ts           npm test — front-face rule for DFC/flip/adventure/split layouts
     test-singleton.ts             npm test — copy limits, exemptions, and repeated-line merging
     test-synergy.ts               npm test — profiling + scoring, incl. union-across-a-pair semantics
+    test-signals.ts                npm test — role/signal detection cases, oracle text copied
+                                    verbatim from the imported database (see "Known risk areas")
+    test-deck-analysis.ts           npm test — theme ranking + lifecycle gap detection cases
+    test-packages.ts                 npm test — fit-heuristic suggestion cases
+    test-card-index.ts                npm test — cardIndex/rehydrate round-trip cases
+    test-card-names.ts                 npm test — DFC single-face name resolution cases
   data/                     gitignored; oracle-cards.jsonl + cards.sqlite live here
 ```
 
