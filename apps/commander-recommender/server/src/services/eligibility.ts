@@ -75,15 +75,23 @@ export function isCommanderEligible(card: ScryfallCardLike): boolean {
   const { typeLine, oracleText } = frontFaceCharacteristics(card);
 
   const isLegendary = typeLine.includes('Legendary');
-  // 903.3: a commander must be a creature, a Vehicle, or a Spacecraft (with
-  // a power/toughness box) — not only a creature. An unanimated Vehicle's
-  // type line is just "Artifact — Vehicle", no "Creature" in sight, so
-  // checking for Creature alone silently excluded every legal Vehicle and
-  // Spacecraft commander.
-  const isEligibleType =
-    typeLine.includes('Creature') ||
-    typeLine.includes('Vehicle') ||
-    typeLine.includes('Spacecraft');
+  // 903.3, updated by the Edge of Eternities set: a commander must be a
+  // creature, a Vehicle, or a Spacecraft — not only a creature. An
+  // unanimated Vehicle's type line is just "Artifact — Vehicle", no
+  // "Creature" in sight, so checking for Creature alone silently excluded
+  // every legal Vehicle and Spacecraft commander.
+  //
+  // No power/toughness condition: verified against Scryfall's live
+  // legality data before adding one, since "with a power/toughness box"
+  // is how this got described secondhand. "The Eternity Elevator" (Edge of
+  // Eternities) is a real, Commander-legal Spacecraft with no printed
+  // power/toughness at all — its stats come entirely from the Station
+  // mechanic's counters — so gating on power/toughness being present would
+  // have wrongly excluded a card that is actually legal.
+  //
+  // Word-boundary matched rather than substring, per the same reasoning as
+  // parseCreatureTypes's Creature/Kindred/Tribal check.
+  const isEligibleType = /\b(Creature|Vehicle|Spacecraft)\b/.test(typeLine);
 
   // Read off the front face too: an ability granting commander-hood only
   // applies where the card actually has that ability, and a back face has

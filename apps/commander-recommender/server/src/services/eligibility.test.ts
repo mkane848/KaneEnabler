@@ -90,6 +90,21 @@ describe('isCommanderEligible', () => {
     assert.strictEqual(isCommanderEligible(vehicle), true);
   });
 
+  it('a legendary Spacecraft is eligible with no power/toughness at all', () => {
+    // "The Eternity Elevator" (Edge of Eternities): a real, Commander-legal
+    // Spacecraft with no printed power or toughness — its stats come
+    // entirely from the Station mechanic's counters, verified against
+    // Scryfall's live legality data. Gating eligibility on power/toughness
+    // being present would wrongly exclude this and any future Spacecraft
+    // shaped the same way.
+    const spacecraft: ScryfallCardLike = {
+      layout: 'normal',
+      type_line: 'Legendary Artifact — Spacecraft',
+      oracle_text: '{T}: Add {C}{C}{C}.\nStation (...)',
+    };
+    assert.strictEqual(isCommanderEligible(spacecraft), true);
+  });
+
   it('"can be your commander" on a non-creature still qualifies', () => {
     // Teferi, Temporal Archmage and the other Oathbreaker-style planeswalkers.
     const teferi: ScryfallCardLike = {
