@@ -22,14 +22,24 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
   const [draft, setDraft] = useState(String(card.count));
 
   const color = MECHANIC_COLOR[card.mechanic];
-  const label = card.mechanic === 'custom' ? card.customLabel || 'Custom' : MECHANIC_LABEL[card.mechanic];
-  const isReady = card.direction === 'decrement' ? card.count <= 0 : card.targetCount != null && card.count >= card.targetCount;
+  const label =
+    card.mechanic === 'custom' ? card.customLabel || 'Custom' : MECHANIC_LABEL[card.mechanic];
+  const isReady =
+    card.direction === 'decrement'
+      ? card.count <= 0
+      : card.targetCount != null && card.count >= card.targetCount;
   const expanded = manuallyExpanded || isReady;
-  const badgeText = card.direction === 'increment' && card.targetCount != null ? `${card.count}/${card.targetCount}` : String(card.count);
+  const badgeText =
+    card.direction === 'increment' && card.targetCount != null
+      ? `${card.count}/${card.targetCount}`
+      : String(card.count);
   // The chapter this Saga is currently sitting on — the most recent one its lore count has reached,
   // shown as a standing reference so "what's active right now" never depends on remembering the last
   // precombat-main popup. Doesn't require isReady, since only the *final* chapter counts as ready.
-  const currentChapter = card.mechanic === 'saga' && card.chapters && card.count > 0 ? card.chapters[card.count - 1] : null;
+  const currentChapter =
+    card.mechanic === 'saga' && card.chapters && card.count > 0
+      ? card.chapters[card.count - 1]
+      : null;
 
   function startEditing() {
     setDraft(String(card.count));
@@ -56,7 +66,7 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
       <button
         type="button"
         className={styles.artButton}
-        onClick={() => setManuallyExpanded(v => !v)}
+        onClick={() => setManuallyExpanded((v) => !v)}
         aria-expanded={expanded}
         aria-label={`${card.name}, ${card.count} counters. ${expanded ? 'Collapse' : 'Expand'} details.`}
       >
@@ -93,9 +103,9 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
                 min={0}
                 inputMode="numeric"
                 value={draft}
-                onChange={e => setDraft(e.target.value)}
+                onChange={(e) => setDraft(e.target.value)}
                 onBlur={commit}
-                onKeyDown={e => {
+                onKeyDown={(e) => {
                   if (e.key === 'Enter') commit();
                   if (e.key === 'Escape') setEditing(false);
                 }}
@@ -121,7 +131,12 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
               >
                 −
               </button>
-              <button type="button" className={styles.stepBtn} onClick={() => step(1)} aria-label="Add one counter">
+              <button
+                type="button"
+                className={styles.stepBtn}
+                onClick={() => step(1)}
+                aria-label="Add one counter"
+              >
                 +
               </button>
             </div>
@@ -152,7 +167,11 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
                 </span>
               )}
               <span className={styles.resolveText}>{card.resolveNote}</span>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => onRemove(card.instanceId)}>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => onRemove(card.instanceId)}
+              >
                 Done
               </button>
             </div>

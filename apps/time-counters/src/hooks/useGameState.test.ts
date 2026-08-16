@@ -33,15 +33,19 @@ describe('useGameState — cards', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.addCard(addInput()));
     expect(result.current.state.cards).toHaveLength(1);
-    expect(result.current.state.cards[0]).toMatchObject({ name: 'Test Card', mechanic: 'suspend', count: 3 });
+    expect(result.current.state.cards[0]).toMatchObject({
+      name: 'Test Card',
+      mechanic: 'suspend',
+      count: 3,
+    });
     const [entry] = result.current.state.log.slice(-1);
-    expect(entry.title).toBe('Added to tracker');
+    expect(entry!.title).toBe('Added to tracker');
   });
 
   it('removeCard drops the card from the board', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.addCard(addInput()));
-    const id = result.current.state.cards[0].instanceId;
+    const id = result.current.state.cards[0]!.instanceId;
     act(() => result.current.removeCard(id));
     expect(result.current.state.cards).toEqual([]);
   });
@@ -49,21 +53,21 @@ describe('useGameState — cards', () => {
   it('setCount clamps to a non-negative whole number', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.addCard(addInput()));
-    const id = result.current.state.cards[0].instanceId;
+    const id = result.current.state.cards[0]!.instanceId;
     act(() => result.current.setCount(id, -5));
-    expect(result.current.state.cards[0].count).toBe(0);
+    expect(result.current.state.cards[0]!.count).toBe(0);
   });
 
   it('adjustCount accumulates across rapid taps against the same base', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.addCard(addInput({ startingCount: 5 })));
-    const id = result.current.state.cards[0].instanceId;
+    const id = result.current.state.cards[0]!.instanceId;
     act(() => {
       result.current.adjustCount(id, -1);
       result.current.adjustCount(id, -1);
       result.current.adjustCount(id, -1);
     });
-    expect(result.current.state.cards[0].count).toBe(2);
+    expect(result.current.state.cards[0]!.count).toBe(2);
   });
 });
 
@@ -73,7 +77,7 @@ describe('useGameState — nextTurn', () => {
     act(() => result.current.addCard(addInput({ startingCount: 2 })));
     act(() => result.current.nextTurn());
     expect(result.current.state.turn).toBe(2);
-    expect(result.current.state.cards[0].count).toBe(1);
+    expect(result.current.state.cards[0]!.count).toBe(1);
     expect(result.current.lastUpkeep).toEqual([
       expect.objectContaining({ step: 'upkeep', from: 2, to: 1, hitTarget: false }),
     ]);
@@ -83,9 +87,9 @@ describe('useGameState — nextTurn', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.addCard(addInput({ startingCount: 1 })));
     act(() => result.current.nextTurn());
-    expect(result.current.state.cards[0].count).toBe(0);
+    expect(result.current.state.cards[0]!.count).toBe(0);
     act(() => result.current.nextTurn());
-    expect(result.current.state.cards[0].count).toBe(0);
+    expect(result.current.state.cards[0]!.count).toBe(0);
     expect(result.current.lastUpkeep).toBeNull();
   });
 
@@ -93,7 +97,7 @@ describe('useGameState — nextTurn', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.addCard(addInput({ startingCount: 3, autoAdjust: false })));
     act(() => result.current.nextTurn());
-    expect(result.current.state.cards[0].count).toBe(3);
+    expect(result.current.state.cards[0]!.count).toBe(3);
   });
 
   it('gains a lore counter and fires the chapter I ability at precombat main', () => {
@@ -110,9 +114,14 @@ describe('useGameState — nextTurn', () => {
       ),
     );
     act(() => result.current.nextTurn());
-    expect(result.current.state.cards[0].count).toBe(1);
+    expect(result.current.state.cards[0]!.count).toBe(1);
     expect(result.current.lastUpkeep).toEqual([
-      expect.objectContaining({ step: 'precombatMain', from: 0, to: 1, chapter: { number: 1, text: 'Chapter I effect' } }),
+      expect.objectContaining({
+        step: 'precombatMain',
+        from: 0,
+        to: 1,
+        chapter: { number: 1, text: 'Chapter I effect' },
+      }),
     ]);
   });
 });
@@ -125,7 +134,7 @@ describe('useGameState — commander tax', () => {
     act(() => result.current.castCommander('tenthDoctor'));
     expect(result.current.state.commanders.tenthDoctor.castCount).toBe(2);
     const [entry] = result.current.state.log.slice(-1);
-    expect(entry.detail).toContain('{4}');
+    expect(entry!.detail).toContain('{4}');
   });
 
   it('tracks each commander independently', () => {
@@ -149,7 +158,7 @@ describe('useGameState — commander tax', () => {
     expect(result.current.state.commanders.tenthDoctor.onBattlefield).toBe(false);
     expect(result.current.state.commanders.tenthDoctor.castCount).toBe(1);
     const [entry] = result.current.state.log.slice(-1);
-    expect(entry.title).toBe('Returned to command zone');
+    expect(entry!.title).toBe('Returned to command zone');
   });
 
   it('returnCommanderToCommandZone is a no-op when the commander is not on the battlefield', () => {

@@ -1,9 +1,8 @@
 {
+  "extends": "@mtg/config/tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "skipLibCheck": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "noEmit": false,
     "allowSyntheticDefaultImports": true,
     "types": ["node"]
   },

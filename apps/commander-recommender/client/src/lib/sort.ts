@@ -18,8 +18,11 @@ function compareIdentity(a: string[], b: string[]): number {
   const sortedA = sortWubrg(a);
   const sortedB = sortWubrg(b);
   for (let i = 0; i < sortedA.length; i++) {
-    const rankA = COLOR_ORDER.get(sortedA[i]) ?? 99;
-    const rankB = COLOR_ORDER.get(sortedB[i]) ?? 99;
+    // sortedA[i] is in bounds by the loop condition; sortedB[i] relies on
+    // this function's documented equal-length precondition (enforced by its
+    // only caller, compareByColorNameValue, before it calls this).
+    const rankA = COLOR_ORDER.get(sortedA[i]!) ?? 99;
+    const rankB = COLOR_ORDER.get(sortedB[i]!) ?? 99;
     if (rankA !== rankB) return rankA - rankB;
   }
   return 0;
@@ -76,7 +79,7 @@ const NATURAL_DIRECTION: Record<SortMode, SortDirection> = {
 export function sortSuggestions(
   suggestions: CommanderSuggestionDTO[],
   mode: SortMode,
-  direction: SortDirection = NATURAL_DIRECTION[mode]
+  direction: SortDirection = NATURAL_DIRECTION[mode],
 ): CommanderSuggestionDTO[] {
   const reversed = direction !== NATURAL_DIRECTION[mode];
 

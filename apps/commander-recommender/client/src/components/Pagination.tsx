@@ -101,7 +101,7 @@ export function Pagination({ pageIndex, pageCount, onPageChange, label }: Props)
             >
               {page + 1}
             </button>
-          )
+          ),
         )}
       </span>
 

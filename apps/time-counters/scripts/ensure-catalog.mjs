@@ -19,7 +19,7 @@ const ROOT = path.resolve(__dirname, '..');
 const SEED = path.join(ROOT, 'scripts', 'seed-cards.json');
 const TARGET = path.join(ROOT, 'public', 'cards.json');
 
-const exists = async p => {
+const exists = async (p) => {
   try {
     await access(p);
     return true;

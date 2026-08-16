@@ -38,7 +38,9 @@ export function detectMechanic(oracleText?: string): Detection | null {
 
   const suspend = oracleText.match(/Suspend (\d+|X)\b/i);
   if (suspend) {
-    const raw = suspend[1];
+    // Group 1 is a mandatory (non-`?`) capture in the pattern above, so a
+    // successful match always populates it.
+    const raw = suspend[1]!;
     return {
       mechanic: 'suspend',
       direction: 'decrement',
@@ -54,14 +56,22 @@ export function detectMechanic(oracleText?: string): Detection | null {
       count: vanishingKeyword[1] ? parseCount(vanishingKeyword[1]) : null,
     };
   }
-  const vanishingReminder = oracleText.match(/enters(?: the battlefield)? with (\w+) time counters? on it/i);
+  const vanishingReminder = oracleText.match(
+    /enters(?: the battlefield)? with (\w+) time counters? on it/i,
+  );
   if (vanishingReminder) {
-    return { mechanic: 'vanishing', direction: 'decrement', count: parseCount(vanishingReminder[1]) };
+    // Group 1 is mandatory in the pattern, so it's always populated here.
+    return {
+      mechanic: 'vanishing',
+      direction: 'decrement',
+      count: parseCount(vanishingReminder[1]!),
+    };
   }
 
   const fading = oracleText.match(/Fading (\d+)\b/i);
   if (fading) {
-    return { mechanic: 'fading', direction: 'decrement', count: parseCount(fading[1]) };
+    // Same as above: group 1 is mandatory in the pattern.
+    return { mechanic: 'fading', direction: 'decrement', count: parseCount(fading[1]!) };
   }
 
   return null;
@@ -137,7 +147,10 @@ export function newlyTriggeredChapters(
   const result: { number: number; text: string }[] = [];
   for (let n = Math.max(from, 0) + 1; n <= to; n++) {
     if (n > chapters.length || triggered.includes(n)) continue;
-    result.push({ number: n, text: chapters[n - 1] });
+    // n ranges over [1, chapters.length] here (the loop starts at >= 1, and
+    // the guard above skips anything past chapters.length), so n - 1 is
+    // always a valid index.
+    result.push({ number: n, text: chapters[n - 1]! });
   }
   return result;
 }
@@ -179,6 +192,9 @@ const BUILTIN_DIRECTION: Record<Exclude<Mechanic, 'custom'>, Direction> = {
 };
 
 /** The fixed direction for a built-in mechanic; 'custom' has no fixed direction, so this defaults it. */
-export function mechanicDirection(mechanic: Mechanic, fallback: Direction = 'decrement'): Direction {
+export function mechanicDirection(
+  mechanic: Mechanic,
+  fallback: Direction = 'decrement',
+): Direction {
   return mechanic === 'custom' ? fallback : BUILTIN_DIRECTION[mechanic];
 }

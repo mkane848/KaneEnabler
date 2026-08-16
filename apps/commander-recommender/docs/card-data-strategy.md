@@ -9,10 +9,10 @@ have to re-measure it.
 `server/data/cards.sqlite` is built from Scryfall's **Oracle Cards** bulk
 export in two steps:
 
-| step | what it does | time | transfer |
-|---|---|---|---|
-| `fetch-scryfall` | downloads the snapshot, gunzips it to `oracle-cards.jsonl`, and fetches re-skinned printing names | ~5s | 24 MB |
-| `import-scryfall` | parses 193 MB of JSONL and writes ~36k rows | ~7s | — |
+| step              | what it does                                                                                      | time | transfer |
+| ----------------- | ------------------------------------------------------------------------------------------------- | ---- | -------- |
+| `fetch-scryfall`  | downloads the snapshot, gunzips it to `oracle-cards.jsonl`, and fetches re-skinned printing names | ~5s  | 24 MB    |
+| `import-scryfall` | parses 193 MB of JSONL and writes ~36k rows                                                       | ~7s  | —        |
 
 On a deploy, both run in `buildCommand` (see `render.yaml`). **Not**
 `startCommand` — so a server wake-up hits Scryfall zero times. This is worth
@@ -28,9 +28,9 @@ small API call, not a 24 MB download.
 
 Two records track this, deliberately separate:
 
-- **`oracle-cards.jsonl.meta.json`** (sidecar) — which snapshot the *file on
-  disk* is. Written by `fetch-scryfall`, only after the download completes.
-- **the `meta` table in `cards.sqlite`** — which snapshot the *database* was
+- **`oracle-cards.jsonl.meta.json`** (sidecar) — which snapshot the _file on
+  disk_ is. Written by `fetch-scryfall`, only after the download completes.
+- **the `meta` table in `cards.sqlite`** — which snapshot the _database_ was
   built from, and under which `IMPORT_VERSION`. Written by `import-scryfall`,
   only on success.
 
@@ -41,8 +41,8 @@ With both current, `npm run prepare-data` takes ~2s and transfers almost
 nothing. `--force` overrides either step.
 
 > **`IMPORT_VERSION` in `src/services/dataSnapshot.ts` must be bumped whenever
-> import logic changes.** Skipping an import on unchanged *data* is only safe
-> if the *code* is unchanged too. Forget it, and your change appears to apply
+> import logic changes.** Skipping an import on unchanged _data_ is only safe
+> if the _code_ is unchanged too. Forget it, and your change appears to apply
 > while the old database is silently kept — everything downstream looks fine
 > and is wrong.
 

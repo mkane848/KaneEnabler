@@ -21,7 +21,11 @@ interface CommanderFieldTileProps {
  * there's no counter to step: tax and Bad Wolf live in CommanderTaxModal,
  * so this just links out to it plus a quick "leave the battlefield" action.
  */
-export default function CommanderFieldTile({ commander, onManage, onReturnToCommandZone }: CommanderFieldTileProps) {
+export default function CommanderFieldTile({
+  commander,
+  onManage,
+  onReturnToCommandZone,
+}: CommanderFieldTileProps) {
   const [expanded, setExpanded] = useState(false);
   const { id, name, imageSmall, castCount } = commander;
   const nextTax = castCount * 2;
@@ -31,7 +35,7 @@ export default function CommanderFieldTile({ commander, onManage, onReturnToComm
       <button
         type="button"
         className={styles.artButton}
-        onClick={() => setExpanded(v => !v)}
+        onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         aria-label={`${name}, on the battlefield. ${expanded ? 'Collapse' : 'Expand'} details.`}
       >
@@ -56,10 +60,18 @@ export default function CommanderFieldTile({ commander, onManage, onReturnToComm
             {castCount > 0 && ` Next cast costs an extra {${nextTax}}.`}
           </p>
           <div className={styles.actions}>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={() => onManage(id, imageSmall)}>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => onManage(id, imageSmall)}
+            >
               Tax / Bad Wolf →
             </button>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={() => onReturnToCommandZone(id)}>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => onReturnToCommandZone(id)}
+            >
               Return to command zone
             </button>
           </div>

@@ -15,7 +15,8 @@
  *     rather than adding load to a service that just told us to back off
  */
 
-const ENDPOINT = process.env.SPELLBOOK_ENDPOINT ?? 'https://backend.commanderspellbook.com/find-my-combos';
+const ENDPOINT =
+  process.env.SPELLBOOK_ENDPOINT ?? 'https://backend.commanderspellbook.com/find-my-combos';
 const REQUEST_TIMEOUT_MS = 12_000;
 const CACHE_TTL_MS = 60 * 60 * 1000; // an hour; combo data changes slowly
 const MAX_CARDS = 250; // a Commander deck is 100; this is a sanity bound
@@ -27,7 +28,8 @@ const MAX_CARDS = 250; // a Commander deck is 100; this is a sanity bound
 const HEADERS = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
-  'User-Agent': 'CommanderIHardlyKnowEr/1.0.0 (hobby project; https://github.com/mkane848/HardlyKnowHer)',
+  'User-Agent':
+    'CommanderIHardlyKnowEr/1.0.0 (hobby project; https://github.com/mkane848/HardlyKnowHer)',
 };
 
 export interface ComboResult {
@@ -51,7 +53,7 @@ export class SpellbookError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly retryAfterSeconds?: number
+    readonly retryAfterSeconds?: number,
   ) {
     super(message);
     this.name = 'SpellbookError';
@@ -139,7 +141,10 @@ function describeFailure(status: number, body: string): string {
  * under a Partner-family ability) and these cards make. Returns combos you
  * can already assemble, plus near-misses one card short.
  */
-export async function findCombos(commanderNames: string[], cardNames: string[]): Promise<ComboLookup> {
+export async function findCombos(
+  commanderNames: string[],
+  cardNames: string[],
+): Promise<ComboLookup> {
   const cards = cardNames.slice(0, MAX_CARDS);
   const key = cacheKey(commanderNames, cards);
 
@@ -160,7 +165,8 @@ export async function findCombos(commanderNames: string[], cardNames: string[]):
       }),
     });
   } catch (err) {
-    const reason = err instanceof Error && err.name === 'TimeoutError' ? 'timed out' : 'could not be reached';
+    const reason =
+      err instanceof Error && err.name === 'TimeoutError' ? 'timed out' : 'could not be reached';
     throw new SpellbookError(`Commander Spellbook ${reason}.`, 504);
   }
 
@@ -169,7 +175,7 @@ export async function findCombos(commanderNames: string[], cardNames: string[]):
     throw new SpellbookError(
       'Commander Spellbook is rate limiting requests right now.',
       429,
-      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined
+      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
     );
   }
 
@@ -177,7 +183,7 @@ export async function findCombos(commanderNames: string[], cardNames: string[]):
     const body = await response.text().catch(() => '');
     throw new SpellbookError(
       `Commander Spellbook rejected the lookup (${describeFailure(response.status, body)})`,
-      response.status
+      response.status,
     );
   }
 

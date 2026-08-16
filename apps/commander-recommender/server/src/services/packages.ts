@@ -144,13 +144,15 @@ function toSuggestion(row: CardRow, alsoFits: string[]): SlotSuggestion {
  */
 export function attachSuggestions(
   analysis: DeckAnalysis,
-  { candidatesByKey, ownedOracleIds, allowedColors }: SuggestionContext
+  { candidatesByKey, ownedOracleIds, allowedColors }: SuggestionContext,
 ): DeckAnalysis {
   // Which of the list's themes each card plays into, so "also fits" can be
   // answered without a second lookup per candidate.
   const themeLabelsByCard = new Map<string, string[]>();
   for (const theme of analysis.themes) {
-    const candidates = candidatesByKey.get(signalKey({ archetype: theme.archetype, qualifier: theme.qualifier }));
+    const candidates = candidatesByKey.get(
+      signalKey({ archetype: theme.archetype, qualifier: theme.qualifier }),
+    );
     for (const candidate of candidates ?? []) {
       const labels = themeLabelsByCard.get(candidate.row.oracle_id);
       if (labels) labels.push(theme.label);
@@ -188,7 +190,7 @@ export function attachSuggestions(
         // A card in the source archetype is only "also fitting" the themes
         // *other* than the one it is being suggested for.
         const alsoFits = (themeLabelsByCard.get(candidate.row.oracle_id) ?? []).filter(
-          (label) => label !== theme.label
+          (label) => label !== theme.label,
         );
         suggestions.push(toSuggestion(candidate.row, alsoFits));
       }

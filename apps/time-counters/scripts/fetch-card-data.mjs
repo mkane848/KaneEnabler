@@ -63,14 +63,18 @@ async function fetchBulkDataUrl() {
   const res = await fetch(BULK_INDEX_URL, {
     headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
   });
-  if (!res.ok) throw new Error(`Scryfall bulk-data index request failed: ${await describeFailure(res)}`);
+  if (!res.ok)
+    throw new Error(`Scryfall bulk-data index request failed: ${await describeFailure(res)}`);
   const body = await res.json();
-  const entry = body.data.find(d => d.type === 'oracle_cards');
-  if (!entry) throw new Error('Could not find an "oracle_cards" entry in the Scryfall bulk-data index.');
+  const entry = body.data.find((d) => d.type === 'oracle_cards');
+  if (!entry)
+    throw new Error('Could not find an "oracle_cards" entry in the Scryfall bulk-data index.');
   // Scryfall used to publish a plain-JSON `download_uri`; it now only
   // publishes a gzip-compressed JSON-Lines file (see fetchBulkCards).
   if (!entry.jsonl_download_uri) {
-    throw new Error('The "oracle_cards" bulk-data entry has no jsonl_download_uri — Scryfall changed its format again.');
+    throw new Error(
+      'The "oracle_cards" bulk-data entry has no jsonl_download_uri — Scryfall changed its format again.',
+    );
   }
   return entry.jsonl_download_uri;
 }
@@ -124,8 +128,8 @@ async function fetchBulkCards(force) {
   const cards = gunzipSync(compressed)
     .toString('utf8')
     .split('\n')
-    .filter(line => line.trim().length > 0)
-    .map(line => JSON.parse(line));
+    .filter((line) => line.trim().length > 0)
+    .map((line) => JSON.parse(line));
 
   await mkdir(CACHE_DIR, { recursive: true });
   await writeFile(BULK_CACHE_PATH, JSON.stringify(cards));
@@ -139,7 +143,10 @@ function faceField(card, field) {
   if (card[field] !== undefined) return card[field];
   if (Array.isArray(card.card_faces) && card.card_faces.length > 0) {
     const joiner = field === 'oracle_text' ? '\n//\n' : ' // ';
-    const combined = card.card_faces.map(f => f[field]).filter(Boolean).join(joiner);
+    const combined = card.card_faces
+      .map((f) => f[field])
+      .filter(Boolean)
+      .join(joiner);
     return combined || undefined;
   }
   return undefined;
@@ -186,18 +193,20 @@ async function main() {
   const commanderLegal = allCards.filter(isCommanderLegal);
   console.log(`  ${commanderLegal.length} are legal in Commander.`);
 
-  const jeskai = commanderLegal.filter(c => isWithinIdentity(c.color_identity, JESKAI_COLORS));
+  const jeskai = commanderLegal.filter((c) => isWithinIdentity(c.color_identity, JESKAI_COLORS));
   console.log(`  ${jeskai.length} of those fit the Jeskai (W/U/R) color identity.`);
 
   const output = jeskai.map(toCardData).sort((a, b) => a.name.localeCompare(b.name));
-  const withText = output.filter(c => c.oracleText).length;
+  const withText = output.filter((c) => c.oracleText).length;
 
   const json = JSON.stringify(output) + '\n';
   await mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
   await writeFile(OUTPUT_PATH, json, 'utf8');
 
   const mb = (Buffer.byteLength(json) / 1024 / 1024).toFixed(2);
-  console.log(`\nWrote ${output.length} card(s) to ${path.relative(ROOT, OUTPUT_PATH)} (${mb} MB).`);
+  console.log(
+    `\nWrote ${output.length} card(s) to ${path.relative(ROOT, OUTPUT_PATH)} (${mb} MB).`,
+  );
   console.log(`Kept oracle text for ${withText} card(s) with time-counter mechanics.`);
 
   // A catalog this far off expectations means an upstream format change.
@@ -217,7 +226,7 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('\nfetch-cards failed:', err.message);
   process.exit(1);
 });

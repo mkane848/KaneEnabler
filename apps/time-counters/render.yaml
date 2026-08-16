@@ -1,9 +1,17 @@
+# NOTE: this app now lives at apps/time-counters/ inside the KaneEnabler
+# monorepo (docs/handoff.md Phase 0). If Render's Blueprint for this service
+# was already connected before that move, its "render.yaml path" setting in
+# the dashboard needs to point at apps/time-counters/render.yaml — rootDir
+# below is repo-root-relative either way, but Render has to be told where to
+# find this file first.
 services:
   - type: web
     runtime: static
     name: drwho-companion-edh
+    rootDir: apps/time-counters
     # fetch-cards regenerates public/cards.json from Scryfall so the deployed
     # catalog is current. It fails the build loudly if Scryfall is unreachable,
-    # rather than quietly shipping the small committed seed.
-    buildCommand: npm install --include=dev && npm run fetch-cards && npm run build
+    # rather than quietly shipping the small committed seed. Unlike npm, pnpm
+    # installs devDependencies by default regardless of NODE_ENV.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
     staticPublishPath: dist

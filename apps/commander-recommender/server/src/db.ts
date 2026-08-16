@@ -106,9 +106,7 @@ export function findCardsByNames(names: string[]): Map<string, CardRow> {
 
 export function getCommanderCandidates(): CardRow[] {
   return db
-    .prepare(
-      `SELECT * FROM cards WHERE is_commander_eligible = 1 AND legality_commander = 'legal'`
-    )
+    .prepare(`SELECT * FROM cards WHERE is_commander_eligible = 1 AND legality_commander = 'legal'`)
     .all() as CardRow[];
 }
 
@@ -123,7 +121,7 @@ export function getBackgroundCards(): CardRow[] {
   if (!hasBackgroundColumn) return [];
   return db
     .prepare(
-      `SELECT * FROM cards WHERE is_background = 1 AND is_legendary = 1 AND legality_commander = 'legal'`
+      `SELECT * FROM cards WHERE is_background = 1 AND is_legendary = 1 AND legality_commander = 'legal'`,
     )
     .all() as CardRow[];
 }
@@ -153,7 +151,7 @@ export function findSignalsByOracleIds(oracleIds: string[]): Map<string, SignalM
       .prepare(
         `SELECT oracle_id, archetype, qualifier, qualifier_kind, roles
          FROM card_signals
-         WHERE oracle_id IN (${chunk.map(() => '?').join(',')})`
+         WHERE oracle_id IN (${chunk.map(() => '?').join(',')})`,
       )
       .all(...chunk) as {
       oracle_id: string;
@@ -209,7 +207,7 @@ export function findCardsBySignals(keys: SignalKey[]): Map<string, SignalCandida
          JOIN cards ON cards.oracle_id = card_signals.oracle_id
          WHERE card_signals.archetype = ?
            AND card_signals.qualifier IS ?
-           AND cards.legality_commander = 'legal'`
+           AND cards.legality_commander = 'legal'`,
       )
       .all(key.archetype, key.qualifier ?? null) as (CardRow & { signal_roles: string })[];
 
@@ -218,7 +216,7 @@ export function findCardsBySignals(keys: SignalKey[]): Map<string, SignalCandida
       rows.map(({ signal_roles, ...row }) => ({
         row: row as CardRow,
         roles: JSON.parse(signal_roles) as SignalMatch['roles'],
-      }))
+      })),
     );
   }
 

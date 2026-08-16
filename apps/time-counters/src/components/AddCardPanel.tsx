@@ -93,7 +93,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
 
   function selectCard(card: CardData) {
     const detection = quickSuspend ? null : detectMechanic(card.oracleText);
-    const nextMechanic = quickSuspend ? 'suspend' : detection?.mechanic ?? 'custom';
+    const nextMechanic = quickSuspend ? 'suspend' : (detection?.mechanic ?? 'custom');
     const nextDirection = detection?.direction ?? mechanicDirection(nextMechanic);
 
     setSelected(card);
@@ -131,19 +131,21 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
   }
 
   function setChapterText(index: number, text: string) {
-    setChapters(prev => prev.map((c, i) => (i === index ? text : c)));
+    setChapters((prev) => prev.map((c, i) => (i === index ? text : c)));
   }
 
   function addChapterRow() {
-    setChapters(prev => [...prev, '']);
+    setChapters((prev) => [...prev, '']);
   }
 
   function removeChapterRow(index: number) {
-    setChapters(prev => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+    setChapters((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
   }
 
-  const trimmedChapters = chapters.map(c => c.trim());
-  const sagaReady = mechanic !== 'saga' || (trimmedChapters.length > 0 && trimmedChapters.every(c => c.length > 0));
+  const trimmedChapters = chapters.map((c) => c.trim());
+  const sagaReady =
+    mechanic !== 'saga' ||
+    (trimmedChapters.length > 0 && trimmedChapters.every((c) => c.length > 0));
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -225,13 +227,17 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               type="text"
               placeholder={catalogLoading ? 'Loading card catalog…' : 'Search any Jeskai card…'}
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
             />
             {query.trim().length > 0 && catalog && (
               <ul className={styles.results}>
-                {results.map(card => (
+                {results.map((card) => (
                   <li key={card.id}>
-                    <button type="button" className={styles.resultItem} onClick={() => selectCard(card)}>
+                    <button
+                      type="button"
+                      className={styles.resultItem}
+                      onClick={() => selectCard(card)}
+                    >
                       <span className={styles.resultName}>
                         {card.name}
                         <ManaCost cost={card.manaCost} />
@@ -253,12 +259,17 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               {catalogLoading && <>Loading every Commander-legal Jeskai card… </>}
               {catalogError && (
                 <>
-                  Couldn&apos;t load the card catalog ({catalogError}). You can still add cards by name.{' '}
+                  Couldn&apos;t load the card catalog ({catalogError}). You can still add cards by
+                  name.{' '}
                 </>
               )}
               {catalog && <>Searching {catalog.length.toLocaleString()} Jeskai-legal cards. </>}
               Can&apos;t find it?{' '}
-              <button type="button" className={styles.manualLink} onClick={() => setManualMode(true)}>
+              <button
+                type="button"
+                className={styles.manualLink}
+                onClick={() => setManualMode(true)}
+              >
                 Add it by name
               </button>
               .
@@ -279,7 +290,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 type="text"
                 placeholder={creatingToken ? 'e.g. Human Noble' : 'e.g. Ancestral Vision'}
                 value={manualName}
-                onChange={e => setManualName(e.target.value)}
+                onChange={(e) => setManualName(e.target.value)}
               />
               <button type="submit" className="btn btn-primary btn-sm">
                 Next
@@ -287,12 +298,17 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
             </div>
             {creatingToken ? (
               <p className={styles.emptyHint}>
-                Tokens aren&apos;t cataloged cards, so there&apos;s no art or oracle text — just name it and
-                pick its mechanic next (e.g. Vanishing 3 for the token The Girl in the Fireplace creates).
+                Tokens aren&apos;t cataloged cards, so there&apos;s no art or oracle text — just
+                name it and pick its mechanic next (e.g. Vanishing 3 for the token The Girl in the
+                Fireplace creates).
               </p>
             ) : (
               <p className={styles.emptyHint}>
-                <button type="button" className={styles.manualLink} onClick={() => setManualMode(false)}>
+                <button
+                  type="button"
+                  className={styles.manualLink}
+                  onClick={() => setManualMode(false)}
+                >
                   ← Back to search
                 </button>
               </p>
@@ -318,7 +334,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
             <div className={styles.field}>
               <span className={styles.fieldLabel}>Mechanic</span>
               <div className={styles.mechanicRow}>
-                {MECHANICS.map(m => (
+                {MECHANICS.map((m) => (
                   <button
                     key={m}
                     type="button"
@@ -331,7 +347,9 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 ))}
               </div>
               {detectedCount != null && (
-                <p className={styles.detectedHint}>Detected {MECHANIC_LABEL[mechanic]} {detectedCount} from card text.</p>
+                <p className={styles.detectedHint}>
+                  Detected {MECHANIC_LABEL[mechanic]} {detectedCount} from card text.
+                </p>
               )}
             </div>
 
@@ -347,7 +365,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                     type="text"
                     placeholder="e.g. Age counter"
                     value={customLabel}
-                    onChange={e => setCustomLabel(e.target.value)}
+                    onChange={(e) => setCustomLabel(e.target.value)}
                   />
                 </div>
 
@@ -377,9 +395,9 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               <div className={styles.field}>
                 <span className={styles.fieldLabel}>Chapters</span>
                 <p className={styles.emptyHint}>
-                  A lore counter is added as your precombat main begins, not at upkeep — this Saga's chapter
-                  abilities fire in order as that lore count reaches each chapter, one at a time, with the last
-                  chapter followed by sacrificing the Saga.
+                  A lore counter is added as your precombat main begins, not at upkeep — this Saga's
+                  chapter abilities fire in order as that lore count reaches each chapter, one at a
+                  time, with the last chapter followed by sacrificing the Saga.
                 </p>
                 {chapters.map((text, i) => (
                   <div key={i} className={styles.manualRow}>
@@ -388,7 +406,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                       type="text"
                       placeholder={`Chapter ${chapterRoman(i + 1)} — what happens`}
                       value={text}
-                      onChange={e => setChapterText(i, e.target.value)}
+                      onChange={(e) => setChapterText(i, e.target.value)}
                       required
                     />
                     <button
@@ -420,7 +438,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                   min={0}
                   inputMode="numeric"
                   value={startingCount}
-                  onChange={e => setStartingCount(e.target.value)}
+                  onChange={(e) => setStartingCount(e.target.value)}
                   required
                 />
               </div>
@@ -437,7 +455,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                     inputMode="numeric"
                     placeholder="Open-ended"
                     value={targetCount}
-                    onChange={e => setTargetCount(e.target.value)}
+                    onChange={(e) => setTargetCount(e.target.value)}
                   />
                 </div>
               )}
@@ -445,7 +463,11 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
 
             <div className={styles.field}>
               <label className={styles.checkboxRow}>
-                <input type="checkbox" checked={autoAdjust} onChange={e => setAutoAdjust(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={autoAdjust}
+                  onChange={(e) => setAutoAdjust(e.target.checked)}
+                />
                 {mechanic === 'saga'
                   ? 'Add a lore counter each of my precombat mains'
                   : direction === 'decrement'
@@ -457,14 +479,17 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
             {mechanic !== 'saga' && (
               <div className={styles.field}>
                 <label className={styles.fieldLabel} htmlFor="resolve-note">
-                  {resolveFieldLabel(direction, targetCount.trim() === '' ? undefined : Number(targetCount))}
+                  {resolveFieldLabel(
+                    direction,
+                    targetCount.trim() === '' ? undefined : Number(targetCount),
+                  )}
                 </label>
                 <textarea
                   id="resolve-note"
                   className="input"
                   rows={2}
                   value={resolveNote}
-                  onChange={e => setResolveNote(e.target.value)}
+                  onChange={(e) => setResolveNote(e.target.value)}
                 />
               </div>
             )}

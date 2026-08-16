@@ -9,10 +9,10 @@ Phase 0 (consolidation) is done: both projects were merged in via `git subtree`,
 commit history, and live under `apps/`. Toolchain and package-extraction work is in progress — see
 [`docs/handoff.md`](./docs/handoff.md) for what's landed and what's next.
 
-| App | What it does |
-|---|---|
-| [`apps/commander-recommender`](./apps/commander-recommender) | Paste a card list, get ranked Commander suggestions with cited synergies, ban-list legality, and Partner/Background pairing |
-| [`apps/time-counters`](./apps/time-counters) | In-game counter companion for a Jeskai *Doctor Who* Commander deck — Suspend, Vanishing, Fading, Sagas, commander tax, Time Travel |
+| App                                                          | What it does                                                                                                                       |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [`apps/commander-recommender`](./apps/commander-recommender) | Paste a card list, get ranked Commander suggestions with cited synergies, ban-list legality, and Partner/Background pairing        |
+| [`apps/time-counters`](./apps/time-counters)                 | In-game counter companion for a Jeskai _Doctor Who_ Commander deck — Suspend, Vanishing, Fading, Sagas, commander tax, Time Travel |
 
 Each app keeps its own setup instructions in its README until the pnpm/Turborepo workspace lands
 (`docs/handoff.md` Phase 1).

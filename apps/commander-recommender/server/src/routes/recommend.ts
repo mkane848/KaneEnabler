@@ -88,7 +88,7 @@ router.post('/recommend', (req, res) => {
   // list cannot execute.
   const analysis = analyzeDeck(
     owned,
-    findSignalsByOracleIds(owned.map((entry) => entry.row.oracle_id))
+    findSignalsByOracleIds(owned.map((entry) => entry.row.oracle_id)),
   );
   const deck = attachSuggestions(analysis, {
     candidatesByKey: findCardsBySignals(requiredSignalKeys(analysis)),
@@ -107,7 +107,8 @@ router.post('/recommend', (req, res) => {
     // Every card in the unit counts toward the Bracket, alongside any Game
     // Changers in the list that fit its color identity — a Partner pair is
     // jointly "the commander" (702.124e), so both halves' own status matters.
-    const gameChangerCount = s.cards.filter((c) => c.game_changer).length + s.gameChangerCards.length;
+    const gameChangerCount =
+      s.cards.filter((c) => c.game_changer).length + s.gameChangerCards.length;
     const colorIdentity = [...new Set(s.cards.flatMap((c) => parseJsonArray(c.color_identity)))];
 
     return {

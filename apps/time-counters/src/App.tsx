@@ -36,11 +36,14 @@ export default function App() {
   const [timeTravelOpen, setTimeTravelOpen] = useState<{ initialPasses?: number } | false>(false);
   const [logOpen, setLogOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [openCommander, setOpenCommander] = useState<{ id: CommanderId; imageSmall?: string } | null>(null);
+  const [openCommander, setOpenCommander] = useState<{
+    id: CommanderId;
+    imageSmall?: string;
+  } | null>(null);
 
   const commanderFieldCards: CommanderFieldCard[] = COMMANDER_IDS.filter(
-    id => state.commanders[id].onBattlefield,
-  ).map(id => ({
+    (id) => state.commanders[id].onBattlefield,
+  ).map((id) => ({
     id,
     name: COMMANDER_NAME[id],
     imageSmall: commanderCatalog[id]?.imageSmall,
@@ -52,8 +55,8 @@ export default function App() {
   // fade counters and Saga uses lore counters, so neither is eligible.
   const timeTravelTargets: TimeTravelTarget[] = [
     ...state.cards
-      .filter(c => usesTimeCounters(c.mechanic))
-      .map(c => ({
+      .filter((c) => usesTimeCounters(c.mechanic))
+      .map((c) => ({
         id: c.instanceId,
         name: c.name,
         mechanic: c.mechanic,
@@ -127,7 +130,9 @@ export default function App() {
           onClose={() => setTimeTravelOpen(false)}
         />
       )}
-      {logOpen && <GameLogPanel log={state.log} currentTurn={state.turn} onClose={() => setLogOpen(false)} />}
+      {logOpen && (
+        <GameLogPanel log={state.log} currentTurn={state.turn} onClose={() => setLogOpen(false)} />
+      )}
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
       {openCommander && (
         <CommanderTaxModal
@@ -140,7 +145,9 @@ export default function App() {
           onReturnToCommandZone={() => returnCommanderToCommandZone(openCommander.id)}
           onClose={() => setOpenCommander(null)}
           roseState={openCommander.id === 'roseTyler' ? state.commanders.roseTyler : undefined}
-          onAdjustRoseTimeCounters={openCommander.id === 'roseTyler' ? adjustRoseTimeCounters : undefined}
+          onAdjustRoseTimeCounters={
+            openCommander.id === 'roseTyler' ? adjustRoseTimeCounters : undefined
+          }
           onRoseAttacks={openCommander.id === 'roseTyler' ? roseAttacks : undefined}
           onOpenTimeyWimey={
             openCommander.id === 'tenthDoctor'

@@ -50,7 +50,7 @@ const TRAILING_NOISE: RegExp[] = [
 function stripTrailingNoise(value: string): string {
   let result = value.trim();
 
-  for (let changed = true; changed; ) {
+  for (let changed = true; changed;) {
     changed = false;
     for (const pattern of TRAILING_NOISE) {
       const next = result.replace(pattern, '').trim();
@@ -101,8 +101,10 @@ export function parseCardList(raw: string): ParsedListEntry[] {
     let quantity = 1;
     let rest = withoutSideboard;
     if (qtyMatch) {
-      quantity = parseInt(qtyMatch[1], 10) || 1;
-      rest = qtyMatch[2];
+      // Both capture groups are mandatory in LEADING_QTY, so a match always
+      // populates them.
+      quantity = parseInt(qtyMatch[1]!, 10) || 1;
+      rest = qtyMatch[2]!;
     }
 
     rest = stripTrailingNoise(rest);

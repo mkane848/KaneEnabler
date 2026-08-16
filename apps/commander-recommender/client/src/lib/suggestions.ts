@@ -1,4 +1,9 @@
-import type { CommanderSuggestionDTO, KeywordSupportDTO, ThemeSupportDTO, KindredSupportDTO } from '../types';
+import type {
+  CommanderSuggestionDTO,
+  KeywordSupportDTO,
+  ThemeSupportDTO,
+  KindredSupportDTO,
+} from '../types';
 
 /**
  * A theme or kindred type can be "matched" against the collection as a whole, but

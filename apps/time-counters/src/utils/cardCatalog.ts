@@ -14,7 +14,7 @@ export function loadCatalog(): Promise<CardData[]> {
   if (cache) return Promise.resolve(cache);
   if (!inFlight) {
     inFlight = fetch(`${import.meta.env.BASE_URL}cards.json`)
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error(`Card catalog request failed: HTTP ${res.status}`);
         return res.json();
       })
@@ -22,10 +22,10 @@ export function loadCatalog(): Promise<CardData[]> {
         if (!Array.isArray(raw)) throw new Error('Card catalog is not an array.');
         // Defensive: the app never surfaces a card outside this deck's identity,
         // even if cards.json was generated or hand-edited without that filter.
-        cache = raw.filter(c => isWithinIdentity(c.colorIdentity, JESKAI_COLORS));
+        cache = raw.filter((c) => isWithinIdentity(c.colorIdentity, JESKAI_COLORS));
         return cache;
       })
-      .catch(err => {
+      .catch((err) => {
         inFlight = null; // let a later attempt retry rather than caching the failure
         throw err;
       });
@@ -55,5 +55,5 @@ export function searchCards(catalog: CardData[], query: string, limit = 8): Card
 /** Exact (case-insensitive) name lookup — used to feature specific cards, e.g. the commanders. */
 export function findCardByName(catalog: CardData[], name: string): CardData | undefined {
   const target = name.toLowerCase();
-  return catalog.find(c => c.name.toLowerCase() === target);
+  return catalog.find((c) => c.name.toLowerCase() === target);
 }

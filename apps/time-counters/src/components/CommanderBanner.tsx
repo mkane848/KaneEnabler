@@ -18,8 +18,12 @@ export default function CommanderBanner({ onOpenCommander }: CommanderBannerProp
   const { cards: catalog } = useCardCatalog();
 
   const portraits = catalog
-    ? COMMANDER_IDS.map(id => ({ id, name: COMMANDER_NAME[id], card: findCardByName(catalog, COMMANDER_NAME[id]) })).filter(
-        (c): c is typeof c & { card: NonNullable<typeof c.card> } => Boolean(c.card?.imageSmall),
+    ? COMMANDER_IDS.map((id) => ({
+        id,
+        name: COMMANDER_NAME[id],
+        card: findCardByName(catalog, COMMANDER_NAME[id]),
+      })).filter((c): c is typeof c & { card: NonNullable<typeof c.card> } =>
+        Boolean(c.card?.imageSmall),
       )
     : [];
 
@@ -43,11 +47,19 @@ export default function CommanderBanner({ onOpenCommander }: CommanderBannerProp
       )}
       <span className={styles.label}>
         Commanders:{' '}
-        <button type="button" className={styles.labelLink} onClick={() => onOpenCommander('tenthDoctor')}>
+        <button
+          type="button"
+          className={styles.labelLink}
+          onClick={() => onOpenCommander('tenthDoctor')}
+        >
           <strong>The Tenth Doctor</strong>
         </button>{' '}
         &amp;{' '}
-        <button type="button" className={styles.labelLink} onClick={() => onOpenCommander('roseTyler')}>
+        <button
+          type="button"
+          className={styles.labelLink}
+          onClick={() => onOpenCommander('roseTyler')}
+        >
           <strong>Rose Tyler</strong>
         </button>
       </span>

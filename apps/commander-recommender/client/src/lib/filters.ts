@@ -37,7 +37,7 @@ export const EMPTY_FILTERS: SuggestionFilters = {
 
 export function hasActiveFilters(filters: SuggestionFilters): boolean {
   return (Object.values(filters) as FilterSelection[]).some(
-    (selection) => selection.include.length > 0 || selection.exclude.length > 0
+    (selection) => selection.include.length > 0 || selection.exclude.length > 0,
   );
 }
 
@@ -87,7 +87,10 @@ function matchesColors(suggestion: CommanderSuggestionDTO, selection: FilterSele
  * same AND semantics every other include facet already uses, rather than
  * needing special-casing here.
  */
-function matchesColorCategory(suggestion: CommanderSuggestionDTO, selection: FilterSelection): boolean {
+function matchesColorCategory(
+  suggestion: CommanderSuggestionDTO,
+  selection: FilterSelection,
+): boolean {
   const { include, exclude } = selection;
   if (include.length === 0 && exclude.length === 0) return true;
   const isColorless = suggestion.colorIdentity.length === 0;
@@ -121,14 +124,14 @@ function matchesBracket(suggestion: CommanderSuggestionDTO, selection: FilterSel
 
 export function applyFilters(
   suggestions: CommanderSuggestionDTO[],
-  filters: SuggestionFilters
+  filters: SuggestionFilters,
 ): CommanderSuggestionDTO[] {
   return suggestions.filter(
     (s) =>
       matchesColors(s, filters.colors) &&
       matchesColorCategory(s, filters.colorCategory) &&
       matchesBracket(s, filters.brackets) &&
-      matchesThemes(s, filters.themes)
+      matchesThemes(s, filters.themes),
   );
 }
 

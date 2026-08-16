@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Something isn't working the way it should
-title: ""
+title: ''
 labels: bug
 ---
 

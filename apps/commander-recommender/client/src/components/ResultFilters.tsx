@@ -141,7 +141,9 @@ export function ResultFilters({
             <FacetChip
               label="Colorless"
               mode={modeOf(filters.colorCategory, 'colorless')}
-              onClick={() => updateFacet('colorCategory', cycleSelection(filters.colorCategory, 'colorless'))}
+              onClick={() =>
+                updateFacet('colorCategory', cycleSelection(filters.colorCategory, 'colorless'))
+              }
               describe={(m) => `Colorless: ${nextModeDescription(m)}`}
             />
           )}
@@ -149,12 +151,16 @@ export function ResultFilters({
             <FacetChip
               label="Multicolor"
               mode={modeOf(filters.colorCategory, 'multicolor')}
-              onClick={() => updateFacet('colorCategory', cycleSelection(filters.colorCategory, 'multicolor'))}
+              onClick={() =>
+                updateFacet('colorCategory', cycleSelection(filters.colorCategory, 'multicolor'))
+              }
               describe={(m) => `Multicolor: ${nextModeDescription(m)}`}
             />
           )}
         </div>
-        <span className="filter-hint">click to allow a color, again to exclude — results fit within the allowed colors</span>
+        <span className="filter-hint">
+          click to allow a color, again to exclude — results fit within the allowed colors
+        </span>
       </div>
 
       {SHOW_BRACKET_FILTER && availableBrackets.length > 1 && (
@@ -171,7 +177,9 @@ export function ResultFilters({
                   label={bracket.replace('Bracket ', '')}
                   mode={mode}
                   onClick={() => updateFacet('brackets', cycleSelection(filters.brackets, bracket))}
-                  describe={(m) => `Bracket ${bracket.replace('Bracket ', '')}: ${nextModeDescription(m)}`}
+                  describe={(m) =>
+                    `Bracket ${bracket.replace('Bracket ', '')}: ${nextModeDescription(m)}`
+                  }
                 />
               );
             })}
@@ -208,7 +216,10 @@ export function ResultFilters({
 
         <label className="sort-control">
           <span className="filter-label">Sort</span>
-          <select value={sortMode} onChange={(event) => onSortModeChange(event.target.value as SortMode)}>
+          <select
+            value={sortMode}
+            onChange={(event) => onSortModeChange(event.target.value as SortMode)}
+          >
             {(Object.entries(SORT_MODE_LABELS) as [SortMode, string][]).map(([mode, label]) => (
               <option key={mode} value={mode}>
                 {label}
@@ -232,7 +243,10 @@ export function ResultFilters({
             list. */}
         <label className="sort-control">
           <span className="filter-label">Show</span>
-          <select value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
+          <select
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          >
             {SUGGESTIONS_PAGE_SIZE_OPTIONS.map((size) => (
               <option key={size} value={size}>
                 {size}

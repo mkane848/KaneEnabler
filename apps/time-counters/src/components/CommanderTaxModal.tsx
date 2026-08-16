@@ -52,7 +52,7 @@ export default function CommanderTaxModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={`commander-tax-title-${commanderId}`}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           <div className={styles.headerMeta}>
@@ -69,11 +69,18 @@ export default function CommanderTaxModal({
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>Commander tax</h3>
           <p className={styles.taxBody}>
-            Cast from the command zone <strong>{castCount}</strong> time{castCount === 1 ? '' : 's'} this game.
+            Cast from the command zone <strong>{castCount}</strong> time{castCount === 1 ? '' : 's'}{' '}
+            this game.
             {castCount > 0 && (
               <>
                 {' '}
-                Next cast costs an extra <strong>{'{'}{nextTax}{'}'}</strong>.
+                Next cast costs an extra{' '}
+                <strong>
+                  {'{'}
+                  {nextTax}
+                  {'}'}
+                </strong>
+                .
               </>
             )}
             {onBattlefield && ' Currently on the battlefield.'}
@@ -93,8 +100,8 @@ export default function CommanderTaxModal({
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>Bad Wolf — time counters</h3>
             <p className={styles.taxBody}>
-              Rose gets +1/+1 for each time counter on her. Attacking puts a counter on her for each suspended
-              card you own and each other permanent you control with a time counter on it.
+              Rose gets +1/+1 for each time counter on her. Attacking puts a counter on her for each
+              suspended card you own and each other permanent you control with a time counter on it.
             </p>
             <div className={styles.counterRow}>
               <span className={styles.counterValue}>{roseState.timeCounters}</span>

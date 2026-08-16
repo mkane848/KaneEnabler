@@ -51,7 +51,8 @@ export function singletonLimit(row: CardRow): number {
 
   const capped = UP_TO_N.exec(text);
   if (capped) {
-    const limit = NUMBER_WORDS[capped[1].toLowerCase()];
+    // Group 1 is mandatory in UP_TO_N, so a match always populates it.
+    const limit = NUMBER_WORDS[capped[1]!.toLowerCase()];
     if (limit) return limit;
   }
 

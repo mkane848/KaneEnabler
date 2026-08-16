@@ -1,4 +1,8 @@
 /// <reference types="vite/client" />
+// moduleResolution "bundler" doesn't map `node:`-prefixed specifiers (used by
+// this app's test files, e.g. `node:assert`) to @types/node the way "node16"
+// does elsewhere in this repo — this reference is what makes them resolve.
+/// <reference types="node" />
 
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;

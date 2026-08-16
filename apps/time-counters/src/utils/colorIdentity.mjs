@@ -20,5 +20,5 @@ export const JESKAI_COLORS = /** @type {readonly string[]} */ (['W', 'U', 'R']);
  */
 export function isWithinIdentity(colors, allowed) {
   if (!colors || colors.length === 0) return true;
-  return colors.every(c => allowed.includes(c));
+  return colors.every((c) => allowed.includes(c));
 }

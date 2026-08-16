@@ -5,7 +5,11 @@ import { CardImageDialog } from './CardImageDialog';
 import { cardCount, SupportingCardList } from './SupportingCards';
 import { useAppStore } from '../store/useAppStore';
 import { identityName, sortWubrg } from '../lib/mtg';
-import { visibleKeywordSupport, visibleThemeSupport, visibleKindredSupport } from '../lib/suggestions';
+import {
+  visibleKeywordSupport,
+  visibleThemeSupport,
+  visibleKindredSupport,
+} from '../lib/suggestions';
 import { ManaSymbol } from './ManaSymbol';
 import type { BracketEstimateDTO, CommanderCardDTO, CommanderSuggestionDTO } from '../types';
 
@@ -59,9 +63,9 @@ function ScoreBadge({ suggestion }: { suggestion: CommanderSuggestionDTO }) {
       <span role="tooltip" id={tooltipId} className="match-tooltip">
         Ranked on {suggestion.score}
         {signals.length > 0 ? `, from ${signals.join(', ')}` : ''}, weighed against the{' '}
-        {suggestion.includedCardCount} card{suggestion.includedCardCount === 1 ? '' : 's'} it can play from your list.
-        Each signal counts for the share of that pool backing it. Colors decide which cards count, never how good the
-        match is.
+        {suggestion.includedCardCount} card{suggestion.includedCardCount === 1 ? '' : 's'} it can
+        play from your list. Each signal counts for the share of that pool backing it. Colors decide
+        which cards count, never how good the match is.
       </span>
     </span>
   );
@@ -78,7 +82,11 @@ function CommanderArt({ card }: { card: CommanderCardDTO }) {
       backName={card.backName}
       scryfallUri={card.scryfallUri}
     >
-      <button type="button" className="commander-art-trigger" aria-label={`Show the full card for ${card.name}`}>
+      <button
+        type="button"
+        className="commander-art-trigger"
+        aria-label={`Show the full card for ${card.name}`}
+      >
         <img className="commander-image" src={card.imageUri} alt={card.name} loading="lazy" />
       </button>
     </CardImageDialog>
@@ -138,7 +146,11 @@ function CommanderFace({
           and tappable at any length to open the full card. */}
       {card.oracleText && (
         <CardDetailDialog card={card} bracket={bracket}>
-          <button type="button" className="commander-oracle-button" aria-label={`Show the full card for ${card.name}`}>
+          <button
+            type="button"
+            className="commander-oracle-button"
+            aria-label={`Show the full card for ${card.name}`}
+          >
             <span ref={oracleRef} className="commander-oracle">
               {card.oracleText}
             </span>
@@ -176,7 +188,9 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
     suggestion.gameChangerCards.length > 0;
 
   return (
-    <article className={`commander-card${expanded ? ' is-expanded' : ''}${isPair ? ' is-pair' : ''}`}>
+    <article
+      className={`commander-card${expanded ? ' is-expanded' : ''}${isPair ? ' is-pair' : ''}`}
+    >
       {isPair ? (
         <div className="commander-image-row">
           {suggestion.cards.map((card) => (
@@ -184,7 +198,8 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
           ))}
         </div>
       ) : (
-        <CommanderArt card={suggestion.cards[0]} />
+        // !isPair means cards.length <= 1, and a unit always has 1 or 2 cards.
+        <CommanderArt card={suggestion.cards[0]!} />
       )}
       <button
         type="button"
@@ -201,7 +216,9 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
           {suggestion.colorIdentity.length === 0 ? (
             <ManaSymbol color="C" />
           ) : (
-            sortWubrg(suggestion.colorIdentity).map((color) => <ManaSymbol key={color} color={color} />)
+            sortWubrg(suggestion.colorIdentity).map((color) => (
+              <ManaSymbol key={color} color={color} />
+            ))
           )}
           <span className="identity-name">{identityName(suggestion.colorIdentity)}</span>
         </div>
@@ -223,7 +240,12 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
         )}
 
         {suggestion.cards.map((card) => (
-          <CommanderFace key={card.oracleId} card={card} bracket={suggestion.bracket} inPair={isPair} />
+          <CommanderFace
+            key={card.oracleId}
+            card={card}
+            bracket={suggestion.bracket}
+            inPair={isPair}
+          />
         ))}
 
         <div className="badge-row">
@@ -234,13 +256,15 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
               change rather than a re-plumb. */}
           {suggestion.gameChangerCount > 0 && (
             <span className="badge badge-gc">
-              {suggestion.gameChangerCount} Game Changer{suggestion.gameChangerCount === 1 ? '' : 's'}
+              {suggestion.gameChangerCount} Game Changer
+              {suggestion.gameChangerCount === 1 ? '' : 's'}
             </span>
           )}
         </div>
 
         <p className="commander-meta">
-          Fits {suggestion.includedCardCount} card{suggestion.includedCardCount === 1 ? '' : 's'} from your list
+          Fits {suggestion.includedCardCount} card{suggestion.includedCardCount === 1 ? '' : 's'}{' '}
+          from your list
         </p>
 
         {kindredTypes.length > 0 && (
@@ -284,11 +308,12 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
                 {kindredSupport.map((kindred) => (
                   <details key={kindred.type} className="explain-group">
                     <summary className="explain-group-title">
-                      {kindred.type} <span className="explain-count">{cardCount(kindred.cards)} in your list</span>
+                      {kindred.type}{' '}
+                      <span className="explain-count">{cardCount(kindred.cards)} in your list</span>
                     </summary>
                     <p className="explain-group-desc">
-                      This commander's own rules text calls out {kindred.type} — merely sharing a creature
-                      type is not a reason to pick a commander, but caring about one is.
+                      This commander's own rules text calls out {kindred.type} — merely sharing a
+                      creature type is not a reason to pick a commander, but caring about one is.
                     </p>
                     <SupportingCardList cards={kindred.cards} />
                   </details>
@@ -302,7 +327,8 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
                 {themeSupport.map((theme) => (
                   <details key={theme.key} className="explain-group">
                     <summary className="explain-group-title">
-                      {theme.label} <span className="explain-count">{cardCount(theme.cards)} in your list</span>
+                      {theme.label}{' '}
+                      <span className="explain-count">{cardCount(theme.cards)} in your list</span>
                     </summary>
                     <p className="explain-group-desc">{theme.description}</p>
                     <SupportingCardList cards={theme.cards} />
@@ -317,11 +343,12 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
                 {keywordSupport.map((kw) => (
                   <details key={kw.keyword} className="explain-group">
                     <summary className="explain-group-title">
-                      {kw.keyword} <span className="explain-count">{cardCount(kw.cards)} in your list</span>
+                      {kw.keyword}{' '}
+                      <span className="explain-count">{cardCount(kw.cards)} in your list</span>
                     </summary>
                     <p className="explain-group-desc">
-                      This commander has {kw.keyword}, and enough of your list does too for it to be a real pattern,
-                      not a coincidence.
+                      This commander has {kw.keyword}, and enough of your list does too for it to be
+                      a real pattern, not a coincidence.
                     </p>
                     <SupportingCardList cards={kw.cards} />
                   </details>
@@ -337,7 +364,9 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
                 <details className="explain-group">
                   <summary className="explain-group-title">
                     Game Changers{' '}
-                    <span className="explain-count">{cardCount(suggestion.gameChangerCards)} in your list</span>
+                    <span className="explain-count">
+                      {cardCount(suggestion.gameChangerCards)} in your list
+                    </span>
                   </summary>
                   <p className="explain-group-desc">
                     These cards are on Wizards' official Game Changers list.
@@ -350,8 +379,8 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
             <ComboFinder commanderNames={suggestion.cards.map((c) => c.name)} />
 
             <p className="explain-caveat">
-              Matches come from card text, keywords, and creature types, not a model of how the deck actually
-              plays. Treat this as a starting point.
+              Matches come from card text, keywords, and creature types, not a model of how the deck
+              actually plays. Treat this as a starting point.
             </p>
           </div>
         )}

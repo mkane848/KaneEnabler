@@ -61,7 +61,7 @@ async function readGlyph(key) {
     throw new Error(`${key}.svg has viewBox "${viewBox}", expected "0 0 32 32"`);
   }
 
-  const paths = [...svg.matchAll(/<path[^>]*\sd="([^"]*)"/g)].map(m => m[1]);
+  const paths = [...svg.matchAll(/<path[^>]*\sd="([^"]*)"/g)].map((m) => m[1]);
   if (paths.length !== 1) {
     throw new Error(`${key}.svg has ${paths.length} paths; the renderer draws one`);
   }
@@ -77,5 +77,9 @@ for (const key of KEYS) {
   rows.push(`  ${key}: '${await readGlyph(key)}',`);
 }
 
-await writeFile(OUT_PATH, HEADER + rows.join('\n') + "\n};\n\nexport const MANA_VIEWBOX = '0 0 32 32';\n", 'utf8');
+await writeFile(
+  OUT_PATH,
+  HEADER + rows.join('\n') + "\n};\n\nexport const MANA_VIEWBOX = '0 0 32 32';\n",
+  'utf8',
+);
 console.log(`Wrote ${KEYS.length} glyphs to ${path.relative(ROOT, OUT_PATH)}`);

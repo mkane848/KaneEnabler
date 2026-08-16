@@ -42,7 +42,8 @@ body {
 
 body {
   background: var(--ink);
-  background-image: radial-gradient(circle at 20% -10%, #2a2418 0%, transparent 45%),
+  background-image:
+    radial-gradient(circle at 20% -10%, #2a2418 0%, transparent 45%),
     radial-gradient(circle at 90% 10%, #241f17 0%, transparent 40%);
   color: var(--text-primary);
   font-family: var(--font-body);
@@ -67,8 +68,9 @@ body {
 .app-shell {
   max-width: 960px;
   margin: 0 auto;
-  padding: max(3rem, calc(env(safe-area-inset-top) + 1.5rem)) max(1.5rem, env(safe-area-inset-right))
-    max(4rem, calc(env(safe-area-inset-bottom) + 2rem)) max(1.5rem, env(safe-area-inset-left));
+  padding: max(3rem, calc(env(safe-area-inset-top) + 1.5rem))
+    max(1.5rem, env(safe-area-inset-right)) max(4rem, calc(env(safe-area-inset-bottom) + 2rem))
+    max(1.5rem, env(safe-area-inset-left));
 }
 
 .app-nav {
@@ -242,7 +244,9 @@ body {
   border-radius: 8px;
   padding: 0.7rem 1.4rem;
   cursor: pointer;
-  transition: transform 0.1s ease, background 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    background 0.15s ease;
 }
 
 .primary-button:hover:not(:disabled) {
@@ -374,7 +378,10 @@ body {
   line-height: 0;
   cursor: pointer;
   opacity: 0.45;
-  transition: opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .toggle-pip .pip {
@@ -411,7 +418,10 @@ body {
   border-radius: 999px;
   padding: 0.28rem 0.7rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
 .toggle-chip:hover {
@@ -648,7 +658,6 @@ body {
   position: relative;
 }
 
-
 .dismiss-button {
   position: absolute;
   top: 0.5rem;
@@ -667,7 +676,9 @@ body {
   border-radius: 50%;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
 }
 
 /* Revealed on hover, but never invisible while focused — :focus as well as
@@ -890,7 +901,9 @@ body {
   border: 1px solid var(--parchment-dim);
   border-radius: 7px;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .commander-oracle-button:hover {
@@ -1350,9 +1363,7 @@ summary.explain-group-title::after {
   display: block;
   max-width: min(92vw, 460px);
   /* Leaves room for the footer line beneath the card. */
-  max-height: calc(
-    100dvh - 5.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-  );
+  max-height: calc(100dvh - 5.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   width: auto;
   height: auto;
   object-fit: contain;

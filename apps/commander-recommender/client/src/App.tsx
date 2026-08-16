@@ -23,8 +23,8 @@ function App() {
       <header className="app-header">
         <h1 className="app-title">Find the Commander hiding in your collection</h1>
         <p className="app-subtitle">
-          Paste or upload a card list. We'll look for synergies across it and suggest legal Commanders,
-          with the reasoning behind each one.
+          Paste or upload a card list. We'll look for synergies across it and suggest legal
+          Commanders, with the reasoning behind each one.
         </p>
       </header>
 
@@ -34,7 +34,10 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Card data via Scryfall. Suggestions are a heuristic, not a model of how a deck actually plays.</p>
+        <p>
+          Card data via Scryfall. Suggestions are a heuristic, not a model of how a deck actually
+          plays.
+        </p>
       </footer>
     </div>
   );

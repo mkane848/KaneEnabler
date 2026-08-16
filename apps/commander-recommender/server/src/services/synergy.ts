@@ -160,7 +160,15 @@ export function buildCollectionProfile(owned: OwnedCard[]): CollectionProfile {
     }
   }
 
-  return { colorCounts, creatureTypes, keywords, vocabulary, archetypeCards, factsByCard, totalCards };
+  return {
+    colorCounts,
+    creatureTypes,
+    keywords,
+    vocabulary,
+    archetypeCards,
+    factsByCard,
+    totalCards,
+  };
 }
 
 // A commander unit is jointly "the commander" (702.124e), so signals are
@@ -205,7 +213,10 @@ function supporterMatches(signal: SignalMatch, facts: CardFacts | undefined): bo
   if (!signal.qualifier) return true;
   if (!facts) return false;
   if (signal.qualifierKind === 'creatureType') {
-    return facts.creatureTypes.includes(signal.qualifier) || facts.producedTokenTypes.includes(signal.qualifier);
+    return (
+      facts.creatureTypes.includes(signal.qualifier) ||
+      facts.producedTokenTypes.includes(signal.qualifier)
+    );
   }
   if (signal.qualifierKind === 'keyword') {
     return facts.keywords.includes(signal.qualifier);
@@ -252,7 +263,7 @@ const DIMINISHING_FACTOR = 0.7;
 export function scoreCommanders(
   units: CommanderUnit[],
   profile: CollectionProfile,
-  owned: OwnedCard[]
+  owned: OwnedCard[],
 ): CommanderSuggestion[] {
   const suggestions: CommanderSuggestion[] = [];
 
@@ -289,7 +300,11 @@ export function scoreCommanders(
     for (const signal of active) {
       const bucket = profile.archetypeCards[signal.archetype] ?? [];
       const cards = bucket
-        .filter((entry) => fitsIdentity(entry) && supporterMatches(signal, profile.factsByCard.get(entry.row.oracle_id)))
+        .filter(
+          (entry) =>
+            fitsIdentity(entry) &&
+            supporterMatches(signal, profile.factsByCard.get(entry.row.oracle_id)),
+        )
         .map(toSupportingCard);
       if (cards.length >= MIN_SIGNAL_COUNT) matched.push({ signal, cards });
     }
@@ -312,8 +327,9 @@ export function scoreCommanders(
       .reduce((sum, raw, rank) => sum + raw * DIMINISHING_FACTOR ** rank, 0);
 
     const depthScore = matched.reduce(
-      (sum, { cards }) => sum + Math.max(0, cards.length - DEEP_SIGNAL_COUNT + 1) * DEPTH_BONUS_PER_CARD,
-      0
+      (sum, { cards }) =>
+        sum + Math.max(0, cards.length - DEEP_SIGNAL_COUNT + 1) * DEPTH_BONUS_PER_CARD,
+      0,
     );
 
     // Mapped back onto the three support lists the API and client already

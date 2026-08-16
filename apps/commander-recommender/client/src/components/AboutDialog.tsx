@@ -40,12 +40,13 @@ export function AboutDialog({ children }: { children: ReactNode }) {
             <div className="dialog-body">
               <Dialog.Title className="dialog-name">Commander? I Hardly Know 'Er</Dialog.Title>
               <p className="about-version">
-                Version {__APP_VERSION__} <span className="about-build-date">· Updated {formattedBuildDate}</span>
+                Version {__APP_VERSION__}{' '}
+                <span className="about-build-date">· Updated {formattedBuildDate}</span>
               </p>
 
               <p className="about-blurb">
-                Paste a card list, get back Commander suggestions scored against it — with an explanation
-                for each one, not just a number.
+                Paste a card list, get back Commander suggestions scored against it — with an
+                explanation for each one, not just a number.
               </p>
 
               <dl className="dialog-meta about-credits">
@@ -61,7 +62,11 @@ export function AboutDialog({ children }: { children: ReactNode }) {
                 <div>
                   <dt>Combo data</dt>
                   <dd>
-                    <a href="https://commanderspellbook.com" target="_blank" rel="noreferrer noopener">
+                    <a
+                      href="https://commanderspellbook.com"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
                       Commander Spellbook
                     </a>
                   </dd>
@@ -81,9 +86,13 @@ export function AboutDialog({ children }: { children: ReactNode }) {
               </dl>
 
               <p className="about-caveat">
-                Suggestions come from card text, keywords and creature types — a heuristic, not a model of how a
-                deck actually plays. See the{' '}
-                <a href={`${REPO_URL}/blob/main/CHANGELOG.md`} target="_blank" rel="noreferrer noopener">
+                Suggestions come from card text, keywords and creature types — a heuristic, not a
+                model of how a deck actually plays. See the{' '}
+                <a
+                  href={`${REPO_URL}/blob/main/CHANGELOG.md`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
                   changelog
                 </a>{' '}
                 for what's changed.

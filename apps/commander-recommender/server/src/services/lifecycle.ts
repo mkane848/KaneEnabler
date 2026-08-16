@@ -83,7 +83,8 @@ export const LIFECYCLES: LifecycleSpec[] = [
       {
         key: 'payoff',
         label: 'Death payoff',
-        description: 'Something that triggers when a creature dies, turning the loss into damage or value.',
+        description:
+          'Something that triggers when a creature dies, turning the loss into damage or value.',
         roles: ['rewards'],
         minimum: 3,
       },
@@ -126,7 +127,8 @@ export const LIFECYCLES: LifecycleSpec[] = [
       {
         key: 'payoff',
         label: 'Payoff',
-        description: 'Anthems, mass pumps, and finishers that scale with how many creatures you have.',
+        description:
+          'Anthems, mass pumps, and finishers that scale with how many creatures you have.',
         roles: ['rewards'],
         minimum: 3,
       },
@@ -238,7 +240,7 @@ const CROSS_ARCHETYPE_SLOTS: Record<string, { archetype: string; roles: Role[] }
 
 export function crossArchetypeSlot(
   archetype: string,
-  slotKey: string
+  slotKey: string,
 ): { archetype: string; roles: Role[] } | undefined {
   return CROSS_ARCHETYPE_SLOTS[`${archetype}.${slotKey}`];
 }

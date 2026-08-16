@@ -83,12 +83,12 @@ export function readImportedSnapshot(dbPath: string): ImportedSnapshot | null {
 /** Records what this import consumed. Called at the end of a successful run. */
 export function writeImportedSnapshot(
   db: Database.Database,
-  snapshot: Omit<ImportedSnapshot, 'importedAt'>
+  snapshot: Omit<ImportedSnapshot, 'importedAt'>,
 ): void {
   ensureMetaTable(db);
   const upsert = db.prepare(
     `INSERT INTO meta (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
   );
   db.transaction(() => {
     upsert.run('scryfall_snapshot_updated_at', snapshot.updatedAt);

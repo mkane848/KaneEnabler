@@ -11,7 +11,15 @@ import type { ComboDTO } from '../types';
  * either to stretch the page well past the fold on their own, same problem
  * as an uncapped suggestion grid.
  */
-function ComboList({ combos, showMissing, pageSize }: { combos: ComboDTO[]; showMissing?: boolean; pageSize: number }) {
+function ComboList({
+  combos,
+  showMissing,
+  pageSize,
+}: {
+  combos: ComboDTO[];
+  showMissing?: boolean;
+  pageSize: number;
+}) {
   const [pageIndex, setPageIndex] = useState(0);
   // A shorter list, or a changed page-size preference, can leave pageIndex
   // pointing past the end — land back on page 1 rather than an empty page.
@@ -52,7 +60,12 @@ function ComboList({ combos, showMissing, pageSize }: { combos: ComboDTO[]; show
             )}
 
             {combo.permalink && (
-              <a className="combo-link" href={combo.permalink} target="_blank" rel="noreferrer noopener">
+              <a
+                className="combo-link"
+                href={combo.permalink}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
                 View on Commander Spellbook
               </a>
             )}
@@ -107,8 +120,14 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
       <div className="explain-section-header">
         <h4 className="explain-heading">Combos</h4>
         {data && !isFetching && resultCount > 0 && (
-          <button type="button" className="link-button" onClick={() => setResultsVisible((v) => !v)}>
-            {resultsVisible ? 'Hide results' : `Show ${resultCount} result${resultCount === 1 ? '' : 's'}`}
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => setResultsVisible((v) => !v)}
+          >
+            {resultsVisible
+              ? 'Hide results'
+              : `Show ${resultCount} result${resultCount === 1 ? '' : 's'}`}
           </button>
         )}
       </div>
@@ -116,8 +135,8 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
       {showIdle && (
         <>
           <p className="explain-group-desc">
-            Check Commander Spellbook for combos between this commander and the cards in your list that
-            fit its color identity.
+            Check Commander Spellbook for combos between this commander and the cards in your list
+            that fit its color identity.
           </p>
           <div className="combo-button-row">
             <button type="button" className="combo-button" onClick={() => setRequested(true)}>
@@ -128,7 +147,12 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
                 handoff.md); this just reserves the spot in the UI for a
                 future one-time, click-to-run lookup matching how the combo
                 button above works. */}
-            <button type="button" className="combo-button combo-button-placeholder" disabled title="Coming soon">
+            <button
+              type="button"
+              className="combo-button combo-button-placeholder"
+              disabled
+              title="Coming soon"
+            >
               EDHRec
             </button>
           </div>
@@ -139,7 +163,9 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
 
       {error && !isFetching && (
         <>
-          <p className="combo-error">{error instanceof Error ? error.message : 'Combo lookup failed.'}</p>
+          <p className="combo-error">
+            {error instanceof Error ? error.message : 'Combo lookup failed.'}
+          </p>
           <button type="button" className="combo-button" onClick={() => refetch()}>
             Try again
           </button>
@@ -150,7 +176,8 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
         <>
           <div className="explain-group-header">
             <p className="explain-group-desc">
-              Searched {data.searchedCardCount} card{data.searchedCardCount === 1 ? '' : 's'} from your list
+              Searched {data.searchedCardCount} card{data.searchedCardCount === 1 ? '' : 's'} from
+              your list
               {data.cached ? ' (cached)' : ''}.
             </p>
             {/* A standing preference (see usePreferencesStore), not local to
@@ -159,7 +186,10 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
             {resultCount > combosPerPage && (
               <label className="sort-control">
                 <span className="filter-label">Show</span>
-                <select value={combosPerPage} onChange={(event) => setCombosPerPage(Number(event.target.value))}>
+                <select
+                  value={combosPerPage}
+                  onChange={(event) => setCombosPerPage(Number(event.target.value))}
+                >
                   {COMBOS_PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>
                       {size}

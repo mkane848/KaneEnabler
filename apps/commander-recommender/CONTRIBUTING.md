@@ -38,7 +38,7 @@ skipping verification.
 
 ## Code conventions
 
-- No unnecessary comments. A comment should explain a non-obvious *why*
+- No unnecessary comments. A comment should explain a non-obvious _why_
   (a hidden constraint, a workaround for a specific bug, something that
   would surprise a reader) — not restate what the code already says.
 - Keep changes proportional to the ask. This codebase deliberately favors a
@@ -58,7 +58,7 @@ what doesn't.
 ## Questions about a specific design decision
 
 `handoff.md` is the deeper "why" behind most of the non-obvious choices in
-this codebase (why Zustand *and* TanStack Query, why the SQLite database is
+this codebase (why Zustand _and_ TanStack Query, why the SQLite database is
 rebuilt on every deploy instead of persisted, why Commander Spellbook is
 only ever called on an explicit click, and so on). Check there before
 assuming something is accidental.

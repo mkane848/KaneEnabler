@@ -82,7 +82,7 @@ export function SupportingCardList<T extends SupportingCardDTO>({
         if (aValue !== bValue) return aValue - bValue;
         return a.name.localeCompare(b.name);
       }),
-    [cards]
+    [cards],
   );
 
   return (

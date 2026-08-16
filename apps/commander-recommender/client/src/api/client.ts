@@ -54,7 +54,9 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
         const payload = await response
           .json()
           .catch(() => ({}) as { error?: string; retryAfterSeconds?: number });
-        const wait = payload.retryAfterSeconds ? ` Try again in about ${payload.retryAfterSeconds}s.` : '';
+        const wait = payload.retryAfterSeconds
+          ? ` Try again in about ${payload.retryAfterSeconds}s.`
+          : '';
         throw new Error((payload.error ?? `Request failed with status ${response.status}`) + wait);
       }
 
@@ -84,7 +86,7 @@ export async function fetchRecommendations(rawList: string): Promise<RecommendRe
   // Cited cards arrive once with citations by position; put them back here so
   // the rest of the app never sees the wire shape. See lib/rehydrate.ts.
   return rehydrateRecommendations(
-    await postJson<WireRecommendResponse>('/api/recommend', { list: rawList })
+    await postJson<WireRecommendResponse>('/api/recommend', { list: rawList }),
   );
 }
 
@@ -106,6 +108,9 @@ export async function fetchMeta(): Promise<ServerMeta> {
  * (one name, or two under a Partner-family ability) makes with the user's
  * cards. Only called from an explicit click — never on load.
  */
-export function fetchCombos(rawList: string, commanderNames: string[]): Promise<ComboLookupResponse> {
+export function fetchCombos(
+  rawList: string,
+  commanderNames: string[],
+): Promise<ComboLookupResponse> {
   return postJson<ComboLookupResponse>('/api/combos', { list: rawList, commanderNames });
 }

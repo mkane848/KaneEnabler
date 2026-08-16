@@ -4,6 +4,7 @@ A standalone brief. A fresh session should be able to execute from this document
 re-deriving the analysis behind it.
 
 Companion documents:
+
 - [`rules-audit.md`](./rules-audit.md) — every rules defect found, with file:line citations
 - [`api-policy.md`](./api-policy.md) — the external-API rule, which is a **hard project rule**
 
@@ -18,7 +19,7 @@ nothing but two git submodules pointing at projects built independently of each 
   suggestions with cited synergies. React 19 + Vite client, Express 5 + better-sqlite3 server,
   ~5,700 lines of app code, 17 hand-rolled test files.
 - **DrWhoCompanionEDH** (`mtg-time-tracker` v1.2.0) — an in-game counter companion for one specific
-  Jeskai *Doctor Who* deck. React 19 + Vite, no backend, localStorage, Vitest.
+  Jeskai _Doctor Who_ deck. React 19 + Vite, no backend, localStorage, Vitest.
 
 The goal is one place where the game's rules are modelled once, correctly, and consumed by every
 tool without being re-derived per feature — so adding a module doesn't mean re-implementing colour
@@ -30,13 +31,13 @@ knowledge **differently**, which is where the bugs are.
 
 ## Decisions on record
 
-| Question | Decision |
-|---|---|
-| Consolidation | Absorb both into `apps/` **preserving history** via `git subtree`. Drop `.gitmodules`. |
-| Rules depth | Structured CR data + a typed primitives package. **Not** a rules engine. |
-| DrWhoCompanionEDH scope | **Stays deck-specific.** Extract shared code; do not generalise to arbitrary commanders. |
-| Tech stack | TanStack **Router on the existing Vite setup — not Start.** Adopt Router, Table, Virtual, Form; keep Query + Zustand. **No RSC.** |
-| User profiles | Supabase auth + Postgres. Preferences **filter and annotate only** — no scoring change. Combos stored as snapshots taken at favourite time. |
+| Question                | Decision                                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consolidation           | Absorb both into `apps/` **preserving history** via `git subtree`. Drop `.gitmodules`.                                                      |
+| Rules depth             | Structured CR data + a typed primitives package. **Not** a rules engine.                                                                    |
+| DrWhoCompanionEDH scope | **Stays deck-specific.** Extract shared code; do not generalise to arbitrary commanders.                                                    |
+| Tech stack              | TanStack **Router on the existing Vite setup — not Start.** Adopt Router, Table, Virtual, Form; keep Query + Zustand. **No RSC.**           |
+| User profiles           | Supabase auth + Postgres. Preferences **filter and annotate only** — no scoring change. Combos stored as snapshots taken at favourite time. |
 
 ## Target shape
 
@@ -122,7 +123,7 @@ to HKH's 6.
 Two near-line-for-line reimplementations, including a `describeFailure` helper that is
 character-for-character the same. Both independently discovered the `jsonl_download_uri` migration.
 
-Merge to **HKH's snapshot-based cache**, which compares the *published* `updated_at` — its own
+Merge to **HKH's snapshot-based cache**, which compares the _published_ `updated_at` — its own
 comment records that this replaced a 7-day mtime heuristic that was "wrong in both directions."
 **DWC is still running exactly that superseded heuristic.** Keep HKH's streamed gunzip and
 sidecar-written-last discipline; adopt DWC's `output.length < 1000` floor check and its
@@ -182,17 +183,17 @@ Typed functions, each citing the CR rule it implements, each tested against it. 
 here once; tools consume it and never re-derive it.** This is the answer to not wanting to revisit
 rules support every time a new feature is imagined.
 
-| Primitive | CR | Source today |
-|---|---|---|
-| `isCommanderEligible` / `frontFaceCharacteristics` | 903.3, 712.4, 709.4 | HKH `eligibility.ts` |
-| `singletonLimit` / `applySingletonLimits` | 903.5b | HKH `singleton.ts` |
-| `buildCommanderUnits` (all six Partner variants) | 702.124 | HKH `partners.ts` |
-| `commanderTax(castCount)` | 903.10 | DWC — inlined in **3 places** |
-| `isWithinIdentity` / `sortWubrg` / `identityName` | 903.4 | split across both, 4 inline copies |
-| Counter taxonomy: time vs fade vs lore | 702.32, 702.62, 714 | DWC `counters.ts` |
-| Turn steps that matter (upkeep, precombat main) | 500–514 | DWC — hardcoded twice |
-| `parseCreatureTypes` | 205.3m | HKH `signals.ts` |
-| Format legality, ban list, Game Changers | — | Scryfall fields; no hand-maintained list |
+| Primitive                                          | CR                  | Source today                             |
+| -------------------------------------------------- | ------------------- | ---------------------------------------- |
+| `isCommanderEligible` / `frontFaceCharacteristics` | 903.3, 712.4, 709.4 | HKH `eligibility.ts`                     |
+| `singletonLimit` / `applySingletonLimits`          | 903.5b              | HKH `singleton.ts`                       |
+| `buildCommanderUnits` (all six Partner variants)   | 702.124             | HKH `partners.ts`                        |
+| `commanderTax(castCount)`                          | 903.10              | DWC — inlined in **3 places**            |
+| `isWithinIdentity` / `sortWubrg` / `identityName`  | 903.4               | split across both, 4 inline copies       |
+| Counter taxonomy: time vs fade vs lore             | 702.32, 702.62, 714 | DWC `counters.ts`                        |
+| Turn steps that matter (upkeep, precombat main)    | 500–514             | DWC — hardcoded twice                    |
+| `parseCreatureTypes`                               | 205.3m              | HKH `signals.ts`                         |
+| Format legality, ban list, Game Changers           | —                   | Scryfall fields; no hand-maintained list |
 
 Deck size (100 cards) and deck colour-identity legality are **not implemented anywhere today** —
 add them here.
@@ -221,7 +222,7 @@ isn't relitigated:
   with a browser error page and no shell to render the banner in. SPA mode avoids this, but then
   Start does very little that Router alone doesn't.
 - **It doesn't collapse the deploy topology.** Keeping the CDN-served shell means keeping a static
-  target *plus* a Node target for SQLite either way.
+  target _plus_ a Node target for SQLite either way.
 - **The migration cost lands on the least-broken part of the codebase.** The client/server split
   works; the rules logic is what has defects.
 
@@ -230,15 +231,15 @@ state across players' devices would be the trigger).
 
 ### What to adopt
 
-| Module | Decision |
-|---|---|
-| **Router** | Both apps. Type-safe routes; URL-as-state for the recommender's filters/sort/page, which today lives in component state and is lost on refresh and unshareable. Also gives the CR rules browser real routes. |
-| **Query** | Keep. Already used correctly with deliberate non-default config. Also replaces DWC's hand-rolled ~25-line cache/in-flight/retry logic in `cardCatalog.ts`. |
-| **Table** | Adopt properly in the recommender. Currently headless-for-pagination-only, with filtering and sorting as separate hand-written passes. Folding them into the table model puts filter/sort/paginate in one state machine Router can serialise to the URL, and removes the `useEffect` that resets pagination on page-size change. |
-| **Virtual** | Both. DWC's `searchCards` is an O(n) scan over ~18,000 cards per keystroke that sorts *all* matches before taking 8, un-debounced. HKH's suggestion grid renders 12–96 unmemoised 361-line `CommanderCard`s that all re-render on any filter change; virtualising lets the page-size cap come off entirely. |
-| **Form** | **DWC `AddCardPanel.tsx` only.** 16 `useState` hooks in one 485-line component, three conditional entry modes, a variable-length `chapters: string[]` field array, and a hand-rolled `resetAll()` that resets 15 of 16 values and silently misses `mechanic`. Not for HKH, whose only form is a textarea plus a file input. |
-| **Store** | No. Alpha, and Zustand already does this job well here. |
-| **DB** | No. Sync/offline-first is its purpose; neither app syncs anything. |
+| Module      | Decision                                                                                                                                                                                                                                                                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Router**  | Both apps. Type-safe routes; URL-as-state for the recommender's filters/sort/page, which today lives in component state and is lost on refresh and unshareable. Also gives the CR rules browser real routes.                                                                                                                     |
+| **Query**   | Keep. Already used correctly with deliberate non-default config. Also replaces DWC's hand-rolled ~25-line cache/in-flight/retry logic in `cardCatalog.ts`.                                                                                                                                                                       |
+| **Table**   | Adopt properly in the recommender. Currently headless-for-pagination-only, with filtering and sorting as separate hand-written passes. Folding them into the table model puts filter/sort/paginate in one state machine Router can serialise to the URL, and removes the `useEffect` that resets pagination on page-size change. |
+| **Virtual** | Both. DWC's `searchCards` is an O(n) scan over ~18,000 cards per keystroke that sorts _all_ matches before taking 8, un-debounced. HKH's suggestion grid renders 12–96 unmemoised 361-line `CommanderCard`s that all re-render on any filter change; virtualising lets the page-size cap come off entirely.                      |
+| **Form**    | **DWC `AddCardPanel.tsx` only.** 16 `useState` hooks in one 485-line component, three conditional entry modes, a variable-length `chapters: string[]` field array, and a hand-rolled `resetAll()` that resets 15 of 16 values and silently misses `mechanic`. Not for HKH, whose only form is a textarea plus a file input.      |
+| **Store**   | No. Alpha, and Zustand already does this job well here.                                                                                                                                                                                                                                                                          |
+| **DB**      | No. Sync/offline-first is its purpose; neither app syncs anything.                                                                                                                                                                                                                                                               |
 
 **Keep** Zustand + TanStack Query with the split the recommender already uses correctly — Zustand
 for client state only, Query owning everything fetched. The `retry: false` /
@@ -272,8 +273,8 @@ for client state only, Query owning everything fetched. The `retry: false` /
 
 The project's first **writable** data.
 
-> This breaks a documented assumption. HKH's `handoff.md` states the card SQLite is *"static
-> read-only reference data, not app state"* — which is why Render rebuilds it per deploy instead of
+> This breaks a documented assumption. HKH's `handoff.md` states the card SQLite is _"static
+> read-only reference data, not app state"_ — which is why Render rebuilds it per deploy instead of
 > paying for a persistent disk. **Keep that true.** Profiles go in Supabase Postgres, entirely
 > separate from the card database. Nothing about the card-data pipeline changes. The "no user
 > accounts" non-goal is superseded; update it rather than leaving it to contradict the code.
@@ -294,12 +295,12 @@ combo_preferences (
 )
 ```
 
-| Requested list | How it's derived |
-|---|---|
-| Cards they like / dislike | `card_preferences.sentiment` |
-| Favourite jank cards | `sentiment = 'like' AND 'jank' = ANY(tags)`. **Jank is a tag, not a list** — a jank card is a card you like *for being jank*. A separate list would duplicate the row and let the two disagree. |
-| Favourite / disliked commanders | The same rows joined against `cards.is_commander_eligible`, already a column. A commander **is** a card; a second table would drift. |
-| Combos they like / hate | `combo_preferences.sentiment` |
+| Requested list                  | How it's derived                                                                                                                                                                                |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cards they like / dislike       | `card_preferences.sentiment`                                                                                                                                                                    |
+| Favourite jank cards            | `sentiment = 'like' AND 'jank' = ANY(tags)`. **Jank is a tag, not a list** — a jank card is a card you like _for being jank_. A separate list would duplicate the row and let the two disagree. |
+| Favourite / disliked commanders | The same rows joined against `cards.is_commander_eligible`, already a column. A commander **is** a card; a second table would drift.                                                            |
+| Combos they like / hate         | `combo_preferences.sentiment`                                                                                                                                                                   |
 
 Key on **`oracle_id`**, not printing id — HKH already does this, and DWC's `CardData.id` being a
 printing id is one of the landmines `@mtg/card-model` exists to resolve.

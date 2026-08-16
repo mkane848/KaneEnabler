@@ -9,8 +9,8 @@ time from Scryfall's bulk data, and game state lives in your browser's
 ## How it works
 
 - **Turn tracking is yours only.** Commander is multiplayer, but Suspend,
-  Vanishing, and Fading all remove a counter at the beginning of *their
-  owner's* upkeep, and a Saga gains a lore counter as *their owner's*
+  Vanishing, and Fading all remove a counter at the beginning of _their
+  owner's_ upkeep, and a Saga gains a lore counter as _their owner's_
   precombat main begins — not every player's. So the app just tracks "my
   turn number," not a full multi-player turn order.
 - **Next Turn runs two steps, in order, as one action:** upkeep (Suspend,
@@ -20,9 +20,9 @@ time from Scryfall's bulk data, and game state lives in your browser's
   Saga's chapter ability is never mixed in with an unrelated upkeep trigger
   or shown before the turn has actually reached that point.
 - **Time Travel** is a separate, deliberately manual action, because it's a
-  real (and different) Magic keyword: *"For each suspended card you own and
+  real (and different) Magic keyword: _"For each suspended card you own and
   each permanent you control with a time counter on it, you may add or
-  remove a time counter."* It isn't tied to the turn counter at all — it's
+  remove a time counter."_ It isn't tied to the turn counter at all — it's
   something specific cards grant (this deck has three: The Tenth Doctor's
   {7} activated ability does it three times, Wibbly-wobbly, Timey-wimey
   triggers it once off a spell, and Time Beetle triggers it on combat
@@ -30,7 +30,7 @@ time from Scryfall's bulk data, and game state lives in your browser's
   app walks you through that many passes, one card at a time, letting you
   add, remove, or skip each one — so you always know how many passes are
   left instead of losing count mid-resolution. Only objects with a real
-  *time counter* are offered: Suspend and Vanishing cards, and Rose Tyler's
+  _time counter_ are offered: Suspend and Vanishing cards, and Rose Tyler's
   own Bad Wolf counters once she has any — Fading (fade counters) and Saga
   (lore counters) are never eligible, since neither is actually a time
   counter.
@@ -133,12 +133,12 @@ A few things worth knowing about the shape of that file:
 
 ## Scripts
 
-| Command               | What it does                                          |
-| ---------------------- | ------------------------------------------------------ |
-| `npm run dev`          | Start the local dev server                             |
-| `npm run build`        | Type-check and build a static bundle into `dist/`      |
-| `npm run preview`      | Preview the production build locally                   |
-| `npm run fetch-cards`  | Rebuild `public/cards.json` from Scryfall              |
+| Command               | What it does                                      |
+| --------------------- | ------------------------------------------------- |
+| `npm run dev`         | Start the local dev server                        |
+| `npm run build`       | Type-check and build a static bundle into `dist/` |
+| `npm run preview`     | Preview the production build locally              |
+| `npm run fetch-cards` | Rebuild `public/cards.json` from Scryfall         |
 
 ## Project layout
 
@@ -210,20 +210,20 @@ Claude doesn't see a flash of the Doctor Who default first.
 ## Counter mechanics
 
 The app tracks the counter types this deck actually uses — Suspend and
-Vanishing (real *time counters*), Fading (*fade counters*, a distinct
-counter type — rule 702.32), and Saga (*lore counters*) — not Magic's many
+Vanishing (real _time counters_), Fading (_fade counters_, a distinct
+counter type — rule 702.32), and Saga (_lore counters_) — not Magic's many
 other counter types (+1/+1, loyalty, charge, level, and so on). Built in,
 with auto-detection from oracle text where that's possible:
 
 | Mechanic  | Direction | Auto-adjusts on | Target                              |
-| --------- | --------- | ---------------- | ------------------------------------ |
-| Suspend   | down      | upkeep            | 0 (cast for free from exile)         |
-| Vanishing | down      | upkeep            | 0 (sacrifice)                        |
-| Fading    | down      | upkeep            | 0 (sacrifice)                        |
-| Saga      | up        | precombat main    | final chapter (resolves, sacrifice)  |
+| --------- | --------- | --------------- | ----------------------------------- |
+| Suspend   | down      | upkeep          | 0 (cast for free from exile)        |
+| Vanishing | down      | upkeep          | 0 (sacrifice)                       |
+| Fading    | down      | upkeep          | 0 (sacrifice)                       |
+| Saga      | up        | precombat main  | final chapter (resolves, sacrifice) |
 
-Suspend, Vanishing, and Fading all trigger at *your own upkeep*. A Saga
-gains its lore counter as *your own precombat main* begins instead — a
+Suspend, Vanishing, and Fading all trigger at _your own upkeep_. A Saga
+gains its lore counter as _your own precombat main_ begins instead — a
 different step, and one step later in the turn — and each chapter ability
 fires the instant the lore count reaches that chapter's number, not only at
 the final one. Next Turn runs both steps, in that order, as one action; see
@@ -237,17 +237,17 @@ Anything else is a **Custom** counter: name it, pick a direction, and
 optionally give it a target. That covers age counters (As Foretold) or any
 other one-off this app doesn't recognize by name — you tell it the counter
 type and direction instead of it guessing wrong. The increment option
-exists here specifically because Time Travel can *add* a time counter to a
+exists here specifically because Time Travel can _add_ a time counter to a
 Suspend or Vanishing card, not just remove one, so the data model has to
 allow it even though neither built-in decrement mechanic moves that way on
-its own. A Custom counter is *not* offered to Time Travel or Bad Wolf,
+its own. A Custom counter is _not_ offered to Time Travel or Bad Wolf,
 since the app has no way to know whether a given Custom counter is
 actually a time counter (Rose's own counters are handled separately, in
 her commander modal, specifically because hers are).
 
 **Not covered on purpose:** every other counter type in Magic (+1/+1,
-loyalty, charge, level, and so on) besides the four above. This is a *time
-counter and Saga* tracker, matching what this deck needs — not a
+loyalty, charge, level, and so on) besides the four above. This is a _time
+counter and Saga_ tracker, matching what this deck needs — not a
 general-purpose counter tracker.
 
 ### About the decklist scan
@@ -259,18 +259,18 @@ previously just an educated guess. Cross-checked against multiple
 independent sources (MTG Wiki, Card Kingdom's mechanics writeup, and
 Scryfall's own `keyword:"time travel"` index):
 
-- **The Tenth Doctor's** real ability is confirmed: *"Whenever you attack,
+- **The Tenth Doctor's** real ability is confirmed: _"Whenever you attack,
   exile cards from the top of your library until you exile a nonland card,
   then put three time counters on it. If it doesn't have suspend, it gains
-  suspend."* Plus *"Timey-Wimey — {7}: Time travel three times. Activate
-  only as a sorcery."* The quick "Suspend a card via an effect" action is
+  suspend."_ Plus _"Timey-Wimey — {7}: Time travel three times. Activate
+  only as a sorcery."_ The quick "Suspend a card via an effect" action is
   the right shortcut for the first ability, and Time Travel now exists as
   its own feature for the second — with a one-tap shortcut into it,
   pre-set to three passes, from his commander tax modal.
-- **Rose Tyler's** ability is confirmed: *"Rose Tyler gets +1/+1 for each
+- **Rose Tyler's** ability is confirmed: _"Rose Tyler gets +1/+1 for each
   time counter on it. Bad Wolf — Whenever Rose Tyler attacks, put a time
   counter on it for each suspended card you own and each other permanent
-  you control with a time counter on it."* Her commander tax modal tracks
+  you control with a time counter on it."_ Her commander tax modal tracks
   those counters directly, with a "Rose attacks" action that counts the
   board for you.
 - **Commander tax** (rule 903.10) is confirmed as +{2} per previous cast

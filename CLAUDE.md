@@ -16,11 +16,11 @@ reverse.
 
 ## Documents
 
-| Document | What it's for |
-|---|---|
-| [`docs/handoff.md`](./docs/handoff.md) | The plan: target architecture, all seven phases, verification steps |
+| Document                                       | What it's for                                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`docs/handoff.md`](./docs/handoff.md)         | The plan: target architecture, all seven phases, verification steps           |
 | [`docs/rules-audit.md`](./docs/rules-audit.md) | Every Magic rules defect found in the incoming code, with file:line citations |
-| [`docs/api-policy.md`](./docs/api-policy.md) | **Hard rule.** External API limits and etiquette |
+| [`docs/api-policy.md`](./docs/api-policy.md)   | **Hard rule.** External API limits and etiquette                              |
 
 ## Hard rules
 
@@ -48,7 +48,7 @@ reverse.
 
 Both incoming projects share these, and they should survive consolidation:
 
-- **Comments explain *why*, not *what*.** They are rare and load-bearing. Match the existing tone;
+- **Comments explain _why_, not _what_.** They are rare and load-bearing. Match the existing tone;
   don't add narrating comments.
 - **Semantic Versioning + [Keep a Changelog](https://keepachangelog.com/).** `package.json`'s
   `version` is the single source of truth.

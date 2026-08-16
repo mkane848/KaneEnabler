@@ -37,7 +37,9 @@ export function CardDetailDialog({ card, children }: Props) {
         <Dialog.Overlay className="dialog-overlay" />
         <Dialog.Content className="dialog-content" aria-describedby={undefined}>
           <div className="dialog-card">
-            {card.imageUri && <img className="dialog-art" src={card.imageUri} alt="" loading="lazy" />}
+            {card.imageUri && (
+              <img className="dialog-art" src={card.imageUri} alt="" loading="lazy" />
+            )}
 
             <div className="dialog-body">
               <div className="dialog-titlebar">
@@ -81,7 +83,12 @@ export function CardDetailDialog({ card, children }: Props) {
               </dl>
 
               {card.scryfallUri && (
-                <a className="dialog-link" href={card.scryfallUri} target="_blank" rel="noreferrer noopener">
+                <a
+                  className="dialog-link"
+                  href={card.scryfallUri}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
                   View on Scryfall — printings, rulings, prices
                 </a>
               )}

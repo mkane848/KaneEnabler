@@ -35,7 +35,9 @@ describe('detectMechanic', () => {
   });
 
   it('detects Vanishing via the reminder-text phrasing when the keyword count is on a separate line', () => {
-    expect(detectMechanic('This permanent enters the battlefield with four time counters on it.')).toEqual({
+    expect(
+      detectMechanic('This permanent enters the battlefield with four time counters on it.'),
+    ).toEqual({
       mechanic: 'vanishing',
       direction: 'decrement',
       count: 4,
@@ -43,11 +45,13 @@ describe('detectMechanic', () => {
   });
 
   it('detects Fading N', () => {
-    expect(detectMechanic('Fading 2 (This creature enters with two fade counters on it.)')).toEqual({
-      mechanic: 'fading',
-      direction: 'decrement',
-      count: 2,
-    });
+    expect(detectMechanic('Fading 2 (This creature enters with two fade counters on it.)')).toEqual(
+      {
+        mechanic: 'fading',
+        direction: 'decrement',
+        count: 2,
+      },
+    );
   });
 
   it('returns null for oracle text with no recognized keyword', () => {
@@ -84,7 +88,9 @@ describe('newlyTriggeredChapters', () => {
 
   it('fires each chapter the lore count newly reaches, not just the final one', () => {
     expect(newlyTriggeredChapters(chapters, 0, 1)).toEqual([{ number: 1, text: 'Chapter I text' }]);
-    expect(newlyTriggeredChapters(chapters, 1, 2)).toEqual([{ number: 2, text: 'Chapter II text' }]);
+    expect(newlyTriggeredChapters(chapters, 1, 2)).toEqual([
+      { number: 2, text: 'Chapter II text' },
+    ]);
   });
 
   it('fires every chapter skipped over when the count jumps by more than one', () => {
@@ -96,11 +102,15 @@ describe('newlyTriggeredChapters', () => {
   });
 
   it('does not refire a chapter already marked triggered', () => {
-    expect(newlyTriggeredChapters(chapters, 0, 2, [1])).toEqual([{ number: 2, text: 'Chapter II text' }]);
+    expect(newlyTriggeredChapters(chapters, 0, 2, [1])).toEqual([
+      { number: 2, text: 'Chapter II text' },
+    ]);
   });
 
   it('never fires past the last written chapter', () => {
-    expect(newlyTriggeredChapters(chapters, 2, 5)).toEqual([{ number: 3, text: 'Chapter III text' }]);
+    expect(newlyTriggeredChapters(chapters, 2, 5)).toEqual([
+      { number: 3, text: 'Chapter III text' },
+    ]);
   });
 });
 

@@ -46,7 +46,8 @@ export const useAppStore = create<AppState>((set) => ({
       dismissed: state.dismissed.includes(unitId) ? state.dismissed : [...state.dismissed, unitId],
     })),
 
-  restore: (unitId) => set((state) => ({ dismissed: state.dismissed.filter((id) => id !== unitId) })),
+  restore: (unitId) =>
+    set((state) => ({ dismissed: state.dismissed.filter((id) => id !== unitId) })),
 
   restoreAll: () => set({ dismissed: [] }),
 

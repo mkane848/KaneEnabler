@@ -17,7 +17,7 @@ import { MANA_GLYPHS } from './manaGlyphs';
 /** Splits a mana cost like "{2}{W/U}{R}" into its bracketed symbols, e.g. ["2", "W/U", "R"]. */
 export function parseManaCost(manaCost?: string): string[] {
   if (!manaCost) return [];
-  return manaCost.match(/\{[^}]+\}/g)?.map(s => s.slice(1, -1)) ?? [];
+  return manaCost.match(/\{[^}]+\}/g)?.map((s) => s.slice(1, -1)) ?? [];
 }
 
 /** One half of a pip: either an inlined glyph or a short piece of text. */
@@ -78,20 +78,22 @@ function nameFor(part: string): string {
 export function toPip(symbol: string): Pip {
   const parts = symbol.split('/');
 
-  if (parts.length === 2 && parts[1].toLowerCase() === 'p') {
-    const color = colorFor(parts[0]);
+  // `.split('/')` never produces sparse entries, so a parts.length === 2
+  // check below guarantees parts[0]/parts[1] are both populated.
+  if (parts.length === 2 && parts[1]!.toLowerCase() === 'p') {
+    const color = colorFor(parts[0]!);
     return {
       faces: [MANA_GLYPHS.p ? { glyph: 'p' } : { text: 'P' }],
       colors: [color],
-      label: `Phyrexian ${nameFor(parts[0])}`,
+      label: `Phyrexian ${nameFor(parts[0]!)}`,
     };
   }
 
   if (parts.length === 2) {
     return {
-      faces: [faceFor(parts[0]), faceFor(parts[1])],
-      colors: [colorFor(parts[0]), colorFor(parts[1])],
-      label: `${nameFor(parts[0])} or ${nameFor(parts[1])}`,
+      faces: [faceFor(parts[0]!), faceFor(parts[1]!)],
+      colors: [colorFor(parts[0]!), colorFor(parts[1]!)],
+      label: `${nameFor(parts[0]!)} or ${nameFor(parts[1]!)}`,
     };
   }
 

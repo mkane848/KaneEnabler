@@ -9,7 +9,12 @@ import {
 import { useAppStore } from '../store/useAppStore';
 import { usePreferencesStore } from '../store/usePreferencesStore';
 import { useRecommendations } from '../api/queries';
-import { applyFilters, availableFilterValues, EMPTY_FILTERS, hasActiveFilters } from '../lib/filters';
+import {
+  applyFilters,
+  availableFilterValues,
+  EMPTY_FILTERS,
+  hasActiveFilters,
+} from '../lib/filters';
 import { sortSuggestions, type SortDirection, type SortMode } from '../lib/sort';
 import { CommanderCard } from './CommanderCard';
 import { DeckSummary } from './DeckSummary';
@@ -78,7 +83,10 @@ export function RecommendationResults() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const suggestionsPerPage = usePreferencesStore((s) => s.suggestionsPerPage);
   const setSuggestionsPerPage = usePreferencesStore((s) => s.setSuggestionsPerPage);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: suggestionsPerPage });
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: suggestionsPerPage,
+  });
 
   // The table's pagination is controlled (below) so the page-size preference
   // can drive it after mount, not just seed it once. Landing back on page 1
@@ -95,14 +103,17 @@ export function RecommendationResults() {
   // the counts below report them separately so neither hides the other.
   const kept = useMemo(
     () => suggestions.filter((s) => !dismissed.includes(s.unitId)),
-    [suggestions, dismissed]
+    [suggestions, dismissed],
   );
   const filtered = useMemo(() => applyFilters(kept, filters), [kept, filters]);
   const sorted = useMemo(
     () => sortSuggestions(filtered, sortMode, sortDirection),
-    [filtered, sortMode, sortDirection]
+    [filtered, sortMode, sortDirection],
   );
-  const { brackets, themes, hasColorless, hasMulticolor } = useMemo(() => availableFilterValues(kept), [kept]);
+  const { brackets, themes, hasColorless, hasMulticolor } = useMemo(
+    () => availableFilterValues(kept),
+    [kept],
+  );
 
   // TanStack Table is used headlessly here, purely for the pagination state
   // machine — page bounds, and resetting to page 1 when filtering or sorting
@@ -111,7 +122,7 @@ export function RecommendationResults() {
   // down one column.
   const columns = useMemo<ColumnDef<CommanderSuggestionDTO>[]>(
     () => [{ id: 'suggestion', accessorKey: 'unitId' }],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -124,7 +135,11 @@ export function RecommendationResults() {
   });
 
   if (error) {
-    return <p className="status-error">{error instanceof Error ? error.message : 'Something went wrong.'}</p>;
+    return (
+      <p className="status-error">
+        {error instanceof Error ? error.message : 'Something went wrong.'}
+      </p>
+    );
   }
 
   if (!result) {
@@ -142,9 +157,9 @@ export function RecommendationResults() {
           confidence the scoring never had. */}
       {result.weakMatchesOnly && result.suggestions.length > 0 && (
         <p className="weak-match-note">
-          No commander matched this list strongly — nothing turned up a deep synergy or more than one shared
-          theme. These are the closest few; treat them as a starting point rather than a ranking. Adding more
-          cards that pull in the same direction will sharpen this.
+          No commander matched this list strongly — nothing turned up a deep synergy or more than
+          one shared theme. These are the closest few; treat them as a starting point rather than a
+          ranking. Adding more cards that pull in the same direction will sharpen this.
         </p>
       )}
       <div className="results-summary">
@@ -156,8 +171,8 @@ export function RecommendationResults() {
             matched count would look like a failed lookup. */}
         {result.ignoredCopies > 0 && (
           <span className="singleton-note">
-            {result.ignoredCopies} extra {result.ignoredCopies === 1 ? 'copy' : 'copies'} ignored — Commander is
-            singleton
+            {result.ignoredCopies} extra {result.ignoredCopies === 1 ? 'copy' : 'copies'} ignored —
+            Commander is singleton
           </span>
         )}
         {result.notFound.length > 0 && (
@@ -217,7 +232,9 @@ export function RecommendationResults() {
               <button
                 type="button"
                 className="link-button"
-                onClick={() => (hasActiveFilters(filters) ? setFilters(EMPTY_FILTERS) : restoreAll())}
+                onClick={() =>
+                  hasActiveFilters(filters) ? setFilters(EMPTY_FILTERS) : restoreAll()
+                }
               >
                 {hasActiveFilters(filters) ? 'Clear filters' : 'Restore all'}
               </button>

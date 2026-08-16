@@ -20,7 +20,7 @@ export function useCardCatalog(): CatalogState {
   useEffect(() => {
     let active = true;
     loadCatalog()
-      .then(loaded => {
+      .then((loaded) => {
         if (active) setCards(loaded);
       })
       .catch((err: Error) => {

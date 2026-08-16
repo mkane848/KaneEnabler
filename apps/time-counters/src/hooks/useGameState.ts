@@ -11,7 +11,12 @@ import type {
   TurnChange,
 } from '../types';
 import { COMMANDER_NAME } from '../utils/commanders';
-import { MECHANIC_LABEL, defaultResolveNote, newlyTriggeredChapters, usesTimeCounters } from '../utils/counters';
+import {
+  MECHANIC_LABEL,
+  defaultResolveNote,
+  newlyTriggeredChapters,
+  usesTimeCounters,
+} from '../utils/counters';
 import { clearState, loadState, saveState } from '../utils/storage';
 
 const INITIAL_COMMANDERS: Commanders = {
@@ -95,7 +100,7 @@ export function useGameState() {
   }, [game]);
 
   const addCard = useCallback((input: AddCardInput) => {
-    setTracker(prev => {
+    setTracker((prev) => {
       const tracked: TrackedCard = {
         instanceId: makeId(),
         cardId: input.card.id,
@@ -125,29 +130,35 @@ export function useGameState() {
 
   /** Drops the card from the board and from any upkeep summary still on screen. */
   const removeCard = useCallback((instanceId: string) => {
-    setTracker(prev => {
-      const card = prev.game.cards.find(c => c.instanceId === instanceId);
+    setTracker((prev) => {
+      const card = prev.game.cards.find((c) => c.instanceId === instanceId);
       let log = prev.game.log;
       if (card) {
         const resolved = hasHitTarget(card.count, card.direction, card.targetCount);
         log = appendLog(log, {
           turn: prev.game.turn,
           title: resolved ? 'Resolved' : 'Removed',
-          detail: resolved ? `${card.name} — ${card.resolveNote}` : `${card.name} removed from tracker`,
+          detail: resolved
+            ? `${card.name} — ${card.resolveNote}`
+            : `${card.name} removed from tracker`,
         });
       }
       return {
-        game: { ...prev.game, cards: prev.game.cards.filter(c => c.instanceId !== instanceId), log },
-        lastUpkeep: prev.lastUpkeep?.filter(c => c.instanceId !== instanceId) ?? null,
+        game: {
+          ...prev.game,
+          cards: prev.game.cards.filter((c) => c.instanceId !== instanceId),
+          log,
+        },
+        lastUpkeep: prev.lastUpkeep?.filter((c) => c.instanceId !== instanceId) ?? null,
       };
     });
   }, []);
 
   /** Manual override — set a card's counters to an exact value. */
   const setCount = useCallback((instanceId: string, count: number) => {
-    setTracker(prev => {
+    setTracker((prev) => {
       let log = prev.game.log;
-      const cards = prev.game.cards.map(c => {
+      const cards = prev.game.cards.map((c) => {
         if (c.instanceId !== instanceId) return c;
         const to = clampCount(count, c.direction, c.targetCount);
         if (to !== c.count) {
@@ -169,9 +180,9 @@ export function useGameState() {
    * from the same rendered count.
    */
   const adjustCount = useCallback((instanceId: string, delta: number) => {
-    setTracker(prev => {
+    setTracker((prev) => {
       let log = prev.game.log;
-      const cards = prev.game.cards.map(c => {
+      const cards = prev.game.cards.map((c) => {
         if (c.instanceId !== instanceId) return c;
         const to = clampCount(c.count + delta, c.direction, c.targetCount);
         if (to !== c.count) {
@@ -189,7 +200,7 @@ export function useGameState() {
 
   const setTurn = useCallback((turn: number) => {
     const safe = Number.isFinite(turn) ? Math.max(1, Math.round(turn)) : 1;
-    setTracker(prev => {
+    setTracker((prev) => {
       if (safe === prev.game.turn) return prev;
       const log = appendLog(prev.game.log, {
         turn: safe,
@@ -223,13 +234,22 @@ export function useGameState() {
    * isn't tied to the turn counter at all.
    */
   const nextTurn = useCallback(() => {
-    setTracker(prev => {
+    setTracker((prev) => {
       const changes: TurnChange[] = [];
 
       // Step 1 — upkeep: Suspend/Vanishing/Fading count down.
-      const afterUpkeep = prev.game.cards.map(c => {
-        if (c.mechanic === 'saga' || !c.autoAdjust || hasHitTarget(c.count, c.direction, c.targetCount)) return c;
-        const to = clampCount(c.count + (c.direction === 'decrement' ? -1 : 1), c.direction, c.targetCount);
+      const afterUpkeep = prev.game.cards.map((c) => {
+        if (
+          c.mechanic === 'saga' ||
+          !c.autoAdjust ||
+          hasHitTarget(c.count, c.direction, c.targetCount)
+        )
+          return c;
+        const to = clampCount(
+          c.count + (c.direction === 'decrement' ? -1 : 1),
+          c.direction,
+          c.targetCount,
+        );
         changes.push({
           instanceId: c.instanceId,
           name: c.name,
@@ -244,11 +264,21 @@ export function useGameState() {
       });
 
       // Step 2 — precombat main: Sagas gain a lore counter; crossed chapters trigger.
-      const cards = afterUpkeep.map(c => {
-        if (c.mechanic !== 'saga' || !c.autoAdjust || hasHitTarget(c.count, c.direction, c.targetCount)) return c;
+      const cards = afterUpkeep.map((c) => {
+        if (
+          c.mechanic !== 'saga' ||
+          !c.autoAdjust ||
+          hasHitTarget(c.count, c.direction, c.targetCount)
+        )
+          return c;
         const to = clampCount(c.count + 1, c.direction, c.targetCount);
         const chapters = c.chapters ?? [];
-        const triggeredNow = newlyTriggeredChapters(chapters, c.count, to, c.triggeredChapters ?? []);
+        const triggeredNow = newlyTriggeredChapters(
+          chapters,
+          c.count,
+          to,
+          c.triggeredChapters ?? [],
+        );
         const hitTarget = hasHitTarget(to, c.direction, c.targetCount);
         if (triggeredNow.length === 0) {
           changes.push({
@@ -279,7 +309,7 @@ export function useGameState() {
         return {
           ...c,
           count: to,
-          triggeredChapters: [...(c.triggeredChapters ?? []), ...triggeredNow.map(t => t.number)],
+          triggeredChapters: [...(c.triggeredChapters ?? []), ...triggeredNow.map((t) => t.number)],
         };
       });
 
@@ -288,7 +318,12 @@ export function useGameState() {
         turn,
         title: 'Next Turn — upkeep & precombat main',
         detail: changes.length === 0 ? 'No auto-adjusting cards to update.' : undefined,
-        changes: changes.map(c => ({ name: c.name, mechanic: c.mechanic, from: c.from, to: c.to })),
+        changes: changes.map((c) => ({
+          name: c.name,
+          mechanic: c.mechanic,
+          from: c.from,
+          to: c.to,
+        })),
       });
       return {
         game: { ...prev.game, turn, cards, log },
@@ -317,27 +352,39 @@ export function useGameState() {
    * 'rose' sentinel id instead of a card instanceId.
    */
   const applyTimeTravel = useCallback(
-    (choices: { id: TimeTravelTargetId; delta: -1 | 0 | 1 }[], passInfo: { current: number; total: number }) => {
-      setTracker(prev => {
-        const nonZero = choices.filter(c => c.delta !== 0);
+    (
+      choices: { id: TimeTravelTargetId; delta: -1 | 0 | 1 }[],
+      passInfo: { current: number; total: number },
+    ) => {
+      setTracker((prev) => {
+        const nonZero = choices.filter((c) => c.delta !== 0);
         const logChanges: { name: string; mechanic: Mechanic; from: number; to: number }[] = [];
 
-        const cards = prev.game.cards.map(c => {
-          const choice = nonZero.find(d => d.id === c.instanceId);
+        const cards = prev.game.cards.map((c) => {
+          const choice = nonZero.find((d) => d.id === c.instanceId);
           if (!choice) return c;
           const to = clampCount(c.count + choice.delta, c.direction, c.targetCount);
-          if (to !== c.count) logChanges.push({ name: c.name, mechanic: c.mechanic, from: c.count, to });
+          if (to !== c.count)
+            logChanges.push({ name: c.name, mechanic: c.mechanic, from: c.count, to });
           return { ...c, count: to };
         });
 
         let commanders = prev.game.commanders;
-        const roseChoice = nonZero.find(d => d.id === 'rose');
+        const roseChoice = nonZero.find((d) => d.id === 'rose');
         if (roseChoice) {
           const from = commanders.roseTyler.timeCounters;
           const to = Math.max(0, from + roseChoice.delta);
           if (to !== from) {
-            logChanges.push({ name: 'Rose Tyler — Bad Wolf counters', mechanic: 'custom', from, to });
-            commanders = { ...commanders, roseTyler: { ...commanders.roseTyler, timeCounters: to } };
+            logChanges.push({
+              name: 'Rose Tyler — Bad Wolf counters',
+              mechanic: 'custom',
+              from,
+              to,
+            });
+            commanders = {
+              ...commanders,
+              roseTyler: { ...commanders.roseTyler, timeCounters: to },
+            };
           }
         }
 
@@ -354,7 +401,7 @@ export function useGameState() {
   );
 
   const dismissUpkeep = useCallback(() => {
-    setTracker(prev => (prev.lastUpkeep === null ? prev : { ...prev, lastUpkeep: null }));
+    setTracker((prev) => (prev.lastUpkeep === null ? prev : { ...prev, lastUpkeep: null }));
   }, []);
 
   /**
@@ -365,7 +412,7 @@ export function useGameState() {
    * now shows up as a card on the board until it leaves again.
    */
   const castCommander = useCallback((id: CommanderId) => {
-    setTracker(prev => {
+    setTracker((prev) => {
       const commander = prev.game.commanders[id];
       const castCount = commander.castCount + 1;
       const name = COMMANDER_NAME[id];
@@ -378,7 +425,10 @@ export function useGameState() {
         ...prev,
         game: {
           ...prev.game,
-          commanders: { ...prev.game.commanders, [id]: { ...commander, castCount, onBattlefield: true } },
+          commanders: {
+            ...prev.game.commanders,
+            [id]: { ...commander, castCount, onBattlefield: true },
+          },
           log,
         },
       };
@@ -393,7 +443,7 @@ export function useGameState() {
    * reset by zone changes.
    */
   const returnCommanderToCommandZone = useCallback((id: CommanderId) => {
-    setTracker(prev => {
+    setTracker((prev) => {
       const commander = prev.game.commanders[id];
       if (!commander.onBattlefield) return prev;
       const log = appendLog(prev.game.log, {
@@ -414,7 +464,7 @@ export function useGameState() {
 
   /** Manual override for Rose Tyler's own Bad Wolf time counters (she gets +1/+1 per counter). */
   const adjustRoseTimeCounters = useCallback((delta: number) => {
-    setTracker(prev => {
+    setTracker((prev) => {
       const from = prev.game.commanders.roseTyler.timeCounters;
       const to = Math.max(0, from + delta);
       if (to === from) return prev;
@@ -427,7 +477,10 @@ export function useGameState() {
         ...prev,
         game: {
           ...prev.game,
-          commanders: { ...prev.game.commanders, roseTyler: { ...prev.game.commanders.roseTyler, timeCounters: to } },
+          commanders: {
+            ...prev.game.commanders,
+            roseTyler: { ...prev.game.commanders.roseTyler, timeCounters: to },
+          },
           log,
         },
       };
@@ -444,8 +497,10 @@ export function useGameState() {
    * the board by hand.
    */
   const roseAttacks = useCallback(() => {
-    setTracker(prev => {
-      const contributing = prev.game.cards.filter(c => usesTimeCounters(c.mechanic) && c.count > 0);
+    setTracker((prev) => {
+      const contributing = prev.game.cards.filter(
+        (c) => usesTimeCounters(c.mechanic) && c.count > 0,
+      );
       const gained = contributing.length;
       const from = prev.game.commanders.roseTyler.timeCounters;
       const to = from + gained;
@@ -455,13 +510,16 @@ export function useGameState() {
         detail:
           gained === 0
             ? 'No suspended cards or time-counter permanents to count — no counters added.'
-            : `+${gained} time counter${gained === 1 ? '' : 's'} (${contributing.map(c => c.name).join(', ')}) → Rose Tyler now has ${to}.`,
+            : `+${gained} time counter${gained === 1 ? '' : 's'} (${contributing.map((c) => c.name).join(', ')}) → Rose Tyler now has ${to}.`,
       });
       return {
         ...prev,
         game: {
           ...prev.game,
-          commanders: { ...prev.game.commanders, roseTyler: { ...prev.game.commanders.roseTyler, timeCounters: to } },
+          commanders: {
+            ...prev.game.commanders,
+            roseTyler: { ...prev.game.commanders.roseTyler, timeCounters: to },
+          },
           log,
         },
       };

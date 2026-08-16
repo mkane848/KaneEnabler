@@ -18,10 +18,14 @@
 @keyframes pulse {
   0%,
   100% {
-    box-shadow: var(--shadow-card), 0 0 0 0 color-mix(in srgb, var(--color-accent) 35%, transparent);
+    box-shadow:
+      var(--shadow-card),
+      0 0 0 0 color-mix(in srgb, var(--color-accent) 35%, transparent);
   }
   50% {
-    box-shadow: var(--shadow-card), 0 0 0 5px color-mix(in srgb, var(--color-accent) 0%, transparent);
+    box-shadow:
+      var(--shadow-card),
+      0 0 0 5px color-mix(in srgb, var(--color-accent) 0%, transparent);
   }
 }
 

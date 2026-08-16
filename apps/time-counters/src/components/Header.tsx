@@ -40,7 +40,9 @@ export default function Header({
   }
 
   function handleReset() {
-    if (window.confirm('Start a new game? This clears every tracked card and resets the turn to 1.')) {
+    if (
+      window.confirm('Start a new game? This clears every tracked card and resets the turn to 1.')
+    ) {
       onReset();
     }
   }
@@ -78,9 +80,9 @@ export default function Header({
               min={1}
               inputMode="numeric"
               value={draft}
-              onChange={e => setDraft(e.target.value)}
+              onChange={(e) => setDraft(e.target.value)}
               onBlur={commitEdit}
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') commitEdit();
                 if (e.key === 'Escape') setEditing(false);
               }}

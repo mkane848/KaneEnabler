@@ -20,7 +20,10 @@ export interface TimeTravelTarget {
 interface TimeTravelPanelProps {
   targets: TimeTravelTarget[];
   initialPasses?: number;
-  onApply: (choices: { id: TimeTravelTargetId; delta: Delta }[], passInfo: { current: number; total: number }) => void;
+  onApply: (
+    choices: { id: TimeTravelTargetId; delta: Delta }[],
+    passInfo: { current: number; total: number },
+  ) => void;
   onClose: () => void;
 }
 
@@ -42,7 +45,12 @@ interface TimeTravelPanelProps {
  * closed partway through, and the player always knows how many passes are
  * left instead of losing count.
  */
-export default function TimeTravelPanel({ targets, initialPasses, onApply, onClose }: TimeTravelPanelProps) {
+export default function TimeTravelPanel({
+  targets,
+  initialPasses,
+  onApply,
+  onClose,
+}: TimeTravelPanelProps) {
   const [stage, setStage] = useState<'setup' | 'pass'>(initialPasses ? 'pass' : 'setup');
   const [timesDraft, setTimesDraft] = useState(String(initialPasses ?? 1));
   const [totalPasses, setTotalPasses] = useState(initialPasses ?? 1);
@@ -59,18 +67,18 @@ export default function TimeTravelPanel({ targets, initialPasses, onApply, onClo
   }
 
   function setChoice(id: string, delta: Delta) {
-    setChoices(prev => ({ ...prev, [id]: prev[id] === delta ? 0 : delta }));
+    setChoices((prev) => ({ ...prev, [id]: prev[id] === delta ? 0 : delta }));
   }
 
   function commitPass() {
     onApply(
-      targets.map(t => ({ id: t.id, delta: choices[t.id] ?? 0 })),
+      targets.map((t) => ({ id: t.id, delta: choices[t.id] ?? 0 })),
       { current: currentPass, total: totalPasses },
     );
     if (currentPass >= totalPasses) {
       onClose();
     } else {
-      setCurrentPass(p => p + 1);
+      setCurrentPass((p) => p + 1);
       setChoices({});
     }
   }
@@ -85,7 +93,7 @@ export default function TimeTravelPanel({ targets, initialPasses, onApply, onClo
         role="dialog"
         aria-modal="true"
         aria-labelledby="time-travel-title"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {stage === 'setup' ? (
           <form onSubmit={startPasses}>
@@ -112,7 +120,7 @@ export default function TimeTravelPanel({ targets, initialPasses, onApply, onClo
               min={1}
               inputMode="numeric"
               value={timesDraft}
-              onChange={e => setTimesDraft(e.target.value)}
+              onChange={(e) => setTimesDraft(e.target.value)}
             />
             <div className={styles.actions}>
               <button type="submit" className="btn btn-primary">
@@ -138,9 +146,12 @@ export default function TimeTravelPanel({ targets, initialPasses, onApply, onClo
 
             <div className={styles.list}>
               {targets.length === 0 && (
-                <p className={styles.subtitle}>No suspended cards, Vanishing permanents, or Bad Wolf counters to choose from right now.</p>
+                <p className={styles.subtitle}>
+                  No suspended cards, Vanishing permanents, or Bad Wolf counters to choose from
+                  right now.
+                </p>
               )}
-              {targets.map(target => {
+              {targets.map((target) => {
                 const color = MECHANIC_COLOR[target.mechanic];
                 const choice = choices[target.id] ?? 0;
                 const canRemove = target.count > 0;

@@ -19,7 +19,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   - There was no compression middleware at all. The browser asked for gzip;
     the server answered with 12,224,814 uncompressed bytes.
   - Each cited card was serialized once per commander that cited it. A cited
-    card is by definition one of *your* cards, so one 30-card list produced
+    card is by definition one of _your_ cards, so one 30-card list produced
     **26,618 card entries backed by 28 distinct cards** — 84% of the payload.
     They are now sent once and cited by position, and put back together at
     the client's API boundary, so nothing in the UI changed.
@@ -50,7 +50,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   them were wrong.** Three separate causes, all found by checking real lists
   against the new deck summary rather than by reading code:
   - Non-creature subtypes were read as creature types. "Battle — Control
-    Point" made *Control* a creature type, so every card saying "creatures you
+    Point" made _Control_ a creature type, so every card saying "creatures you
     control" registered as caring about Control Kindred — a 30-card
     aristocrats list came back with a 14-card "Control Kindred" theme.
   - A creature card's subtypes still are not all creature types, and are not
@@ -58,11 +58,12 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     Enchantment — Lhurgoyf Aura" each carry one of each. That made Equipment,
     Aura, and Saga creature types. The vocabulary now comes from Scryfall's
     creature-type catalog rather than being inferred.
-  - Joke-set type lines ("Creature — Lady of Proper Etiquette") made *of* a
+  - Joke-set type lines ("Creature — Lady of Proper Etiquette") made _of_ a
     creature type. The vocabulary now describes the legal format only.
 
   Precomputed relationships went from 134,293 to 84,471. This was inflating
   commander scores as well as the new summary.
+
 - **Every Equipment was counting as its own Voltron payoff**, because
   "Equipped creature gets +2/+2" is an Equipment describing its own effect. A
   20-card Equipment pile read as a complete Voltron deck while lacking any
@@ -91,7 +92,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   relationships are a property of the card rather than of what someone pasted.
   Nothing in the recommendations changes yet; this is the foundation the
   deck-theme summary and card-package suggestions are built on, and it makes
-  questions like "which cards *produce* Goblins" or "which cards *reward*
+  questions like "which cards _produce_ Goblins" or "which cards _reward_
   creature death" answerable directly instead of only as a side effect of
   scoring commanders.
 - **The card data refresh only does work when there's new data.** Re-running
@@ -108,8 +109,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   didn't. Each list is now ordered by mana value and then alphabetically, the
   way a decklist reads; cards with no mana value (lands) sort last rather
   than as zero.
-- Results-per-page options are **12 / 24 / 48 / 96**, replacing 9 / 18 / 36 /
-  72. All of them still fill whole rows of the grid, and the new set does so
+- Results-per-page options are **12 / 24 / 48 / 96**, replacing 9 / 18 / 36 / 72. All of them still fill whole rows of the grid, and the new set does so
   at four columns as well as three, so wide screens no longer end on a ragged
   row. An existing saved preference moves to the nearest new option rather
   than resetting.
@@ -143,7 +143,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 - **Cards that would fill the gap.** Where a chain is broken, up to fifteen
   cards that would fix it, five at a time. They are restricted to colors your
   list already plays, exclude cards you already have, and are ranked first by
-  how many of your *other* themes the card also feeds — the one ranking input
+  how many of your _other_ themes the card also feeds — the one ranking input
   that comes from your actual list. Slots are filled across archetype
   boundaries where that is how the game works: Reanimator's graveyard-filling
   is answered by Self-Mill cards, because nothing in Reanimator itself fills
@@ -176,18 +176,18 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   candidate commander, so two cards "synergised" when the same words appeared
   in both. That measured lexical overlap rather than synergy. Signals are now
   structured — what object they act on, what event links them, and in what
-  capacity each card participates (it *is* the resource, *produces* it,
-  *consumes* it, *rewards* it, or *amplifies* it). What this changes in
+  capacity each card participates (it _is_ the resource, _produces_ it,
+  _consumes_ it, _rewards_ it, or _amplifies_ it). What this changes in
   practice:
   - **A commander has to actually care.** Sharing a property is never enough.
     Being a Frog Horror doesn't make one a Horror commander, and a card's
-    *name* is no longer evidence of anything — Gitrog, Horror of Zhava was
+    _name_ is no longer evidence of anything — Gitrog, Horror of Zhava was
     matching Horror kindred purely because "Horror" is in its name, while its
     abilities are entirely about lands. 267 Commander-eligible cards in the
     current card data have a creature type that reaches their rules text only
     through their own name.
   - **Keywords alone are no longer a synergy.** Two cards both having Trample
-    means nothing; a commander that *grants* trample to your team, the way
+    means nothing; a commander that _grants_ trample to your team, the way
     Craterhoof Behemoth does, is the real signal.
   - **Payoffs restricted to a subtype only count that subtype.** A commander
     that reanimates Slivers specifically feeds "Reanimator (Sliver)", and the
@@ -212,7 +212,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Fixed
 
-- Double-faced cards whose *back* is a legendary creature are no longer
+- Double-faced cards whose _back_ is a legendary creature are no longer
   offered as commanders. Westvale Abbey // Ormendahl, Profane Prince was
   being suggested because Scryfall's combined type line for it reads
   "Land // Legendary Creature — Demon", which satisfies a naive
@@ -313,7 +313,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   Human, whether or not it did anything with them. Krenko counting
   Goblins, Lathril tapping Elves, and Edgar Markov triggering on Vampire
   spells all still match; Silas Renn, whose text never mentions Humans,
-  no longer does. A commander need not *be* the type it cares about —
+  no longer does. A commander need not _be_ the type it cares about —
   Ghoulcaller Gisa is a Human Wizard and one of the best Zombie
   commanders there is. Irregular plurals are handled, since Lathril's
   text says "Elves", never "Elf".

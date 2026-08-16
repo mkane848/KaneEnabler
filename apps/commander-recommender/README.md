@@ -26,7 +26,7 @@ and the raw score it was ranked by.
 **On commander eligibility and double-faced cards:** eligibility is judged on
 a card's **front face only**, because that is all a card has outside the
 battlefield (CR 712.4). Westvale Abbey // Ormendahl, Profane Prince is a
-non-legendary *land* in the command zone — Ormendahl only exists once it has
+non-legendary _land_ in the command zone — Ormendahl only exists once it has
 transformed — so it is not a legal commander, even though the two faces read
 together contain both "Legendary" and "Creature". The same reading applies to
 flip cards (Bushi Tenderfoot is not legendary; only its flipped side is) and
@@ -34,10 +34,10 @@ adventures. Split cards are the exception and stay joined: they are one face
 with both halves' characteristics in every zone (CR 709.4).
 
 **On kindred (what used to be called "tribal"):** a creature type only counts
-if the commander's own rules text *cares* about it — merely being that type is
+if the commander's own rules text _cares_ about it — merely being that type is
 not enough. Krenko counts Goblins, Lathril taps Elves, Edgar Markov triggers
 on Vampire spells; Silas Renn is a Human whose text never mentions Humans, so
-a pile of Humans says nothing about him. A commander does not have to *be* the
+a pile of Humans says nothing about him. A commander does not have to _be_ the
 type it cares about, since Ghoulcaller Gisa is a Human Wizard and one of the
 best Zombie commanders in the format.
 
@@ -48,7 +48,7 @@ Arid Mesa: …": it sacrifices only itself, by name, as the cost for an
 unrelated effect, which reads nothing like the creature-sacrifice archetype
 even though "sacrifice" appears in it.
 
-**On what scoring rewards:** a commander is scored on how *focused* a fit it
+**On what scoring rewards:** a commander is scored on how _focused_ a fit it
 is, not how much of your list it can legally cast. Each signal counts for the
 share of that commander's playable cards standing behind it, so a mono-black
 commander whose every playable card feeds one theme beats a five-color one
@@ -97,7 +97,7 @@ npm run prepare-data:fresh
 ```
 
 You rarely need to. Scryfall regenerates the file roughly daily, but the
-ban list and Game Changers list — the two things whose *staleness* actually
+ban list and Game Changers list — the two things whose _staleness_ actually
 matters here — change only a handful of times a year. Monthly is plenty;
 the 7-day auto-refresh above already covers picking up new cards from a
 fresh set (including any new Partner-family cards) sooner than that.
@@ -175,7 +175,7 @@ the cards themselves rather than from a hardcoded list:
 
 Repeats of a card across several lines are merged before this is applied, so
 listing the same card three times is the same as listing it once. Whatever
-gets trimmed is reported back as "*N* extra copies ignored" next to the
+gets trimmed is reported back as "_N_ extra copies ignored" next to the
 matched count, so a trimmed list never looks like a failed lookup.
 
 ## Partner, Background, and every other command-zone pairing
@@ -209,10 +209,10 @@ commander — Gitrog, Horror of Zhava's abilities are entirely about lands, and
 evidence of anything.
 Having Trample doesn't make one a Trample payoff either; granting trample to
 your whole team, the way Craterhoof Behemoth does, is what counts. Every
-signal is read from two sides: which group your card *belongs to* comes from
+signal is read from two sides: which group your card _belongs to_ comes from
 structured data (its creature types, its keywords, the tokens it makes — so
 Krenko's Command is a Goblin card despite being a Sorcery), while whether the
-commander *pays that group off* is read from its rules text.
+commander _pays that group off_ is read from its rules text.
 
 Payoffs that name a subtype only pay off that subtype. A commander that
 reanimates Slivers specifically feeds **"Reanimator (Sliver)"**, not generic
@@ -222,7 +222,7 @@ it.
 Context decides which archetype a card lands in. A fetch land like Arid Mesa
 sacrifices itself, so it supports **Lands Matter** — it never triggers a
 creature-death ability, so it isn't Aristocrats, which is specifically about
-sacrificing *creatures*.
+sacrificing _creatures_.
 
 Each cited card's name shows its art on hover (or on tap, on a touch screen)
 without leaving the list, and its mana value alongside the name. Tapping a
@@ -280,12 +280,12 @@ and `handoff.md` for the plan.
 
 ## Data sources
 
-| Data | Source | How it's fetched |
-| --- | --- | --- |
-| Card text, types, color identity, legality, Game Changers | [Scryfall](https://scryfall.com)'s [Oracle Cards bulk data](https://scryfall.com/docs/api/bulk-data) | Downloaded once (`server/scripts/fetch-scryfall.ts` → `GET api.scryfall.com/bulk-data`, then the returned `download_uri`) and re-imported on every deploy — never queried live per request. |
-| Combos | [Commander Spellbook](https://commanderspellbook.com)'s [`find-my-combos`](https://commanderspellbook.com/) API | Queried live, but only when you click "Find combos" on a specific suggestion (`server/src/services/spellbook.ts` → `POST backend.commanderspellbook.com/find-my-combos`). Responses are cached in memory for an hour. |
-| Commander ban list, Game Changers list | Republished by Scryfall as `legalities.commander` / `game_changer` on each card in the bulk data above | No separate call — comes along with the card data. |
-| Bracket System, Game Changers list (canonical) | The Commander Format Rules Committee, [mtgcommander.net](https://mtgcommander.net) | Not called directly; Scryfall's `game_changer` field is treated as the source of truth for which cards are on it. |
+| Data                                                      | Source                                                                                                          | How it's fetched                                                                                                                                                                                                      |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Card text, types, color identity, legality, Game Changers | [Scryfall](https://scryfall.com)'s [Oracle Cards bulk data](https://scryfall.com/docs/api/bulk-data)            | Downloaded once (`server/scripts/fetch-scryfall.ts` → `GET api.scryfall.com/bulk-data`, then the returned `download_uri`) and re-imported on every deploy — never queried live per request.                           |
+| Combos                                                    | [Commander Spellbook](https://commanderspellbook.com)'s [`find-my-combos`](https://commanderspellbook.com/) API | Queried live, but only when you click "Find combos" on a specific suggestion (`server/src/services/spellbook.ts` → `POST backend.commanderspellbook.com/find-my-combos`). Responses are cached in memory for an hour. |
+| Commander ban list, Game Changers list                    | Republished by Scryfall as `legalities.commander` / `game_changer` on each card in the bulk data above          | No separate call — comes along with the card data.                                                                                                                                                                    |
+| Bracket System, Game Changers list (canonical)            | The Commander Format Rules Committee, [mtgcommander.net](https://mtgcommander.net)                              | Not called directly; Scryfall's `game_changer` field is treated as the source of truth for which cards are on it.                                                                                                     |
 
 Both outbound calls send an identifying `User-Agent` (required by Scryfall,
 good manners for Commander Spellbook) naming this app and linking back to

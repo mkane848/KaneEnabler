@@ -36,6 +36,8 @@ describe('App', () => {
     fireEvent.click(screen.getByText('Cast The Tenth Doctor from the command zone'));
     fireEvent.click(screen.getByText('Done'));
 
-    expect(screen.getByRole('button', { name: /The Tenth Doctor, on the battlefield/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /The Tenth Doctor, on the battlefield/i }),
+    ).toBeInTheDocument();
   });
 });

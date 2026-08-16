@@ -22,11 +22,17 @@ const STEP_ORDER: TurnStep[] = ['upkeep', 'precombatMain'];
  * (Sagas), matching turn order, so a Saga chapter reads as "this is what
  * happened after upkeep," not lumped in with unrelated counters.
  */
-export default function ChangeSummaryModal({ changes, turn, onResolve, onClose }: ChangeSummaryModalProps) {
-  const readyCount = changes.filter(c => c.hitTarget).length;
-  const groups = STEP_ORDER.map(step => ({ step, items: changes.filter(c => c.step === step) })).filter(
-    g => g.items.length > 0,
-  );
+export default function ChangeSummaryModal({
+  changes,
+  turn,
+  onResolve,
+  onClose,
+}: ChangeSummaryModalProps) {
+  const readyCount = changes.filter((c) => c.hitTarget).length;
+  const groups = STEP_ORDER.map((step) => ({
+    step,
+    items: changes.filter((c) => c.step === step),
+  })).filter((g) => g.items.length > 0);
 
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
@@ -35,7 +41,7 @@ export default function ChangeSummaryModal({ changes, turn, onResolve, onClose }
         role="dialog"
         aria-modal="true"
         aria-labelledby="change-summary-title"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           <h2 id="change-summary-title" className={styles.title}>
@@ -51,23 +57,29 @@ export default function ChangeSummaryModal({ changes, turn, onResolve, onClose }
           </p>
         )}
 
-        {groups.map(group => (
+        {groups.map((group) => (
           <div key={group.step}>
             <h3 className={styles.stepHeading}>{STEP_LABEL[group.step]}</h3>
             <div className={styles.list}>
               {group.items.map((c, i) => (
-                <div key={`${c.instanceId}-${i}`} className={`${styles.row} ${c.hitTarget ? styles.rowReady : ''}`}>
+                <div
+                  key={`${c.instanceId}-${i}`}
+                  className={`${styles.row} ${c.hitTarget ? styles.rowReady : ''}`}
+                >
                   <div>
                     <div className={styles.name}>{c.name}</div>
                     {c.chapter && (
                       <div className={styles.readyNote}>
-                        <span className={styles.readyLabel}>Chapter {chapterRoman(c.chapter.number)}:</span>{' '}
+                        <span className={styles.readyLabel}>
+                          Chapter {chapterRoman(c.chapter.number)}:
+                        </span>{' '}
                         {c.chapter.text}
                       </div>
                     )}
                     {c.hitTarget && (
                       <div className={styles.readyNote}>
-                        <span className={styles.readyLabel}>{triggerLabel(c.mechanic)}:</span> {c.resolveNote}
+                        <span className={styles.readyLabel}>{triggerLabel(c.mechanic)}:</span>{' '}
+                        {c.resolveNote}
                       </div>
                     )}
                   </div>
@@ -76,7 +88,11 @@ export default function ChangeSummaryModal({ changes, turn, onResolve, onClose }
                       {c.from} → {c.to}
                     </span>
                     {c.hitTarget && (
-                      <button type="button" className="btn btn-sm btn-ghost" onClick={() => onResolve(c.instanceId)}>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => onResolve(c.instanceId)}
+                      >
                         Done
                       </button>
                     )}

@@ -1,11 +1,9 @@
 {
+  "extends": "@mtg/config/tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "skipLibCheck": true,
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "noEmit": false,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
     "types": ["node"]
   },
   "include": ["vite.config.ts", "vitest.config.ts"]

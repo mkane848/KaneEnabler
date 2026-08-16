@@ -115,7 +115,7 @@ function countsTowardTheme(archetype: string, roles: Role[]): boolean {
  */
 function groupByTheme(
   owned: OwnedCard[],
-  signalsByCard: Map<string, SignalMatch[]>
+  signalsByCard: Map<string, SignalMatch[]>,
 ): Map<string, { signal: SignalMatch; participants: Participation[] }> {
   const groups = new Map<string, { signal: SignalMatch; participants: Participation[] }>();
 
@@ -173,7 +173,7 @@ function buildSlots(
   slots: LifecycleSlot[],
   archetype: string,
   participants: Participation[],
-  groups: Map<string, { signal: SignalMatch; participants: Participation[] }>
+  groups: Map<string, { signal: SignalMatch; participants: Participation[] }>,
 ): SlotStatus[] {
   return slots.map((slot) => {
     // Most slots draw from the archetype's own cards. A few are filled by a
@@ -209,7 +209,7 @@ function buildSlots(
  */
 export function analyzeDeck(
   owned: OwnedCard[],
-  signalsByCard: Map<string, SignalMatch[]>
+  signalsByCard: Map<string, SignalMatch[]>,
 ): DeckAnalysis {
   const groups = groupByTheme(owned, signalsByCard);
 

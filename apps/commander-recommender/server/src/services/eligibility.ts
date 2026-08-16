@@ -46,9 +46,10 @@ export function frontFaceCharacteristics(card: ScryfallCardLike): FaceCharacteri
   const useFrontOnly = Array.isArray(faces) && faces.length > 0 && card.layout !== 'split';
 
   if (useFrontOnly) {
+    // useFrontOnly is only true when faces.length > 0.
     return {
-      typeLine: faces[0].type_line ?? '',
-      oracleText: faces[0].oracle_text ?? '',
+      typeLine: faces![0]!.type_line ?? '',
+      oracleText: faces![0]!.oracle_text ?? '',
     };
   }
 
@@ -80,7 +81,9 @@ export function isCommanderEligible(card: ScryfallCardLike): boolean {
   // checking for Creature alone silently excluded every legal Vehicle and
   // Spacecraft commander.
   const isEligibleType =
-    typeLine.includes('Creature') || typeLine.includes('Vehicle') || typeLine.includes('Spacecraft');
+    typeLine.includes('Creature') ||
+    typeLine.includes('Vehicle') ||
+    typeLine.includes('Spacecraft');
 
   // Read off the front face too: an ability granting commander-hood only
   // applies where the card actually has that ability, and a back face has

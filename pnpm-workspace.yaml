@@ -1,0 +1,37 @@
+packages:
+  - 'apps/commander-recommender/client'
+  - 'apps/commander-recommender/server'
+  - 'apps/time-counters'
+  - 'packages/*'
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+
+# Phase 1 (docs/handoff.md): one declared version per shared dependency
+# instead of hand-synchronised copies drifting apart across packages.
+catalog:
+  '@testing-library/jest-dom': ^6.9.1
+  '@testing-library/react': ^16.3.2
+  '@types/node': ^22.18.0
+  '@types/react': ^19.2.17
+  '@types/react-dom': ^19.2.3
+  '@vitejs/plugin-react': ^6.0.4
+  '@vitest/coverage-v8': ^4.1.10
+  eslint: ^9.18.0
+  jsdom: ^27.4.0
+  prettier: ^3.4.2
+  react: ^19.2.8
+  react-dom: ^19.2.8
+  # docs/handoff.md's Phase 1 originally called for TS 7 (DrWhoCompanionEDH
+  # was already on ^7.0.2; HardlyKnowHer was the one on ^6.0.3 needing to
+  # catch up). Landed on 6.0.3 instead — the actual latest stable 6.x —
+  # because typescript-eslint 8.x hard-throws on TS 7 ("typescript-eslint
+  # does not support TS 7.0"; not fixable via a version override, since
+  # pnpm's `overrides` doesn't reach the peer-dependency edge that check
+  # resolves through — see github.com/typescript-eslint/typescript-eslint
+  # /issues/10940). This still resolves the original problem (one TS
+  # version workspace-wide instead of two majors); revisit once that issue
+  # closes and bump back to 7.
+  typescript: ^6.0.3
+  vite: ^8.1.5
+  vitest: ^4.1.10

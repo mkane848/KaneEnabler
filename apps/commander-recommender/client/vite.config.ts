@@ -9,7 +9,7 @@ import react from '@vitejs/plugin-react';
 // hardcoding the number a second place in the About dialog, where it would
 // inevitably drift from reality after the first missed bump.
 const rootPackageJson = JSON.parse(
-  readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf-8')
+  readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf-8'),
 ) as { version: string };
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));

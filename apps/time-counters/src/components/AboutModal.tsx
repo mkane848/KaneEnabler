@@ -14,7 +14,7 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="about-title"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           <h2 id="about-title" className={styles.title}>
@@ -35,7 +35,13 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Credits</h3>
           <ul className={styles.list}>
-            <li>Card data via <a href="https://scryfall.com" target="_blank" rel="noreferrer">Scryfall</a>.</li>
+            <li>
+              Card data via{' '}
+              <a href="https://scryfall.com" target="_blank" rel="noreferrer">
+                Scryfall
+              </a>
+              .
+            </li>
             <li>
               Mana symbols via the community{' '}
               <a href="https://github.com/andrewgioia/mana" target="_blank" rel="noreferrer">
@@ -50,7 +56,13 @@ export default function AboutModal({ onClose }: AboutModalProps) {
               </a>{' '}
               (Fraunces, Inter, IBM Plex Mono, Orbitron, Titillium Web, JetBrains Mono).
             </li>
-            <li>Built with <a href="https://claude.com/claude-code" target="_blank" rel="noreferrer">Claude</a>.</li>
+            <li>
+              Built with{' '}
+              <a href="https://claude.com/claude-code" target="_blank" rel="noreferrer">
+                Claude
+              </a>
+              .
+            </li>
           </ul>
         </div>
 

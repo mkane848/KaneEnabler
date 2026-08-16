@@ -76,7 +76,7 @@ not what the code does.
     **Fading uses fade counters** (rule 702.32) and **Saga uses lore
     counters** — neither is a time counter, even though all four are
     tracked through the same `count`/`direction` fields for UI
-    simplicity. Anything that models the *time counter* keyword action
+    simplicity. Anything that models the _time counter_ keyword action
     (Time Travel) or Rose Tyler's Bad Wolf trigger must go through this
     helper rather than assuming "tracked mechanic" == "time counter."
   - **`turnStepForMechanic(mechanic)`** — which Next Turn step
@@ -111,7 +111,7 @@ not what the code does.
 
 ## Conventions
 
-- Comments are rare and explain *why*, not *what* — see existing files for
+- Comments are rare and explain _why_, not _what_ — see existing files for
   the tone (e.g. `useGameState.ts`'s doc comments on `nextTurn` and
   `applyTimeTravel` explain the rules distinction between the two, not
   just what the function does). Match that style; don't add narrating
@@ -122,7 +122,7 @@ not what the code does.
   Getting a keyword's timing or trigger condition wrong is a bug here,
   not just a style nit.
 - The turn model is intentionally **single-player-centric**: this is a
-  Commander (multiplayer) app, but it only tracks *this player's* turn
+  Commander (multiplayer) app, but it only tracks _this player's_ turn
   number and the phases/steps that matter for the effects this deck
   cares about (upkeep triggers, precombat main for Sagas, etc.), not a
   full multi-player turn order.
@@ -163,17 +163,17 @@ secondary sources — reuse rather than re-deriving:
   action, no stack). Each chapter ability triggers the instant the lore
   count reaches that number — not just at the final chapter. The Saga
   sacrifices after its final chapter ability fully resolves.
-- Commander tax (rule 903.10): +{2} per previous cast of *that specific
-  commander* from the command zone this game, tracked independently per
+- Commander tax (rule 903.10): +{2} per previous cast of _that specific
+  commander_ from the command zone this game, tracked independently per
   commander, for the whole game (doesn't reset on zone changes).
-- The Tenth Doctor: *"Allons-y — Whenever you attack, exile cards from the
+- The Tenth Doctor: _"Allons-y — Whenever you attack, exile cards from the
   top of your library until you exile a nonland card, put three time
-  counters on it, gains suspend if it doesn't have it."* Timey-Wimey:
-  *"{7}: Time travel three times. Activate only as a sorcery."*
-- Rose Tyler: *"gets +1/+1 for each time counter on it."* Bad Wolf:
-  *"Whenever Rose Tyler attacks, put a time counter on it for each
+  counters on it, gains suspend if it doesn't have it."_ Timey-Wimey:
+  _"{7}: Time travel three times. Activate only as a sorcery."_
+- Rose Tyler: _"gets +1/+1 for each time counter on it."_ Bad Wolf:
+  _"Whenever Rose Tyler attacks, put a time counter on it for each
   suspended card you own and each other permanent you control with a time
-  counter on it."*
+  counter on it."_
 
 ## Working with the user
 

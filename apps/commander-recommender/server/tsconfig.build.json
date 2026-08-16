@@ -17,5 +17,11 @@
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Test files live colocated in src/ (see docs/handoff.md Phase 1) but have
+  // no business in the shipped build — excluding them here is also what
+  // keeps a `pnpm build` running concurrently with `pnpm test` from writing
+  // compiled *.test.js into dist/ and getting picked up as a second, broken
+  // copy of every test.
+  "exclude": ["**/*.test.ts"]
 }

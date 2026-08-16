@@ -48,7 +48,7 @@ export default function GameLogPanel({ log, currentTurn, onClose }: GameLogPanel
         role="dialog"
         aria-modal="true"
         aria-labelledby="game-log-title"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           <h2 id="game-log-title" className={styles.title}>
@@ -60,17 +60,19 @@ export default function GameLogPanel({ log, currentTurn, onClose }: GameLogPanel
         </div>
 
         {groups.length === 0 ? (
-          <p className={styles.empty}>Nothing logged yet — actions you take show up here as you play.</p>
+          <p className={styles.empty}>
+            Nothing logged yet — actions you take show up here as you play.
+          </p>
         ) : (
           <div className={styles.groups}>
-            {groups.map(group => (
+            {groups.map((group) => (
               <section key={group.turn} className={styles.group}>
                 <h3 className={styles.turnHeading}>
                   Turn {group.turn}
                   {group.turn === currentTurn && <span className={styles.currentTag}>current</span>}
                 </h3>
                 <div className={styles.entries}>
-                  {group.entries.map(entry => (
+                  {group.entries.map((entry) => (
                     <div key={entry.id} className={styles.entry}>
                       <div className={styles.entryTitle}>{entry.title}</div>
                       {entry.changes && entry.changes.length > 0 ? (

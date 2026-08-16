@@ -56,17 +56,17 @@ export const usePreferencesStore = create<PreferencesState>()(
           suggestionsPerPage: nearestOption(
             state?.suggestionsPerPage,
             SUGGESTIONS_PAGE_SIZE_OPTIONS,
-            SUGGESTIONS_PAGE_SIZE_OPTIONS[0]
+            SUGGESTIONS_PAGE_SIZE_OPTIONS[0],
           ),
           combosPerPage: nearestOption(
             state?.combosPerPage,
             COMBOS_PAGE_SIZE_OPTIONS,
-            COMBOS_PAGE_SIZE_OPTIONS[1]
+            COMBOS_PAGE_SIZE_OPTIONS[1],
           ),
         } as PreferencesState;
       },
-    }
-  )
+    },
+  ),
 );
 
 /**
@@ -79,11 +79,11 @@ export const usePreferencesStore = create<PreferencesState>()(
 function nearestOption(
   stored: number | undefined,
   options: readonly number[],
-  fallback: number
+  fallback: number,
 ): number {
   if (typeof stored !== 'number' || !Number.isFinite(stored)) return fallback;
   if (options.includes(stored)) return stored;
   return options.reduce((best, option) =>
-    Math.abs(option - stored) < Math.abs(best - stored) ? option : best
+    Math.abs(option - stored) < Math.abs(best - stored) ? option : best,
   );
 }

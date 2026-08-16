@@ -66,7 +66,7 @@ if (!forceImport && diskSnapshot && fs.existsSync(DB_PATH)) {
     console.log(
       `Database is already built from this snapshot (published ${existing.updatedAt}, ` +
         `import v${existing.importVersion}). Nothing to do.\n` +
-        'Pass --force to rebuild it anyway.'
+        'Pass --force to rebuild it anyway.',
     );
     process.exit(0);
   }
@@ -91,7 +91,7 @@ for (const line of raw.split('\n')) {
   } catch {
     throw new Error(
       `Could not parse line ${lineNumber} of ${inputPath} as JSON. Expected newline-delimited JSON ` +
-        `(one card object per line). Line began: ${trimmed.slice(0, 80)}`
+        `(one card object per line). Line began: ${trimmed.slice(0, 80)}`,
     );
   }
 }
@@ -237,14 +237,17 @@ function cleanTarget(raw: string): string {
  */
 function detectPartnerAbility(oracleText: string): PartnerInfo {
   if (/doctor.s companion/i.test(oracleText)) return { ability: 'doctors_companion', target: null };
-  if (/choose a background/i.test(oracleText)) return { ability: 'choose_background', target: null };
+  if (/choose a background/i.test(oracleText))
+    return { ability: 'choose_background', target: null };
   if (/friends forever/i.test(oracleText)) return { ability: 'friends_forever', target: null };
 
+  // Both capture groups below are mandatory in their patterns, so a match
+  // always populates them.
   const partnerWith = oracleText.match(/partner with ([^(\n]+)/i);
-  if (partnerWith) return { ability: 'partner_with', target: cleanTarget(partnerWith[1]) };
+  if (partnerWith) return { ability: 'partner_with', target: cleanTarget(partnerWith[1]!) };
 
   const partnerSuffix = oracleText.match(/partner[—–-]\s*([^(\n]+)/i);
-  if (partnerSuffix) return { ability: 'partner_suffix', target: cleanTarget(partnerSuffix[1]) };
+  if (partnerSuffix) return { ability: 'partner_suffix', target: cleanTarget(partnerSuffix[1]!) };
 
   if (/\bpartner\b/i.test(oracleText)) return { ability: 'partner', target: null };
 
@@ -305,9 +308,11 @@ const insertMany = db.transaction((rows: any[]) => {
     // adventure and flip cards all print on one physical face, so their
     // "second face" is the same picture.
     const backImageUri: string | null = DFC_LAYOUTS.has(card.layout)
-      ? card.card_faces?.[1]?.image_uris?.normal ?? null
+      ? (card.card_faces?.[1]?.image_uris?.normal ?? null)
       : null;
-    const backName: string | null = DFC_LAYOUTS.has(card.layout) ? card.card_faces?.[1]?.name ?? null : null;
+    const backName: string | null = DFC_LAYOUTS.has(card.layout)
+      ? (card.card_faces?.[1]?.name ?? null)
+      : null;
 
     // Eligibility reads the front face only — see services/eligibility.ts.
     // Westvale Abbey's joined type_line ("Land // Legendary Creature —
@@ -368,9 +373,9 @@ const eligible = db
 const banned = db
   .prepare(`SELECT COUNT(*) as c FROM cards WHERE legality_commander = 'banned'`)
   .get() as { c: number };
-const gameChangers = db
-  .prepare('SELECT COUNT(*) as c FROM cards WHERE game_changer = 1')
-  .get() as { c: number };
+const gameChangers = db.prepare('SELECT COUNT(*) as c FROM cards WHERE game_changer = 1').get() as {
+  c: number;
+};
 console.log(`${eligible.c} cards are Commander-eligible.`);
 console.log(`${banned.c} cards are currently banned in Commander.`);
 console.log(`${gameChangers.c} cards are on the Game Changers list.`);
@@ -399,7 +404,7 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
 
   const insertSignal = db.prepare(
     `INSERT INTO card_signals (oracle_id, archetype, qualifier, qualifier_kind, roles)
-     VALUES (?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?)`,
   );
   let signalCount = 0;
   db.transaction(() => {
@@ -410,7 +415,7 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
           signal.archetype,
           signal.qualifier ?? null,
           signal.qualifierKind ?? null,
-          JSON.stringify(signal.roles)
+          JSON.stringify(signal.roles),
         );
         signalCount++;
       }
@@ -421,7 +426,7 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
     .get() as { c: number };
   console.log(
     `${signalCount} card signals precomputed across ${withSignals.c} cards ` +
-      `(vocabulary: ${creatureTypes.size} creature types, ${keywords.size} keywords).`
+      `(vocabulary: ${creatureTypes.size} creature types, ${keywords.size} keywords).`,
   );
 }
 
@@ -431,14 +436,16 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
 const FLAVOR_NAMES_PATH = path.join(DATA_DIR, 'flavor-names.json');
 if (fs.existsSync(FLAVOR_NAMES_PATH)) {
   const knownOracleIds = new Set(
-    (db.prepare('SELECT oracle_id FROM cards').all() as { oracle_id: string }[]).map((r) => r.oracle_id)
+    (db.prepare('SELECT oracle_id FROM cards').all() as { oracle_id: string }[]).map(
+      (r) => r.oracle_id,
+    ),
   );
   const flavorEntries = JSON.parse(fs.readFileSync(FLAVOR_NAMES_PATH, 'utf-8')) as {
     flavor_name?: string;
     oracle_id?: string;
   }[];
   const insertFlavorName = db.prepare(
-    'INSERT INTO card_flavor_names (flavor_name_lower, oracle_id) VALUES (?, ?)'
+    'INSERT INTO card_flavor_names (flavor_name_lower, oracle_id) VALUES (?, ?)',
   );
   let flavorImported = 0;
   let flavorSkipped = 0;
@@ -456,7 +463,7 @@ if (fs.existsSync(FLAVOR_NAMES_PATH)) {
   })();
   console.log(
     `${flavorImported} re-skinned card names indexed` +
-      (flavorSkipped > 0 ? ` (${flavorSkipped} skipped as unresolvable).` : '.')
+      (flavorSkipped > 0 ? ` (${flavorSkipped} skipped as unresolvable).` : '.'),
   );
 } else {
   console.log('No flavor-names.json found — re-skinned card names not indexed.');
@@ -464,14 +471,16 @@ if (fs.existsSync(FLAVOR_NAMES_PATH)) {
 }
 const partnerCounts = db
   .prepare(
-    `SELECT partner_ability, COUNT(*) as c FROM cards WHERE partner_ability IS NOT NULL GROUP BY partner_ability`
+    `SELECT partner_ability, COUNT(*) as c FROM cards WHERE partner_ability IS NOT NULL GROUP BY partner_ability`,
   )
   .all() as { partner_ability: string; c: number }[];
 if (partnerCounts.length > 0) {
   console.log('Partner-family abilities found:');
   for (const row of partnerCounts) console.log(`  ${row.partner_ability}: ${row.c}`);
 }
-const backgroundCount = db.prepare('SELECT COUNT(*) as c FROM cards WHERE is_background = 1').get() as {
+const backgroundCount = db
+  .prepare('SELECT COUNT(*) as c FROM cards WHERE is_background = 1')
+  .get() as {
   c: number;
 };
 console.log(`${backgroundCount.c} legendary Background enchantments found.`);

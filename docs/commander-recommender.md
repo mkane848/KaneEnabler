@@ -25,7 +25,7 @@ Partner/Background support plus several UX features have shipped since —
 see `CHANGELOG.md`). It is not a fresh scaffold: `npm install`, real
 Scryfall data, `npm run dev`, and a real decklist have all been run and
 verified working, repeatedly, across many prior sessions. Don't assume the
-opposite just because a *specific* environment happens to lack
+opposite just because a _specific_ environment happens to lack
 `node_modules/` or network access at any given moment — that's a property
 of the sandbox you're in right now, not of the project's maturity.
 
@@ -88,7 +88,7 @@ All explicitly requested by the user unless noted:
 - **Radix UI** for interactive controls that need real keyboard and
   screen-reader behaviour — currently just `Dialog`, for the card-detail,
   card-image, and About popovers. TanStack has no equivalent — it ships
-  data and interaction *logic*, not accessible UI primitives — so the two
+  data and interaction _logic_, not accessible UI primitives — so the two
   are used side by side rather than one instead of the other. The filter
   chips used to be a Radix `ToggleGroup`, but that only supports a
   single-select/multi-select model, not the three-state
@@ -96,12 +96,12 @@ All explicitly requested by the user unless noted:
   `<button>`s with manual `aria-pressed`-equivalent state classes instead,
   and `@radix-ui/react-toggle-group` was dropped as a dependency.
 
-- **Zustand + TanStack Query** for state, split by what the state *is*:
+- **Zustand + TanStack Query** for state, split by what the state _is_:
   Zustand (`client/src/store/useAppStore.ts`) holds client state only — the
   textarea contents and the list that was actually submitted — and is where a
   user session would go once there are accounts. Everything fetched lives in
   Query (`client/src/api/queries.ts`), which owns its caching and
-  loading/error state. Recommendations are modelled as a *query* keyed on the
+  loading/error state. Recommendations are modelled as a _query_ keyed on the
   submitted list, not a mutation: the POST is only because a deck list is too
   big for a query string, and nothing changes server-side. That keying is why
   the form and the results section can read the same data without passing
@@ -354,7 +354,7 @@ server/                Express + TS + better-sqlite3
   each other per 702.124f), which keeps it cheap enough to run per request
   with an eligible pool in the tens to low hundreds. `Partner with [Name]` is
   checked for symmetric naming (each card must name the other, not just be
-  named by it); Doctor's companion is checked for an *exact* {Time Lord,
+  named by it); Doctor's companion is checked for an _exact_ {Time Lord,
   Doctor} creature-type set, not just "has those types among others."
 
 - **`synergy.ts`** — the heart of the app.
@@ -372,14 +372,15 @@ server/                Express + TS + better-sqlite3
 
      `sacrifice`'s pattern requires an indefinite object right after the
      word — `/\bsacrifice (a|an|another|your|this|that|target|it|them|up to
-     \w+|one|two|three|four|five|\d+)\b/i` — not a bare `/sacrifice/i`. A
+\w+|one|two|three|four|five|\d+)\b/i` — not a bare `/sacrifice/i`. A
      fetch land's own text reads "Sacrifice Arid Mesa: …": it sacrifices
      only itself, by its own proper name, as a cost for an unrelated effect.
      That is not the creature/permanent-sacrifice archetype even though the
      literal word appears, and a bare match was counting every fetch land
      in the format toward it.
+
   2. `ARCHETYPES` is a second layer on top of the theme list: a named label
-     (Aristocrats, Voltron) for a *combination* of themes, applied when a
+     (Aristocrats, Voltron) for a _combination_ of themes, applied when a
      candidate matches enough of the archetype's component theme keys.
      Spellslinger is **not** in this layer — it's just the existing
      `spellslinger` theme under its real name, since that already was the
@@ -388,7 +389,7 @@ server/                Express + TS + better-sqlite3
   3. Scores every `CommanderUnit` from `partners.ts` (not a single `CardRow`
      — see above): requires nonzero color-identity overlap AND at least one
      kindred/theme/keyword/archetype signal to even be considered. A signal
-     counts only if at least `MIN_SIGNAL_COUNT` (3) *distinct* cards back it
+     counts only if at least `MIN_SIGNAL_COUNT` (3) _distinct_ cards back it
      **after** narrowing to that unit's color identity. Every signal is
      unioned across both cards in a pair (`unitColorIdentity`/
      `unitKeywords`/`unitOracleText`) per rule 702.124e — a Partner pair
@@ -398,7 +399,7 @@ server/                Express + TS + better-sqlite3
      **Kindred requires caring, not sharing** (`caresAboutCreatureType`).
      A creature type counts only if the unit's own oracle text names it —
      Krenko counts Goblins, Lathril taps Elves, The First Sliver gives
-     Sliver spells cascade. Merely *having* the type does nothing, which is
+     Sliver spells cascade. Merely _having_ the type does nothing, which is
      why Silas Renn no longer collects a "Human" tag off a list that happens
      to hold Humans. The commander need not have the type at all
      (Ghoulcaller Gisa is a Human Wizard Zombie commander), so this reads
@@ -411,10 +412,10 @@ server/                Express + TS + better-sqlite3
      Each signal then scores its **density**: the share of the unit's
      castable pool (distinct cards fitting its identity) that backs it,
      times a per-kind weight — `kindred * 15 + theme * 10 + keyword * 8 +
-     archetype * 20`. So a signal every playable card supports is worth its
+archetype * 20`. So a signal every playable card supports is worth its
      full weight; one that half of them support is worth half.
 
-     Color identity decides *which cards are eligible* and contributes
+     Color identity decides _which cards are eligible_ and contributes
      nothing to the score. It used to: an earlier formula opened with
      `coverageRatio * 50`, the largest term, which a five-color commander
      banked in full for free — it could out-rank a mono-color commander
@@ -429,17 +430,17 @@ server/                Express + TS + better-sqlite3
     generic shared-keyword tag would read as a confused echo of the
     dedicated Partner/Background handling in `partners.ts`, not a second,
     unrelated theme.
-  - Every signal here requires the *candidate's own text* to match too, not
+  - Every signal here requires the _candidate's own text_ to match too, not
     just the profile. This is consistent but has a real cost for Voltron
     specifically: a commander that's a great Voltron target purely on
     stats (evasive, hard to remove) but whose own text never says
     "equip"/"enchant"/"Aura" won't be flagged. Documented in the archetype's
     own description string, not hidden.
   - This is intentionally a short, readable heuristic, not a combo/archetype
-    *engine* — documented as a known limitation, not a bug to silently "fix"
+    _engine_ — documented as a known limitation, not a bug to silently "fix"
     into something more complex without discussing it first.
 
-- **`bracket.ts`** — Bracket estimate is based *only* on Game Changer count
+- **`bracket.ts`** — Bracket estimate is based _only_ on Game Changer count
   among matched cards + the suggested commander itself: 0 → "Bracket 1–2",
   1–3 → "Bracket 3", 4+ → "Bracket 4–5". Explicitly does not model combo
   speed, mass land destruction, or extra-turn density — the real Bracket
@@ -483,8 +484,8 @@ server/                Express + TS + better-sqlite3
 
 - **The role vocabulary in `signals.ts` is provisional and wants review.**
   `Role` is currently `is / produces / consumes / rewards / amplifies`. It
-  replaced an earlier "Outlet / Payoff" split that was reported as *not
-  quite right*, and the five roles are an inference drawn from worked
+  replaced an earlier "Outlet / Payoff" split that was reported as _not
+  quite right_, and the five roles are an inference drawn from worked
   examples rather than a model anyone has signed off on. The specific
   problem with Outlet/Payoff was that real cards almost never separate the
   two — Lathril's activated ability consumes ten Elves and rewards you in
@@ -493,8 +494,8 @@ server/                Express + TS + better-sqlite3
   lets one ability be both, which Outlet/Payoff could not express.
   Cases known to still sit awkwardly:
   - **Goblin Sharpshooter** reads as `rewards` on creature-death (it untaps
-    whenever a creature dies), but players describe it as a *sacrifice
-    outlet*, because with any outlet it becomes a machine gun. It enables a
+    whenever a creature dies), but players describe it as a _sacrifice
+    outlet_, because with any outlet it becomes a machine gun. It enables a
     loop it does not itself contain, and no current role captures
     "enables". If a sixth role is ever added, this is the case that
     justifies it.
@@ -518,15 +519,15 @@ server/                Express + TS + better-sqlite3
   suggestions with ten commanders sharing a score of 46.60, because they all
   match the same three signals with the same supporting-card counts. Nothing
   distinguishes them. This is the strongest argument for the score floor
-  above, and possibly for a tie-breaker (mana value? how *deeply* the
+  above, and possibly for a tie-breaker (mana value? how _deeply_ the
   commander engages, i.e. role count?).
 - **Aristocrats is credited to any creature-token maker.** `produces:
-  create ... creature token` means Krenko, Mob Boss reads as an Aristocrats
+create ... creature token` means Krenko, Mob Boss reads as an Aristocrats
   card. Tokens genuinely are sacrifice fodder, so this is defensible, but it
   inflates: it fires on most go-wide cards. Worth revisiting if Aristocrats
   starts showing up on commanders that have nothing to do with it.
 - **The density denominator is every identity-fitting card (choice A).**
-  `scoreCommanders` divides a signal's supporting-card count by *all*
+  `scoreCommanders` divides a signal's supporting-card count by _all_
   distinct castable cards, lands included. The alternative considered and
   not taken (**choice B**) excludes lands from the denominator, on the
   reasoning that lands are infrastructure every deck needs in roughly equal
@@ -557,7 +558,7 @@ server/                Express + TS + better-sqlite3
   class of issue before assuming it's something else.
 - **Scryfall's API/bulk-data shape.** `fetch-scryfall.ts` and
   `import-scryfall.ts` assume a specific JSON shape (`data[].type ===
-  'oracle_cards'`, `card.legalities.commander`, `card.game_changer`,
+'oracle_cards'`, `card.legalities.commander`, `card.game_changer`,
   `card.color_identity`, etc.) based on Scryfall's documented API as of
   this project's creation. Worth a quick sanity check against a live
   response if anything about the import looks off.
@@ -673,7 +674,7 @@ run.
 ## Merged with `main`'s independent Partner/Background work
 
 While this branch built the above, a separate PR (`main`, PR #2, commit
-`7997147`) independently built the *same* feature with a different design:
+`7997147`) independently built the _same_ feature with a different design:
 single-card suggestions carrying a `pairing` field plus a `partnerOptions[]`
 list you choose a second commander from, computed by `detectPairing`/
 `canPair`/`buildPartnerOptions` in its own `partners.ts`/`synergy.ts`. Both
@@ -685,6 +686,7 @@ main's approach is still recoverable from its own git history.
 
 main also carried real, independent work unrelated to Partner/Background,
 which was carried forward on top of the kept design:
+
 - **Art preview** — `CardImageDialog.tsx` (whole-card image popover,
   separate from the rules-text `CardDetailDialog`), wired onto commander
   art and every supporting-card name. `SupportingCard`/`SupportingCardDTO`
@@ -699,7 +701,7 @@ which was carried forward on top of the kept design:
 - **"Still has supporting cards" fix** — `lib/suggestions.ts`
   (`visibleThemeSupport`/`visibleKindredSupport`, extended here with a
   `visibleKeywordSupport` for the keyword category main didn't have): a
-  theme/kindred type/keyword matched against the collection *globally* can end up
+  theme/kindred type/keyword matched against the collection _globally_ can end up
   with zero cards once narrowed to a specific commander's color identity;
   this filters those out of both the card display and the filter bar's
   available options instead of showing/offering an empty reason. This was

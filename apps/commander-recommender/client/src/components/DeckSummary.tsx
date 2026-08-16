@@ -81,7 +81,9 @@ function Slot({ slot }: { slot: SlotStatusDTO }) {
         </details>
       )}
 
-      {!slot.filled && slot.suggestions.length > 0 && <SuggestionList suggestions={slot.suggestions} />}
+      {!slot.filled && slot.suggestions.length > 0 && (
+        <SuggestionList suggestions={slot.suggestions} />
+      )}
     </li>
   );
 }
@@ -139,8 +141,9 @@ export function DeckSummary({ deck }: { deck: DeckAnalysisDTO }) {
     <section className="deck-summary">
       <h2>What this list is doing</h2>
       <p className="deck-summary-intro">
-        The strongest patterns in your cards, and whether each one has everything it needs to actually work. A
-        theme is a chain, not a pile — nine death triggers and no sacrifice outlet is a deck that can't execute.
+        The strongest patterns in your cards, and whether each one has everything it needs to
+        actually work. A theme is a chain, not a pile — nine death triggers and no sacrifice outlet
+        is a deck that can't execute.
       </p>
       <div className="deck-themes">
         {deck.themes.map((theme) => (

@@ -1,3 +1,9 @@
+# NOTE: this app now lives at apps/commander-recommender/ inside the
+# KaneEnabler monorepo (docs/handoff.md Phase 0). If Render's Blueprint
+# for these services was already connected before that move, its
+# "render.yaml path" setting in the dashboard needs to point at
+# apps/commander-recommender/render.yaml — rootDir below is repo-root-relative
+# either way, but Render has to be told where to find this file first.
 services:
   # Express API — builds its own SQLite card database from Scryfall's bulk
   # data during the build step, since the free plan's filesystem is
@@ -9,12 +15,12 @@ services:
     name: mtg-recommender-server
     runtime: node
     plan: free
-    rootDir: server
-    # --include=dev is required here: NODE_ENV=production (set below) makes
-    # plain `npm install` skip devDependencies, but prepare-data/build need
-    # tsx and tsc, which are devDependencies.
-    buildCommand: npm install --include=dev && npm run prepare-data && npm run build
-    startCommand: npm start
+    rootDir: apps/commander-recommender/server
+    # Unlike npm, pnpm installs devDependencies by default regardless of
+    # NODE_ENV — no --include=dev workaround needed. prepare-data/build still
+    # need tsx and tsc, both devDependencies.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run prepare-data && pnpm run build
+    startCommand: pnpm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -26,8 +32,8 @@ services:
   - type: web
     runtime: static
     name: mtg-recommender-client
-    rootDir: client
-    buildCommand: npm install && VITE_API_URL="https://${SERVER_HOST}.onrender.com" npm run build
+    rootDir: apps/commander-recommender/client
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
     staticPublishPath: dist
     envVars:
       - key: SERVER_HOST

@@ -69,7 +69,8 @@ export default function ActiveCardsList({
         <div className={styles.empty}>
           <div className={styles.emptyTitle}>Nothing tracked yet</div>
           <p className={styles.emptyBody}>
-            Suspend a spell or drop a Vanishing creature? Tap “Add a card” above to start tracking its counters.
+            Suspend a spell or drop a Vanishing creature? Tap “Add a card” above to start tracking
+            its counters.
           </p>
         </div>
       </div>
@@ -82,13 +83,15 @@ export default function ActiveCardsList({
   return (
     <div className={styles.wrap}>
       <div className={styles.sectionRow}>
-        <p className={styles.sectionLabel}>Tracking {total} card{total === 1 ? '' : 's'}</p>
+        <p className={styles.sectionLabel}>
+          Tracking {total} card{total === 1 ? '' : 's'}
+        </p>
         <button type="button" className={styles.timeTravelLink} onClick={onOpenTimeTravel}>
           Time Travel →
         </button>
       </div>
       <div className={styles.grid}>
-        {commanderCards.map(commander => (
+        {commanderCards.map((commander) => (
           <CommanderFieldTile
             key={commander.id}
             commander={commander}
@@ -96,7 +99,7 @@ export default function ActiveCardsList({
             onReturnToCommandZone={onReturnCommanderToCommandZone}
           />
         ))}
-        {sorted.map(card => (
+        {sorted.map((card) => (
           <CardTile
             key={card.instanceId}
             card={card}

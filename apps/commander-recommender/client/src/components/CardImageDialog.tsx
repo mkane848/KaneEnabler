@@ -29,7 +29,14 @@ interface Props {
  * Radix Dialog handles focus trapping, restoring focus to whatever was
  * tapped, Escape, and scroll locking.
  */
-export function CardImageDialog({ name, imageUri, backImageUri, backName, scryfallUri, children }: Props) {
+export function CardImageDialog({
+  name,
+  imageUri,
+  backImageUri,
+  backName,
+  scryfallUri,
+  children,
+}: Props) {
   const [showBack, setShowBack] = useState(false);
 
   // Reopening a card should start on its front again rather than wherever it

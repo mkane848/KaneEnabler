@@ -184,7 +184,8 @@ export function stripSelfReferences(text: string, ...names: (string | null)[]): 
     if (!name) continue;
     forms.add(name);
     // "Lathril, Blade of the Elves" -> also strip "Lathril".
-    const short = name.split(',')[0].trim();
+    // .split() on any string always returns at least one element.
+    const short = name.split(',')[0]!.trim();
     if (short && short !== name) forms.add(short);
   }
   // Longest first, so the full name goes before its own short form.
@@ -253,9 +254,11 @@ function findProducedTokenTypes(text: string, vocab: Vocabulary): string[] {
 export function parseCreatureTypes(typeLine: string, knownTypes?: Set<string>): string[] {
   const [typePart, subtypePart] = typeLine.split('—');
   if (!subtypePart) return [];
+  // typePart is always populated: .split() on any string returns at least
+  // one element, which destructures into this position.
   // Word-boundary matched, and checked against the type part only: a Battle
   // whose subtype happened to read "Creature" would otherwise slip through.
-  if (!/\b(Creature|Kindred|Tribal)\b/.test(typePart)) return [];
+  if (!/\b(Creature|Kindred|Tribal)\b/.test(typePart!)) return [];
 
   const words = subtypePart.trim().split(/\s+/).filter(Boolean);
   return knownTypes ? words.filter((word) => knownTypes.has(word)) : words;
@@ -341,7 +344,10 @@ function tokenDescriptorPattern(type: string): RegExp {
 function wordPattern(word: string): RegExp {
   let pattern = wordPatternCache.get(word);
   if (!pattern) {
-    pattern = new RegExp(`\\b(?:${escapeRegExp(word)}|${escapeRegExp(pluralOfType(word))})\\b`, 'i');
+    pattern = new RegExp(
+      `\\b(?:${escapeRegExp(word)}|${escapeRegExp(pluralOfType(word))})\\b`,
+      'i',
+    );
     wordPatternCache.set(word, pattern);
   }
   return pattern;
@@ -357,7 +363,8 @@ function wordPattern(word: string): RegExp {
  */
 function detectsSelfSacrifice(rawText: string, name: string): boolean {
   if (/\bsacrifice this\b/i.test(rawText)) return true;
-  const short = name.split(',')[0].trim();
+  // .split() on any string always returns at least one element.
+  const short = name.split(',')[0]!.trim();
   if (!short) return false;
   return new RegExp(`sacrifice ${escapeRegExp(short)}\\b`, 'i').test(rawText);
 }
@@ -466,7 +473,10 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /whenever you attack/i,
         /whenever[^.;]*creatures? you control attacks?/i,
       ],
-      amplifies: [/would create[^.]*tokens?[^.]*instead/i, /create twice (?:that many|as many) tokens/i],
+      amplifies: [
+        /would create[^.]*tokens?[^.]*instead/i,
+        /create twice (?:that many|as many) tokens/i,
+      ],
     },
   },
   {
@@ -515,7 +525,11 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /play an additional land/i,
         /put[^.;]*land[^.;]*from your (?:hand|graveyard)[^.;]*onto the battlefield/i,
       ],
-      rewards: [/\blandfall\b/i, /whenever a land (?:you control )?enters/i, /for each land you control/i],
+      rewards: [
+        /\blandfall\b/i,
+        /whenever a land (?:you control )?enters/i,
+        /for each land you control/i,
+      ],
       consumes: [/\bsacrifice (?:a|an|another)\b[^.;]*\bland/i],
     },
   },
@@ -537,12 +551,19 @@ export const ARCHETYPES: ArchetypeDef[] = [
   {
     key: 'counters',
     label: '+1/+1 Counters',
-    description: 'Growing creatures with +1/+1 counters, and the payoffs that read how many are out there.',
+    description:
+      'Growing creatures with +1/+1 counters, and the payoffs that read how many are out there.',
     weight: 20,
     roles: {
-      produces: [/put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i, /\b(?:adapt|evolve|bolster|outlast)\b/i],
+      produces: [
+        /put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i,
+        /\b(?:adapt|evolve|bolster|outlast)\b/i,
+      ],
       rewards: [/whenever[^.;]*\+1\/\+1 counter/i, /for each \+1\/\+1 counter/i],
-      amplifies: [/would (?:put|distribute) one or more[^.]*counters[^.]*instead/i, /twice that many[^.]*counters/i],
+      amplifies: [
+        /would (?:put|distribute) one or more[^.]*counters[^.]*instead/i,
+        /twice that many[^.]*counters/i,
+      ],
     },
   },
   {
@@ -698,7 +719,11 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
         // rewards you for having had them.
         if (clause.includes(':')) roles.push('rewards');
       }
-      if (/\bget\b|\bgains?\b|\bhas\b|\bhave\b|whenever|for each|number of|search|\blose\b|\bloses\b/i.test(clause)) {
+      if (
+        /\bget\b|\bgains?\b|\bhas\b|\bhave\b|whenever|for each|number of|search|\blose\b|\bloses\b/i.test(
+          clause,
+        )
+      ) {
         roles.push('rewards');
       }
       // Mentioned outside a token's name, in a way none of the above caught —
@@ -829,7 +854,10 @@ export function supports(signal: SignalMatch, supporter: SignalMatch[], facts: C
   if (!signal.qualifier) return true;
 
   if (signal.qualifierKind === 'creatureType') {
-    return facts.creatureTypes.includes(signal.qualifier) || facts.producedTokenTypes.includes(signal.qualifier);
+    return (
+      facts.creatureTypes.includes(signal.qualifier) ||
+      facts.producedTokenTypes.includes(signal.qualifier)
+    );
   }
   if (signal.qualifierKind === 'keyword') {
     return facts.keywords.includes(signal.qualifier);
@@ -847,7 +875,7 @@ export function supports(signal: SignalMatch, supporter: SignalMatch[], facts: C
  */
 export function archetypeDisplay(
   archetype: string,
-  qualifier: string | null
+  qualifier: string | null,
 ): { label: string; description: string; weight: number } {
   if (archetype === 'kindred' && qualifier) {
     return {

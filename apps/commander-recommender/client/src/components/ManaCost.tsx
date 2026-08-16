@@ -3,7 +3,8 @@ import { MANA_GLYPHS } from '../lib/manaSymbols';
 
 /** Splits "{3}{U}{B}" into ["3", "U", "B"]. */
 function parseCost(cost: string): string[] {
-  return [...cost.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
+  // The capture group is mandatory in the pattern, so every match has it.
+  return [...cost.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]!);
 }
 
 /**

@@ -102,8 +102,8 @@ export function CardListUpload() {
           {validationError && <p className="status-error">{validationError}</p>}
           {slow && (
             <p className="status-waking" aria-live="polite">
-              Waking the server — it sleeps after a spell of inactivity, so the first request can take up
-              to a minute.
+              Waking the server — it sleeps after a spell of inactivity, so the first request can
+              take up to a minute.
             </p>
           )}
           <div className="upload-actions">

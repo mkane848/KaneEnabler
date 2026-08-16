@@ -26,7 +26,9 @@ function parseJsonArray(value: string | null): string[] {
  */
 router.post('/combos', async (req, res) => {
   if (!isSeeded) {
-    return res.status(503).json({ error: 'The card database is empty — run "npm run prepare-data" first.' });
+    return res
+      .status(503)
+      .json({ error: 'The card database is empty — run "npm run prepare-data" first.' });
   }
 
   // See the note in recommend.ts: Express 5 leaves req.body undefined when
@@ -41,7 +43,9 @@ router.post('/combos', async (req, res) => {
     commanderNames.length > 2 ||
     !commanderNames.every((n) => typeof n === 'string' && n.trim())
   ) {
-    return res.status(400).json({ error: 'Request body must include a "commanderNames" array of 1-2 names.' });
+    return res
+      .status(400)
+      .json({ error: 'Request body must include a "commanderNames" array of 1-2 names.' });
   }
   const names = commanderNames as string[];
 
@@ -74,7 +78,7 @@ router.post('/combos', async (req, res) => {
   try {
     const lookup = await findCombos(
       commanders.map((c) => c.name),
-      deckCards
+      deckCards,
     );
     res.json({ ...lookup, searchedCardCount: deckCards.length });
   } catch (err) {

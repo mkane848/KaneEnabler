@@ -56,7 +56,10 @@ export function unitKey(unit: CommanderUnit): string {
  * (they're not a creature/Vehicle/Spacecraft, so getCommanderCandidates
  * already excludes them) and are only ever reached here as a pairing target.
  */
-export function buildCommanderUnits(candidates: CardRow[], backgrounds: CardRow[]): CommanderUnit[] {
+export function buildCommanderUnits(
+  candidates: CardRow[],
+  backgrounds: CardRow[],
+): CommanderUnit[] {
   const units: CommanderUnit[] = candidates.map((card) => ({ cards: [card] }));
   const seenPairs = new Set<string>();
 
@@ -70,7 +73,8 @@ export function buildCommanderUnits(candidates: CardRow[], backgrounds: CardRow[
 
   function pairAllWithin(group: CardRow[]): void {
     for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) addPair(group[i], group[j]);
+      // Both i and j are always within [0, group.length) by the loop bounds.
+      for (let j = i + 1; j < group.length; j++) addPair(group[i]!, group[j]!);
     }
   }
 
@@ -104,7 +108,9 @@ export function buildCommanderUnits(candidates: CardRow[], backgrounds: CardRow[
   // which every real friends-forever card already satisfies as printed —
   // checked anyway rather than assumed, since nothing stops a future card
   // from breaking that pattern.
-  pairAllWithin(byAbility('friends_forever').filter((c) => (c.type_line ?? '').includes('Creature')));
+  pairAllWithin(
+    byAbility('friends_forever').filter((c) => (c.type_line ?? '').includes('Creature')),
+  );
 
   // Choose a Background: the companion card × every legal legendary Background.
   for (const chooser of byAbility('choose_background')) {

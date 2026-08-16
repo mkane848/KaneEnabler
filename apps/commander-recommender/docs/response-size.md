@@ -8,21 +8,21 @@ compete for attention.
 
 Three real lists, against the v1.7.0 engine, `POST /api/recommend`:
 
-| List | Raw | Gzipped | Suggestions |
-|---|---|---|---|
-| Aristocrats (30 cards) | 12.22 MB | 0.41 MB | 1,385 |
-| Reanimator (30 cards) | 5.09 MB | 0.27 MB | 1,133 |
-| Voltron (20 cards) | 1.60 MB | 0.06 MB | 180 |
+| List                   | Raw      | Gzipped | Suggestions |
+| ---------------------- | -------- | ------- | ----------- |
+| Aristocrats (30 cards) | 12.22 MB | 0.41 MB | 1,385       |
+| Reanimator (30 cards)  | 5.09 MB  | 0.27 MB | 1,133       |
+| Voltron (20 cards)     | 1.60 MB  | 0.06 MB | 180         |
 
 Where the bytes go, on the largest:
 
-| Field | Size | Share |
-|---|---|---|
-| `themeSupport` | 10.33 MB | 84.5% |
-| `cards` (the commanders themselves) | 1.68 MB | 13.8% |
-| `kindredSupport` | 0.21 MB | 1.7% |
-| `bracket` | 0.17 MB | 1.4% |
-| `deck` (the whole Stage 2 summary) | 0.06 MB | 0.5% |
+| Field                               | Size     | Share |
+| ----------------------------------- | -------- | ----- |
+| `themeSupport`                      | 10.33 MB | 84.5% |
+| `cards` (the commanders themselves) | 1.68 MB  | 13.8% |
+| `kindredSupport`                    | 0.21 MB  | 1.7%  |
+| `bracket`                           | 0.17 MB  | 1.4%  |
+| `deck` (the whole Stage 2 summary)  | 0.06 MB  | 0.5%  |
 
 ## The two findings that decide the work
 
@@ -40,7 +40,7 @@ if the server is CPU-bound, which it is not.
 **2. The supporting cards are duplicated 951×.** Across the aristocrats
 response, **26,618 supporting-card entries are serialized, backed by 28
 distinct cards.** That ratio is not an accident and will not improve with
-tuning: a supporting card is by definition one of *your* cards, so the
+tuning: a supporting card is by definition one of _your_ cards, so the
 distinct set can never exceed the size of the uploaded list, while the number
 of references grows with the number of commanders. A larger collection makes
 this worse, not better.
@@ -63,11 +63,11 @@ of magnitude.
 
 Both shipped. Measured the same way, on the same three lists:
 
-| List | Raw before | Raw after | On the wire | Total |
-|---|---|---|---|---|
-| Aristocrats | 12.22 MB | 2.88 MB | **0.25 MB** | 49× smaller |
-| Reanimator | 5.09 MB | 2.26 MB | **0.20 MB** | 25× smaller |
-| Voltron | 1.60 MB | 0.36 MB | **0.04 MB** | 40× smaller |
+| List        | Raw before | Raw after | On the wire | Total       |
+| ----------- | ---------- | --------- | ----------- | ----------- |
+| Aristocrats | 12.22 MB   | 2.88 MB   | **0.25 MB** | 49× smaller |
+| Reanimator  | 5.09 MB    | 2.26 MB   | **0.20 MB** | 25× smaller |
+| Voltron     | 1.60 MB    | 0.36 MB   | **0.04 MB** | 40× smaller |
 
 The aristocrats card index holds 28 cards, down from 26,618 serialized
 citations. After the change, the largest remaining field is `cards` — the
@@ -94,7 +94,7 @@ wire.
 the wire, no API change, no client change.
 
 This alone resolves the user-visible problem. Everything below is about the
-*raw* size, which still matters for `JSON.parse` cost and client memory —
+_raw_ size, which still matters for `JSON.parse` cost and client memory —
 a phone parsing a 12 MB string into an object graph is doing real work
 regardless of how few bytes crossed the network.
 

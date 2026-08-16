@@ -1,8 +1,4 @@
-import type {
-  RecommendResponse,
-  SupportingCardDTO,
-  WireRecommendResponse,
-} from '../types';
+import type { RecommendResponse, SupportingCardDTO, WireRecommendResponse } from '../types';
 
 /**
  * Swaps the wire response's card positions back for card objects.
@@ -23,7 +19,9 @@ export function rehydrateRecommendations(wire: WireRecommendResponse): Recommend
   // citation rather than rendering `undefined` keeps that a missing row
   // instead of a crash halfway down the page.
   const resolve = (positions: number[]): SupportingCardDTO[] =>
-    positions.map((position) => cardIndex[position]).filter((card): card is SupportingCardDTO => !!card);
+    positions
+      .map((position) => cardIndex[position])
+      .filter((card): card is SupportingCardDTO => !!card);
 
   return {
     ...rest,

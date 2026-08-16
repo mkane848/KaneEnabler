@@ -81,4 +81,3 @@ export function identityName(colors: string[]): string {
   const key = sortWubrg(colors).join('');
   return IDENTITY_NAMES[key] ?? `${colors.length}-Color`;
 }
-

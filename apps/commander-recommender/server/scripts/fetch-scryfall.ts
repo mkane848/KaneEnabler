@@ -38,7 +38,8 @@ const CREATURE_TYPES_PATH = path.join(DATA_DIR, 'creature-types.json');
 // Kept in sync with services/spellbook.ts's User-Agent by hand — see the
 // note there on why it isn't read from package.json.
 const SCRYFALL_HEADERS = {
-  'User-Agent': 'CommanderIHardlyKnowEr/1.0.0 (hobby project; https://github.com/mkane848/HardlyKnowHer)',
+  'User-Agent':
+    'CommanderIHardlyKnowEr/1.0.0 (hobby project; https://github.com/mkane848/HardlyKnowHer)',
   Accept: 'application/json;q=0.9,*/*;q=0.8',
 };
 
@@ -109,7 +110,7 @@ async function main() {
     throw new Error(
       'The "oracle_cards" bulk entry has no `jsonl_download_uri`. Scryfall has probably renamed the ' +
         'field again — check https://scryfall.com/docs/api/bulk-data for the current shape. ' +
-        `Fields present: ${Object.keys(oracleCards).join(', ')}`
+        `Fields present: ${Object.keys(oracleCards).join(', ')}`,
     );
   }
 
@@ -118,7 +119,7 @@ async function main() {
   if (!force && diskHasSnapshot(OUTPUT_PATH, publishedUpdatedAt)) {
     console.log(
       `Already have the current snapshot (published ${publishedUpdatedAt}). Skipping download.\n` +
-        'Pass --force to download it again anyway.'
+        'Pass --force to download it again anyway.',
     );
     // Still fetch the re-skin names if we've never got them. Skipping the
     // bulk download must not mean permanently skipping a companion file that
@@ -151,7 +152,7 @@ async function main() {
   await pipeline(
     Readable.fromWeb(fileRes.body as Parameters<typeof Readable.fromWeb>[0]),
     createGunzip(),
-    fs.createWriteStream(OUTPUT_PATH)
+    fs.createWriteStream(OUTPUT_PATH),
   );
 
   const written = fs.statSync(OUTPUT_PATH).size;
@@ -197,7 +198,7 @@ async function fetchCreatureTypes() {
   if (!Array.isArray(body.data) || body.data.length === 0) {
     throw new Error(
       'The creature-type catalog came back without a non-empty `data` array. Check ' +
-        'https://scryfall.com/docs/api/catalogs for the current shape.'
+        'https://scryfall.com/docs/api/catalogs for the current shape.',
     );
   }
 
@@ -226,8 +227,7 @@ async function fetchFlavorNames() {
   // unique=cards collapses each card to one printing — usually the canonical
   // one, which is exactly the printing without the flavor name. That drops
   // 176 of the 617 re-skinned printings on the floor.
-  let url: string | null =
-    'https://api.scryfall.com/cards/search?q=has%3Aflavorname&unique=prints';
+  let url: string | null = 'https://api.scryfall.com/cards/search?q=has%3Aflavorname&unique=prints';
 
   while (url) {
     const res: Response = await fetch(url, { headers: SCRYFALL_HEADERS });
@@ -247,7 +247,7 @@ async function fetchFlavorNames() {
         entries.push({ flavor_name: card.flavor_name, oracle_id: card.oracle_id });
       }
     }
-    url = page.has_more ? page.next_page ?? null : null;
+    url = page.has_more ? (page.next_page ?? null) : null;
     // Scryfall asks for 50-100ms between requests. See
     // https://scryfall.com/docs/api — this is the whole reason it's polite
     // to page rather than hammer.
