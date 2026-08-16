@@ -1,0 +1,11 @@
+.toggle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-faint);
+  padding: 0.3em 0.2em;
+  white-space: nowrap;
+}
+
+.toggle:hover {
+  color: var(--color-accent);
+}

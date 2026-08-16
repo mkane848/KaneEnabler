@@ -1,0 +1,59 @@
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem 1.1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.sectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0.3rem 0 -0.1rem;
+}
+
+.sectionLabel {
+  font-size: 0.78rem;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timeTravelLink {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-faint);
+}
+
+.timeTravelLink:hover {
+  color: var(--color-accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 0.6rem;
+}
+
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-faint);
+}
+
+.emptyTitle {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.emptyBody {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 32ch;
+  margin: 0 auto;
+}
