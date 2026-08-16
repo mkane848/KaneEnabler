@@ -28,6 +28,15 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   alongside the existing `notFound`) so the match count still adds up
   instead of a banned card silently vanishing. Also applies to combo search,
   which no longer treats a banned card as available for the deck.
+- **The singleton-count exception for cards like Nazgûl and Seven Dwarves
+  would have silently capped a future card at 1 copy.** `singletonLimit`
+  only recognized a spelled-out number word ("up to nine"), with no path
+  for a digit ("up to 7") or a word past twelve. Neither real card hits
+  this today — both spell their number out, seven and nine — but the
+  failure mode was silent, so a future card wouldn't have been caught
+  until someone noticed a deck getting under-counted. Now tries a plain
+  integer first, unbounded, before falling back to the word list; a value
+  that's genuinely neither now logs a warning instead of failing quietly.
 
 ## [1.7.1] — 2026-08-01
 

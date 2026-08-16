@@ -3,7 +3,7 @@
  * list.
  */
 import assert from 'node:assert';
-import { describe, it } from 'vitest';
+import { describe, it, vi } from 'vitest';
 import type { CardRow } from '../types';
 import { applySingletonLimits, singletonLimit } from './singleton';
 import type { OwnedCard } from './synergy';
@@ -97,6 +97,37 @@ describe('singletonLimit', () => {
       oracle_text: 'A deck can have up to nine cards named Nazgûl.',
     });
     assert.strictEqual(singletonLimit(nazgul), 9);
+  });
+
+  it('"up to N" with a digit instead of a spelled-out word still resolves to N', () => {
+    // Both real "up to N" cards (Seven Dwarves, Nazgûl) spell the number out
+    // today, but nothing about the rule requires that — a future card is
+    // free to print a digit instead.
+    const card = makeCard({
+      name: 'Hypothetical Card',
+      oracle_text: 'A deck can have up to 7 cards named Hypothetical Card.',
+    });
+    assert.strictEqual(singletonLimit(card), 7);
+  });
+
+  it('a digit above twelve resolves to N instead of silently falling back to 1', () => {
+    // NUMBER_WORDS tops out at twelve; a digit must not depend on it.
+    const card = makeCard({
+      name: 'Hypothetical Card',
+      oracle_text: 'A deck can have up to 15 cards named Hypothetical Card.',
+    });
+    assert.strictEqual(singletonLimit(card), 15);
+  });
+
+  it('a value that is neither a digit nor a known word still falls back to 1, but warns instead of failing silently', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const card = makeCard({
+      name: 'Hypothetical Card',
+      oracle_text: 'A deck can have up to lots cards named Hypothetical Card.',
+    });
+    assert.strictEqual(singletonLimit(card), 1);
+    assert.strictEqual(warnSpy.mock.calls.length, 1);
+    warnSpy.mockRestore();
   });
 });
 
