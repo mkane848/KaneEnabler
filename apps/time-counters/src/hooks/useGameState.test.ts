@@ -328,6 +328,19 @@ describe('useGameState — Bad Wolf / Rose Tyler', () => {
     act(() => result.current.adjustRoseTimeCounters(-3));
     expect(result.current.state.commanders.roseTyler.timeCounters).toBe(0);
   });
+
+  it('a suspended card counts unconditionally, even at 0 counters — unlike Vanishing', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => {
+      result.current.addCard(addInput({ mechanic: 'suspend', startingCount: 0 }));
+      result.current.addCard(addInput({ mechanic: 'vanishing', startingCount: 0 }));
+    });
+    act(() => result.current.roseAttacks());
+    // Only the suspended card contributes — "each suspended card you own" is
+    // unconditional, but "each other permanent with a time counter on it"
+    // requires an actual counter, which the Vanishing card no longer has.
+    expect(result.current.state.commanders.roseTyler.timeCounters).toBe(1);
+  });
 });
 
 describe('useGameState — resetGame', () => {

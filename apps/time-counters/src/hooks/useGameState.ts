@@ -549,16 +549,19 @@ export function useGameState() {
   /**
    * Rose Tyler's Bad Wolf: "Whenever Rose Tyler attacks, put a time counter
    * on it for each suspended card you own and each other permanent you
-   * control with a time counter on it." Counts every tracked Suspend card
-   * plus every tracked Vanishing card currently on the board (both use real
-   * time counters — Fading and Saga don't, see usesTimeCounters), and adds
-   * that many counters to Rose in one step instead of the player counting
-   * the board by hand.
+   * control with a time counter on it." Two clauses with different
+   * conditions: a suspended card counts unconditionally — it's still
+   * "suspended" regardless of how many time counters remain on it — while
+   * the second clause is explicitly about permanents *with a time counter
+   * on them*, so a tracked Vanishing card with none left doesn't qualify.
+   * Fading and Saga never count either way (neither uses time counters —
+   * see usesTimeCounters). Adds that many counters to Rose in one step
+   * instead of the player counting the board by hand.
    */
   const roseAttacks = useCallback(() => {
     setTracker((prev) => {
       const contributing = prev.game.cards.filter(
-        (c) => usesTimeCounters(c.mechanic) && c.count > 0,
+        (c) => c.mechanic === 'suspend' || (usesTimeCounters(c.mechanic) && c.count > 0),
       );
       const gained = contributing.length;
       const from = prev.game.commanders.roseTyler.timeCounters;

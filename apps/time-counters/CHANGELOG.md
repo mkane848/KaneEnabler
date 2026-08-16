@@ -24,6 +24,12 @@ this project follows [Semantic Versioning](https://semver.org/).
   precombat-main step already did, and the Game Log entry names which
   chapter(s) triggered. Moving the count back down still can't un-trigger
   a chapter already recorded.
+- **Bad Wolf could under-count suspended cards.** Rose Tyler's trigger has
+  two separate clauses — "each suspended card you own" (unconditional) and
+  "each other permanent you control with a time counter on it" (needs a
+  counter still on it) — collapsed into one check that required a counter
+  either way. A suspended card that already lost its last counter now still
+  contributes; a Vanishing permanent in the same state correctly doesn't.
 
 ## [1.2.0] - 2026-08-11
 
