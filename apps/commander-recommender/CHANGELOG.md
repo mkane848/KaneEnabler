@@ -9,6 +9,19 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Added
+
+- **Filters, sort, and the current page are now part of the URL**, so they
+  survive a reload and a link you copy while looking at a filtered/sorted
+  view reproduces it (paste your list back in against that link and you're
+  back where you left off — the list itself still isn't part of the URL).
+  Previously all three lived in component state and reset the moment the
+  page refreshed. A visit with nothing customized keeps a plain `/`; only
+  what you've actually changed shows up in the address bar. Also fixes a
+  latent gap the pagination code's own comment already claimed was handled:
+  narrowing the results with a filter while on a later page could leave you
+  stranded looking at an empty page instead of being brought back in range.
+
 ### Fixed
 
 - **Multi-word creature types like Time Lord were silently dropped.**

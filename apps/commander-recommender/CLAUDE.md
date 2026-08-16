@@ -80,6 +80,11 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   durable UI prefs like page size). Don't merge these; a dismissal surviving a browser restart
   against a different pasted list would be surprising, but a page-size choice should outlive the
   tab.
+- **`client/src/router.tsx`** is the third place client state can live: `RecommendationResults`'
+  filters/sort/current-page are search params on the one route (`lib/searchSchema.ts`'s
+  `validateRecommenderSearch`), not `useState` — shareable and survives a refresh, which neither
+  Zustand store's split above was designed for. Page _size_ stays in `usePreferencesStore`
+  deliberately (a durable preference, not something a shared link should carry).
 - **`client/src/lib/mtg.ts`** — WUBRG ordering and color-identity naming ("Golgari", never
   "Black/Green"). Mana glyph paths and cost parsing live in `@mtg/mana` (`packages/mana`), shared
   with the sibling app — this client has no `manaSymbols.ts` of its own anymore.

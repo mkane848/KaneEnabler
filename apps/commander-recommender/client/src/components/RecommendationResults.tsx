@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { getRouteApi } from '@tanstack/react-router';
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -14,6 +15,7 @@ import {
   availableFilterValues,
   EMPTY_FILTERS,
   hasActiveFilters,
+  type SuggestionFilters,
 } from '../lib/filters';
 import { sortSuggestions, type SortDirection, type SortMode } from '../lib/sort';
 import { CommanderCard } from './CommanderCard';
@@ -21,6 +23,8 @@ import { DeckSummary } from './DeckSummary';
 import { Pagination } from './Pagination';
 import { ResultFilters } from './ResultFilters';
 import type { CommanderSuggestionDTO } from '../types';
+
+const routeApi = getRouteApi('/');
 
 const EXPORT_FILENAME = 'commander-suggestions.txt';
 
@@ -78,23 +82,33 @@ export function RecommendationResults() {
   const restoreAll = useAppStore((s) => s.restoreAll);
   const { data: result, error } = useRecommendations(submittedList);
 
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [sortMode, setSortMode] = useState<SortMode>('relevance');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  // Filters/sort/page live in the URL (see lib/searchSchema.ts) rather than
+  // component state — shareable, and survives a refresh. Page *size* stays a
+  // persisted preference (usePreferencesStore): it should outlive the tab,
+  // not travel with one particular shared link.
+  const { filters, sortMode, sortDirection, page } = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
   const suggestionsPerPage = usePreferencesStore((s) => s.suggestionsPerPage);
   const setSuggestionsPerPage = usePreferencesStore((s) => s.setSuggestionsPerPage);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: suggestionsPerPage,
-  });
 
-  // The table's pagination is controlled (below) so the page-size preference
-  // can drive it after mount, not just seed it once. Landing back on page 1
-  // avoids being stranded on a page number that no longer exists once the
-  // page is shorter.
-  useEffect(() => {
-    setPagination({ pageIndex: 0, pageSize: suggestionsPerPage });
-  }, [suggestionsPerPage]);
+  function setFilters(next: SuggestionFilters) {
+    navigate({ search: (prev) => ({ ...prev, filters: next, page: 0 }) });
+  }
+  function setSortMode(next: SortMode) {
+    navigate({ search: (prev) => ({ ...prev, sortMode: next, page: 0 }) });
+  }
+  function setSortDirection(next: SortDirection) {
+    navigate({ search: (prev) => ({ ...prev, sortDirection: next, page: 0 }) });
+  }
+  function setPage(next: number) {
+    navigate({ search: (prev) => ({ ...prev, page: next }) });
+  }
+  // Landing back on page 1 avoids being stranded on a page number that no
+  // longer exists once a smaller page size makes for more pages.
+  function handlePageSizeChange(size: number) {
+    setSuggestionsPerPage(size);
+    setPage(0);
+  }
 
   const suggestions = useMemo(() => result?.suggestions ?? [], [result]);
 
@@ -115,9 +129,16 @@ export function RecommendationResults() {
     [kept],
   );
 
+  // A URL's page number is only ever valid relative to the row set it was
+  // written against — a shared link, or a filter/sort change since, can put
+  // it past the end. Clamped for display rather than corrected in the URL:
+  // an out-of-range page still means something (it's evidence of what the
+  // set used to look like), it just isn't rendered.
+  const pageCount = Math.max(1, Math.ceil(sorted.length / suggestionsPerPage));
+  const safePageIndex = Math.min(Math.max(page, 0), pageCount - 1);
+
   // TanStack Table is used headlessly here, purely for the pagination state
-  // machine — page bounds, and resetting to page 1 when filtering or sorting
-  // changes the row set under you. Filtering and sorting themselves stay
+  // machine — page bounds and slicing. Filtering and sorting themselves stay
   // plain functions in lib, since they cut across the whole row rather than
   // down one column.
   const columns = useMemo<ColumnDef<CommanderSuggestionDTO>[]>(
@@ -130,8 +151,12 @@ export function RecommendationResults() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    state: { pagination },
-    onPaginationChange: setPagination,
+    state: { pagination: { pageIndex: safePageIndex, pageSize: suggestionsPerPage } },
+    onPaginationChange: (updater) => {
+      const current: PaginationState = { pageIndex: safePageIndex, pageSize: suggestionsPerPage };
+      const next = typeof updater === 'function' ? updater(current) : updater;
+      if (next.pageIndex !== page) setPage(next.pageIndex);
+    },
   });
 
   if (error) {
@@ -146,8 +171,6 @@ export function RecommendationResults() {
     return null;
   }
 
-  const pageCount = table.getPageCount();
-  const { pageIndex } = table.getState().pagination;
   const rows = table.getRowModel().rows;
 
   return (
@@ -233,7 +256,7 @@ export function RecommendationResults() {
             sortDirection={sortDirection}
             onSortDirectionChange={setSortDirection}
             pageSize={suggestionsPerPage}
-            onPageSizeChange={setSuggestionsPerPage}
+            onPageSizeChange={handlePageSizeChange}
             shown={filtered.length}
             total={kept.length}
           />
@@ -262,7 +285,7 @@ export function RecommendationResults() {
               </div>
 
               <Pagination
-                pageIndex={pageIndex}
+                pageIndex={safePageIndex}
                 pageCount={pageCount}
                 onPageChange={(index) => table.setPageIndex(index)}
                 label="Suggestion pages"

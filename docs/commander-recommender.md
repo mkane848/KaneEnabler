@@ -160,6 +160,11 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
   .env.example            documents VITE_API_URL (blank in dev)
   src/
     main.tsx, App.tsx     entry point / page shell / navbar
+    router.tsx              TanStack Router: one route ("/"), adopted for validateSearch —
+                             makes RecommendationResults' filters/sort/page URL-addressable
+                             rather than component state lost on refresh (docs/handoff.md
+                             Phase 5). Not a multi-page app; stripSearchParams keeps a bare
+                             visit at a bare "/"
     index.css              design system: parchment/ink palette, mana pips
     store/useAppStore.ts   client state only: rawList, submittedList, dismissed
     store/usePreferencesStore.ts  durable UI prefs (results-per-page), persisted to
@@ -179,6 +184,9 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
       suggestions.ts           "still has supporting cards after the identity filter" helpers
                                (visibleThemeSupport/visibleKindredSupport/visibleKeywordSupport)
                                shared by the card display and the filter bar's option lists
+      searchSchema.ts          RecommenderSearch (filters/sortMode/sortDirection/page) +
+                               validateRecommenderSearch — defensive parsing for router.tsx,
+                               since a URL is untrusted input (hand-edited, a stale bookmark)
     types/index.ts          DTOs mirroring the server's response shape — a suggestion is
                              `{ unitId, cards: CommanderCardDTO[], colorIdentity, ... }`, one-or-two
                              cards per unit, not a single flattened card
@@ -239,10 +247,11 @@ server/                Express + TS + better-sqlite3
       recommend.ts            POST /api/recommend — returns every suggestion scoreCommanders
                                clears its own bar for, uncapped; no server-side slice. The
                                client owns pagination over the full set (RecommendationResults.tsx,
-                               controlled TanStack Table pagination state driven by
-                               usePreferencesStore's `suggestionsPerPage`), since it also needs
-                               the whole thing for the filter bar's counts and option lists —
-                               truncating server-side would make both of those lie.
+                               controlled TanStack Table pagination state — page index from the
+                               URL via router.tsx, page size from usePreferencesStore's
+                               `suggestionsPerPage`), since it also needs the whole thing for the
+                               filter bar's counts and option lists — truncating server-side
+                               would make both of those lie.
       combos.ts                POST /api/combos — proxies to Commander Spellbook, on request only;
                                 takes `commanderNames: string[]` (1-2) for a Partner unit
       meta.ts                   GET /api/meta — how current the card data is (reads
