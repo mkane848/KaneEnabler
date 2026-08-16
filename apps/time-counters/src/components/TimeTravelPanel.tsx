@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
-import type { Mechanic, TrackedCard } from '../types';
+import type { Mechanic, RoseTylerState, TrackedCard } from '../types';
 import type { TimeTravelTargetId } from '../hooks/useGameState';
-import { MECHANIC_COLOR } from '../utils/counters';
+import { MECHANIC_COLOR, MECHANIC_LABEL, usesTimeCounters } from '../utils/counters';
 import styles from './TimeTravelPanel.module.css';
 
 type Delta = -1 | 0 | 1;
@@ -15,6 +15,47 @@ export interface TimeTravelTarget {
   count: number;
   direction: TrackedCard['direction'];
   targetCount?: number;
+}
+
+/**
+ * Which cards and commander state are valid Time Travel targets right now —
+ * Suspend/Vanishing cards (fade and lore counters aren't time counters, see
+ * usesTimeCounters) and, once she has any, Rose Tyler's own Bad Wolf
+ * counters. A card needs an actual counter still on it: once the last one's
+ * removed, a suspended card has already been cast (rule 702.61) and a
+ * Vanishing permanent has no time counter left either, so neither is a
+ * legal target for "add or remove a time counter" anymore.
+ */
+export function buildTimeTravelTargets(
+  cards: TrackedCard[],
+  rose: RoseTylerState,
+): TimeTravelTarget[] {
+  return [
+    ...cards
+      .filter((c) => usesTimeCounters(c.mechanic) && c.count > 0)
+      .map((c) => ({
+        id: c.instanceId,
+        name: c.name,
+        mechanic: c.mechanic,
+        label: MECHANIC_LABEL[c.mechanic],
+        count: c.count,
+        direction: c.direction,
+        targetCount: c.targetCount,
+      })),
+    ...(rose.timeCounters > 0
+      ? [
+          {
+            id: 'rose' as const,
+            name: 'Rose Tyler — Bad Wolf',
+            mechanic: 'custom' as const,
+            label: 'Bad Wolf',
+            count: rose.timeCounters,
+            direction: 'increment' as const,
+            targetCount: undefined,
+          },
+        ]
+      : []),
+  ];
 }
 
 interface TimeTravelPanelProps {

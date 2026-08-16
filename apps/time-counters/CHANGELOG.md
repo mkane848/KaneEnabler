@@ -30,6 +30,14 @@ this project follows [Semantic Versioning](https://semver.org/).
   counter still on it) — collapsed into one check that required a counter
   either way. A suspended card that already lost its last counter now still
   contributes; a Vanishing permanent in the same state correctly doesn't.
+- **Time Travel offered a suspended card as a target even after it had
+  already been cast.** The target list checked mechanic only, not whether
+  a counter was actually left — once the last one's removed, the card has
+  already resolved (rule 702.61) and isn't a legal Time Travel target,
+  which the −1 button already silently assumed (disabled at 0) while +1
+  stayed clickable. Both Suspend and Vanishing cards now drop off the
+  target list entirely once they're out of counters, instead of sitting
+  there with only half their buttons disabled.
 
 ## [1.2.0] - 2026-08-11
 

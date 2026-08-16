@@ -7,12 +7,11 @@ import ChangeSummaryModal from './components/ChangeSummaryModal';
 import CommanderTaxModal from './components/CommanderTaxModal';
 import GameLogPanel from './components/GameLogPanel';
 import Header from './components/Header';
-import TimeTravelPanel, { type TimeTravelTarget } from './components/TimeTravelPanel';
+import TimeTravelPanel, { buildTimeTravelTargets } from './components/TimeTravelPanel';
 import { useCommanderCards } from './hooks/useCommanderCards';
 import { useGameState } from './hooks/useGameState';
 import type { CommanderId } from './types';
 import { COMMANDER_IDS, COMMANDER_NAME } from './utils/commanders';
-import { MECHANIC_LABEL, usesTimeCounters } from './utils/counters';
 
 export default function App() {
   const {
@@ -50,35 +49,7 @@ export default function App() {
     castCount: state.commanders[id].castCount,
   }));
 
-  // Time Travel only applies to real time counters — Suspend/Vanishing cards
-  // and Rose Tyler's own Bad Wolf counters (once she has any). Fading uses
-  // fade counters and Saga uses lore counters, so neither is eligible.
-  const timeTravelTargets: TimeTravelTarget[] = [
-    ...state.cards
-      .filter((c) => usesTimeCounters(c.mechanic))
-      .map((c) => ({
-        id: c.instanceId,
-        name: c.name,
-        mechanic: c.mechanic,
-        label: MECHANIC_LABEL[c.mechanic],
-        count: c.count,
-        direction: c.direction,
-        targetCount: c.targetCount,
-      })),
-    ...(state.commanders.roseTyler.timeCounters > 0
-      ? [
-          {
-            id: 'rose' as const,
-            name: 'Rose Tyler — Bad Wolf',
-            mechanic: 'custom' as const,
-            label: 'Bad Wolf',
-            count: state.commanders.roseTyler.timeCounters,
-            direction: 'increment' as const,
-            targetCount: undefined,
-          },
-        ]
-      : []),
-  ];
+  const timeTravelTargets = buildTimeTravelTargets(state.cards, state.commanders.roseTyler);
 
   return (
     <>
