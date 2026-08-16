@@ -37,6 +37,19 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   until someone noticed a deck getting under-counted. Now tries a plain
   integer first, unbounded, before falling back to the word list; a value
   that's genuinely neither now logs a warning instead of failing quietly.
+- **Hybrid and Phyrexian mana rendered as raw text, and the generic-mana
+  disc color had drifted from its own design token.** `{W/U}` showed the
+  literal text "W/U" on a grey disc instead of a split white/blue circle,
+  `{W/P}` showed "W/P" instead of a Phyrexian glyph, and `--pip-generic`
+  had been hardcoded to a slightly different color than the rest of the
+  palette rather than reading the shared token. All three traced back to
+  `client/src/lib/manaSymbols.ts` being a hand-copied, incomplete extract
+  of the mana-font glyphs (6 of 8 symbols, no generator, no way to update
+  it — its own header comment pointed at a dependency the app never had)
+  instead of the shared, generated, validated set `time-counters` already
+  had. Now imports the same `@mtg/mana` package that app uses: hybrids
+  split the disc corner to corner, Phyrexian draws as one glyph on one
+  disc rather than a split, and `--pip-generic` is a proper token again.
 
 ## [1.7.1] — 2026-08-01
 

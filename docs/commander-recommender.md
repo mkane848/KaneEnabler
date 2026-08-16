@@ -78,12 +78,19 @@ All explicitly requested by the user unless noted:
   always shown in WUBRG order (never alphabetical, never raw data order), and
   a color identity is named — "Golgari", not "Black/Green" — because that's
   what players read. Symbols are the real mana glyphs, inlined as SVG paths in
-  `lib/manaSymbols.ts` and drawn by `components/ManaSymbol.tsx`.
-  These came from the `mana-font` package (MIT), but **the package itself is
-  deliberately not a dependency**: its stylesheet offers no woff2, so a
-  browser downloads a ~408KB `.woff` plus an unused body-text face to render
-  six pips. Six inlined paths cost ~12KB of markup instead. Don't "simplify"
-  this back to the font without re-checking that trade.
+  the shared `@mtg/mana` package (`packages/mana/`, generated from `mana-font`
+  with validation) and drawn by `components/ManaSymbol.tsx` (single color
+  pips) and `components/ManaCost.tsx` (a full cost string, including the
+  hybrid split-disc and Phyrexian single-glyph cases). `time-counters` depends
+  on the same package, so the glyph data and the hybrid/Phyrexian parsing
+  logic (`toPip`) exist in exactly one place — see Phase 2 in
+  [`../docs/handoff.md`](../docs/handoff.md) for why this app's own copy was
+  wrong before the consolidation (audit items 13, 15, 16). `mana-font` itself
+  stays a devDependency of `packages/mana` only, never a runtime one: its
+  stylesheet offers no woff2, so a browser would download a ~408KB `.woff`
+  plus an unused body-text face to render a handful of pips. Inlined paths
+  cost a few KB of markup instead. Don't "simplify" this back to the font
+  without re-checking that trade.
 
 - **Radix UI** for interactive controls that need real keyboard and
   screen-reader behaviour — currently just `Dialog`, for the card-detail,
@@ -172,7 +179,6 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
       suggestions.ts           "still has supporting cards after the identity filter" helpers
                                (visibleThemeSupport/visibleKindredSupport/visibleKeywordSupport)
                                shared by the card display and the filter bar's option lists
-      manaSymbols.ts           inlined SVG path data for the 6 mana glyphs
     types/index.ts          DTOs mirroring the server's response shape — a suggestion is
                              `{ unitId, cards: CommanderCardDTO[], colorIdentity, ... }`, one-or-two
                              cards per unit, not a single flattened card

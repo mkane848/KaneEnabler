@@ -10,6 +10,7 @@ monorepo holding:
 - `apps/commander-recommender` — Commander recommender (React + Vite client, Express + SQLite server)
 - `apps/time-counters` — in-game counter companion for one specific Doctor Who deck
 - `packages/config` (`@mtg/config`) — shared tsconfig/ESLint/Prettier/Vitest bases both apps extend
+- `packages/mana` (`@mtg/mana`) — mana-cost parsing and the inlined glyph SVG paths both clients render
 
 **Read [`docs/handoff.md`](./docs/handoff.md) first.** It is the execution brief for the
 consolidation and everything that follows — target architecture, all seven phases, what's landed
@@ -43,10 +44,12 @@ Run from the repo root unless noted. Every command fans out per-package via Turb
   and `CHANGELOG.md` — they are not versioned together. `apps/commander-recommender` additionally
   splits into `client/` and `server/`, each its own pnpm workspace package (see its own
   `render.yaml`/`CLAUDE.md` for why).
-- **`packages/*`** are internal (`workspace:*`), unpublished. `packages/config` exists today;
-  `docs/handoff.md`'s Phase 2–3 packages (`@mtg/rules`, `@mtg/scryfall`, `@mtg/card-model`,
-  `@mtg/mana`, `@mtg/ui`, `@mtg/profile`) land incrementally — check that doc for current status
-  before assuming one exists.
+- **`packages/*`** are internal (`workspace:*`), unpublished, and ship plain TS source with no build
+  step — both apps' Vite bundlers and `tsc`'s `moduleResolution: "bundler"` resolve a package's
+  `exports` straight to its `src/index.ts`. `packages/config` and `packages/mana` exist today;
+  `docs/handoff.md`'s remaining Phase 2–3 packages (`@mtg/rules`, `@mtg/scryfall`, `@mtg/card-model`,
+  `@mtg/ui`, `@mtg/profile`) land incrementally — check that doc for current status before assuming
+  one exists.
 - **Shared dependency versions live in `pnpm-workspace.yaml`'s `catalog:`**, not hand-copied across
   `package.json` files — reference `"catalog:"` rather than pinning a version directly for anything
   more than one package depends on, so drift can't reoccur the way it did before consolidation.

@@ -1,5 +1,5 @@
 import { COLOR_LABELS } from '../lib/mtg';
-import { MANA_GLYPHS, MANA_VIEWBOX } from '../lib/manaSymbols';
+import { MANA_GLYPHS, MANA_VIEWBOX } from '@mtg/mana';
 
 interface Props {
   /** W, U, B, R, G, or C. */

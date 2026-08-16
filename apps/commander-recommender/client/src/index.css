@@ -12,11 +12,21 @@
   --ink-text-muted: #6b5f4a;
 
   --pip-w: #f8f4e3;
+  --pip-w-ink: rgba(20, 16, 10, 0.82);
   --pip-u: #0f6ab5;
+  --pip-u-ink: rgba(248, 244, 227, 0.92);
   --pip-b: #2c2620;
+  --pip-b-ink: rgba(248, 244, 227, 0.92);
   --pip-r: #c6362a;
+  --pip-r-ink: rgba(248, 244, 227, 0.92);
   --pip-g: #1f7a45;
+  --pip-g-ink: rgba(248, 244, 227, 0.92);
   --pip-c: #8c7a63;
+  --pip-c-ink: rgba(20, 16, 10, 0.82);
+  --pip-s: #c2d4e0;
+  --pip-s-ink: rgba(20, 16, 10, 0.82);
+  --pip-generic: #b3aaa1;
+  --pip-generic-ink: rgba(20, 16, 10, 0.82);
 
   /* Destructive actions. Muted enough not to fight the brass accent, red
      enough to read as "this removes something". */
@@ -819,11 +829,18 @@ body {
   gap: 0.3rem;
 }
 
-/* Mana pip: colored disc here, glyph from inlined SVG (see ManaSymbol).
-   Mirrors how printed symbols look — colored circle, dark glyph, soft
-   shadow. */
+/* Mana pip: colored disc here, glyph from inlined SVG (see ManaSymbol and
+   ManaCost). Mirrors how printed symbols look — colored circle, contrasting
+   glyph, soft shadow. --pip-bg-a/-ink-a drive a single-color pip (set by
+   the .pip-* classes below); a hybrid additionally sets --pip-bg-b/-ink-b
+   and .pip-hybrid for the second half — see ManaCost.tsx, which is the only
+   caller that ever needs two colors in one disc, so those are set inline
+   per instance rather than as a fixed set of classes (there's no enumerating
+   36 color pairs). overflow keeps the hybrid gradient inside the circle. */
 .pip {
-  --pip-bg: var(--pip-c);
+  --pip-bg-a: var(--pip-c);
+  --pip-ink-a: var(--pip-c-ink);
+  position: relative;
   width: 1.15em;
   height: 1.15em;
   flex: none;
@@ -831,7 +848,8 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--pip-bg);
+  overflow: hidden;
+  background: var(--pip-bg-a);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
 }
 
@@ -839,34 +857,86 @@ body {
   width: 68%;
   height: 68%;
   display: block;
-  fill: rgba(20, 16, 10, 0.82);
+  fill: var(--pip-ink-a);
 }
 
 .pip-w {
-  --pip-bg: var(--pip-w);
+  --pip-bg-a: var(--pip-w);
+  --pip-ink-a: var(--pip-w-ink);
 }
 .pip-u {
-  --pip-bg: var(--pip-u);
+  --pip-bg-a: var(--pip-u);
+  --pip-ink-a: var(--pip-u-ink);
 }
 .pip-b {
-  --pip-bg: var(--pip-b);
+  --pip-bg-a: var(--pip-b);
+  --pip-ink-a: var(--pip-b-ink);
 }
 .pip-r {
-  --pip-bg: var(--pip-r);
+  --pip-bg-a: var(--pip-r);
+  --pip-ink-a: var(--pip-r-ink);
 }
 .pip-g {
-  --pip-bg: var(--pip-g);
+  --pip-bg-a: var(--pip-g);
+  --pip-ink-a: var(--pip-g-ink);
 }
 .pip-c {
-  --pip-bg: var(--pip-c);
+  --pip-bg-a: var(--pip-c);
+  --pip-ink-a: var(--pip-c-ink);
+}
+.pip-s {
+  --pip-bg-a: var(--pip-s);
+  --pip-ink-a: var(--pip-s-ink);
+}
+.pip-generic {
+  --pip-bg-a: var(--pip-generic);
+  --pip-ink-a: var(--pip-generic-ink);
 }
 
-/* The dark colors need a light glyph to stay legible. */
-.pip-b svg,
-.pip-u svg,
-.pip-r svg,
-.pip-g svg {
-  fill: rgba(248, 244, 227, 0.92);
+/* Hybrids are split corner to corner, each half tinted by its own symbol,
+   the same way they're printed. */
+.pip-hybrid {
+  background: linear-gradient(135deg, var(--pip-bg-a) 0 50%, var(--pip-bg-b) 50% 100%);
+}
+
+/* The two miniatures of a hybrid, tucked into opposite corners of the split. */
+.pip-half {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48%;
+  height: 48%;
+}
+.pip-half:first-child {
+  top: 6%;
+  left: 6%;
+}
+.pip-half:last-child {
+  right: 6%;
+  bottom: 6%;
+}
+.pip-half svg {
+  width: 100%;
+  height: 100%;
+}
+.pip-half:last-child svg {
+  fill: var(--pip-ink-b, var(--pip-ink-a));
+}
+
+/* Numerals and X/Y/Z, which have no glyph — drawn as text on the disc. */
+.pip-text {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.62em;
+  line-height: 1;
+  color: var(--pip-ink-a);
+}
+.pip-half .pip-text {
+  font-size: 0.4em;
+}
+.pip-half:last-child .pip-text {
+  color: var(--pip-ink-b, var(--pip-ink-a));
 }
 
 .pip-row .pip {
@@ -1445,14 +1515,6 @@ summary.explain-group-title::after {
   gap: 0.18rem;
   flex: none;
   font-size: 0.95rem;
-}
-
-.pip-generic {
-  --pip-bg: #cdc3ad;
-  font-family: var(--font-mono);
-  font-size: 0.62em;
-  font-weight: 700;
-  color: #241f16;
 }
 
 .dialog-type {
