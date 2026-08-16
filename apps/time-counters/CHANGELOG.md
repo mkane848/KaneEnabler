@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-08-16
+
+### Fixed
+
+- **Fading permanents were flagged "ready to sacrifice" one upkeep early.**
+  Rule 702.32b sacrifices a Fading permanent on the upkeep a fade-counter
+  removal _fails_ — one upkeep after the count reaches 0 — not the upkeep
+  it gets there, unlike Vanishing. The card now sits at 0 for one full turn
+  before the resolve callout appears, on both the tile and the Next Turn
+  summary. A manual count edit that restores counters above 0 (via the
+  stepper or the exact-count field) un-does that flag if it was set.
+
 ## [1.2.0] - 2026-08-11
 
 ### Added

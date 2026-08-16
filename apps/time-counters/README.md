@@ -220,12 +220,12 @@ counter type — rule 702.32), and Saga (_lore counters_) — not Magic's many
 other counter types (+1/+1, loyalty, charge, level, and so on). Built in,
 with auto-detection from oracle text where that's possible:
 
-| Mechanic  | Direction | Auto-adjusts on | Target                              |
-| --------- | --------- | --------------- | ----------------------------------- |
-| Suspend   | down      | upkeep          | 0 (cast for free from exile)        |
-| Vanishing | down      | upkeep          | 0 (sacrifice)                       |
-| Fading    | down      | upkeep          | 0 (sacrifice)                       |
-| Saga      | up        | precombat main  | final chapter (resolves, sacrifice) |
+| Mechanic  | Direction | Auto-adjusts on | Target                               |
+| --------- | --------- | --------------- | ------------------------------------ |
+| Suspend   | down      | upkeep          | 0 (cast for free from exile)         |
+| Vanishing | down      | upkeep          | 0 (sacrifice)                        |
+| Fading    | down      | upkeep          | 0, sacrificed the _following_ upkeep |
+| Saga      | up        | precombat main  | final chapter (resolves, sacrifice)  |
 
 Suspend, Vanishing, and Fading all trigger at _your own upkeep_. A Saga
 gains its lore counter as _your own precombat main_ begins instead — a
@@ -233,6 +233,14 @@ different step, and one step later in the turn — and each chapter ability
 fires the instant the lore count reaches that chapter's number, not only at
 the final one. Next Turn runs both steps, in that order, as one action; see
 [How it works](#how-it-works).
+
+Fading and Vanishing look identical in this app — both count down to 0 —
+but they don't end on the same turn. Vanishing N is sacrificed the upkeep
+the count _reaches_ 0. Fading N is sacrificed the upkeep _after_ that: rule
+702.32b's trigger is specifically failing to remove a fade counter, _"At
+the beginning of your upkeep, remove a fade counter from it. If you can't,
+sacrifice it."_ So a Fading card sits at 0 for one full turn, still on the
+board, before the "ready to sacrifice" callout appears.
 
 Because Fading and Saga don't use time counters, they're never offered as
 targets for the Time Travel keyword action or counted toward Rose Tyler's

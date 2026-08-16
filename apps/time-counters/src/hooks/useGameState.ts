@@ -14,6 +14,7 @@ import { COMMANDER_NAME } from '../utils/commanders';
 import {
   MECHANIC_LABEL,
   defaultResolveNote,
+  hasHitTarget,
   newlyTriggeredChapters,
   usesTimeCounters,
 } from '../utils/counters';
@@ -42,12 +43,6 @@ function clampCount(count: number, direction: Direction, targetCount?: number): 
   const rounded = Number.isFinite(count) ? Math.max(0, Math.round(count)) : 0;
   if (direction === 'increment' && targetCount != null) return Math.min(rounded, targetCount);
   return rounded;
-}
-
-/** True once this card's counter has reached whatever ends it. */
-function hasHitTarget(count: number, direction: Direction, targetCount?: number): boolean {
-  if (direction === 'decrement') return count <= 0;
-  return targetCount != null && count >= targetCount;
 }
 
 function mechanicName(mechanic: Mechanic, customLabel?: string): string {
@@ -134,7 +129,7 @@ export function useGameState() {
       const card = prev.game.cards.find((c) => c.instanceId === instanceId);
       let log = prev.game.log;
       if (card) {
-        const resolved = hasHitTarget(card.count, card.direction, card.targetCount);
+        const resolved = hasHitTarget(card);
         log = appendLog(log, {
           turn: prev.game.turn,
           title: resolved ? 'Resolved' : 'Removed',
@@ -168,7 +163,12 @@ export function useGameState() {
             detail: `${c.name} set to ${to} (was ${c.count})`,
           });
         }
-        return { ...c, count: to };
+        // A manual edit restoring counters means it no longer holds that a
+        // fade-counter removal failed — but reaching 0 by hand isn't the
+        // rule's actual upkeep trigger, so this never *sets* the flag, only
+        // clears it (see hasHitTarget in utils/counters.ts).
+        const fadeExhausted = c.mechanic === 'fading' && to > 0 ? false : c.fadeExhausted;
+        return { ...c, count: to, fadeExhausted };
       });
       return { ...prev, game: { ...prev.game, cards, log } };
     });
@@ -192,7 +192,10 @@ export function useGameState() {
             detail: `${c.name} ${to > c.count ? '+1' : '−1'} → ${to}`,
           });
         }
-        return { ...c, count: to };
+        // See setCount above: restoring counters by hand clears the failed-
+        // removal flag, but reaching 0 this way never sets it.
+        const fadeExhausted = c.mechanic === 'fading' && to > 0 ? false : c.fadeExhausted;
+        return { ...c, count: to, fadeExhausted };
       });
       return { ...prev, game: { ...prev.game, cards, log } };
     });
@@ -239,12 +242,25 @@ export function useGameState() {
 
       // Step 1 — upkeep: Suspend/Vanishing/Fading count down.
       const afterUpkeep = prev.game.cards.map((c) => {
-        if (
-          c.mechanic === 'saga' ||
-          !c.autoAdjust ||
-          hasHitTarget(c.count, c.direction, c.targetCount)
-        )
-          return c;
+        if (c.mechanic === 'saga' || !c.autoAdjust || hasHitTarget(c)) return c;
+
+        // CR 702.32b: Fading removes a fade counter at upkeep same as the
+        // others, but only sacrifices once removal *fails* — the upkeep
+        // after the count already reached 0, not the upkeep it gets there.
+        if (c.mechanic === 'fading' && c.count <= 0) {
+          changes.push({
+            instanceId: c.instanceId,
+            name: c.name,
+            mechanic: c.mechanic,
+            step: 'upkeep',
+            from: c.count,
+            to: c.count,
+            hitTarget: true,
+            resolveNote: c.resolveNote,
+          });
+          return { ...c, fadeExhausted: true };
+        }
+
         const to = clampCount(
           c.count + (c.direction === 'decrement' ? -1 : 1),
           c.direction,
@@ -257,7 +273,17 @@ export function useGameState() {
           step: 'upkeep',
           from: c.count,
           to,
-          hitTarget: hasHitTarget(to, c.direction, c.targetCount),
+          // A successful removal is never itself the sacrifice trigger, even
+          // when it brings a Fading card to exactly 0 — see the branch above.
+          hitTarget:
+            c.mechanic === 'fading'
+              ? false
+              : hasHitTarget({
+                  mechanic: c.mechanic,
+                  count: to,
+                  direction: c.direction,
+                  targetCount: c.targetCount,
+                }),
           resolveNote: c.resolveNote,
         });
         return { ...c, count: to };
@@ -265,12 +291,7 @@ export function useGameState() {
 
       // Step 2 — precombat main: Sagas gain a lore counter; crossed chapters trigger.
       const cards = afterUpkeep.map((c) => {
-        if (
-          c.mechanic !== 'saga' ||
-          !c.autoAdjust ||
-          hasHitTarget(c.count, c.direction, c.targetCount)
-        )
-          return c;
+        if (c.mechanic !== 'saga' || !c.autoAdjust || hasHitTarget(c)) return c;
         const to = clampCount(c.count + 1, c.direction, c.targetCount);
         const chapters = c.chapters ?? [];
         const triggeredNow = newlyTriggeredChapters(
@@ -279,7 +300,12 @@ export function useGameState() {
           to,
           c.triggeredChapters ?? [],
         );
-        const hitTarget = hasHitTarget(to, c.direction, c.targetCount);
+        const hitTarget = hasHitTarget({
+          mechanic: c.mechanic,
+          count: to,
+          direction: c.direction,
+          targetCount: c.targetCount,
+        });
         if (triggeredNow.length === 0) {
           changes.push({
             instanceId: c.instanceId,

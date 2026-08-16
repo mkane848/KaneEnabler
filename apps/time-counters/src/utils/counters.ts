@@ -1,4 +1,4 @@
-import type { Direction, Mechanic } from '../types';
+import type { Direction, Mechanic, TrackedCard } from '../types';
 
 const WORD_NUMBERS: Record<string, number> = {
   one: 1,
@@ -105,6 +105,27 @@ export function triggerLabel(mechanic: Mechanic): string {
     default:
       return 'Ready to resolve';
   }
+}
+
+/**
+ * True once this card has reached whatever ends it — cast/sacrifice/final
+ * chapter, not just mid-countdown. For every mechanic but Fading, that's
+ * simply "count reached 0 (decrement) or the target (increment)."
+ *
+ * Fading is the exception (rule 702.32b): "At the beginning of your upkeep,
+ * remove a fade counter from it. If you can't, sacrifice it." The sacrifice
+ * happens on the upkeep the removal *fails* — one upkeep after the count
+ * reaches 0 — so Fading N survives N+1 upkeeps, unlike Vanishing N's exactly
+ * N. `fadeExhausted` is the flag that records that failed removal actually
+ * happened; count alone can't distinguish "just reached 0" from "already
+ * had a turn at 0."
+ */
+export function hasHitTarget(
+  card: Pick<TrackedCard, 'mechanic' | 'count' | 'direction' | 'targetCount' | 'fadeExhausted'>,
+): boolean {
+  if (card.mechanic === 'fading') return !!card.fadeExhausted;
+  if (card.direction === 'decrement') return card.count <= 0;
+  return card.targetCount != null && card.count >= card.targetCount;
 }
 
 /**

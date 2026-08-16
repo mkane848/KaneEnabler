@@ -126,6 +126,74 @@ describe('useGameState — nextTurn', () => {
   });
 });
 
+describe('useGameState — Fading timing (CR 702.32b)', () => {
+  it('a Fading N card survives N+1 upkeeps — only flagged ready on the upkeep the removal fails', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'fading', startingCount: 2 })));
+    const id = result.current.state.cards[0]!.instanceId;
+
+    act(() => result.current.nextTurn());
+    expect(result.current.state.cards[0]!.count).toBe(1);
+    expect(result.current.lastUpkeep).toEqual([
+      expect.objectContaining({ instanceId: id, from: 2, to: 1, hitTarget: false }),
+    ]);
+
+    act(() => result.current.nextTurn());
+    expect(result.current.state.cards[0]!.count).toBe(0);
+    expect(result.current.lastUpkeep).toEqual([
+      expect.objectContaining({ instanceId: id, from: 1, to: 0, hitTarget: false }),
+    ]);
+
+    act(() => result.current.nextTurn());
+    expect(result.current.state.cards[0]!.count).toBe(0);
+    expect(result.current.lastUpkeep).toEqual([
+      expect.objectContaining({ instanceId: id, from: 0, to: 0, hitTarget: true }),
+    ]);
+  });
+
+  it('stops re-triggering once the Fading card is exhausted', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'fading', startingCount: 1 })));
+    act(() => result.current.nextTurn()); // 1 -> 0, removal still succeeded
+    act(() => result.current.nextTurn()); // can't remove -> sacrifice trigger, now exhausted
+    act(() => result.current.nextTurn()); // already exhausted -> left alone
+    expect(result.current.state.cards[0]!.count).toBe(0);
+    expect(result.current.lastUpkeep).toBeNull();
+  });
+
+  it('Vanishing N (unlike Fading N) is ready the moment count reaches 0, not one turn later', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'vanishing', startingCount: 1 })));
+    act(() => result.current.nextTurn());
+    expect(result.current.state.cards[0]!.count).toBe(0);
+    expect(result.current.lastUpkeep).toEqual([
+      expect.objectContaining({ from: 1, to: 0, hitTarget: true }),
+    ]);
+  });
+
+  it('removeCard logs a Fading card as resolved only once exhausted, not merely at 0', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'fading', startingCount: 1 })));
+    act(() => result.current.nextTurn()); // count -> 0, removal succeeded, not yet exhausted
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.removeCard(id));
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry!.title).toBe('Removed');
+  });
+
+  it('a manual edit that restores a Fading card above 0 clears its exhausted flag', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'fading', startingCount: 1 })));
+    act(() => result.current.nextTurn()); // 1 -> 0
+    act(() => result.current.nextTurn()); // exhausted, hitTarget true
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.setCount(id, 2));
+    act(() => result.current.nextTurn());
+    expect(result.current.state.cards[0]!.count).toBe(1);
+    expect(result.current.lastUpkeep).toEqual([expect.objectContaining({ hitTarget: false })]);
+  });
+});
+
 describe('useGameState — commander tax', () => {
   it('castCommander increments cast count and logs the resulting tax', () => {
     const { result } = renderHook(() => useGameState());

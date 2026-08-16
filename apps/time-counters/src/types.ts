@@ -82,6 +82,14 @@ export interface TrackedCard {
   chapters?: string[];
   /** Chapter numbers (1-based) whose ability has already triggered, so a chapter isn't shown as pending after it's fired. */
   triggeredChapters?: number[];
+  /**
+   * Fading only (rule 702.32b): true once an upkeep has actually failed to
+   * remove a fade counter — the real sacrifice trigger. A Fading card at
+   * count 0 that hasn't reached that upkeep yet is *not* exhausted; it gets
+   * one more upkeep first (Fading N survives N+1 upkeeps, unlike Vanishing
+   * N's exactly N). See hasHitTarget in utils/counters.ts.
+   */
+  fadeExhausted?: boolean;
 }
 
 /** Which turn step produced a given change — Suspend/Vanishing/Fading tick down at upkeep; Sagas gain a lore counter as precombat main begins. */

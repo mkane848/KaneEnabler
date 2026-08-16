@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   chapterRoman,
   detectMechanic,
+  hasHitTarget,
   mechanicDirection,
   newlyTriggeredChapters,
   resolveFieldLabel,
@@ -60,6 +61,49 @@ describe('detectMechanic', () => {
 
   it('returns null when there is no oracle text at all', () => {
     expect(detectMechanic(undefined)).toBeNull();
+  });
+});
+
+describe('hasHitTarget', () => {
+  it('a decrementing card (Suspend/Vanishing) hits its target at 0', () => {
+    expect(hasHitTarget({ mechanic: 'suspend', count: 0, direction: 'decrement' })).toBe(true);
+    expect(hasHitTarget({ mechanic: 'vanishing', count: 1, direction: 'decrement' })).toBe(false);
+  });
+
+  it('an incrementing card hits its target once count reaches it', () => {
+    expect(
+      hasHitTarget({ mechanic: 'custom', count: 3, direction: 'increment', targetCount: 3 }),
+    ).toBe(true);
+    expect(
+      hasHitTarget({ mechanic: 'custom', count: 2, direction: 'increment', targetCount: 3 }),
+    ).toBe(false);
+  });
+
+  it('an open-ended increment (no targetCount) never hits a target', () => {
+    expect(hasHitTarget({ mechanic: 'custom', count: 99, direction: 'increment' })).toBe(false);
+  });
+
+  it('CR 702.32b — a Fading card at 0 has not hit its target until a fade-counter removal has actually failed', () => {
+    expect(hasHitTarget({ mechanic: 'fading', count: 0, direction: 'decrement' })).toBe(false);
+    expect(
+      hasHitTarget({
+        mechanic: 'fading',
+        count: 0,
+        direction: 'decrement',
+        fadeExhausted: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('a Fading card hits its target once fadeExhausted is set, regardless of count', () => {
+    expect(
+      hasHitTarget({
+        mechanic: 'fading',
+        count: 0,
+        direction: 'decrement',
+        fadeExhausted: true,
+      }),
+    ).toBe(true);
   });
 });
 

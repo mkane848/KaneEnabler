@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import type { TrackedCard } from '../types';
-import { MECHANIC_COLOR, MECHANIC_LABEL, chapterRoman, triggerLabel } from '../utils/counters';
+import {
+  MECHANIC_COLOR,
+  MECHANIC_LABEL,
+  chapterRoman,
+  hasHitTarget,
+  triggerLabel,
+} from '../utils/counters';
 import styles from './CardTile.module.css';
 
 interface CardTileProps {
@@ -24,10 +30,7 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
   const color = MECHANIC_COLOR[card.mechanic];
   const label =
     card.mechanic === 'custom' ? card.customLabel || 'Custom' : MECHANIC_LABEL[card.mechanic];
-  const isReady =
-    card.direction === 'decrement'
-      ? card.count <= 0
-      : card.targetCount != null && card.count >= card.targetCount;
+  const isReady = hasHitTarget(card);
   const expanded = manuallyExpanded || isReady;
   const badgeText =
     card.direction === 'increment' && card.targetCount != null
