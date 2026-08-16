@@ -15,6 +15,15 @@ this project follows [Semantic Versioning](https://semver.org/).
   before the resolve callout appears, on both the tile and the Next Turn
   summary. A manual count edit that restores counters above 0 (via the
   stepper or the exact-count field) un-does that flag if it was set.
+- **Manually editing a Saga's lore counter could silently skip chapter
+  abilities.** Setting or stepping the count with the stepper or the
+  exact-count field never checked which chapters the change crossed, so
+  jumping from 0 to 2 fired neither chapter I nor II — only chapter III
+  would fire later, and never again after that. Manual edits now catch up
+  every chapter ability the jump crosses, the same way Next Turn's
+  precombat-main step already did, and the Game Log entry names which
+  chapter(s) triggered. Moving the count back down still can't un-trigger
+  a chapter already recorded.
 
 ## [1.2.0] - 2026-08-11
 

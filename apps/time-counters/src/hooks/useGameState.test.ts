@@ -126,6 +126,71 @@ describe('useGameState — nextTurn', () => {
   });
 });
 
+function sagaInput(overrides: Partial<AddCardInput> = {}): AddCardInput {
+  return addInput({
+    mechanic: 'saga',
+    direction: 'increment',
+    startingCount: 0,
+    targetCount: 3,
+    chapters: ['Chapter I effect', 'Chapter II effect', 'Chapter III effect'],
+    ...overrides,
+  });
+}
+
+describe('useGameState — Saga manual edits trigger chapters', () => {
+  it('setCount jumping from 0 to 2 fires chapter I and II, not just II', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(sagaInput()));
+    const id = result.current.state.cards[0]!.instanceId;
+
+    act(() => result.current.setCount(id, 2));
+    expect(result.current.state.cards[0]!.count).toBe(2);
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1, 2]);
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry!.detail).toContain('Chapter I');
+    expect(entry!.detail).toContain('II');
+  });
+
+  it('a later nextTurn only fires chapter III, since I and II were already caught up by the manual edit', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(sagaInput()));
+    const id = result.current.state.cards[0]!.instanceId;
+
+    act(() => result.current.setCount(id, 2));
+    act(() => result.current.nextTurn());
+    expect(result.current.state.cards[0]!.count).toBe(3);
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1, 2, 3]);
+    expect(result.current.lastUpkeep).toEqual([
+      expect.objectContaining({
+        instanceId: id,
+        chapter: { number: 3, text: 'Chapter III effect' },
+      }),
+    ]);
+  });
+
+  it('adjustCount stepping by more than one also catches up every chapter it crosses', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(sagaInput()));
+    const id = result.current.state.cards[0]!.instanceId;
+
+    act(() => result.current.adjustCount(id, 2));
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1, 2]);
+  });
+
+  it('a downward correction does not un-trigger a chapter that already fired', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(sagaInput()));
+    const id = result.current.state.cards[0]!.instanceId;
+
+    act(() => result.current.nextTurn()); // 0 -> 1, chapter I fires
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1]);
+
+    act(() => result.current.setCount(id, 0));
+    expect(result.current.state.cards[0]!.count).toBe(0);
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1]);
+  });
+});
+
 describe('useGameState — Fading timing (CR 702.32b)', () => {
   it('a Fading N card survives N+1 upkeeps — only flagged ready on the upkeep the removal fails', () => {
     const { result } = renderHook(() => useGameState());

@@ -13,6 +13,7 @@ import type {
 import { COMMANDER_NAME } from '../utils/commanders';
 import {
   MECHANIC_LABEL,
+  chapterRoman,
   defaultResolveNote,
   hasHitTarget,
   newlyTriggeredChapters,
@@ -47,6 +48,38 @@ function clampCount(count: number, direction: Direction, targetCount?: number): 
 
 function mechanicName(mechanic: Mechanic, customLabel?: string): string {
   return mechanic === 'custom' ? customLabel || 'Custom' : MECHANIC_LABEL[mechanic];
+}
+
+/**
+ * A manual count edit can jump (or drop back) a Saga's lore count by more
+ * than one step — catching up several missed turns at once, say. This fires
+ * every chapter ability the jump crosses, not just the one it lands on,
+ * the same way nextTurn's own precombat-main step does — a manual edit is
+ * how the player syncs the app to what already happened at the table, so
+ * those chapters really did trigger even though nextTurn never ran for
+ * them. Moving the count backward never un-triggers a chapter already
+ * recorded — newlyTriggeredChapters only looks forward from `from`.
+ */
+function catchUpSagaChapters(
+  card: TrackedCard,
+  to: number,
+): { triggeredChapters: number[] | undefined; logSuffix: string } {
+  if (card.mechanic !== 'saga' || !card.chapters) {
+    return { triggeredChapters: card.triggeredChapters, logSuffix: '' };
+  }
+  const triggeredNow = newlyTriggeredChapters(
+    card.chapters,
+    card.count,
+    to,
+    card.triggeredChapters ?? [],
+  );
+  if (triggeredNow.length === 0) {
+    return { triggeredChapters: card.triggeredChapters, logSuffix: '' };
+  }
+  return {
+    triggeredChapters: [...(card.triggeredChapters ?? []), ...triggeredNow.map((t) => t.number)],
+    logSuffix: ` — triggers Chapter ${triggeredNow.map((t) => chapterRoman(t.number)).join(', ')}`,
+  };
 }
 
 /** Appends a log entry, dropping the oldest once the cap is hit. */
@@ -156,19 +189,19 @@ export function useGameState() {
       const cards = prev.game.cards.map((c) => {
         if (c.instanceId !== instanceId) return c;
         const to = clampCount(count, c.direction, c.targetCount);
-        if (to !== c.count) {
-          log = appendLog(log, {
-            turn: prev.game.turn,
-            title: 'Manual edit',
-            detail: `${c.name} set to ${to} (was ${c.count})`,
-          });
-        }
+        if (to === c.count) return c;
+        const { triggeredChapters, logSuffix } = catchUpSagaChapters(c, to);
+        log = appendLog(log, {
+          turn: prev.game.turn,
+          title: 'Manual edit',
+          detail: `${c.name} set to ${to} (was ${c.count})${logSuffix}`,
+        });
         // A manual edit restoring counters means it no longer holds that a
         // fade-counter removal failed — but reaching 0 by hand isn't the
         // rule's actual upkeep trigger, so this never *sets* the flag, only
         // clears it (see hasHitTarget in utils/counters.ts).
         const fadeExhausted = c.mechanic === 'fading' && to > 0 ? false : c.fadeExhausted;
-        return { ...c, count: to, fadeExhausted };
+        return { ...c, count: to, fadeExhausted, triggeredChapters };
       });
       return { ...prev, game: { ...prev.game, cards, log } };
     });
@@ -185,17 +218,17 @@ export function useGameState() {
       const cards = prev.game.cards.map((c) => {
         if (c.instanceId !== instanceId) return c;
         const to = clampCount(c.count + delta, c.direction, c.targetCount);
-        if (to !== c.count) {
-          log = appendLog(log, {
-            turn: prev.game.turn,
-            title: 'Manual adjustment',
-            detail: `${c.name} ${to > c.count ? '+1' : '−1'} → ${to}`,
-          });
-        }
+        if (to === c.count) return c;
+        const { triggeredChapters, logSuffix } = catchUpSagaChapters(c, to);
+        log = appendLog(log, {
+          turn: prev.game.turn,
+          title: 'Manual adjustment',
+          detail: `${c.name} ${to > c.count ? '+1' : '−1'} → ${to}${logSuffix}`,
+        });
         // See setCount above: restoring counters by hand clears the failed-
         // removal flag, but reaching 0 this way never sets it.
         const fadeExhausted = c.mechanic === 'fading' && to > 0 ? false : c.fadeExhausted;
-        return { ...c, count: to, fadeExhausted };
+        return { ...c, count: to, fadeExhausted, triggeredChapters };
       });
       return { ...prev, game: { ...prev.game, cards, log } };
     });
