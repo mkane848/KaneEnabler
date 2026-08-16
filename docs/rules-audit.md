@@ -2,8 +2,11 @@
 
 Findings from a review of the Magic: The Gathering rules logic in both incoming projects. Line
 references are against the state of each repo at the point of consolidation
-(`HardlyKnowHer` @ `25d978c`, `DrWhoCompanionEDH` @ `ecf9037`); paths are repo-relative and will
-gain an `apps/<name>/` prefix once Phase 0 lands.
+(`HardlyKnowHer` @ `25d978c`, `DrWhoCompanionEDH` @ `ecf9037`). Phase 0 has landed: prepend
+`apps/commander-recommender/` to every `HardlyKnowHer` path below (e.g. `server/src/db.ts` →
+`apps/commander-recommender/server/src/db.ts`) and `apps/time-counters/` to every
+`DrWhoCompanionEDH` path (e.g. `src/hooks/useGameState.ts` →
+`apps/time-counters/src/hooks/useGameState.ts`). Line numbers are unchanged from the cited commits.
 
 **Working assumption: the legacy logic is not necessarily correct.** Both codebases are unusually
 well-documented and cite Comprehensive Rules numbers in comments, which makes them *easier* to

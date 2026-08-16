@@ -5,18 +5,17 @@ were built independently, so the game's rules are modelled once and shared by ev
 
 ## Status
 
-Consolidation hasn't started yet. The repo currently holds two submodules:
+Phase 0 (consolidation) is done: both projects were merged in via `git subtree`, preserving full
+commit history, and live under `apps/`. Toolchain and package-extraction work is in progress — see
+[`docs/handoff.md`](./docs/handoff.md) for what's landed and what's next.
 
-| Project | What it does |
+| App | What it does |
 |---|---|
-| [HardlyKnowHer](https://github.com/mkane848/HardlyKnowHer) | Paste a card list, get ranked Commander suggestions with cited synergies, ban-list legality, and Partner/Background pairing |
-| [DrWhoCompanionEDH](https://github.com/mkane848/DrWhoCompanionEDH) | In-game counter companion for a Jeskai *Doctor Who* Commander deck — Suspend, Vanishing, Fading, Sagas, commander tax, Time Travel |
+| [`apps/commander-recommender`](./apps/commander-recommender) | Paste a card list, get ranked Commander suggestions with cited synergies, ban-list legality, and Partner/Background pairing |
+| [`apps/time-counters`](./apps/time-counters) | In-game counter companion for a Jeskai *Doctor Who* Commander deck — Suspend, Vanishing, Fading, Sagas, commander tax, Time Travel |
 
-To check them out:
-
-```bash
-git submodule update --init --recursive
-```
+Each app keeps its own setup instructions in its README until the pnpm/Turborepo workspace lands
+(`docs/handoff.md` Phase 1).
 
 ## Where this is going
 

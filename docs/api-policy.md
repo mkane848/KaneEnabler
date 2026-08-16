@@ -28,7 +28,7 @@ Scryfall traffic. No app should construct a Scryfall request directly.
 ### Commander Spellbook
 
 The politeness measures here are the reason calling them is acceptable at all. From
-`server/src/services/spellbook.ts:1-17` in the recommender:
+`apps/commander-recommender/server/src/services/spellbook.ts:1-17`:
 
 | Constraint | Detail |
 |---|---|
