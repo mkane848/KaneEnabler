@@ -11,7 +11,6 @@ import {
   type SuggestionFilters,
 } from '../lib/filters';
 import { SORT_MODE_LABELS, type SortDirection, type SortMode } from '../lib/sort';
-import { SUGGESTIONS_PAGE_SIZE_OPTIONS } from '../store/usePreferencesStore';
 
 interface Props {
   filters: SuggestionFilters;
@@ -24,8 +23,6 @@ interface Props {
   onSortModeChange: (mode: SortMode) => void;
   sortDirection: SortDirection;
   onSortDirectionChange: (direction: SortDirection) => void;
-  pageSize: number;
-  onPageSizeChange: (size: number) => void;
   shown: number;
   total: number;
 }
@@ -103,8 +100,6 @@ export function ResultFilters({
   onSortModeChange,
   sortDirection,
   onSortDirectionChange,
-  pageSize,
-  onPageSizeChange,
   shown,
   total,
 }: Props) {
@@ -237,23 +232,6 @@ export function ResultFilters({
         >
           <span aria-hidden="true">{sortDirection === 'asc' ? '↑' : '↓'}</span>
         </button>
-
-        {/* Remembered across visits (see usePreferencesStore) — a page size
-            picked once is a standing preference, not a one-off for this
-            list. */}
-        <label className="sort-control">
-          <span className="filter-label">Show</span>
-          <select
-            value={pageSize}
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-          >
-            {SUGGESTIONS_PAGE_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </label>
 
         {active && (
           <button type="button" className="filter-clear" onClick={() => onChange(EMPTY_FILTERS)}>

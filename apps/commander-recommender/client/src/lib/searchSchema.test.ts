@@ -8,7 +8,6 @@ describe('validateRecommenderSearch', () => {
       filters: EMPTY_FILTERS,
       sortMode: 'relevance',
       sortDirection: 'desc',
-      page: 0,
     });
   });
 
@@ -22,7 +21,6 @@ describe('validateRecommenderSearch', () => {
       },
       sortMode: 'colorNameValue',
       sortDirection: 'asc',
-      page: 3,
     };
     expect(validateRecommenderSearch(search)).toEqual(search);
   });
@@ -33,18 +31,6 @@ describe('validateRecommenderSearch', () => {
 
   it('falls back to defaults for an unrecognized sortDirection', () => {
     expect(validateRecommenderSearch({ sortDirection: 'sideways' }).sortDirection).toBe('desc');
-  });
-
-  it('rejects a negative page', () => {
-    expect(validateRecommenderSearch({ page: -1 }).page).toBe(0);
-  });
-
-  it('rejects a non-integer page', () => {
-    expect(validateRecommenderSearch({ page: 1.5 }).page).toBe(0);
-  });
-
-  it('rejects a non-numeric page (a hand-edited URL)', () => {
-    expect(validateRecommenderSearch({ page: 'two' }).page).toBe(0);
   });
 
   it('falls back a whole filter selection to empty if any entry is malformed', () => {

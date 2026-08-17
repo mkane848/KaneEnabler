@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-08-17
+
+### Fixed
+
+- **Typing in the Add Card search box could lag on a fast typist.**
+  `searchCards` scanned the full ~16k-card catalog on every keystroke,
+  collected every substring match, sorted the whole match set, and only
+  then took the top 8 — repeating that full scan-and-sort for every
+  keystroke, including ones already superseded before their scan finished.
+  The catalog is written out already alphabetized, so scanning it in order
+  and bucketing into "starts with" vs. "merely contains" produces each
+  bucket in the right relative order without a separate sort, and the scan
+  now stops as soon as the anchored bucket alone fills the result limit.
+  The search box itself still updates every keystroke instantly
+  (`useDeferredValue` only defers the search computation, not what's shown
+  in the input), so React can drop a stale in-flight scan for the next one
+  instead of queuing every keystroke's scan behind the last.
+
 ## [1.3.0] - 2026-08-17
 
 ### Added
@@ -26,7 +44,7 @@ this project follows [Semantic Versioning](https://semver.org/).
 - **A corrupted save could crash the app on load.** Loading only checked
   that `turn` was a number and `cards` was an array; nothing validated an
   individual tracked card, so a save containing something like `cards:
-  [{}]` (hand-edited, or corrupted some other way) passed the check and
+[{}]` (hand-edited, or corrupted some other way) passed the check and
   then crashed `CardTile` on a missing field. Every card is now validated
   field-by-field on load; one that doesn't pass is dropped (with a console
   warning) rather than taking the rest of the save down with it.

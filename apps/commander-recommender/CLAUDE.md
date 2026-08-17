@@ -77,14 +77,15 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   Spellbook traffic — don't restore them without re-reading the api-policy doc.
 - **`client/src/store/`** splits by what the state _is_: `useAppStore` (not persisted — textarea
   contents, submitted list, dismissals) vs. `usePreferencesStore` (persisted to `localStorage` —
-  durable UI prefs like page size). Don't merge these; a dismissal surviving a browser restart
-  against a different pasted list would be surprising, but a page-size choice should outlive the
-  tab.
+  durable UI prefs, currently just `combosPerPage`). Don't merge these; a dismissal surviving a
+  browser restart against a different pasted list would be surprising, but a durable preference
+  should outlive the tab. The suggestion grid itself has no page-size preference any more — it's
+  virtualized (`@tanstack/react-virtual`), not paginated, so there's no "how many per page" to
+  remember.
 - **`client/src/router.tsx`** is the third place client state can live: `RecommendationResults`'
-  filters/sort/current-page are search params on the one route (`lib/searchSchema.ts`'s
+  filters/sort are search params on the one route (`lib/searchSchema.ts`'s
   `validateRecommenderSearch`), not `useState` — shareable and survives a refresh, which neither
-  Zustand store's split above was designed for. Page _size_ stays in `usePreferencesStore`
-  deliberately (a durable preference, not something a shared link should carry).
+  Zustand store's split above was designed for.
 - **`client/src/lib/mtg.ts`** — WUBRG ordering and color-identity naming ("Golgari", never
   "Black/Green"). Mana glyph paths and cost parsing live in `@mtg/mana` (`packages/mana`), shared
   with the sibling app — this client has no `manaSymbols.ts` of its own anymore.

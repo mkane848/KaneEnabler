@@ -33,23 +33,34 @@ export function loadCatalog(): Promise<CardData[]> {
   return inFlight;
 }
 
-/** Substring search over the catalog, name-anchored matches first. */
+/**
+ * Substring search over the catalog, name-anchored matches first.
+ *
+ * loadCatalog keeps the catalog alphabetized (it's written that way to
+ * cards.json), so scanning it in order and bucketing into "starts with"
+ * vs. "merely contains" already produces each bucket in the right relative
+ * order — no separate sort over the matches needed. Once the anchored
+ * bucket alone has `limit` entries nothing later in the scan could
+ * possibly displace them (an anchored match always outranks a contains-only
+ * one), so the scan stops there instead of always walking the full ~16k
+ * catalog on every keystroke.
+ */
 export function searchCards(catalog: CardData[], query: string, limit = 8): CardData[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
-  const matches: CardData[] = [];
+  const anchored: CardData[] = [];
+  const contains: CardData[] = [];
   for (const card of catalog) {
-    if (card.name.toLowerCase().includes(q)) matches.push(card);
+    const name = card.name.toLowerCase();
+    if (name.startsWith(q)) {
+      anchored.push(card);
+      if (anchored.length >= limit) break;
+    } else if (contains.length < limit && name.includes(q)) {
+      contains.push(card);
+    }
   }
-  return matches
-    .sort((a, b) => {
-      const aStarts = a.name.toLowerCase().startsWith(q) ? 0 : 1;
-      const bStarts = b.name.toLowerCase().startsWith(q) ? 0 : 1;
-      if (aStarts !== bStarts) return aStarts - bStarts;
-      return a.name.localeCompare(b.name);
-    })
-    .slice(0, limit);
+  return anchored.length >= limit ? anchored : [...anchored, ...contains].slice(0, limit);
 }
 
 /** Exact (case-insensitive) name lookup — used to feature specific cards, e.g. the commanders. */

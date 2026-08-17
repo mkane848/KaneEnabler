@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useDeferredValue, useMemo, useState, type FormEvent } from 'react';
 import type { CardData, Direction, Mechanic } from '../types';
 import { searchCards } from '../utils/cardCatalog';
 import { useCardCatalog } from '../hooks/useCardCatalog';
@@ -57,10 +57,15 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
   const [resolveNote, setResolveNote] = useState('');
   const [chapters, setChapters] = useState<string[]>(DEFAULT_CHAPTER_ROWS);
 
-  // ~16k cards, so only re-scan when the query or the catalog actually changes.
+  // The input's own value stays synced to every keystroke immediately (it's
+  // a controlled input; typing has to feel instant), but the search itself
+  // runs against a deferred copy — React drops a stale in-flight scan and
+  // starts the next one rather than queuing every keystroke's worth of
+  // ~16k-card scans back to back on a fast typist.
+  const deferredQuery = useDeferredValue(query);
   const results = useMemo(
-    () => (stage === 'search' && catalog ? searchCards(catalog, query) : []),
-    [stage, catalog, query],
+    () => (stage === 'search' && catalog ? searchCards(catalog, deferredQuery) : []),
+    [stage, catalog, deferredQuery],
   );
 
   function resetAll() {
@@ -71,6 +76,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     setQuickSuspend(false);
     setCreatingToken(false);
     setSelected(null);
+    setMechanic('custom');
     setCustomLabel('');
     setStartingCount('');
     setTargetCount('');

@@ -334,10 +334,31 @@ body {
   border-color: var(--brass);
 }
 
-.suggestion-grid {
+/* Virtualized suggestion grid (RecommendationResults.tsx) — replaces what
+   used to be a plain `display: grid; grid-template-columns: repeat(auto-fill,
+   minmax(260px, 1fr))` container holding every CommanderCard at once. The
+   column math that auto-fill used to do implicitly now happens in JS
+   (useGridColumns), since a virtualizer has to know row membership before
+   anything renders; --suggestion-grid-columns carries that count in per row.
+   .suggestion-grid-virtual's own height is set inline to the virtualizer's
+   getTotalSize(), so the page scrollbar reflects the full result count even
+   though only the rows near the viewport are actually mounted. */
+.suggestion-grid-virtual {
+  position: relative;
+  width: 100%;
+}
+
+.suggestion-grid-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(var(--suggestion-grid-columns, 1), 1fr);
   gap: 1.25rem;
+  /* A little breathing room between rows — auto-fill's own row gap did this
+     for free; a manually-positioned row needs it explicitly. */
+  padding-bottom: 1.25rem;
 }
 
 /* Filters */

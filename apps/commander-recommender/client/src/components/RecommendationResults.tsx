@@ -1,14 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import {
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  type ColumnDef,
-  type PaginationState,
-} from '@tanstack/react-table';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useAppStore } from '../store/useAppStore';
-import { usePreferencesStore } from '../store/usePreferencesStore';
 import { useRecommendations } from '../api/queries';
 import {
   applyFilters,
@@ -20,7 +13,6 @@ import {
 import { sortSuggestions, type SortDirection, type SortMode } from '../lib/sort';
 import { CommanderCard } from './CommanderCard';
 import { DeckSummary } from './DeckSummary';
-import { Pagination } from './Pagination';
 import { ResultFilters } from './ResultFilters';
 import type { CommanderSuggestionDTO } from '../types';
 
@@ -76,38 +68,76 @@ function ExportControls({ suggestions }: { suggestions: CommanderSuggestionDTO[]
   );
 }
 
+/** Matches .suggestion-grid-row's own track width and gap in index.css —
+ * the same numbers CSS's repeat(auto-fill, minmax(260px, 1fr)) used to lay
+ * the grid out with directly. A virtualized grid needs to decide row
+ * membership in JS before anything renders, so it has to reproduce that
+ * math instead of leaving it to the browser. */
+const MIN_CARD_WIDTH = 260;
+const GRID_GAP = 20;
+/** A reasonable starting guess for one row's height; corrected after each
+ * row's first real render via the virtualizer's own measureElement. */
+const ESTIMATED_ROW_HEIGHT = 460;
+
+/**
+ * How many columns the grid lays out at its current width — the same
+ * result CSS's own `repeat(auto-fill, minmax(260px, 1fr))` would produce,
+ * recomputed on resize. Suggestions are grouped into rows of this many so
+ * the row virtualizer below can decide what to render before anything
+ * paints, the same job the CSS grid used to do implicitly.
+ *
+ * A callback ref rather than a plain useRef + useEffect: this component
+ * returns null (no grid, no DOM node) until the suggestions finish loading,
+ * so an effect keyed on the ref *object* (which never changes identity)
+ * would run once too early, see no element yet, and never get a second
+ * chance once the grid actually mounts. A callback ref fires on every real
+ * attach — including this later one — so it can't miss it.
+ */
+function useGridColumns() {
+  const [columns, setColumns] = useState(1);
+  const elementRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<ResizeObserver | null>(null);
+
+  const ref = useCallback((el: HTMLDivElement | null) => {
+    observerRef.current?.disconnect();
+    elementRef.current = el;
+    if (!el) return;
+
+    const measure = (width: number) => {
+      setColumns(Math.max(1, Math.floor((width + GRID_GAP) / (MIN_CARD_WIDTH + GRID_GAP))));
+    };
+    measure(el.clientWidth);
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) measure(entry.contentRect.width);
+    });
+    observer.observe(el);
+    observerRef.current = observer;
+  }, []);
+
+  return { ref, columns, elementRef };
+}
+
 export function RecommendationResults() {
   const submittedList = useAppStore((s) => s.submittedList);
   const dismissed = useAppStore((s) => s.dismissed);
   const restoreAll = useAppStore((s) => s.restoreAll);
   const { data: result, error } = useRecommendations(submittedList);
 
-  // Filters/sort/page live in the URL (see lib/searchSchema.ts) rather than
-  // component state — shareable, and survives a refresh. Page *size* stays a
-  // persisted preference (usePreferencesStore): it should outlive the tab,
-  // not travel with one particular shared link.
-  const { filters, sortMode, sortDirection, page } = routeApi.useSearch();
+  // Filters/sort live in the URL (see lib/searchSchema.ts) rather than
+  // component state — shareable, and survives a refresh.
+  const { filters, sortMode, sortDirection } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const suggestionsPerPage = usePreferencesStore((s) => s.suggestionsPerPage);
-  const setSuggestionsPerPage = usePreferencesStore((s) => s.setSuggestionsPerPage);
 
   function setFilters(next: SuggestionFilters) {
-    navigate({ search: (prev) => ({ ...prev, filters: next, page: 0 }) });
+    navigate({ search: (prev) => ({ ...prev, filters: next }) });
   }
   function setSortMode(next: SortMode) {
-    navigate({ search: (prev) => ({ ...prev, sortMode: next, page: 0 }) });
+    navigate({ search: (prev) => ({ ...prev, sortMode: next }) });
   }
   function setSortDirection(next: SortDirection) {
-    navigate({ search: (prev) => ({ ...prev, sortDirection: next, page: 0 }) });
-  }
-  function setPage(next: number) {
-    navigate({ search: (prev) => ({ ...prev, page: next }) });
-  }
-  // Landing back on page 1 avoids being stranded on a page number that no
-  // longer exists once a smaller page size makes for more pages.
-  function handlePageSizeChange(size: number) {
-    setSuggestionsPerPage(size);
-    setPage(0);
+    navigate({ search: (prev) => ({ ...prev, sortDirection: next }) });
   }
 
   const suggestions = useMemo(() => result?.suggestions ?? [], [result]);
@@ -129,34 +159,21 @@ export function RecommendationResults() {
     [kept],
   );
 
-  // A URL's page number is only ever valid relative to the row set it was
-  // written against — a shared link, or a filter/sort change since, can put
-  // it past the end. Clamped for display rather than corrected in the URL:
-  // an out-of-range page still means something (it's evidence of what the
-  // set used to look like), it just isn't rendered.
-  const pageCount = Math.max(1, Math.ceil(sorted.length / suggestionsPerPage));
-  const safePageIndex = Math.min(Math.max(page, 0), pageCount - 1);
+  // The whole page scrolls (no inner scroll pane — see .app-shell in
+  // index.css), so this virtualizes against the window rather than a fixed-
+  // height container. gridElementRef doubles as both the column-count
+  // probe inside useGridColumns and the scrollMargin anchor below:
+  // offsetTop is how far down the page the grid's own top edge sits, which
+  // is what lets the virtualizer place rows at the right point in real page
+  // coordinates.
+  const { ref: gridRef, columns: columnCount, elementRef: gridElementRef } = useGridColumns();
+  const rowCount = Math.ceil(sorted.length / columnCount);
 
-  // TanStack Table is used headlessly here, purely for the pagination state
-  // machine — page bounds and slicing. Filtering and sorting themselves stay
-  // plain functions in lib, since they cut across the whole row rather than
-  // down one column.
-  const columns = useMemo<ColumnDef<CommanderSuggestionDTO>[]>(
-    () => [{ id: 'suggestion', accessorKey: 'unitId' }],
-    [],
-  );
-
-  const table = useReactTable({
-    data: sorted,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    state: { pagination: { pageIndex: safePageIndex, pageSize: suggestionsPerPage } },
-    onPaginationChange: (updater) => {
-      const current: PaginationState = { pageIndex: safePageIndex, pageSize: suggestionsPerPage };
-      const next = typeof updater === 'function' ? updater(current) : updater;
-      if (next.pageIndex !== page) setPage(next.pageIndex);
-    },
+  const rowVirtualizer = useWindowVirtualizer({
+    count: rowCount,
+    estimateSize: () => ESTIMATED_ROW_HEIGHT,
+    overscan: 3,
+    scrollMargin: gridElementRef.current?.offsetTop ?? 0,
   });
 
   if (error) {
@@ -170,8 +187,6 @@ export function RecommendationResults() {
   if (!result) {
     return null;
   }
-
-  const rows = table.getRowModel().rows;
 
   return (
     <section className="results">
@@ -255,8 +270,6 @@ export function RecommendationResults() {
             onSortModeChange={setSortMode}
             sortDirection={sortDirection}
             onSortDirectionChange={setSortDirection}
-            pageSize={suggestionsPerPage}
-            onPageSizeChange={handlePageSizeChange}
             shown={filtered.length}
             total={kept.length}
           />
@@ -277,20 +290,34 @@ export function RecommendationResults() {
               </button>
             </p>
           ) : (
-            <>
-              <div className="suggestion-grid">
-                {rows.map((row) => (
-                  <CommanderCard key={row.original.unitId} suggestion={row.original} />
-                ))}
-              </div>
-
-              <Pagination
-                pageIndex={safePageIndex}
-                pageCount={pageCount}
-                onPageChange={(index) => table.setPageIndex(index)}
-                label="Suggestion pages"
-              />
-            </>
+            <div
+              ref={gridRef}
+              className="suggestion-grid-virtual"
+              style={{ height: rowVirtualizer.getTotalSize() }}
+            >
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const start = virtualRow.index * columnCount;
+                const rowSuggestions = sorted.slice(start, start + columnCount);
+                return (
+                  <div
+                    key={virtualRow.key}
+                    ref={rowVirtualizer.measureElement}
+                    data-index={virtualRow.index}
+                    className="suggestion-grid-row"
+                    style={{
+                      ['--suggestion-grid-columns' as string]: columnCount,
+                      transform: `translateY(${
+                        virtualRow.start - rowVirtualizer.options.scrollMargin
+                      }px)`,
+                    }}
+                  >
+                    {rowSuggestions.map((suggestion) => (
+                      <CommanderCard key={suggestion.unitId} suggestion={suggestion} />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </>
       )}
