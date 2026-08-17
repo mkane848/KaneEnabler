@@ -5,8 +5,6 @@ export interface RecommenderSearch {
   filters: SuggestionFilters;
   sortMode: SortMode;
   sortDirection: SortDirection;
-  /** 0-based, matching TanStack Table's own pageIndex. */
-  page: number;
 }
 
 /** The single source of truth for "nothing customized yet" — also what
@@ -15,7 +13,6 @@ export const DEFAULT_RECOMMENDER_SEARCH: RecommenderSearch = {
   filters: EMPTY_FILTERS,
   sortMode: 'relevance',
   sortDirection: 'desc',
-  page: 0,
 };
 
 const SORT_MODES: readonly SortMode[] = ['relevance', 'colorNameValue'];
@@ -61,15 +58,10 @@ export function validateRecommenderSearch(search: Record<string, unknown>): Reco
   const sortDirection = SORT_DIRECTIONS.includes(search.sortDirection as SortDirection)
     ? (search.sortDirection as SortDirection)
     : DEFAULT_RECOMMENDER_SEARCH.sortDirection;
-  const page =
-    typeof search.page === 'number' && Number.isInteger(search.page) && search.page >= 0
-      ? search.page
-      : DEFAULT_RECOMMENDER_SEARCH.page;
 
   return {
     filters: parseFilters(search.filters),
     sortMode,
     sortDirection,
-    page,
   };
 }

@@ -167,12 +167,14 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
                              visit at a bare "/"
     index.css              design system: parchment/ink palette, mana pips
     store/useAppStore.ts   client state only: rawList, submittedList, dismissed
-    store/usePreferencesStore.ts  durable UI prefs (results-per-page), persisted to
+    store/usePreferencesStore.ts  durable UI prefs (currently just combosPerPage — the
+                                   suggestion grid has no page-size preference of its own
+                                   any more, see RecommendationResults.tsx), persisted to
                                    localStorage via zustand/middleware — deliberately a
                                    separate store from useAppStore, which is NOT persisted
                                    (dismissals surviving a browser restart against
                                    whatever list is pasted in next would be surprising;
-                                   a page-size choice should outlive the tab)
+                                   a durable preference should outlive the tab)
     api/
       client.ts             fetchRecommendations/fetchCombos, wakeServer, cold-start retry
       queries.ts             TanStack Query hooks wrapping the above
@@ -184,15 +186,19 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
       suggestions.ts           "still has supporting cards after the identity filter" helpers
                                (visibleThemeSupport/visibleKindredSupport/visibleKeywordSupport)
                                shared by the card display and the filter bar's option lists
-      searchSchema.ts          RecommenderSearch (filters/sortMode/sortDirection/page) +
+      searchSchema.ts          RecommenderSearch (filters/sortMode/sortDirection) +
                                validateRecommenderSearch — defensive parsing for router.tsx,
-                               since a URL is untrusted input (hand-edited, a stale bookmark)
+                               since a URL is untrusted input (hand-edited, a stale bookmark).
+                               No page field — the grid is virtualized, not paginated
     types/index.ts          DTOs mirroring the server's response shape — a suggestion is
                              `{ unitId, cards: CommanderCardDTO[], colorIdentity, ... }`, one-or-two
                              cards per unit, not a single flattened card
     components/
       CardListUpload.tsx        paste or upload .txt, submit; collapses after a load succeeds
-      RecommendationResults.tsx  filter bar + sort + export controls + paginated suggestion grid
+      RecommendationResults.tsx  filter bar + sort + export controls + virtualized suggestion
+                                  grid (@tanstack/react-virtual — see the comment above
+                                  useGridColumns for why it's window-scrolled and grouped into
+                                  JS-computed rows instead of a plain CSS grid)
       ResultFilters.tsx          color/color-category/bracket/theme filter controls + sort dropdown
       CommanderCard.tsx          one suggestion: pips, one `CommanderFace` per card (1 or 2),
                                   "why" disclosure; art wrapped in CardImageDialog per face.
@@ -232,7 +238,9 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
     DeckSummary.tsx            renders deckAnalysis.ts's themes/lifecycle output: what the list is
                                 trying to do and what's missing, independent of any commander
     ConfirmDialog.tsx           generic destructive-action confirmation (Radix Dialog)
-    Pagination.tsx               shared pager, reused by the suggestion grid and each combo group
+    Pagination.tsx               shared pager, reused by each combo group (ComboFinder.tsx) — the
+                                  suggestion grid itself no longer paginates, see
+                                  RecommendationResults.tsx
     SupportingCards.tsx          cited-card name + hover art preview list, factored out of
                                   CommanderCard.tsx
     ErrorFallback.tsx             recovery screen for a caught render error — rendered both by
@@ -255,10 +263,9 @@ server/                Express + TS + better-sqlite3
     routes/
       recommend.ts            POST /api/recommend — returns every suggestion scoreCommanders
                                clears its own bar for, uncapped; no server-side slice. The
-                               client owns pagination over the full set (RecommendationResults.tsx,
-                               controlled TanStack Table pagination state — page index from the
-                               URL via router.tsx, page size from usePreferencesStore's
-                               `suggestionsPerPage`), since it also needs the whole thing for the
+                               client renders the full set in one virtualized, window-scrolled
+                               grid (RecommendationResults.tsx, @tanstack/react-virtual) rather
+                               than paginating it, since it also needs the whole thing for the
                                filter bar's counts and option lists — truncating server-side
                                would make both of those lie.
       combos.ts                POST /api/combos — proxies to Commander Spellbook, on request only;

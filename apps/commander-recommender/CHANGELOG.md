@@ -117,6 +117,19 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   front-face field reader; the import now uses the same one for all three
   fields, so the fallback is consistent instead of present on two of three.
 
+### Changed
+
+- **The suggestion grid scrolls instead of paginating.** Results were capped
+  at a page — 12/24/48/96 at a time, chosen from a "Show" dropdown — with
+  numbered page buttons below; an unfiltered list routinely produces
+  hundreds of suggestions, so most of a match was never on screen unless you
+  kept clicking through pages. The grid is now virtualized with TanStack
+  Virtual (window-based, since the page itself is the only scroll container
+  — there's no inner scrolling pane), rendering only the rows near the
+  viewport no matter how large the result set gets, so every result is
+  reachable by scrolling. The page-size preference and its dropdown are gone
+  along with pagination; there's nothing left to remember a page size for.
+
 ## [1.7.1] — 2026-08-01
 
 ### Fixed

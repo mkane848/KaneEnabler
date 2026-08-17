@@ -164,7 +164,7 @@ narrow as it already was, for reasons that turned out to be real rather than his
 `CardRow`'s SQLite JSON-string columns, `CardData`'s deliberately sparse `oracleText` (only ~100 of
 ~18,000 cards), `CommanderCardDTO`'s wire-dedup shape (see `cardIndex.ts` in
 `docs/commander-recommender.md`). Forcing all three through one wide shape would have fought those
-constraints instead of respecting them; sharing the *reading*, not the *shape*, is what the
+constraints instead of respecting them; sharing the _reading_, not the _shape_, is what the
 duplication was.
 
 One more constraint decided the package's own implementation: `fetch-card-data.mjs` runs under bare
@@ -266,19 +266,45 @@ state across players' devices would be the trigger).
 
 ### What to adopt
 
-| Module      | Decision                                                                                                                                                                                                                                                                                                                         |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Router**  | Both apps. Type-safe routes; URL-as-state for the recommender's filters/sort/page, which today lives in component state and is lost on refresh and unshareable. Also gives the CR rules browser real routes.                                                                                                                     |
-| **Query**   | Keep. Already used correctly with deliberate non-default config. Also replaces DWC's hand-rolled ~25-line cache/in-flight/retry logic in `cardCatalog.ts`.                                                                                                                                                                       |
-| **Table**   | Adopt properly in the recommender. Currently headless-for-pagination-only, with filtering and sorting as separate hand-written passes. Folding them into the table model puts filter/sort/paginate in one state machine Router can serialise to the URL, and removes the `useEffect` that resets pagination on page-size change. |
-| **Virtual** | Both. DWC's `searchCards` is an O(n) scan over ~18,000 cards per keystroke that sorts _all_ matches before taking 8, un-debounced. HKH's suggestion grid renders 12–96 unmemoised 361-line `CommanderCard`s that all re-render on any filter change; virtualising lets the page-size cap come off entirely.                      |
-| **Form**    | **DWC `AddCardPanel.tsx` only.** 16 `useState` hooks in one 485-line component, three conditional entry modes, a variable-length `chapters: string[]` field array, and a hand-rolled `resetAll()` that resets 15 of 16 values and silently misses `mechanic`. Not for HKH, whose only form is a textarea plus a file input.      |
-| **Store**   | No. Alpha, and Zustand already does this job well here.                                                                                                                                                                                                                                                                          |
-| **DB**      | No. Sync/offline-first is its purpose; neither app syncs anything.                                                                                                                                                                                                                                                               |
+| Module      | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Router**  | Both apps. Type-safe routes; URL-as-state for the recommender's filters/sort/page, which today lives in component state and is lost on refresh and unshareable. Also gives the CR rules browser real routes. **Landed.**                                                                                                                                                                                                                                       |
+| **Query**   | Keep. Already used correctly with deliberate non-default config. Also replaces DWC's hand-rolled ~25-line cache/in-flight/retry logic in `cardCatalog.ts`.                                                                                                                                                                                                                                                                                                     |
+| **Table**   | **Not adopted — the row below explains why, since this reverses what this table originally said.**                                                                                                                                                                                                                                                                                                                                                             |
+| **Virtual** | **Recommender only — landed differently than planned; DWC explicitly not, see below.**                                                                                                                                                                                                                                                                                                                                                                         |
+| **Form**    | **DWC `AddCardPanel.tsx` only.** 16 `useState` hooks in one 485-line component, three conditional entry modes, a variable-length `chapters: string[]` field array. (The `resetAll()` silently-misses-`mechanic` defect cited here originally is already fixed directly — a one-line addition, not a reason to adopt Form on its own. The rest of the case for Form still stands.) Not for HKH, whose only form is a textarea plus a file input. Still pending. |
+| **Store**   | No. Alpha, and Zustand already does this job well here.                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **DB**      | No. Sync/offline-first is its purpose; neither app syncs anything.                                                                                                                                                                                                                                                                                                                                                                                             |
 
 **Keep** Zustand + TanStack Query with the split the recommender already uses correctly — Zustand
 for client state only, Query owning everything fetched. The `retry: false` /
 `refetchOnWindowFocus: false` defaults are load-bearing: they throttle Commander Spellbook.
+
+**Table and Virtual, revisited** (both landed after this table was originally written, and not the
+way it predicted):
+
+- **Table was never adopted, and shouldn't be now.** Its whole case was folding filter/sort/paginate
+  into one state machine so Router could serialise it to the URL. The URL-serialisation half of
+  that happened anyway, directly — `RecommendationResults.tsx`'s filters/sort became URL search
+  params (`searchSchema.ts`) without Table's involvement. Once Virtual replaced pagination outright
+  (below), the other half of Table's case — a shared pagination state machine — stopped applying too:
+  there's no pagination left to unify. Adopting Table now would mean bolting it onto working,
+  already-shipped code for a benefit that no longer exists.
+- **Virtual landed in the recommender, not DWC, and did something bigger than "virtualise" there.**
+  The recommender's suggestion grid now renders the full sorted/filtered set (`useWindowVirtualizer`,
+  window-scrolled since the page itself scrolls, not an inner pane) instead of paginating —
+  `Pagination.tsx`, the `suggestionsPerPage` preference, and the `page` URL param are gone; only
+  rows near the viewport are mounted, sized dynamically via `measureElement` since a Partner-pair
+  card is taller than a solo one. Column count is computed in JS (`useGridColumns`, matching what
+  CSS `repeat(auto-fill, minmax(260px, 1fr))` would have produced) since a virtualizer has to know
+  row membership before anything paints.
+  DWC's `searchCards`, on inspection, was never a rendering problem — the result list was already
+  capped at 8 items, so there was nothing to virtualize. Its real cost was the _scan_: sorting every
+  match before slicing to 8, on every keystroke, unthrottled. Fixed directly instead: the catalog is
+  already alphabetized, so bucketing into "starts with" / "contains" during a single pass (stopping
+  early once the anchored bucket alone fills the limit) replaces the sort entirely, and
+  `useDeferredValue` on the query keeps a fast typist from queueing scans back to back. No new
+  dependency in DWC.
 
 ### React Server Components
 
@@ -385,7 +411,7 @@ Plus the API-limits regression guards in [`api-policy.md`](./api-policy.md).
 
 Phases 0–2 are prerequisites. Phases 3 and 4 can proceed in parallel once packages exist. Phase 5 is
 Router first (it unblocks URL-as-state, the rules browser, and Phase 7's profile screens), then
-Table and Virtual in the recommender, then Form in `AddCardPanel`. Phase 7 follows Router. Phase 6
-is continuous.
+Virtual in the recommender (Table turned out not to apply — see "Table and Virtual, revisited"
+above), then Form in `AddCardPanel` (still pending). Phase 7 follows Router. Phase 6 is continuous.
 
 Ship each phase as its own PR.
