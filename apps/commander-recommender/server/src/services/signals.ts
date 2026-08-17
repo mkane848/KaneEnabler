@@ -33,7 +33,7 @@
  * with per-role matchers. `Role`, `QualifierKind` and the catalog are all
  * meant to grow; nothing here is closed.
  */
-import type { CardRow } from '../types';
+import { parseJsonArray, type CardRow } from '../types';
 
 /**
  * The capacity in which a card participates in an archetype.
@@ -193,16 +193,6 @@ export function stripSelfReferences(text: string, ...names: (string | null)[]): 
     out = out.split(form).join(' ');
   }
   return out;
-}
-
-function parseJsonArray(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
 }
 
 /** Every word in a piece of text, lowercased. The unit of vocabulary
@@ -751,10 +741,6 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
       ) {
         roles.push('rewards');
       }
-      // Mentioned outside a token's name, in a way none of the above caught —
-      // still active interest in the type, which is what separates Krenko
-      // from Silas Renn.
-      if (!consumesType && !roles.includes('rewards')) roles.push('rewards');
     }
 
     if (roles.length === 0) continue;
@@ -863,31 +849,6 @@ export function detectSignals(facts: CardFacts, vocab: Vocabulary): SignalMatch[
   out.push(...detectKindred(facts, vocab));
   out.push(...detectKeywordCare(facts, vocab));
   return out;
-}
-
-/**
- * Whether a card in the list can support a signal the commander showed.
- *
- * Unqualified signals accept any card that participates in the archetype at
- * all. A *qualified* signal additionally requires the supporter to be of that
- * subtype — this is the Sliver Gravemother rule, and it is the whole reason
- * qualifiers exist.
- */
-export function supports(signal: SignalMatch, supporter: SignalMatch[], facts: CardFacts): boolean {
-  const sameArchetype = supporter.filter((s) => s.archetype === signal.archetype);
-  if (sameArchetype.length === 0) return false;
-  if (!signal.qualifier) return true;
-
-  if (signal.qualifierKind === 'creatureType') {
-    return (
-      facts.creatureTypes.includes(signal.qualifier) ||
-      facts.producedTokenTypes.includes(signal.qualifier)
-    );
-  }
-  if (signal.qualifierKind === 'keyword') {
-    return facts.keywords.includes(signal.qualifier);
-  }
-  return sameArchetype.some((s) => s.qualifier === signal.qualifier);
 }
 
 /**

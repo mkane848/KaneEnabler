@@ -212,6 +212,30 @@ describe('token makers are kindred cards', () => {
   });
 });
 
+describe('a bare word mention is not caring about the type', () => {
+  it("a card ruling a type out is not a kindred payoff for it", () => {
+    // Artificial Evolution — real oracle text. It explicitly forbids the
+    // result of its effect from becoming Wall, the opposite of caring about
+    // Walls — but the word appears in a clause none of the intentional
+    // caring-patterns (has/have/whenever/for each/etc.) match, so a
+    // catch-all that credited *any* remaining mention with an active
+    // `rewards` role flagged it as a Wall Kindred payoff anyway. rules-audit
+    // item 10 names this exact shape: Wall, Scout, Seal, Elder, Noble,
+    // Citizen, Mount, Guest, and Toy are all both creature types and common
+    // English words, so any card whose text happens to contain one — in any
+    // context, caring or not — was becoming a kindred signal for it.
+    const card = makeCard({
+      name: 'Artificial Evolution',
+      type_line: 'Instant',
+      oracle_text:
+        'Change the text of target spell or permanent by replacing all instances of one creature ' +
+        "type with another. The new creature type can't be Wall. (This effect lasts indefinitely.)",
+    });
+    const signals = signalsFor(card, ['Wall']);
+    assert.strictEqual(find(signals, 'kindred', 'Wall'), undefined);
+  });
+});
+
 describe('keywords are not synergies on their own', () => {
   it('having a keyword is passive and never qualifies a commander', () => {
     const trampler = makeCard({

@@ -6,7 +6,7 @@
  * The split matters: adding an archetype should mean editing a catalog, not
  * touching the scorer.
  */
-import type { CardRow } from '../types';
+import { parseJsonArray, type CardRow } from '../types';
 import type { CommanderUnit } from './partners';
 import {
   buildCardFacts,
@@ -95,16 +95,6 @@ export interface CommanderSuggestion {
   gameChangerCards: SupportingCard[];
 }
 
-function parseJsonArray(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
 function toSupportingCard({ row, quantity }: OwnedCard): SupportingCard {
   return {
     name: row.name,
@@ -182,12 +172,27 @@ function unitColorIdentity(unit: CommanderUnit): Set<string> {
   return set;
 }
 
-/** Every signal the unit shows, with roles unioned across its cards. */
-function unitSignals(unit: CommanderUnit, profile: CollectionProfile): SignalMatch[] {
+/**
+ * Every signal the unit shows, with roles unioned across its cards.
+ *
+ * Reads the relationship layer precomputed at import time (`card_signals` —
+ * see `db.ts`'s `findSignalsByOracleIds`) rather than recomputing from the
+ * collection's own vocabulary. That vocabulary is scoped to types/keywords
+ * *present in the submitted list* (see `CollectionProfile.creatureTypes`),
+ * which is correct for a supporting card — it has to be in the list to
+ * support anything — but was also being used for the *candidate*, whose own
+ * relationships don't depend on what anyone happened to paste: a commander
+ * that cares about Vampires cares about them whether or not the list has
+ * any. Recomputing per request also meant a card appearing in k Partner
+ * pairs was processed k+1 times per request instead of looked up once.
+ */
+function unitSignals(
+  unit: CommanderUnit,
+  signalsByOracleId: Map<string, SignalMatch[]>,
+): SignalMatch[] {
   const merged = new Map<string, SignalMatch>();
   for (const card of unit.cards) {
-    const facts = buildCardFacts(card, profile.vocabulary);
-    for (const signal of detectSignals(facts, profile.vocabulary)) {
+    for (const signal of signalsByOracleId.get(card.oracle_id) ?? []) {
       const key = signalKey(signal);
       const existing = merged.get(key);
       if (existing) {
@@ -264,6 +269,7 @@ export function scoreCommanders(
   units: CommanderUnit[],
   profile: CollectionProfile,
   owned: OwnedCard[],
+  candidateSignals: Map<string, SignalMatch[]>,
 ): CommanderSuggestion[] {
   const suggestions: CommanderSuggestion[] = [];
 
@@ -294,7 +300,7 @@ export function scoreCommanders(
     // generalised "cares, not shares" rule: it covers kindred (Silas Renn is
     // a Human but no Human commander), keywords (having Trample is not a
     // deck), and every archetype at once.
-    const active = unitSignals(unit, profile).filter((s) => hasActiveRole(s.roles));
+    const active = unitSignals(unit, candidateSignals).filter((s) => hasActiveRole(s.roles));
 
     const matched: { signal: SignalMatch; cards: SupportingCard[] }[] = [];
     for (const signal of active) {

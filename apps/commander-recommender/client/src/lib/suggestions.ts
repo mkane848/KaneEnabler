@@ -39,7 +39,3 @@ export function visibleKindredTypes(suggestion: CommanderSuggestionDTO): string[
 export function visibleKeywordSupport(suggestion: CommanderSuggestionDTO): KeywordSupportDTO[] {
   return suggestion.keywordSupport.filter((keyword) => keyword.cards.length > 0);
 }
-
-export function visibleKeywordLabels(suggestion: CommanderSuggestionDTO): string[] {
-  return visibleKeywordSupport(suggestion).map((keyword) => keyword.keyword);
-}

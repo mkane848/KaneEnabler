@@ -17,6 +17,7 @@ import {
   defaultResolveNote,
   hasHitTarget,
   newlyTriggeredChapters,
+  turnStepForMechanic,
   usesTimeCounters,
 } from '../utils/counters';
 import { clearState, loadState, saveState } from '../utils/storage';
@@ -275,7 +276,9 @@ export function useGameState() {
 
       // Step 1 — upkeep: Suspend/Vanishing/Fading count down.
       const afterUpkeep = prev.game.cards.map((c) => {
-        if (c.mechanic === 'saga' || !c.autoAdjust || hasHitTarget(c)) return c;
+        if (turnStepForMechanic(c.mechanic) !== 'upkeep' || !c.autoAdjust || hasHitTarget(c)) {
+          return c;
+        }
 
         // CR 702.32b: Fading removes a fade counter at upkeep same as the
         // others, but only sacrifices once removal *fails* — the upkeep
@@ -324,7 +327,13 @@ export function useGameState() {
 
       // Step 2 — precombat main: Sagas gain a lore counter; crossed chapters trigger.
       const cards = afterUpkeep.map((c) => {
-        if (c.mechanic !== 'saga' || !c.autoAdjust || hasHitTarget(c)) return c;
+        if (
+          turnStepForMechanic(c.mechanic) !== 'precombatMain' ||
+          !c.autoAdjust ||
+          hasHitTarget(c)
+        ) {
+          return c;
+        }
         const to = clampCount(c.count + 1, c.direction, c.targetCount);
         const chapters = c.chapters ?? [];
         const triggeredNow = newlyTriggeredChapters(

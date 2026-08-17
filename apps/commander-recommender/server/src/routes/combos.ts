@@ -3,19 +3,9 @@ import { isSeeded, findCardsByNames } from '../db';
 import { isCommanderLegal } from '../services/legality';
 import { parseCardList } from '../services/parseList';
 import { findCombos, SpellbookError } from '../services/spellbook';
-import type { CardRow } from '../types';
+import { parseJsonArray, type CardRow } from '../types';
 
 const router = Router();
-
-function parseJsonArray(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 /**
  * Looks up Commander Spellbook combos for one commander unit (one card, or

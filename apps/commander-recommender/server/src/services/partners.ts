@@ -1,4 +1,4 @@
-import type { CardRow } from '../types';
+import { parseJsonArray, type CardRow } from '../types';
 
 /**
  * A commander as actually played: one card, or two under a Partner-family
@@ -8,16 +8,6 @@ import type { CardRow } from '../types';
  */
 export interface CommanderUnit {
   cards: CardRow[];
-}
-
-function parseJsonArray(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
 }
 
 function creatureTypeSet(card: CardRow): Set<string> {

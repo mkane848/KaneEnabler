@@ -21,18 +21,9 @@ import { applySingletonLimits } from '../services/singleton';
 import { createCardIndex } from '../services/cardIndex';
 import { analyzeDeck } from '../services/deckAnalysis';
 import { attachSuggestions, collectionColors, requiredSignalKeys } from '../services/packages';
+import { parseJsonArray } from '../types';
 
 const router = Router();
-
-function parseJsonArray(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 router.post('/recommend', (req, res) => {
   if (!isSeeded) {
@@ -63,13 +54,21 @@ router.post('/recommend', (req, res) => {
   const candidates = getCommanderCandidates();
   const backgrounds = getBackgroundCards();
   const units = buildCommanderUnits(candidates, backgrounds);
+  // Candidates' own signals come from the same precomputed relationship
+  // layer as the deck analysis below, not recomputed against the submitted
+  // list's vocabulary — a commander that cares about a type earns that
+  // signal whether or not the list happens to own a card of it. This also
+  // means a card in several Partner pairs is looked up once, not
+  // reprocessed per pairing (see docs/rules-audit.md item 9).
+  const candidateOracleIds = new Set(units.flatMap((u) => u.cards.map((c) => c.oracle_id)));
+  const candidateSignals = findSignalsByOracleIds([...candidateOracleIds]);
   // Two bars, not one. scoreCommanders drops anything with no identity fit
   // or no real signal; selectSuggestions then drops the long tail whose
   // whole case is a single bare-minimum signal, which is what made result
   // counts run into four figures. Still no cap beyond that — the client
   // owns pagination over whatever survives, since it needs the full set for
   // the filter bar's counts and options anyway.
-  const scored = scoreCommanders(units, profile, owned);
+  const scored = scoreCommanders(units, profile, owned, candidateSignals);
 
   // What the *list* is doing, independent of any commander. Reads the same
   // precomputed relationships the scorer does rather than deriving its own,

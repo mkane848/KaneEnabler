@@ -46,3 +46,14 @@ export interface CardRow {
   back_image_uri: string | null;
   back_name: string | null;
 }
+
+/** Decodes one of CardRow's `JSON string[]` columns (colors, color_identity, keywords, creature_types). */
+export function parseJsonArray(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}

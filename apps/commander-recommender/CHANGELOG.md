@@ -63,6 +63,32 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   had. Now imports the same `@mtg/mana` package that app uses: hybrids
   split the disc corner to corner, Phyrexian draws as one glyph on one
   disc rather than a split, and `--pip-generic` is a proper token again.
+- **A commander candidate's own signals could depend on what else was in
+  your list, not just on the candidate's own card.** Candidates were scored
+  by recomputing each one's signals per request against a vocabulary built
+  only from the submitted list's creature types and keywords. A signal
+  backed by a card's own structural type or token data was unaffected, but
+  a purely textual qualifier — one named only in a card's oracle text, with
+  no structural fallback, like Sliver Gravemother's "Reanimator (Sliver)"
+  label — could silently lose its qualifier if the list didn't separately
+  include enough of that type. Recomputing per request also meant a card in
+  _k_ Partner pairs was processed _k_+1 times on every submission.
+  Candidates now read the same precomputed, full-vocabulary `card_signals`
+  table the deck-analysis summary already used — computed once at import
+  time against every type and keyword in the game, not scoped to whatever
+  happened to be pasted in.
+- **A card could be flagged as a Kindred payoff for a type it only
+  happened to mention.** `detectKindred` ended with a catch-all that
+  granted an active "rewards" role to any card whose text mentioned a
+  creature-type word without matching one of the specific caring patterns
+  (`gets`/`gains`/`has`/`whenever`/`for each`/etc.) — so a common English
+  word that's incidentally also a creature type (Wall, Scout, Seal, Elder,
+  Noble, Citizen, Mount, Guest, Toy) could make an unrelated card look like
+  it cared about that type, given 3+ other citable cards of it. Artificial
+  Evolution is a real example: its text names Wall only to rule it out as a
+  target ("The new creature type can't be Wall"), not to reward it. The
+  catch-all is gone; only the specific caring patterns and the
+  sacrifice/tap/discard/exile "consumes" check grant the rewards role now.
 
 ## [1.7.1] — 2026-08-01
 

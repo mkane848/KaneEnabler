@@ -10,6 +10,7 @@ import assert from 'node:assert';
 import { describe, it } from 'vitest';
 import type { CardRow } from '../types';
 import type { CommanderUnit } from './partners';
+import { buildCardFacts, buildVocabulary, detectSignals, type SignalMatch } from './signals';
 import {
   buildCollectionProfile,
   scoreCommanders,
@@ -17,6 +18,33 @@ import {
   type CommanderSuggestion,
   type OwnedCard,
 } from './synergy';
+
+/**
+ * Stands in for the precomputed `card_signals` table this file has no
+ * database to query (see db.ts's findSignalsByOracleIds, and
+ * rules-audit.md item 9 on why the scorer reads it instead of recomputing
+ * per request). Built the same way import-scryfall.ts populates that table:
+ * facts + signals against a vocabulary that is *not* scoped to the owned
+ * list. `creatureTypes`/`keywords` stand in for the full game's catalog —
+ * pass whichever the candidate's own text needs to discover a type or
+ * keyword it doesn't already carry structurally (a card's own
+ * `creature_types`/token-production are recognized regardless of
+ * vocabulary; only a bare textual mention needs the word to be "known").
+ */
+function candidateSignalsFor(
+  units: CommanderUnit[],
+  creatureTypes: string[] = [],
+  keywords: string[] = [],
+): Map<string, SignalMatch[]> {
+  const vocab = buildVocabulary(creatureTypes, keywords);
+  const map = new Map<string, SignalMatch[]>();
+  for (const unit of units) {
+    for (const card of unit.cards) {
+      map.set(card.oracle_id, detectSignals(buildCardFacts(card, vocab), vocab));
+    }
+  }
+  return map;
+}
 
 let counter = 0;
 function makeCard(overrides: Partial<CardRow> = {}): CardRow {
@@ -104,10 +132,12 @@ describe('buildCollectionProfile', () => {
       oracle_text: 'Creatures you control gain partner.',
     });
     const entries = partnerCards.map((c) => owned(c));
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units, [], ['Partner']),
     );
     assert.deepStrictEqual(
       suggestions.flatMap((s) => s.matchedKeywords),
@@ -121,10 +151,12 @@ describe('identity + signal gating', () => {
     const ownedCards = sacrificeCards(3, { color_identity: JSON.stringify(['W']) });
     const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
     const entries = ownedCards.map((c) => owned(c));
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 0);
   });
@@ -140,10 +172,12 @@ describe('identity + signal gating', () => {
       oracle_text: 'Vanilla text with no matching archetype.',
     });
     const entries = [owned(ownedCard, 2)];
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 0);
   });
@@ -152,10 +186,12 @@ describe('identity + signal gating', () => {
     const ownedCards = sacrificeCards(2, { color_identity: JSON.stringify(['B']) });
     const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
     const entries = ownedCards.map((c) => owned(c));
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 0);
   });
@@ -167,10 +203,12 @@ describe('identity + signal gating', () => {
     });
     const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
     const entries = [owned(sacCard, 10)];
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 0);
   });
@@ -179,10 +217,12 @@ describe('identity + signal gating', () => {
     const ownedCards = sacrificeCards(3, { color_identity: JSON.stringify(['B']) });
     const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
     const entries = ownedCards.map((c) => owned(c));
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 1);
     assert.ok(suggestions[0]!.matchedThemes.includes('Aristocrats'));
@@ -198,10 +238,12 @@ describe('identity + signal gating', () => {
       oracle_text: 'This card does something else entirely.',
     });
     const entries = ownedCards.map((c) => owned(c));
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 0);
   });
@@ -228,7 +270,12 @@ describe('identity + signal gating', () => {
     // Globally there are 3 Aristocrats cards — enough on its own.
     assert.strictEqual(profile.archetypeCards['aristocrats']!.length, 3);
     // But only 2 fit this candidate's identity, so it must not count.
-    assert.strictEqual(scoreCommanders([solo(candidate)], profile, entries).length, 0);
+    const narrowingUnits = [solo(candidate)];
+    assert.strictEqual(
+      scoreCommanders(narrowingUnits, profile, entries, candidateSignalsFor(narrowingUnits))
+        .length,
+      0,
+    );
   });
 
   it("only cards that fit the candidate's color identity count toward includedCardCount", () => {
@@ -240,10 +287,12 @@ describe('identity + signal gating', () => {
     });
     const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
     const entries = [...fits.map((c) => owned(c)), owned(doesNotFit, 5)];
+    const units = [solo(candidate)];
     const suggestions = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 1);
     assert.strictEqual(suggestions[0]!.includedCardCount, 3);
@@ -268,7 +317,13 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
         'Whenever Silas Renn deals combat damage to a player, choose target artifact card in your graveyard.',
     });
     const entries = humans.map((c) => owned(c));
-    const suggestions = scoreCommanders([solo(silas)], buildCollectionProfile(entries), entries);
+    const units = [solo(silas)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
     assert.deepStrictEqual(
       suggestions.flatMap((s) => s.matchedCreatureTypes),
       [],
@@ -291,7 +346,13 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
         '{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.',
     });
     const entries = goblins.map((c) => owned(c));
-    const suggestions = scoreCommanders([solo(krenko)], buildCollectionProfile(entries), entries);
+    const units = [solo(krenko)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
     assert.strictEqual(suggestions.length, 1);
     assert.deepStrictEqual(suggestions[0]!.matchedCreatureTypes, ['Goblin']);
   });
@@ -316,10 +377,12 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
         'Whenever a creature dies, untap Goblin Sharpshooter.',
     });
     const entries = goblins.map((c) => owned(c));
+    const units = [solo(sharpshooter)];
     const suggestions = scoreCommanders(
-      [solo(sharpshooter)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.deepStrictEqual(
       suggestions.flatMap((s) => s.matchedCreatureTypes),
@@ -338,7 +401,8 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
         oracle_text: 'Create two 1/1 red Goblin creature tokens.',
       }),
     );
-    // One real Goblin, so the type is in the list's vocabulary at all.
+    // A real Goblin too, so it's not just the five Sorceries citable as
+    // support for the signal.
     const goblin = makeCard({
       name: 'A Goblin',
       color_identity: JSON.stringify(['R']),
@@ -352,7 +416,13 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
         '{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.',
     });
     const entries = [...commands, goblin].map((c) => owned(c));
-    const suggestions = scoreCommanders([solo(krenko)], buildCollectionProfile(entries), entries);
+    const units = [solo(krenko)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
     const kindred = suggestions[0]!.kindredSupport.find((k) => k.type === 'Goblin');
     assert.ok(kindred);
     // All five Sorceries plus the actual Goblin.
@@ -387,10 +457,16 @@ describe('qualifiers', () => {
       oracle_text: 'Sliver spells you cast have encore.',
     });
     const entries = [...slivers, ...others].map((c) => owned(c));
+    const units = [solo(gravemother)];
     const suggestions = scoreCommanders(
-      [solo(gravemother)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      // The qualifier ("(Sliver)") is found by scanning the payoff clause's
+      // own words against the vocabulary directly — unlike plain kindred
+      // membership, it doesn't fall back to the card's structural
+      // creature_types, so Sliver has to be a known word here too.
+      candidateSignalsFor(units, ['Sliver']),
     );
 
     const reanimator = suggestions[0]!.themeSupport.find((t) => t.label.startsWith('Reanimator'));
@@ -418,8 +494,10 @@ describe('scoring measures focus, not color reach', () => {
 
     const entries = [...sac, ...irrelevant].map((c) => owned(c));
     const profile = buildCollectionProfile(entries);
-    const narrow = scoreCommanders([solo(narrowCandidate)], profile, entries);
-    const wide = scoreCommanders([solo(wideCandidate)], profile, entries);
+    const narrowUnits = [solo(narrowCandidate)];
+    const wideUnits = [solo(wideCandidate)];
+    const narrow = scoreCommanders(narrowUnits, profile, entries, candidateSignalsFor(narrowUnits));
+    const wide = scoreCommanders(wideUnits, profile, entries, candidateSignalsFor(wideUnits));
 
     // Narrow: 4/4 density * 20 (Aristocrats) = 20, no depth bonus (4 < 5).
     assert.strictEqual(narrow[0]!.score, 20);
@@ -436,12 +514,19 @@ describe('scoring measures focus, not color reach', () => {
       owned(c),
     );
     const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
+    const units = [solo(candidate)];
 
-    const at = scoreCommanders([solo(candidate)], buildCollectionProfile(atFloor), atFloor);
+    const at = scoreCommanders(
+      units,
+      buildCollectionProfile(atFloor),
+      atFloor,
+      candidateSignalsFor(units),
+    );
     const below = scoreCommanders(
-      [solo(candidate)],
+      units,
       buildCollectionProfile(belowFloor),
       belowFloor,
+      candidateSignalsFor(units),
     );
     // Both fully focused, so breadth is 20 either way; only depth differs.
     assert.strictEqual(at[0]!.score, 21);
@@ -496,10 +581,12 @@ describe('scoring measures focus, not color reach', () => {
 
     const entries = [...landfall, ...sac, ...counters, ...spells, ...filler].map((c) => owned(c));
     assert.strictEqual(entries.length, 50);
+    const units = [solo(deep), solo(shallow)];
     const suggestions = scoreCommanders(
-      [solo(deep), solo(shallow)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
 
     assert.strictEqual(suggestions[0]!.cards[0]!.name, 'Landfall Deep');
@@ -525,10 +612,12 @@ describe('scoring measures focus, not color reach', () => {
       oracle_text: 'Sacrifice a creature: Draw a card. Other Vampires you control get +1/+1.',
     });
     const entries = [...sac, ...vampires].map((c) => owned(c));
+    const units = [solo(weak), solo(strong)];
     const suggestions = scoreCommanders(
-      [solo(weak), solo(strong)],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 2);
     assert.strictEqual(suggestions[0]!.cards[0]!.name, 'Strong');
@@ -542,10 +631,12 @@ describe('Partner-pair union semantics (702.124e)', () => {
     const partnerA = makeCard({ name: 'A', color_identity: JSON.stringify(['U']) });
     const partnerB = sacrificeCommander('B', { color_identity: JSON.stringify(['B']) });
     const entries = ownedCards.map((c) => owned(c));
+    const units = [{ cards: [partnerA, partnerB] }];
     const suggestions = scoreCommanders(
-      [{ cards: [partnerA, partnerB] }],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 1);
     assert.deepStrictEqual(suggestions[0]!.cards.map((c) => c.name).sort(), ['A', 'B']);
@@ -560,10 +651,12 @@ describe('Partner-pair union semantics (702.124e)', () => {
     });
     const vocal = sacrificeCommander('Vocal Half', { color_identity: JSON.stringify(['B']) });
     const entries = ownedCards.map((c) => owned(c));
+    const units = [{ cards: [silent, vocal] }];
     const suggestions = scoreCommanders(
-      [{ cards: [silent, vocal] }],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 1);
     assert.ok(suggestions[0]!.matchedThemes.includes('Aristocrats'));
@@ -588,10 +681,15 @@ describe('Partner-pair union semantics (702.124e)', () => {
       oracle_text: 'Sliver spells you cast have cascade.',
     });
     const entries = slivers.map((c) => owned(c));
+    const units = [{ cards: [silent, caring] }];
     const suggestions = scoreCommanders(
-      [{ cards: [silent, caring] }],
+      units,
       buildCollectionProfile(entries),
       entries,
+      // Neither half's own creature_types says Sliver — "caring" reaches it
+      // only through its text, so unlike the other tests here, discovering
+      // it at all depends on Sliver being a known vocabulary word.
+      candidateSignalsFor(units, ['Sliver']),
     );
     assert.deepStrictEqual(suggestions[0]?.matchedCreatureTypes, ['Sliver']);
   });
@@ -614,10 +712,12 @@ describe('Partner-pair union semantics (702.124e)', () => {
       creature_types: JSON.stringify(['Vampire']),
     });
     const entries = [...vampiresOwned, ...sac].map((c) => owned(c));
+    const units = [{ cards: [nonVampireHalf, vampireHalf] }];
     const suggestions = scoreCommanders(
-      [{ cards: [nonVampireHalf, vampireHalf] }],
+      units,
       buildCollectionProfile(entries),
       entries,
+      candidateSignalsFor(units),
     );
     assert.strictEqual(suggestions.length, 1);
     assert.ok(suggestions[0]!.matchedThemes.includes('Aristocrats'));
