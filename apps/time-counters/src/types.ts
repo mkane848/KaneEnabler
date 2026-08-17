@@ -4,7 +4,7 @@
  * counter type, rule 702.32) even though it's tracked the same way in this
  * UI; Saga uses lore counters and advances on a different turn step
  * entirely (precombat main, not upkeep) — see `TIME_COUNTER_MECHANICS` and
- * `TURN_STEP_FOR_MECHANIC` in utils/counters.ts.
+ * `turnStepForMechanic` in `@mtg/rules`.
  */
 export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'saga' | 'custom';
 

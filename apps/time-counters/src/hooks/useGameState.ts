@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { commanderTax, turnStepForMechanic, usesTimeCounters } from '@mtg/rules';
 import type {
   CardData,
   CommanderId,
@@ -17,8 +18,6 @@ import {
   defaultResolveNote,
   hasHitTarget,
   newlyTriggeredChapters,
-  turnStepForMechanic,
-  usesTimeCounters,
 } from '../utils/counters';
 import { clearState, loadState, saveState } from '../utils/storage';
 
@@ -442,7 +441,7 @@ export function useGameState() {
    *
    * Only Suspend and Vanishing cards are eligible targets — Fading uses
    * fade counters and Saga uses lore counters, neither of which is a time
-   * counter (see usesTimeCounters in utils/counters.ts), so the caller
+   * counter (see usesTimeCounters in @mtg/rules), so the caller
    * (TimeTravelPanel via App.tsx) never offers them a choice here. Rose
    * Tyler's own Bad Wolf time counters are a legitimate target too — she's
    * "a permanent you control with a time counter on it" — passed with the
@@ -516,7 +515,7 @@ export function useGameState() {
       const log = appendLog(prev.game.log, {
         turn: prev.game.turn,
         title: 'Cast from command zone',
-        detail: `${name} — cast ${castCount} time${castCount === 1 ? '' : 's'} this game; next cast costs an extra {${castCount * 2}}.`,
+        detail: `${name} — cast ${castCount} time${castCount === 1 ? '' : 's'} this game; next cast costs an extra {${commanderTax(castCount)}}.`,
       });
       return {
         ...prev,
@@ -593,7 +592,7 @@ export function useGameState() {
    * the second clause is explicitly about permanents *with a time counter
    * on them*, so a tracked Vanishing card with none left doesn't qualify.
    * Fading and Saga never count either way (neither uses time counters —
-   * see usesTimeCounters). Adds that many counters to Rose in one step
+   * see usesTimeCounters in @mtg/rules). Adds that many counters to Rose in one step
    * instead of the player counting the board by hand.
    */
   const roseAttacks = useCallback(() => {

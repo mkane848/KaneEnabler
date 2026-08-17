@@ -10,6 +10,14 @@ monorepo holding:
 - `apps/commander-recommender` — Commander recommender (React + Vite client, Express + SQLite server)
 - `apps/time-counters` — in-game counter companion for one specific Doctor Who deck
 - `packages/config` (`@mtg/config`) — shared tsconfig/ESLint/Prettier/Vitest bases both apps extend
+- `packages/rules` (`@mtg/rules`) — CR-cited Magic rules primitives shared by both apps: commander
+  eligibility, singleton limit, Partner/Background pairing, commander tax, color-identity subset
+  checks, counter taxonomy/turn steps, creature-type parsing, and commander format legality, plus
+  deck size and whole-deck color-identity validation (built and tested, not yet called from either
+  app's UI — see `docs/handoff.md`'s Phase 3b table). Consumed straight from `.ts` source by Vite
+  and time-counters, but also built to real CommonJS for commander-recommender/server's bare-Node
+  runtime (conditional package.json exports + a nested `dist/package.json` — see that package's
+  own `tsconfig.build.json` before changing its module settings)
 - `packages/mana` (`@mtg/mana`) — mana-cost parsing and the inlined glyph SVG paths both clients render
 - `packages/ui` (`@mtg/ui`) — a `Modal` built on Radix Dialog (focus trap, Escape, scroll lock);
   time-counters' five panels use it, commander-recommender's own Dialog usages are unmigrated (see

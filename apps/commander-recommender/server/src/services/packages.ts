@@ -12,7 +12,8 @@
  * thing you're missing, in your colors". The ranking below is a fit heuristic,
  * and it is ordered so the honest signal comes first.
  */
-import type { CardRow } from '../types';
+import { isWithinColorIdentity } from '@mtg/rules';
+import { parseJsonArray, type CardRow } from '../types';
 import type { Role } from './signals';
 import type { DeckAnalysis, SlotSuggestion } from './deckAnalysis';
 import { crossArchetypeSlot, lifecycleFor } from './lifecycle';
@@ -36,26 +37,15 @@ export const MAX_SUGGESTIONS_PER_SLOT = 15;
  */
 const THEMES_WITH_SUGGESTIONS = 3;
 
-/** Reads a color identity column, tolerating a malformed value. */
-function colorsOf(json: string | null): string[] {
-  if (!json) return [];
-  try {
-    const parsed = JSON.parse(json);
-    return Array.isArray(parsed) ? (parsed as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
 /** Every color the submitted list already plays. */
 export function collectionColors(rows: CardRow[]): Set<string> {
   const colors = new Set<string>();
-  for (const row of rows) for (const color of colorsOf(row.color_identity)) colors.add(color);
+  for (const row of rows) for (const color of parseJsonArray(row.color_identity)) colors.add(color);
   return colors;
 }
 
 function fitsColors(row: CardRow, allowed: Set<string>): boolean {
-  return colorsOf(row.color_identity).every((color) => allowed.has(color));
+  return isWithinColorIdentity(parseJsonArray(row.color_identity), allowed);
 }
 
 export interface SuggestionContext {

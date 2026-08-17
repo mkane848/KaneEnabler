@@ -269,14 +269,20 @@ server/                Express + TS + better-sqlite3
     services/
       parseList.ts            decklist text -> [{name, quantity}]; handles the major export formats
       singleton.ts             merges repeated cards and trims copies to what 903.5b allows,
-                                before anything is scored
-      partners.ts              builds every legal `CommanderUnit` (solo + Partner-family pairs)
-                                from the candidate pool — see "Partner/Background" below
+                                before anything is scored; the limit itself (`singletonLimit`) is
+                                `@mtg/rules`, this file is just the list-merge orchestration around it
+      partners.ts              a thin facade re-exporting `buildCommanderUnits`/`unitKey` from
+                                `@mtg/rules` (solo + Partner-family pairs, rule 702.124), plus this
+                                app's own `CommanderUnit = RulesCommanderUnit<CardRow>` alias — see
+                                "Partner/Background" below
       signals.ts               the signal model: what a card contributes to a deck's plan and in
                                 what capacity (role vocabulary is/produces/consumes/rewards/
                                 amplifies — see "Known risk areas"). Superseded the old flat
-                                "theme" regex-co-occurrence model. 879 lines; the largest file in
-                                the app and where most kindred/theme/keyword detection logic lives.
+                                "theme" regex-co-occurrence model. Largest file in the app and where
+                                most kindred/theme/keyword detection logic lives; `parseCreatureTypes`
+                                (CR 205.3m) moved out to `@mtg/rules`
+      legality.ts               `partitionSubmittedCards` (banned/not-found/submitted split for a
+                                 decklist); `isCommanderLegal` itself is `@mtg/rules`
       synergy.ts               profile-building + commander scoring (the core logic), operating on
                                 `CommanderUnit`s (1-2 cards), not single cards. Per-archetype
                                 weights are 16–22 (kindred 15, keyword 8) — see signals.ts, not a
@@ -308,8 +314,6 @@ server/                Express + TS + better-sqlite3
                                     real, distinct state
       bracket.ts               Game-Changer-count -> Bracket estimate (still computed and
                                 still on the API response, but its UI is hidden — see below)
-      eligibility.ts           front-face-only commander eligibility (CR 712.4); the reason
-                                Westvale Abbey is not a legal commander
       spellbook.ts             Commander Spellbook adapter: cache, backoff, response normalisation
   scripts/
     fetch-scryfall.ts        downloads current Oracle Cards bulk file (skips if a recent copy exists)
@@ -364,9 +368,12 @@ server/                Express + TS + better-sqlite3
   from a best reading of their API. If real responses come back empty, the
   field mapping in `normalizeVariant` is the first thing to check.
 
-- **`partners.ts`** — builds every legal `CommanderUnit` (rule 702.124: a
-  commander as actually played, one card or two) from the eligible candidate
-  pool: one solo unit per candidate, plus one pair per valid Partner,
+- **`partners.ts`** — this app's own file is now a thin facade; the logic
+  below lives in `@mtg/rules`' `partners.ts` (Phase 3b), generic over this
+  app's `CardRow` so every existing caller here needed zero changes. Builds
+  every legal `CommanderUnit` (rule 702.124: a commander as actually played,
+  one card or two) from the eligible candidate pool: one solo unit per
+  candidate, plus one pair per valid Partner,
   Partner—[text], Partner with [Name], Friends forever, Choose a Background,
   or Doctor's companion combination. A card with a partner ability still gets
   its own solo unit too — every variant is optional, so e.g. a Partner card
@@ -471,22 +478,24 @@ archetype * 20`. So a signal every playable card supports is worth its
   system does, but that's not reliably detectable from card text. This
   caveat is surfaced in the UI copy; keep it there if this logic changes.
 
-- **`eligibility.ts`** — commander eligibility, judged on a card's **front
-  face only**. A double-faced card has only its front face's characteristics
-  outside the battlefield (CR 712.4), and Scryfall's top-level `type_line`
-  for one is the two faces joined ("Land // Legendary Creature — Demon").
-  Reading that whole made Westvale Abbey look legal off the back face's
-  "Legendary" and "Creature" — it is a plain non-legendary land in the
-  command zone. Same reading fixes `flip` (Bushi Tenderfoot is not
-  legendary, only its flipped side is) and `adventure`. `split` is the
+- **`@mtg/rules`' `eligibility.ts`** — commander eligibility, judged on a
+  card's **front face only**. A double-faced card has only its front face's
+  characteristics outside the battlefield (CR 712.4), and Scryfall's
+  top-level `type_line` for one is the two faces joined ("Land // Legendary
+  Creature — Demon"). Reading that whole made Westvale Abbey look legal off
+  the back face's "Legendary" and "Creature" — it is a plain non-legendary
+  land in the command zone. Same reading fixes `flip` (Bushi Tenderfoot is
+  not legendary, only its flipped side is) and `adventure`. `split` is the
   documented exception and stays joined: one face, both halves'
   characteristics in every zone (CR 709.4).
 
-  Lives apart from `import-scryfall.ts`, its only caller, purely so it can
-  be tested against real card shapes without running an import. **This is
-  import-time**, so an existing `cards.sqlite` keeps the old flag until
-  re-imported — deploys rebuild from scratch every time, so it self-heals
-  there; locally, re-run `npm run import-scryfall`.
+  Moved here (from this app's own `server/src/services/eligibility.ts`) as
+  part of `@mtg/rules`' Phase 3b extraction — every Magic rule lives there
+  once, shared with `apps/time-counters`, rather than re-derived per app.
+  `import-scryfall.ts` is still its only caller in this app. **Eligibility is
+  computed at import time**, so an existing `cards.sqlite` keeps the old flag
+  until re-imported — deploys rebuild from scratch every time, so it
+  self-heals there; locally, re-run `npm run import-scryfall`.
 
   Note this also narrows `creature_types` to the front face: a card in your
   library is its front face, so Delver of Secrets counts toward Wizards

@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "prebuild": "pnpm --filter @mtg/rules build",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc",
     "lint": "eslint .",
@@ -21,6 +22,7 @@
     "prepare-data:fresh": "tsx scripts/fetch-scryfall.ts --force && npm run import-scryfall"
   },
   "dependencies": {
+    "@mtg/rules": "workspace:*",
     "@types/compression": "^1.8.1",
     "better-sqlite3": "^13.0.1",
     "compression": "^1.8.1",

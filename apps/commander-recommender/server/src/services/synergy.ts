@@ -6,6 +6,7 @@
  * The split matters: adding an archetype should mean editing a catalog, not
  * touching the scorer.
  */
+import { isWithinColorIdentity } from '@mtg/rules';
 import { parseJsonArray, type CardRow } from '../types';
 import type { CommanderUnit } from './partners';
 import {
@@ -276,7 +277,7 @@ export function scoreCommanders(
   for (const unit of units) {
     const identitySet = unitColorIdentity(unit);
     const fitsIdentity = ({ row }: OwnedCard) =>
-      parseJsonArray(row.color_identity).every((c) => identitySet.has(c));
+      isWithinColorIdentity(parseJsonArray(row.color_identity), identitySet);
 
     // Two counts on purpose. includedCardCount sums quantity and is what the
     // user is shown ("Fits N cards from your list"). The density denominator

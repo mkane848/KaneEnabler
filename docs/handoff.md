@@ -183,20 +183,24 @@ Typed functions, each citing the CR rule it implements, each tested against it. 
 here once; tools consume it and never re-derive it.** This is the answer to not wanting to revisit
 rules support every time a new feature is imagined.
 
-| Primitive                                          | CR                  | Source today                             |
-| -------------------------------------------------- | ------------------- | ---------------------------------------- |
-| `isCommanderEligible` / `frontFaceCharacteristics` | 903.3, 712.4, 709.4 | HKH `eligibility.ts`                     |
-| `singletonLimit` / `applySingletonLimits`          | 903.5b              | HKH `singleton.ts`                       |
-| `buildCommanderUnits` (all six Partner variants)   | 702.124             | HKH `partners.ts`                        |
-| `commanderTax(castCount)`                          | 903.10              | DWC — inlined in **3 places**            |
-| `isWithinIdentity` / `sortWubrg` / `identityName`  | 903.4               | split across both, 4 inline copies       |
-| Counter taxonomy: time vs fade vs lore             | 702.32, 702.62, 714 | DWC `counters.ts`                        |
-| Turn steps that matter (upkeep, precombat main)    | 500–514             | DWC — hardcoded twice                    |
-| `parseCreatureTypes`                               | 205.3m              | HKH `signals.ts`                         |
-| Format legality, ban list, Game Changers           | —                   | Scryfall fields; no hand-maintained list |
+| Primitive                                          | CR                  | Landed in `@mtg/rules`                                                                                                                                                                        |
+| -------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `isCommanderEligible` / `frontFaceCharacteristics` | 903.3, 712.4, 709.4 | `eligibility.ts` — moved wholesale from HKH's copy                                                                                                                                            |
+| `singletonLimit`                                   | 903.5b              | `singleton.ts` — the pure rule only; `applySingletonLimits`' list-merge orchestration isn't a Magic rule and stayed in HKH's `services/singleton.ts`, calling this                            |
+| `buildCommanderUnits` (all six Partner variants)   | 702.124             | `partners.ts` — HKH's own `services/partners.ts` is now a thin facade re-exporting this                                                                                                       |
+| `commanderTax(castCount)`                          | 903.10              | `commanderTax.ts` — DWC's 3 inline copies now call this                                                                                                                                       |
+| `isWithinColorIdentity`                            | 903.4               | `colorIdentity.ts` — every identity-subset check in both apps now calls this. `sortWubrg`/`identityName` stayed in HKH — display formatting, not a rule, and only ever had one implementation |
+| Counter taxonomy: time vs fade vs lore             | 702.32, 702.62, 714 | `counters.ts` — moved from DWC's `utils/counters.ts`                                                                                                                                          |
+| Turn steps that matter (upkeep, precombat main)    | 500–514             | `counters.ts` — same file; DWC's two hardcoded copies now call this                                                                                                                           |
+| `parseCreatureTypes`                               | 205.3m              | `creatureTypes.ts` — moved from HKH's `signals.ts`                                                                                                                                            |
+| Commander format legality                          | —                   | `legality.ts` — `isCommanderLegal` centralized here; ban list / Game Changers are still raw Scryfall fields, no primitive needed                                                              |
+| Deck size (100 cards)                              | 903.5a              | `deckLegality.ts` — new                                                                                                                                                                       |
+| Deck-wide colour-identity legality                 | 903.4               | `deckLegality.ts` — new (`combinedColorIdentity` + `findColorIdentityViolations`)                                                                                                             |
 
-Deck size (100 cards) and deck colour-identity legality are **not implemented anywhere today** —
-add them here.
+The last two are genuinely new: neither app has a deck-list-level validation feature today (both only
+score/suggest against a _submitted_ list, never validate a completed 100-card deck), so these two are
+tested and CR-cited but **not called from either app yet** — wire them in when a feature needs them,
+rather than leaving the rule undocumented until then.
 
 ## Phase 4 — Rules audit
 

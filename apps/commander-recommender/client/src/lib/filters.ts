@@ -1,3 +1,4 @@
+import { isWithinColorIdentity } from '@mtg/rules';
 import type { CommanderSuggestionDTO } from '../types';
 import { visibleThemeLabels } from './suggestions';
 
@@ -70,7 +71,7 @@ function matchesColors(suggestion: CommanderSuggestionDTO, selection: FilterSele
   const { include, exclude } = selection;
   if (include.length > 0) {
     const allowed = new Set(include);
-    if (!suggestion.colorIdentity.every((color) => allowed.has(color))) return false;
+    if (!isWithinColorIdentity(suggestion.colorIdentity, allowed)) return false;
   }
   if (exclude.length > 0) {
     const excluded = new Set(exclude);

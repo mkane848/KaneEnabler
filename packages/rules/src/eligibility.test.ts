@@ -5,13 +5,12 @@
  * Card shapes below mirror what Scryfall's bulk data actually contains —
  * notably that a DFC's top-level `type_line` is the two faces joined.
  */
-import assert from 'node:assert';
-import { describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   frontFaceCharacteristics,
   isCommanderEligible,
   type ScryfallCardLike,
-} from './eligibility';
+} from './eligibility.js';
 
 describe('isCommanderEligible', () => {
   // --- the reported bug -------------------------------------------------------
@@ -29,7 +28,7 @@ describe('isCommanderEligible', () => {
         { type_line: 'Legendary Creature — Demon', oracle_text: 'Flying, trample, haste' },
       ],
     };
-    assert.strictEqual(isCommanderEligible(westvaleAbbey), false);
+    expect(isCommanderEligible(westvaleAbbey)).toBe(false);
   });
 
   it('a flip card whose back is legendary is NOT eligible', () => {
@@ -46,7 +45,7 @@ describe('isCommanderEligible', () => {
         { type_line: 'Legendary Creature — Human Samurai', oracle_text: 'Double strike' },
       ],
     };
-    assert.strictEqual(isCommanderEligible(bushiTenderfoot), false);
+    expect(isCommanderEligible(bushiTenderfoot)).toBe(false);
   });
 
   // --- still eligible ---------------------------------------------------------
@@ -67,7 +66,7 @@ describe('isCommanderEligible', () => {
         },
       ],
     };
-    assert.strictEqual(isCommanderEligible(halvar), true);
+    expect(isCommanderEligible(halvar)).toBe(true);
   });
 
   it('an ordinary legendary creature is eligible', () => {
@@ -76,7 +75,7 @@ describe('isCommanderEligible', () => {
       type_line: 'Legendary Creature — Human Assassin',
       oracle_text: 'Whenever a creature you control dies, draw a card.',
     };
-    assert.strictEqual(isCommanderEligible(card), true);
+    expect(isCommanderEligible(card)).toBe(true);
   });
 
   it('a legendary Vehicle is eligible even with no "Creature" in its type', () => {
@@ -87,7 +86,7 @@ describe('isCommanderEligible', () => {
       type_line: 'Legendary Artifact — Vehicle',
       oracle_text: 'Crew 3',
     };
-    assert.strictEqual(isCommanderEligible(vehicle), true);
+    expect(isCommanderEligible(vehicle)).toBe(true);
   });
 
   it('a legendary Spacecraft is eligible with no power/toughness at all', () => {
@@ -102,7 +101,7 @@ describe('isCommanderEligible', () => {
       type_line: 'Legendary Artifact — Spacecraft',
       oracle_text: '{T}: Add {C}{C}{C}.\nStation (...)',
     };
-    assert.strictEqual(isCommanderEligible(spacecraft), true);
+    expect(isCommanderEligible(spacecraft)).toBe(true);
   });
 
   it('"can be your commander" on a non-creature still qualifies', () => {
@@ -112,7 +111,7 @@ describe('isCommanderEligible', () => {
       type_line: 'Legendary Planeswalker — Teferi',
       oracle_text: 'Teferi, Temporal Archmage can be your commander.',
     };
-    assert.strictEqual(isCommanderEligible(teferi), true);
+    expect(isCommanderEligible(teferi)).toBe(true);
   });
 
   it('an adventure creature is read from its creature face', () => {
@@ -124,7 +123,7 @@ describe('isCommanderEligible', () => {
         { type_line: 'Sorcery — Adventure', oracle_text: 'Destroy target artifact.' },
       ],
     };
-    assert.strictEqual(isCommanderEligible(adventurer), true);
+    expect(isCommanderEligible(adventurer)).toBe(true);
   });
 
   // --- not eligible -----------------------------------------------------------
@@ -135,7 +134,7 @@ describe('isCommanderEligible', () => {
       type_line: 'Creature — Human Wizard',
       oracle_text: 'Draw a card.',
     };
-    assert.strictEqual(isCommanderEligible(card), false);
+    expect(isCommanderEligible(card)).toBe(false);
   });
 
   it('a legendary non-creature permanent is not eligible', () => {
@@ -144,7 +143,7 @@ describe('isCommanderEligible', () => {
       type_line: 'Legendary Enchantment',
       oracle_text: 'Whenever you cast a spell, scry 1.',
     };
-    assert.strictEqual(isCommanderEligible(card), false);
+    expect(isCommanderEligible(card)).toBe(false);
   });
 
   it('"can be your commander" on a back face does not qualify the card', () => {
@@ -161,7 +160,7 @@ describe('isCommanderEligible', () => {
         },
       ],
     };
-    assert.strictEqual(isCommanderEligible(card), false);
+    expect(isCommanderEligible(card)).toBe(false);
   });
 });
 
@@ -178,9 +177,9 @@ describe('frontFaceCharacteristics', () => {
       ],
     };
     const { typeLine, oracleText } = frontFaceCharacteristics(split);
-    assert.strictEqual(typeLine, 'Instant // Instant');
-    assert.ok(oracleText.includes('Destroy target artifact.'));
-    assert.ok(oracleText.includes('Draw a card.'));
+    expect(typeLine).toBe('Instant // Instant');
+    expect(oracleText).toContain('Destroy target artifact.');
+    expect(oracleText).toContain('Draw a card.');
   });
 
   it('a single-faced card falls back to its top-level fields', () => {
@@ -190,14 +189,14 @@ describe('frontFaceCharacteristics', () => {
       oracle_text: 'Tap ten untapped Elves you control: win.',
     };
     const { typeLine, oracleText } = frontFaceCharacteristics(card);
-    assert.strictEqual(typeLine, 'Legendary Creature — Elf');
-    assert.strictEqual(oracleText, 'Tap ten untapped Elves you control: win.');
+    expect(typeLine).toBe('Legendary Creature — Elf');
+    expect(oracleText).toBe('Tap ten untapped Elves you control: win.');
   });
 
   it('missing fields degrade to empty strings rather than throwing', () => {
     const { typeLine, oracleText } = frontFaceCharacteristics({});
-    assert.strictEqual(typeLine, '');
-    assert.strictEqual(oracleText, '');
-    assert.strictEqual(isCommanderEligible({}), false);
+    expect(typeLine).toBe('');
+    expect(oracleText).toBe('');
+    expect(isCommanderEligible({})).toBe(false);
   });
 });

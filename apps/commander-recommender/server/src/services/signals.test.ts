@@ -16,7 +16,6 @@ import {
   buildVocabulary,
   detectSignals,
   hasActiveRole,
-  parseCreatureTypes,
   stripSelfReferences,
   type Role,
   type SignalMatch,
@@ -213,7 +212,7 @@ describe('token makers are kindred cards', () => {
 });
 
 describe('a bare word mention is not caring about the type', () => {
-  it("a card ruling a type out is not a kindred payoff for it", () => {
+  it('a card ruling a type out is not a kindred payoff for it', () => {
     // Artificial Evolution — real oracle text. It explicitly forbids the
     // result of its effect from becoming Wall, the opposite of caring about
     // Walls — but the word appears in a clause none of the intentional
@@ -447,77 +446,5 @@ describe('Voltron', () => {
       oracle_text: 'Equipped creature gets +1/+1 for each Equipment you control.\nEquip {2}',
     });
     assert.ok(rolesOf(signalsFor(gauntlets), 'voltron').includes('rewards'));
-  });
-});
-
-describe('creature types: the vocabulary the rest of this depends on', () => {
-  const CREATURE_TYPES = new Set(['Boar', 'Lhurgoyf', 'Knight', 'Goblin', 'Elf', 'Wall']);
-
-  it('a card with no subtypes has no creature types', () => {
-    assert.deepStrictEqual(parseCreatureTypes('Instant'), []);
-  });
-
-  it('a non-creature card contributes no creature types', () => {
-    // "Battle — Control Point" is the one that broke it: every card reading
-    // "creatures you control" was detected as caring about Control Kindred.
-    assert.deepStrictEqual(parseCreatureTypes('Battle — Control Point', CREATURE_TYPES), []);
-    assert.deepStrictEqual(parseCreatureTypes('Land — Cave', CREATURE_TYPES), []);
-    assert.deepStrictEqual(parseCreatureTypes('Artifact — Equipment', CREATURE_TYPES), []);
-    assert.deepStrictEqual(parseCreatureTypes('Enchantment — Aura', CREATURE_TYPES), []);
-  });
-
-  it("a creature card's non-creature subtypes are dropped", () => {
-    // The subtypes of one card are mixed and not positionally separable, so
-    // the catalog is what settles it.
-    assert.deepStrictEqual(
-      parseCreatureTypes('Artifact Creature — Equipment Boar', CREATURE_TYPES),
-      ['Boar'],
-    );
-    assert.deepStrictEqual(
-      parseCreatureTypes('Enchantment Creature — Saga Knight', CREATURE_TYPES),
-      ['Knight'],
-    );
-  });
-
-  it('Kindred cards carry creature types even without being creatures', () => {
-    assert.deepStrictEqual(
-      parseCreatureTypes('Kindred Enchantment — Lhurgoyf Aura', CREATURE_TYPES),
-      ['Lhurgoyf'],
-    );
-  });
-
-  it('without a catalog it falls back to type-line structure alone', () => {
-    // A database seeded before the catalog file existed still gets the
-    // Creature/Kindred gate rather than nothing.
-    assert.deepStrictEqual(parseCreatureTypes('Battle — Control Point'), []);
-    assert.deepStrictEqual(parseCreatureTypes('Creature — Goblin Wizard'), ['Goblin', 'Wizard']);
-  });
-
-  it('recognizes a multi-word creature type from the catalog instead of splitting it into two words', () => {
-    // "Time Lord" is Scryfall's only multi-word creature type today (verified
-    // against the live catalog/creature-types endpoint) — a word-by-word
-    // filter can never match it, since neither "Time" nor "Lord" is a type
-    // on its own.
-    const types = new Set(['Time Lord', 'Doctor', 'Wizard']);
-    assert.deepStrictEqual(parseCreatureTypes('Legendary Creature — Time Lord Doctor', types), [
-      'Time Lord',
-      'Doctor',
-    ]);
-  });
-
-  it('still recognizes ordinary single-word types alongside a multi-word one', () => {
-    const types = new Set(['Time Lord', 'Doctor', 'Wizard']);
-    assert.deepStrictEqual(
-      parseCreatureTypes('Legendary Creature — Time Lord Doctor Wizard', types),
-      ['Time Lord', 'Doctor', 'Wizard'],
-    );
-  });
-
-  it('drops a word that almost starts a multi-word type but does not complete it', () => {
-    // "Time Wizard" isn't a real type in this fixture's catalog — "Time"
-    // must not be kept on its own just because it's the first word of a
-    // different known multi-word type ("Time Lord").
-    const types = new Set(['Time Lord', 'Wizard']);
-    assert.deepStrictEqual(parseCreatureTypes('Creature — Time Wizard', types), ['Wizard']);
   });
 });

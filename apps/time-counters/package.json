@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@mtg/mana": "workspace:*",
+    "@mtg/rules": "workspace:*",
     "@mtg/ui": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"

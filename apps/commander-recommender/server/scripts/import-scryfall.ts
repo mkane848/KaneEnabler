@@ -1,14 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { frontFaceCharacteristics, isCommanderEligible } from '../src/services/eligibility';
+import { frontFaceCharacteristics, isCommanderEligible, parseCreatureTypes } from '@mtg/rules';
 import { faceNameEntries } from '../src/services/cardNames';
-import {
-  buildCardFacts,
-  buildVocabulary,
-  detectSignals,
-  parseCreatureTypes,
-} from '../src/services/signals';
+import { buildCardFacts, buildVocabulary, detectSignals } from '../src/services/signals';
 import type { CardRow } from '../src/types';
 import { IMPORT_VERSION, readSidecar } from '../src/services/dataSnapshot';
 import { readImportedSnapshot, writeImportedSnapshot } from '../src/services/importedSnapshot';

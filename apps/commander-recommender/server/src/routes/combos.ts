@@ -1,6 +1,6 @@
 import { Router } from 'express';
+import { isCommanderLegal, isWithinColorIdentity } from '@mtg/rules';
 import { isSeeded, findCardsByNames } from '../db';
-import { isCommanderLegal } from '../services/legality';
 import { parseCardList } from '../services/parseList';
 import { findCombos, SpellbookError } from '../services/spellbook';
 import { parseJsonArray, type CardRow } from '../types';
@@ -61,7 +61,7 @@ router.post('/combos', async (req, res) => {
   for (const entry of parsed) {
     const row = nameMap.get(entry.name.toLowerCase());
     if (!row || commanderOracleIds.has(row.oracle_id) || !isCommanderLegal(row)) continue;
-    if (parseJsonArray(row.color_identity).every((c) => identity.has(c))) {
+    if (isWithinColorIdentity(parseJsonArray(row.color_identity), identity)) {
       deckCards.push(row.name);
     }
   }
