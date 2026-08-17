@@ -1,0 +1,43 @@
+# NOTE: this app now lives at apps/commander-recommender/ inside the
+# KaneEnabler monorepo (docs/handoff.md Phase 0). If Render's Blueprint
+# for these services was already connected before that move, its
+# "render.yaml path" setting in the dashboard needs to point at
+# apps/commander-recommender/render.yaml — rootDir below is repo-root-relative
+# either way, but Render has to be told where to find this file first.
+services:
+  # Express API — builds its own SQLite card database from Scryfall's bulk
+  # data during the build step, since the free plan's filesystem is
+  # ephemeral. The data is static reference data (never written to at
+  # runtime), so rebuilding it on every deploy is the right tradeoff: no
+  # persistent disk needed, and the ban list / Game Changers list stay
+  # current each time you redeploy.
+  - type: web
+    name: mtg-recommender-server
+    runtime: node
+    plan: free
+    rootDir: apps/commander-recommender/server
+    # Unlike npm, pnpm installs devDependencies by default regardless of
+    # NODE_ENV — no --include=dev workaround needed. prepare-data/build still
+    # need tsx and tsc, both devDependencies.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run prepare-data && pnpm run build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  # Static Vite build. VITE_API_URL is wired to the server service's
+  # hostname automatically so you don't have to hardcode it. Static sites
+  # have no "plan" field — they're served free via CDN, not run on a
+  # compute instance like the server above.
+  - type: web
+    runtime: static
+    name: mtg-recommender-client
+    rootDir: apps/commander-recommender/client
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
+    staticPublishPath: dist
+    envVars:
+      - key: SERVER_HOST
+        fromService:
+          name: mtg-recommender-server
+          type: web
+          property: host

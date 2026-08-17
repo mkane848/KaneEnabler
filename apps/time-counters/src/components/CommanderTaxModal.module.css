@@ -1,0 +1,145 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 7, 20, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+}
+
+/*
+ * Radix portals Dialog.Overlay and Dialog.Content as siblings, not
+ * parent/child, so .sheet positions itself instead of relying on
+ * .backdrop's old flex centering — the standard "center a fixed element of
+ * unknown width" trick (left: 50% + translateX(-50%) works for both the
+ * 100%-wide and max-width-capped cases).
+ */
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 51;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 640px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding: 1.1rem 1.1rem 1.5rem;
+  box-shadow: var(--shadow-modal);
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 220ms ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateX(-50%) translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.portrait {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section {
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.section:first-of-type {
+  margin-top: 1rem;
+}
+
+.sectionTitle {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.taxBody {
+  font-size: 0.86rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.7rem;
+  line-height: 1.4;
+}
+
+.taxBody strong {
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+.counterRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.counterValue {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text);
+  min-width: 2ch;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.stepBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.stepBtn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.stepBtn:disabled {
+  opacity: 0.4;
+}

@@ -1,0 +1,2115 @@
+:root {
+  --ink: #17140f;
+  --ink-raised: #221d15;
+  --ink-border: #3a3225;
+  --parchment: #f4ecd8;
+  --parchment-dim: #e6d9b8;
+  --brass: #b8842a;
+  --brass-bright: #dba53f;
+  --text-primary: #f4ecd8;
+  --text-muted: #a89a80;
+  --ink-text: #241f16;
+  --ink-text-muted: #6b5f4a;
+
+  --pip-w: #f8f4e3;
+  --pip-w-ink: rgba(20, 16, 10, 0.82);
+  --pip-u: #0f6ab5;
+  --pip-u-ink: rgba(248, 244, 227, 0.92);
+  --pip-b: #2c2620;
+  --pip-b-ink: rgba(248, 244, 227, 0.92);
+  --pip-r: #c6362a;
+  --pip-r-ink: rgba(248, 244, 227, 0.92);
+  --pip-g: #1f7a45;
+  --pip-g-ink: rgba(248, 244, 227, 0.92);
+  --pip-c: #8c7a63;
+  --pip-c-ink: rgba(20, 16, 10, 0.82);
+  --pip-s: #c2d4e0;
+  --pip-s-ink: rgba(20, 16, 10, 0.82);
+  --pip-generic: #b3aaa1;
+  --pip-generic-ink: rgba(20, 16, 10, 0.82);
+
+  /* Destructive actions. Muted enough not to fight the brass accent, red
+     enough to read as "this removes something". */
+  --danger: #8c2f2f;
+  --danger-text: #f8f4e3;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--ink);
+  background-image:
+    radial-gradient(circle at 20% -10%, #2a2418 0%, transparent 45%),
+    radial-gradient(circle at 90% 10%, #241f17 0%, transparent 40%);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Safe-area insets keep the top of the page out from under a mobile URL bar
+   or notch, and the bottom clear of the home indicator. The max() means the
+   normal desktop padding still applies where the insets are zero. */
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: max(3rem, calc(env(safe-area-inset-top) + 1.5rem))
+    max(1.5rem, env(safe-area-inset-right)) max(4rem, calc(env(safe-area-inset-bottom) + 2rem))
+    max(1.5rem, env(safe-area-inset-left));
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.app-nav-brand {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  color: var(--brass-bright);
+}
+
+.app-nav-link {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.app-nav-link:hover {
+  border-color: var(--brass);
+}
+
+.app-header {
+  border-bottom: 1px solid var(--ink-border);
+  padding-bottom: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.app-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  line-height: 1.15;
+  margin: 0 0 0.9rem;
+  max-width: 20ch;
+}
+
+.app-subtitle {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 52ch;
+  margin: 0;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* Upload panel */
+
+.upload-panel {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.upload-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.upload-collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.upload-collapsed-summary {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.upload-collapse-toggle .explain-chevron {
+  margin-left: auto;
+  color: var(--brass);
+  font-size: 0.65rem;
+}
+
+.upload-collapsible {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.upload-textarea {
+  background: var(--parchment);
+  color: var(--ink-text);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 10px;
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 220px;
+}
+
+.upload-textarea::placeholder {
+  color: var(--ink-text-muted);
+}
+
+.upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.file-button {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.file-button:hover {
+  border-color: var(--brass);
+}
+
+.file-name {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.primary-button {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink-text);
+  background: var(--brass-bright);
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    background 0.15s ease;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--brass);
+}
+
+.primary-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Results */
+
+.status-error {
+  color: var(--pip-r);
+  font-weight: 500;
+}
+
+.status-empty {
+  color: var(--text-muted);
+}
+
+.status-waking {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--brass-bright);
+  margin: 0;
+}
+
+.results-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.results-summary details summary {
+  cursor: pointer;
+  color: var(--brass-bright);
+}
+
+.results-summary ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--text-muted);
+}
+
+.export-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.export-button {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 7px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.export-button:hover {
+  border-color: var(--brass);
+}
+
+.suggestion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Filters */
+
+.filter-bar {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  min-width: 4.5rem;
+}
+
+.filter-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.toggle-group {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.toggle-pip {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  padding: 0.2rem;
+  line-height: 0;
+  cursor: pointer;
+  opacity: 0.45;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.toggle-pip .pip {
+  font-size: 1.1rem;
+}
+
+.toggle-pip:hover {
+  opacity: 0.8;
+}
+
+/* Include/exclude read as color, not just a filled-in state, since both
+   are "active" — green ring to require a value, red ring to rule it out. */
+.toggle-pip-include {
+  opacity: 1;
+  border-color: #2e8c50;
+  box-shadow: 0 0 0 1px #2e8c50;
+}
+
+.toggle-pip-exclude {
+  opacity: 1;
+  border-color: var(--pip-r);
+  box-shadow: 0 0 0 1px var(--pip-r);
+}
+
+.toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.toggle-chip:hover {
+  border-color: var(--brass);
+  color: var(--text-primary);
+}
+
+.toggle-chip-include {
+  background: rgba(46, 140, 80, 0.18);
+  border-color: #2e8c50;
+  color: #dff5e5;
+}
+
+.toggle-chip-exclude {
+  background: rgba(198, 54, 42, 0.18);
+  border-color: var(--pip-r);
+  color: #ffd9d4;
+}
+
+.chip-mode-icon {
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  /* A flex item won't shrink below its min-content width by default, and
+     this one's is set by the longest option text — enough to push the bar
+     past the viewport on a phone. */
+  min-width: 0;
+}
+
+.sort-control select {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--ink);
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.filter-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--ink-border);
+  margin-top: 0.1rem;
+  padding-top: 0.75rem;
+}
+
+.filter-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.filter-clear,
+.link-button {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--brass-bright);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-button {
+  margin-left: 0.5rem;
+}
+
+.dismissed-note,
+.singleton-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Pagination */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  margin-top: 1.75rem;
+  /* Wraps so the jump box drops below the controls on a narrow screen
+     rather than squeezing the numbers. */
+  flex-wrap: wrap;
+}
+
+/* Type a page number. Only rendered once there are enough pages that the
+   numbered buttons start collapsing behind ellipses. */
+.page-jump {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.page-jump-input {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  /* Wide enough for four digits — a list long enough to need more pages than
+     that has other problems. */
+  width: 3.6rem;
+  padding: 0.35rem 0.4rem;
+  text-align: center;
+}
+
+.page-jump-input:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.page-jump-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.page-button {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.page-button:hover:not(:disabled) {
+  border-color: var(--brass);
+}
+
+.page-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-status {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Numbered page buttons. Wraps rather than overflowing: with a long result
+   set the ellipsis keeps this short, but a narrow screen can still run out
+   of room for first + window + last. */
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-number {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  /* min-width so single- and double-digit pages don't jitter the row width
+     as you move through them. */
+  min-width: 2rem;
+  padding: 0.35rem 0.4rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.page-number:hover {
+  border-color: var(--ink-border);
+  color: var(--text-primary);
+}
+
+.page-number.is-current {
+  color: var(--brass-bright);
+  border-color: var(--brass);
+  font-weight: 600;
+}
+
+.page-gap {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 0 0.1rem;
+}
+
+/* Reverses whichever sort mode is selected; sits beside that control. */
+.sort-direction {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.sort-direction:hover {
+  border-color: var(--brass);
+}
+
+.commander-card {
+  background: var(--parchment);
+  color: var(--ink-text);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--parchment-dim);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dismiss-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 6;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--ink-text-muted);
+  background: rgba(244, 236, 216, 0.85);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Revealed on hover, but never invisible while focused — :focus as well as
+   :focus-visible, so the control can't be focused-but-unseen however focus
+   arrived. Always visible on touch, where there is no hover to reveal it. */
+.commander-card:hover .dismiss-button,
+.commander-card:focus-within .dismiss-button,
+.dismiss-button:focus,
+.dismiss-button:focus-visible {
+  opacity: 1;
+}
+
+.dismiss-button:hover {
+  color: var(--pip-r);
+}
+
+@media (hover: none) {
+  .dismiss-button {
+    opacity: 1;
+  }
+}
+
+/* The cropped hero shot is what the grid wants — the whole card is a tap
+   away in the dialog, which is the only place it can be shown at its own
+   proportions without either distorting it or dictating the card's height. */
+.commander-art-trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+}
+
+.commander-image {
+  width: 100%;
+  display: block;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  object-position: top;
+  transition: transform 0.2s ease;
+}
+
+.commander-art-trigger:hover .commander-image {
+  transform: scale(1.03);
+}
+
+/* A Partner/Background pair shows both cards' art side by side rather than
+   picking one to represent the unit — neither card outranks the other
+   (702.124e). */
+.commander-image-row {
+  display: flex;
+}
+
+.commander-image-row .commander-art-trigger {
+  width: 50%;
+  /* Only the row's own outer corners round; a raw 14px on every trigger
+     would round both inner edges too, leaving a visible gap at the seam. */
+  border-radius: 0;
+}
+
+.commander-image-row .commander-art-trigger:first-child {
+  border-radius: 14px 0 0 0;
+}
+
+.commander-image-row .commander-art-trigger:last-child {
+  border-radius: 0 14px 0 0;
+}
+
+.commander-image-row .commander-image {
+  width: 100%;
+  aspect-ratio: 5 / 6;
+}
+
+/* One card's name/type/rules-text block within a commander unit. A solo
+   commander has one; a pair stacks two, separated by a rule so it reads as
+   two distinct cards rather than one confused card. */
+.commander-face {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.commander-face + .commander-face {
+  margin-top: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--parchment-dim);
+}
+
+.commander-body {
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  /* Fill the card so the footer's margin-top:auto has slack to push against.
+     Without this the body is only as tall as its content and the footers sit
+     at ragged heights once rules text lengths differ. */
+  flex: 1;
+}
+
+.commander-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* Both halves of a pair as one title. Slightly smaller than a solo name
+   because it carries two of them, and it wraps rather than truncating —
+   a commander's name is the one thing that must never be cut off. */
+.commander-name-pair {
+  font-size: 1.05rem;
+}
+
+.pair-plus {
+  color: var(--brass);
+  font-weight: 400;
+}
+
+/* Caption above each half's type line and rules text, telling you which card
+   the text belongs to. Deliberately quiet: the pair title above is the
+   heading, and this only needs to attribute. */
+.commander-face-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--brass);
+  margin: 0;
+}
+
+.pip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Mana pip: colored disc here, glyph from inlined SVG (see ManaSymbol and
+   ManaCost). Mirrors how printed symbols look — colored circle, contrasting
+   glyph, soft shadow. --pip-bg-a/-ink-a drive a single-color pip (set by
+   the .pip-* classes below); a hybrid additionally sets --pip-bg-b/-ink-b
+   and .pip-hybrid for the second half — see ManaCost.tsx, which is the only
+   caller that ever needs two colors in one disc, so those are set inline
+   per instance rather than as a fixed set of classes (there's no enumerating
+   36 color pairs). overflow keeps the hybrid gradient inside the circle. */
+.pip {
+  --pip-bg-a: var(--pip-c);
+  --pip-ink-a: var(--pip-c-ink);
+  position: relative;
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--pip-bg-a);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.pip svg {
+  width: 68%;
+  height: 68%;
+  display: block;
+  fill: var(--pip-ink-a);
+}
+
+.pip-w {
+  --pip-bg-a: var(--pip-w);
+  --pip-ink-a: var(--pip-w-ink);
+}
+.pip-u {
+  --pip-bg-a: var(--pip-u);
+  --pip-ink-a: var(--pip-u-ink);
+}
+.pip-b {
+  --pip-bg-a: var(--pip-b);
+  --pip-ink-a: var(--pip-b-ink);
+}
+.pip-r {
+  --pip-bg-a: var(--pip-r);
+  --pip-ink-a: var(--pip-r-ink);
+}
+.pip-g {
+  --pip-bg-a: var(--pip-g);
+  --pip-ink-a: var(--pip-g-ink);
+}
+.pip-c {
+  --pip-bg-a: var(--pip-c);
+  --pip-ink-a: var(--pip-c-ink);
+}
+.pip-s {
+  --pip-bg-a: var(--pip-s);
+  --pip-ink-a: var(--pip-s-ink);
+}
+.pip-generic {
+  --pip-bg-a: var(--pip-generic);
+  --pip-ink-a: var(--pip-generic-ink);
+}
+
+/* Hybrids are split corner to corner, each half tinted by its own symbol,
+   the same way they're printed. */
+.pip-hybrid {
+  background: linear-gradient(135deg, var(--pip-bg-a) 0 50%, var(--pip-bg-b) 50% 100%);
+}
+
+/* The two miniatures of a hybrid, tucked into opposite corners of the split. */
+.pip-half {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48%;
+  height: 48%;
+}
+.pip-half:first-child {
+  top: 6%;
+  left: 6%;
+}
+.pip-half:last-child {
+  right: 6%;
+  bottom: 6%;
+}
+.pip-half svg {
+  width: 100%;
+  height: 100%;
+}
+.pip-half:last-child svg {
+  fill: var(--pip-ink-b, var(--pip-ink-a));
+}
+
+/* Numerals and X/Y/Z, which have no glyph — drawn as text on the disc. */
+.pip-text {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.62em;
+  line-height: 1;
+  color: var(--pip-ink-a);
+}
+.pip-half .pip-text {
+  font-size: 0.4em;
+}
+.pip-half:last-child .pip-text {
+  color: var(--pip-ink-b, var(--pip-ink-a));
+}
+
+.pip-row .pip {
+  font-size: 1.05rem;
+}
+
+.identity-name {
+  margin-left: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-text-muted);
+}
+
+.commander-type {
+  font-size: 0.82rem;
+  color: var(--ink-text-muted);
+  margin: 0;
+}
+
+/* The rules text box, and the button wrapping it that opens the full card. */
+.commander-oracle-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  margin: 0.15rem 0 0;
+  padding: 0.6rem 0.7rem;
+  background: rgba(36, 31, 22, 0.05);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.commander-oracle-button:hover {
+  background: rgba(36, 31, 22, 0.09);
+  border-color: var(--brass);
+}
+
+/* pre-line keeps the break between each ability, which is how oracle text is
+   written and how players scan it. Clamped to four lines so a wordy commander
+   doesn't set the height for its whole row. */
+.commander-oracle {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.oracle-more {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #7a5615;
+}
+
+.badge-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0.15rem 0;
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.badge-bracket {
+  background: rgba(184, 132, 42, 0.18);
+  color: #7a5615;
+}
+
+.badge-gc {
+  background: rgba(198, 54, 42, 0.15);
+  color: var(--pip-r);
+}
+
+/* Relative match-strength badge + its hover/tap tooltip. Positioned so the
+   tooltip can float above the card without pushing other badges around. */
+.match-badge-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.badge-match {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  background: rgba(15, 106, 181, 0.15);
+  color: #0f5c9c;
+  transition: background 0.15s ease;
+}
+
+.badge-match:hover,
+.badge-match:focus-visible {
+  background: rgba(15, 106, 181, 0.25);
+}
+
+.match-tooltip {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: 15rem;
+  max-width: 60vw;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.match-badge-wrap:hover .match-tooltip,
+.match-badge-wrap:focus-within .match-tooltip,
+.match-badge-wrap.is-open .match-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.commander-meta {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.commander-tags {
+  font-size: 0.82rem;
+  margin: 0;
+  color: var(--ink-text-muted);
+}
+
+.commander-tags-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brass);
+  margin-right: 0.35rem;
+}
+
+.commander-bracket-note {
+  font-size: 0.78rem;
+  color: var(--ink-text-muted);
+  /* auto pushes the note and the toggle beneath it to the bottom of the
+     card, so those line up across a row even though rules text lengths
+     differ. Grid already equalises card heights within a row. */
+  margin: 0.4rem 0 0;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--parchment-dim);
+}
+
+/* "Why this commander?" disclosure */
+
+.explain-toggle {
+  margin-top: 0.6rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7a5615;
+  background: rgba(184, 132, 42, 0.12);
+  border: 1px solid rgba(184, 132, 42, 0.35);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.explain-toggle:hover {
+  background: rgba(184, 132, 42, 0.22);
+}
+
+.explain-chevron {
+  font-size: 0.6rem;
+}
+
+.explain-panel {
+  margin-top: 0.75rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--parchment-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.explain-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.explain-heading {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+  margin: 0;
+}
+
+/* Combos' heading + its "Hide/Show results" toggle, and the results' own
+   "Searched N cards" line + page-size picker — both need the label on the
+   left and a control pinned to the right without wrapping onto its own line. */
+.explain-section-header,
+.explain-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.explain-group-header .explain-group-desc {
+  margin: 0;
+}
+
+/* A <details>, so each group's cards start collapsed — expanding "Why this
+   commander?" should show the shape of the reasoning at a glance, not a
+   page-length wall of card names. Block rather than flex: a <details> has no
+   wrapper around its content, so flex would lay out the summary and every
+   sibling as flex items and fight the disclosure behaviour. */
+.explain-group {
+  display: block;
+}
+
+.explain-group > * + * {
+  margin-top: 0.35rem;
+}
+
+.explain-group-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.1rem 0;
+}
+
+/* The click-to-expand affordance (pointer cursor, chevron) belongs only to
+   an actual <summary> — CommanderCard's kindred/theme/keyword/Game Changer
+   groups. ComboFinder's Ready-to-go/Almost-there groups share the base
+   .explain-group-title typography above but are plain, non-collapsible <p>s
+   (each is already bounded by its own pagination instead), so they must not
+   inherit a "this expands" affordance that does nothing on click. */
+summary.explain-group-title {
+  cursor: pointer;
+  /* Suppress the native marker in both engines — the chevron below replaces
+     it, so it can sit at the end of the row rather than crowding the label. */
+  list-style: none;
+}
+
+summary.explain-group-title::-webkit-details-marker {
+  display: none;
+}
+
+summary.explain-group-title::after {
+  content: '▾';
+  display: inline-block;
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ink-text-muted);
+  transition: transform 120ms ease;
+}
+
+.explain-group[open] > summary.explain-group-title::after {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  summary.explain-group-title::after {
+    transition: none;
+  }
+}
+
+.explain-count {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--ink-text-muted);
+}
+
+.explain-group-desc {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0;
+}
+
+.support-cards {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--parchment-dim);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.support-card {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.78rem;
+  background: rgba(36, 31, 22, 0.04);
+}
+
+.support-card + .support-card {
+  border-top: 1px solid var(--parchment-dim);
+}
+
+.support-name-wrap {
+  flex: 1;
+  /* Lets the name truncate instead of overflowing past the mana value and
+     GC badges — a plain flex child has no min-width by default, so its
+     content would keep the row as wide as the longest name. */
+  min-width: 0;
+}
+
+.support-name {
+  /* A button, but it reads as the list's text — the underline on hover is
+     what says it's tappable, rather than a control's chrome in every row. */
+  display: block;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.support-name:hover,
+.support-name:focus-visible {
+  text-decoration: underline;
+  color: #7a5615;
+}
+
+/* Portalled to <body> by Radix HoverCard, so it escapes .support-cards'
+   own overflow: hidden (there for its rounded-corner row backgrounds)
+   instead of being clipped by it. */
+.card-hover-preview {
+  width: 200px;
+  max-width: 60vw;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  line-height: 0;
+}
+
+.card-hover-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* A standard card's proportions, reserved up front — without this the box
+     is 0-height until the image finishes loading, so it either doesn't
+     render at all yet or pops in and shoves the page under it once it does. */
+  aspect-ratio: 63 / 88;
+  background: var(--ink-raised);
+  object-fit: cover;
+}
+
+.support-qty {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-text-muted);
+  min-width: 1.5em;
+}
+
+.support-cost {
+  /* Shrinks before the name does when a row is tight, but never below the
+     pips' own width — a truncated mana cost would be misinformation, not
+     just clipped text. */
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.support-gc {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--pip-r);
+  background: rgba(198, 54, 42, 0.13);
+  border-radius: 4px;
+  padding: 0.05rem 0.25rem;
+}
+
+/* Card detail dialog */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 7, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+}
+
+.dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(94vw, 460px);
+  /* dvh rather than vh so a mobile URL bar sliding into view shrinks this
+     instead of pushing its top and bottom off-screen. */
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 21;
+  border-radius: 14px;
+}
+
+.dialog-card {
+  background: var(--parchment);
+  color: var(--ink-text);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Full-card dialog.
+   No aspect-ratio and no fixed height anywhere in here: the image keeps its
+   natural proportions and is bounded by the viewport, so a tall card scales
+   down on a short screen instead of being squashed into a box that doesn't
+   fit it. dvh (not vh) so a mobile URL bar sliding in doesn't crop it, and
+   the safe-area insets keep it clear of notches and home indicators. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.card-image-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(92vw, 460px);
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* Both bounds are in viewport units rather than percentages: the dialog is
+   position:fixed with an auto width, so a percentage here would resolve
+   against a box that is itself sized by this image, and collapse. */
+.card-image-full {
+  display: block;
+  max-width: min(92vw, 460px);
+  /* Leaves room for the footer line beneath the card. */
+  max-height: calc(100dvh - 5.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4.75% / 3.5%; /* matches the rounding of a real card */
+  box-shadow: 0 18px 44px rgba(12, 10, 7, 0.6);
+}
+
+.card-image-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.card-image-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-image-link {
+  font-size: 0.78rem;
+  color: var(--brass-bright);
+}
+
+/* Only rendered for a genuine two-sided card, so it never sits inert next to
+   a single-faced one. */
+.card-image-flip {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.card-image-flip:hover {
+  border-color: var(--brass);
+}
+
+.dialog-art {
+  width: 100%;
+  display: block;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  object-position: top;
+}
+
+.dialog-body {
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.dialog-titlebar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dialog-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.mana-cost {
+  display: inline-flex;
+  gap: 0.18rem;
+  flex: none;
+  font-size: 0.95rem;
+}
+
+.dialog-type {
+  font-size: 0.85rem;
+  color: var(--ink-text-muted);
+  margin: 0;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--parchment-dim);
+}
+
+.dialog-oracle {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  margin: 0;
+}
+
+.dialog-stats {
+  align-self: flex-end;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dialog-meta {
+  margin: 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--parchment-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.dialog-meta > div {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dialog-meta dt {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--brass);
+  min-width: 8.5rem;
+}
+
+.dialog-meta dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dialog-pips {
+  display: inline-flex;
+  gap: 0.2rem;
+  font-size: 0.95rem;
+}
+
+.dialog-link {
+  font-size: 0.8rem;
+  color: #7a5615;
+}
+
+/* 44px is the minimum comfortable touch target, and it matters most here:
+   this control sits at the top of the screen on mobile, right where the URL
+   bar and notch encroach. */
+.dialog-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink-text);
+  background: rgba(244, 236, 216, 0.9);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.dialog-close:hover {
+  color: var(--pip-r);
+}
+
+/* About dialog */
+
+.about-dialog-card {
+  /* No art strip like the card-detail dialog, so the body starts at the top. */
+  display: block;
+}
+
+.about-version {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.about-build-date {
+  opacity: 0.75;
+}
+
+.about-blurb {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0.9rem 0 0;
+}
+
+.about-credits {
+  margin-top: 1rem;
+}
+
+.about-credits a {
+  color: #7a5615;
+}
+
+.about-caveat {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 1rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--parchment-dim);
+}
+
+.about-caveat a {
+  color: #7a5615;
+}
+
+/* On the image dialog the close button overlays the card art rather than a
+   parchment panel, so it needs its own contrast to stay readable. */
+.card-image-close {
+  top: 0.4rem;
+  right: 0.4rem;
+  background: rgba(20, 16, 10, 0.75);
+  border-color: rgba(244, 236, 216, 0.4);
+  color: var(--text-primary);
+}
+
+.card-image-close:hover {
+  background: rgba(20, 16, 10, 0.9);
+}
+
+/* Combo lookup */
+
+.combo-button-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.combo-button {
+  align-self: flex-start;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-text);
+  background: var(--brass-bright);
+  border: none;
+  border-radius: 7px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.combo-button:hover {
+  background: var(--brass);
+}
+
+.combo-button-placeholder {
+  background: transparent;
+  color: var(--ink-text-muted);
+  border: 1px dashed var(--parchment-dim);
+  cursor: not-allowed;
+}
+
+.combo-button-placeholder:hover {
+  background: transparent;
+}
+
+.combo-error {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--pip-r);
+  margin: 0;
+}
+
+.combo-list {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.combo-item {
+  background: rgba(36, 31, 22, 0.05);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.combo-cards {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.combo-produces {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.combo-arrow {
+  color: var(--brass);
+  font-weight: 700;
+}
+
+.combo-produces-list {
+  font-weight: 600;
+  color: #7a5615;
+  background: rgba(184, 132, 42, 0.14);
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+}
+
+.combo-missing {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pip-r);
+  background: rgba(198, 54, 42, 0.1);
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+  margin: 0;
+}
+
+.combo-steps-details {
+  font-size: 0.75rem;
+}
+
+.combo-steps-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #7a5615;
+}
+
+.combo-steps-details summary::marker {
+  color: var(--brass);
+}
+
+.combo-steps {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0.35rem 0 0;
+  white-space: pre-line;
+}
+
+.combo-link,
+.combo-credit a {
+  font-size: 0.72rem;
+  color: #7a5615;
+}
+
+.combo-credit {
+  font-size: 0.72rem;
+  color: var(--ink-text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.explain-caveat {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--parchment-dim);
+}
+
+.app-footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ink-border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+  .primary-button {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* The export buttons sit on the same row as the match summary on desktop;
+     on a narrow screen they get their own full-width row instead of being
+     squeezed against the edge. */
+  .export-controls {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .export-button {
+    flex: 1;
+    padding: 0.5rem 0.7rem;
+  }
+
+  .sort-control {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sort-control select {
+    flex: 1;
+  }
+
+  /* Keyed to width rather than only to (hover: none): a phone-sized screen
+     wants a real touch target whether or not the browser claims a pointer,
+     and this is the control nearest the screen edge. */
+  .dismiss-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.35rem;
+  }
+}
+
+@media (hover: none) {
+  .dismiss-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.35rem;
+  }
+}
+
+/* Confirmation dialog for destructive actions. Narrower than the card
+   dialogs — it holds a sentence and two buttons, not artwork. */
+.confirm-dialog-card {
+  max-width: 26rem;
+}
+
+.confirm-description {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0.75rem 0 1.4rem;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.danger-button {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--danger-text);
+  background: var(--danger);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.danger-button:hover {
+  filter: brightness(1.12);
+}
+
+.danger-button:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* Shown above results when nothing cleared the quality bar. Bordered rather
+   than coloured like an error — the request succeeded, the answer is just
+   less confident than usual. */
+.weak-match-note {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-left: 3px solid var(--brass);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  margin: 0 0 1.25rem;
+}
+
+/* Deck summary — what the uploaded list is doing, and what it's missing */
+
+.deck-summary {
+  margin: 0 0 1.75rem;
+}
+
+.deck-summary h2 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
+  color: var(--text-primary);
+}
+
+.deck-summary-intro {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0 0 0.9rem;
+  max-width: 60ch;
+}
+
+.deck-themes {
+  display: grid;
+  /* Wider than the commander grid: these panels hold prose and card rows
+     rather than card art, and two columns of them at tablet width leaves
+     each too narrow to read. */
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.deck-theme {
+  background: var(--parchment);
+  color: var(--ink-text);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+}
+
+.deck-theme > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  cursor: pointer;
+  list-style: none;
+}
+
+.deck-theme > summary::-webkit-details-marker {
+  display: none;
+}
+
+.deck-theme-label {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.deck-theme-count {
+  font-size: 0.78rem;
+  color: var(--ink-text-muted);
+}
+
+.deck-theme-status {
+  margin-left: auto;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.deck-theme-status.is-complete {
+  color: #2f6b45;
+}
+
+.deck-theme-status.is-short {
+  color: #8c5a12;
+  /* The list of short slots can be long; let it wrap rather than push the
+     panel wider than its grid track. */
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.deck-theme-description {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0.55rem 0 0;
+}
+
+.deck-slots {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.deck-slot {
+  border-top: 1px solid var(--parchment-dim);
+  padding-top: 0.7rem;
+}
+
+.deck-slot-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.deck-slot-mark {
+  font-size: 0.85rem;
+}
+
+.deck-slot.is-filled .deck-slot-mark {
+  color: #2f6b45;
+}
+
+.deck-slot.is-short .deck-slot-mark {
+  color: #8c5a12;
+}
+
+.deck-slot-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.deck-slot-count {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--ink-text-muted);
+}
+
+/* Marked as a guess, and styled like one: quieter than the slot label it
+   sits beside, because the confidence behind it is lower. See
+   LifecycleSlot.commonlyMissing. */
+.slot-hint {
+  font-size: 0.7rem;
+  color: #8c5a12;
+  cursor: help;
+  border-bottom: 1px dotted currentColor;
+}
+
+.deck-slot-description {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--ink-text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.deck-slot-cards {
+  margin-top: 0.4rem;
+}
+
+.deck-slot-cards > summary {
+  font-size: 0.76rem;
+  color: #7a5a12;
+  cursor: pointer;
+}
+
+.slot-suggestions {
+  margin-top: 0.5rem;
+}
+
+.slot-suggestions-label {
+  font-size: 0.76rem;
+  color: var(--ink-text-muted);
+  margin: 0 0 0.25rem;
+}
+
+.slot-suggestions .link-button {
+  font-size: 0.76rem;
+  margin-top: 0.35rem;
+}
+
+.slot-also-fits {
+  font-size: 0.68rem;
+  color: var(--ink-text-muted);
+  white-space: nowrap;
+  /* Truncates rather than widening the row — the full list is in the
+     title attribute. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 9rem;
+}

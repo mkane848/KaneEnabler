@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# tsc -b (project references) emits these next to vite.config.ts as a
+# byproduct of type-checking it; the compiled output is never used.
+client/vite.config.js
+client/vite.config.d.ts
+
+# Local card database + downloaded Scryfall bulk data (large, regenerable)
+server/data/*.sqlite
+server/data/*.sqlite-*
+server/data/*.json
+server/data/*.jsonl
+server/data/*.jsonl.gz
+
+# Local env overrides (client/.env.example is the committed template)
+client/.env
+client/.env.local

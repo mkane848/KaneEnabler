@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.job }}-${{ github.sha }}
+          restore-keys: turbo-${{ github.job }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm turbo run lint
+      - run: pnpm turbo run typecheck
+      # No real Scryfall/card data needed for lint/typecheck/build — those
+      # don't touch server/data or public/cards.json, only running the app
+      # does (see each app's own docs). Keeps this job fast and independent
+      # of Scryfall being reachable from CI.
+      - run: pnpm turbo run test
+      - run: pnpm turbo run build

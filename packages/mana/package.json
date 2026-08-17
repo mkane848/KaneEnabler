@@ -1,0 +1,24 @@
+{
+  "name": "@mtg/mana",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gen-glyphs": "node scripts/gen-mana-glyphs.mjs"
+  },
+  "devDependencies": {
+    "@mtg/config": "workspace:*",
+    "eslint": "catalog:",
+    "globals": "^15.14.0",
+    "mana-font": "1.18.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

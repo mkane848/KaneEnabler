@@ -1,0 +1,4 @@
+{
+  "extends": "@mtg/config/tsconfig.base.json",
+  "include": ["src"]
+}

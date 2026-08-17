@@ -1,0 +1,7 @@
+{
+  "name": "mtg-commander-recommender",
+  "private": true,
+  "version": "1.7.1",
+  "license": "MIT",
+  "description": "Upload a Magic: The Gathering card list and get Commander suggestions based on synergies, ban-list legality, and estimated Bracket."
+}

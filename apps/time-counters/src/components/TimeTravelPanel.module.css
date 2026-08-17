@@ -1,0 +1,163 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 7, 20, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+}
+
+/*
+ * Radix portals Dialog.Overlay and Dialog.Content as siblings, not
+ * parent/child, so .sheet positions itself instead of relying on
+ * .backdrop's old flex centering — the standard "center a fixed element of
+ * unknown width" trick (left: 50% + translateX(-50%) works for both the
+ * 100%-wide and max-width-capped cases).
+ */
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 51;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 640px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding: 1.1rem 1.1rem 1.5rem;
+  box-shadow: var(--shadow-modal);
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 220ms ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateX(-50%) translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.title {
+  font-size: 1.1rem;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--color-accent-strong);
+  margin: 0.15rem 0 0.9rem;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55em 0.7em;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-soft);
+}
+
+.rowMeta {
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--tag-color, var(--color-text-muted));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rowRight {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.preview {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  min-width: 3.5ch;
+  text-align: right;
+}
+
+.choiceRow {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.choiceBtn {
+  padding: 0.35em 0.55em;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+
+.choiceBtn:last-child {
+  border-right: none;
+}
+
+.choiceBtn:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+.choiceBtnActive {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.actions {
+  display: flex;
+  margin-top: 1rem;
+}
+
+.actions .btn {
+  flex: 1;
+}

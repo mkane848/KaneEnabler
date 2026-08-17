@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+.turbo
+pnpm-lock.yaml
+
+# Generated/vendored data, not hand-formatted source
+apps/commander-recommender/server/data
+apps/time-counters/public/cards.json
+packages/rules/data

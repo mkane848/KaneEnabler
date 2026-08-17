@@ -14,13 +14,13 @@ don't look like network changes. They look like refactors.
 
 ### Scryfall
 
-| Constraint | Detail |
-|---|---|
-| Rate | ≤10 requests/second sustained (100ms spacing). `/cards/collection` is capped tighter at 2/second. |
-| Headers | A descriptive `User-Agent` **and** an `Accept` header on **every** request. Scryfall answers HTTP 400 without them — this broke a real deploy of the recommender. |
-| Caching | Cache downloaded data locally for **at least 24 hours**. Prices update once daily; fetching more often gains nothing. |
-| Bulk | For mass lookups (names, images, prices), use the bulk-data exports. Never loop per-card against the API. |
-| Backoff | On 429 or 503, retry with exponential backoff and jitter — or don't retry at all. |
+| Constraint | Detail                                                                                                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rate       | ≤10 requests/second sustained (100ms spacing). `/cards/collection` is capped tighter at 2/second.                                                                 |
+| Headers    | A descriptive `User-Agent` **and** an `Accept` header on **every** request. Scryfall answers HTTP 400 without them — this broke a real deploy of the recommender. |
+| Caching    | Cache downloaded data locally for **at least 24 hours**. Prices update once daily; fetching more often gains nothing.                                             |
+| Bulk       | For mass lookups (names, images, prices), use the bulk-data exports. Never loop per-card against the API.                                                         |
+| Backoff    | On 429 or 503, retry with exponential backoff and jitter — or don't retry at all.                                                                                 |
 
 **Enforced in:** `packages/scryfall` (`@mtg/scryfall`), which is the single choke point for all
 Scryfall traffic. No app should construct a Scryfall request directly.
@@ -28,16 +28,16 @@ Scryfall traffic. No app should construct a Scryfall request directly.
 ### Commander Spellbook
 
 The politeness measures here are the reason calling them is acceptable at all. From
-`server/src/services/spellbook.ts:1-17` in the recommender:
+`apps/commander-recommender/server/src/services/spellbook.ts:1-17`:
 
-| Constraint | Detail |
-|---|---|
-| Trigger | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation. |
-| Endpoint | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database. |
-| Caching | 1 hour, keyed on commander names + card set. Repeat clicks cost them nothing. |
-| 429 | Surface their `Retry-After` to the user and **stop**. No automatic retry. |
-| Bounds | `MAX_CARDS = 250`; 12s request timeout. |
-| Identity | Identifying `User-Agent` naming the app and linking the repo. |
+| Constraint | Detail                                                                                              |
+| ---------- | --------------------------------------------------------------------------------------------------- |
+| Trigger    | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation. |
+| Endpoint   | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database.         |
+| Caching    | 1 hour, keyed on commander names + card set. Repeat clicks cost them nothing.                       |
+| 429        | Surface their `Retry-After` to the user and **stop**. No automatic retry.                           |
+| Bounds     | `MAX_CARDS = 250`; 12s request timeout.                                                             |
+| Identity   | Identifying `User-Agent` naming the app and linking the repo.                                       |
 
 **Favorited combos must render from a stored snapshot, never a live call.** See
 [`handoff.md`](./handoff.md) Phase 7.

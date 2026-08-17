@@ -1,0 +1,139 @@
+# Changelog
+
+All notable changes to this project are documented in this file. The format
+is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
+this project follows [Semantic Versioning](https://semver.org/).
+
+## [1.2.1] - 2026-08-16
+
+### Fixed
+
+- **Fading permanents were flagged "ready to sacrifice" one upkeep early.**
+  Rule 702.32b sacrifices a Fading permanent on the upkeep a fade-counter
+  removal _fails_ — one upkeep after the count reaches 0 — not the upkeep
+  it gets there, unlike Vanishing. The card now sits at 0 for one full turn
+  before the resolve callout appears, on both the tile and the Next Turn
+  summary. A manual count edit that restores counters above 0 (via the
+  stepper or the exact-count field) un-does that flag if it was set.
+- **Manually editing a Saga's lore counter could silently skip chapter
+  abilities.** Setting or stepping the count with the stepper or the
+  exact-count field never checked which chapters the change crossed, so
+  jumping from 0 to 2 fired neither chapter I nor II — only chapter III
+  would fire later, and never again after that. Manual edits now catch up
+  every chapter ability the jump crosses, the same way Next Turn's
+  precombat-main step already did, and the Game Log entry names which
+  chapter(s) triggered. Moving the count back down still can't un-trigger
+  a chapter already recorded.
+- **Bad Wolf could under-count suspended cards.** Rose Tyler's trigger has
+  two separate clauses — "each suspended card you own" (unconditional) and
+  "each other permanent you control with a time counter on it" (needs a
+  counter still on it) — collapsed into one check that required a counter
+  either way. A suspended card that already lost its last counter now still
+  contributes; a Vanishing permanent in the same state correctly doesn't.
+- **Time Travel offered a suspended card as a target even after it had
+  already been cast.** The target list checked mechanic only, not whether
+  a counter was actually left — once the last one's removed, the card has
+  already resolved (rule 702.61) and isn't a legal Time Travel target,
+  which the −1 button already silently assumed (disabled at 0) while +1
+  stayed clickable. Both Suspend and Vanishing cards now drop off the
+  target list entirely once they're out of counters, instead of sitting
+  there with only half their buttons disabled.
+- **A modal double-faced card's mana cost could show up to five pips
+  instead of one.** `scripts/fetch-card-data.mjs` fell back to joining
+  both faces' mana costs with " // " when a card had none at the top
+  level — which every modal DFC doesn't, since it's cast as one face or
+  the other, never both. `"{1}{G} // {3}{G}{G}"` then read as five
+  separate symbols to the mana-cost renderer. Now takes the front face's
+  own cost only, the same front-face principle already used for commander
+  eligibility elsewhere in this project's sibling app. Takes effect on the
+  next `pnpm run fetch-cards`; the committed catalog is unaffected until
+  then, since this environment can't reach Scryfall's bulk data.
+- **The five modal panels (Commander tax, Time Travel, Game Log, Turn
+  summary, About) now trap focus, restore it on close, and close on
+  Escape.** Each was a hand-rolled backdrop and dialog pair that asserted
+  `aria-modal="true"` without enforcing it: Tab could reach the page behind
+  an open dialog, closing one left focus stranded with nowhere to go, and
+  there was no keyboard way to dismiss one at all. All five now share
+  `@mtg/ui`'s `Modal` component (built on Radix Dialog), which also adds
+  scroll lock behind an open dialog — previously the page could scroll out
+  from under it.
+
+## [1.2.0] - 2026-08-11
+
+### Added
+
+- **Casting a commander now shows it as a card on the board**, right
+  alongside everything else being tracked, until it's sent back to the
+  command zone (a one-tap action from its field tile or the tax modal).
+  Returning to the command zone never resets the tax (rule 903.10) —
+  that persists for the whole game regardless of zone changes.
+
+### Changed
+
+- **The board is now one flat grid instead of a section per counter
+  mechanic.** Each mechanic's own header + grid was wasting a lot of
+  vertical space on mobile, especially with only a card or two in a
+  section. Cards are still sorted by mechanic and urgency, but the sole
+  cue distinguishing them now is each tile's colored top accent and badge
+  (a new violet for a commander's field tile, the existing per-mechanic
+  colors for everything else) instead of a row break.
+
+## [1.1.1] - 2026-08-11
+
+### Fixed
+
+- **Render deploys were failing at the `fetch-cards` build step.** Scryfall
+  retired the plain-JSON `download_uri` on its bulk-data index in favor of
+  a gzip-compressed JSON-Lines `jsonl_download_uri`, so the catalog build
+  was fetching `undefined` and crashing before `vite build` ever ran.
+  `scripts/fetch-card-data.mjs` now reads the new field and decompresses/
+  parses the JSON-Lines file; verified against the live Scryfall API
+  (18,407 Jeskai-legal cards written).
+
+## [1.1.0] - 2026-08-11
+
+### Added
+
+- **Commander tax tracking.** Tap either commander's portrait (or name) in
+  the header to open a per-commander tracker: how many times it's been
+  cast from the command zone this game and the resulting tax (rule
+  903.10 — +{2} per previous cast), with a one-tap "Cast from the command
+  zone" action.
+- **Rose Tyler's Bad Wolf counters**, tracked in that same modal: her own
+  time counters (she's +1/+1 per counter) with manual +/− controls, plus a
+  "Rose attacks" action that counts this game's tracked Suspend cards and
+  Vanishing permanents for you and applies that many counters in one tap,
+  instead of counting the board by hand every combat.
+- **The Tenth Doctor's Timey-Wimey** shortcut in his modal, opening Time
+  Travel pre-set to three passes.
+- **Saga support** as a full mechanic: enter chapter I/II/III (or more)
+  text when adding a Saga, and each chapter ability now triggers
+  individually — with its own text shown — exactly when its lore count is
+  reached, not just at the final chapter. A Saga's tile shows its current
+  chapter as a standing reference, not just a one-time popup.
+- The turn cycle is now rules-accurate under the hood: Next Turn runs
+  **upkeep** (Suspend/Vanishing/Fading count down) and **precombat main**
+  (Sagas gain a lore counter) as two ordered steps in one action, and the
+  summary groups what happened by step.
+
+### Fixed
+
+- **Time Travel no longer offers Fading or Saga cards** as targets — Fading
+  uses fade counters and Saga uses lore counters (rules 702.32 and Saga's
+  own rules), neither of which is the time counter Time Travel and Bad Wolf
+  actually care about. Only Suspend, Vanishing, and (once she has any) Rose
+  Tyler's own Bad Wolf counters are eligible now.
+
+## [1.0.0] - 2026-07-26
+
+First versioned release. The app itself predates this file — Suspend,
+Vanishing, and Fading tracking, the virtual-tabletop card grid, Next Turn
+and Time Travel, the Game Log, the Doctor Who/Claude themes, and token
+support were all already in place. This release adds:
+
+### Added
+
+- An **About** link in the header, opening a modal with the app version,
+  credits (Scryfall card data, the mana-font project, Google Fonts, built
+  with Claude), and links to the source repo and this changelog.
+- Semantic versioning, tracked here from this point forward.

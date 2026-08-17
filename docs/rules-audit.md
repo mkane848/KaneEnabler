@@ -2,11 +2,14 @@
 
 Findings from a review of the Magic: The Gathering rules logic in both incoming projects. Line
 references are against the state of each repo at the point of consolidation
-(`HardlyKnowHer` @ `25d978c`, `DrWhoCompanionEDH` @ `ecf9037`); paths are repo-relative and will
-gain an `apps/<name>/` prefix once Phase 0 lands.
+(`HardlyKnowHer` @ `25d978c`, `DrWhoCompanionEDH` @ `ecf9037`). Phase 0 has landed: prepend
+`apps/commander-recommender/` to every `HardlyKnowHer` path below (e.g. `server/src/db.ts` →
+`apps/commander-recommender/server/src/db.ts`) and `apps/time-counters/` to every
+`DrWhoCompanionEDH` path (e.g. `src/hooks/useGameState.ts` →
+`apps/time-counters/src/hooks/useGameState.ts`). Line numbers are unchanged from the cited commits.
 
 **Working assumption: the legacy logic is not necessarily correct.** Both codebases are unusually
-well-documented and cite Comprehensive Rules numbers in comments, which makes them *easier* to
+well-documented and cite Comprehensive Rules numbers in comments, which makes them _easier_ to
 audit, not automatically right. Several defects below sit directly underneath a comment that
 describes the correct rule.
 
@@ -20,8 +23,8 @@ Each item should get a **failing test first**, then the fix.
 
 **`DrWhoCompanionEDH`** — `src/hooks/useGameState.ts:43-46`, `src/utils/counters.ts:76-77`
 
-CR 702.32b: *"At the beginning of your upkeep, remove a fade counter from it. **If you can't,
-sacrifice it.**"* The sacrifice happens on the upkeep at which you cannot remove a counter — so
+CR 702.32b: _"At the beginning of your upkeep, remove a fade counter from it. **If you can't,
+sacrifice it.**"_ The sacrifice happens on the upkeep at which you cannot remove a counter — so
 **Fading N gives you N+1 turns**, while Vanishing N gives you N.
 
 The app treats the two identically: `hasHitTarget` returns true at `count <= 0` for both, and
@@ -29,7 +32,7 @@ The app treats the two identically: `hasHitTarget` returns true at `count <= 0` 
 therefore reported as dying one turn before it actually does.
 
 This is the clearest correctness bug found in either project, and it is notable that the same file
-gets the *harder* distinction right — `usesTimeCounters` correctly excludes fade and lore counters
+gets the _harder_ distinction right — `usesTimeCounters` correctly excludes fade and lore counters
 from time-counter effects (`counters.ts:100-110`).
 
 ### 2. Manual count edits bypass Saga chapter triggering
@@ -43,16 +46,16 @@ Concretely: a Saga at 0 lore counters, manually set to 2, fires **no** chapter a
 chapters I and II are silently lost.
 
 The doc comment at `counters.ts:126-128` claims the logic "stays correct if a manual edit or Time
-Travel jumps the count by more than one." That is true of the *function* and false of its *call
-sites*. `CLAUDE.md:85-89` names this exact bug class ("always trigger per-chapter, never just check
+Travel jumps the count by more than one." That is true of the _function_ and false of its _call
+sites_. `CLAUDE.md:85-89` names this exact bug class ("always trigger per-chapter, never just check
 the final target") — the helper honours it, the callers don't.
 
 ### 3. Bad Wolf under-counts suspended cards
 
 **`DrWhoCompanionEDH`** — `src/hooks/useGameState.ts:437`
 
-Rose Tyler's trigger counts *"each suspended card you own and each **other** permanent you control
-with a time counter on it."* Those are two clauses with different conditions, collapsed into one
+Rose Tyler's trigger counts _"each suspended card you own and each **other** permanent you control
+with a time counter on it."_ Those are two clauses with different conditions, collapsed into one
 predicate: `usesTimeCounters(c.mechanic) && c.count > 0`.
 
 `count > 0` is correct for the second clause — a permanent with no time counters isn't "a permanent
@@ -85,7 +88,7 @@ more than theoretical.
 
 **`HardlyKnowHer`** — `server/src/db.ts:110`, `server/src/services/synergy.ts`
 
-Only *commanders* are filtered by `legality_commander = 'legal'`. A banned card sitting in the
+Only _commanders_ are filtered by `legality_commander = 'legal'`. A banned card sitting in the
 submitted list still counts as synergy support and can be cited as a reason for a suggestion.
 
 ### 7. Commander eligibility doesn't check the power/toughness box
@@ -120,9 +123,9 @@ Two different implementations detect card signals from the same cards:
   Used by the deck analyser.
 - `unitSignals` — computed per request, vocabulary scoped to the submitted list. Used by the scorer.
 
-`import-scryfall.ts:191-197` argues the precomputed path is *more* correct. The scorer should read
-the table. Doing so also eliminates redundant recomputation: a card appearing in *k* Partner pairs
-is currently processed *k+1* times per request.
+`import-scryfall.ts:191-197` argues the precomputed path is _more_ correct. The scorer should read
+the table. Doing so also eliminates redundant recomputation: a card appearing in _k_ Partner pairs
+is currently processed _k+1_ times per request.
 
 **This is the largest single inconsistency in either codebase.**
 
@@ -130,7 +133,7 @@ is currently processed *k+1* times per request.
 
 **`HardlyKnowHer`** — `server/src/services/signals.ts:656-667` (`candidateTypes`), `:707` (catch-all)
 
-`candidateTypes` harvests creature types from *every word* of a card's oracle text, and
+`candidateTypes` harvests creature types from _every word_ of a card's oracle text, and
 `detectKindred` ends with a catch-all that grants an active `rewards` role for any remaining
 mention. Together, any card whose rules text happens to contain a common English word that is also
 a creature type — Wall, Scout, Seal, Elder, Noble, Citizen, Mount, Guest, Toy — becomes a kindred
@@ -246,7 +249,7 @@ enforced. The sibling project gets all of this from Radix Dialog.
 ### 22. Theme token bypassed in the header
 
 **`DrWhoCompanionEDH`** — `src/components/Header.module.css:5` hardcodes `rgba(20, 22, 43, 0.92)`,
-which is the *Claude* theme's background colour. The sticky header therefore renders in the wrong
+which is the _Claude_ theme's background colour. The sticky header therefore renders in the wrong
 theme's colour under the Doctor Who theme — contradicting the project's own documented rule that
 every component reads colour from CSS custom properties.
 
@@ -264,6 +267,6 @@ Recorded so a future reader doesn't "fix" them:
 - **Sacrifice detection requiring an indefinite object** (`signals.ts:443`). A fetch land
   sacrificing itself is not the Aristocrats archetype.
 - **Reminder text stripped before signal detection** (`signals.ts:373-375`).
-- **Kindred requiring the card to *care* about a type, not merely *have* it.**
+- **Kindred requiring the card to _care_ about a type, not merely _have_ it.**
 - **Never writing oracle text from memory** — Scryfall has moved much self-referential wording to
   "this creature"/"this land", which silently broke two rules written from recall.

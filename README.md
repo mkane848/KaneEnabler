@@ -5,33 +5,31 @@ were built independently, so the game's rules are modelled once and shared by ev
 
 ## Status
 
-Consolidation hasn't started yet. The repo currently holds two submodules:
+Phase 0 (consolidation) and Phase 1 (pnpm + Turborepo toolchain baseline) are done — see
+[`docs/handoff.md`](./docs/handoff.md) for exactly what that covers and what's next.
 
-| Project | What it does |
-|---|---|
-| [HardlyKnowHer](https://github.com/mkane848/HardlyKnowHer) | Paste a card list, get ranked Commander suggestions with cited synergies, ban-list legality, and Partner/Background pairing |
-| [DrWhoCompanionEDH](https://github.com/mkane848/DrWhoCompanionEDH) | In-game counter companion for a Jeskai *Doctor Who* Commander deck — Suspend, Vanishing, Fading, Sagas, commander tax, Time Travel |
+| App                                                          | What it does                                                                                                                       |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [`apps/commander-recommender`](./apps/commander-recommender) | Paste a card list, get ranked Commander suggestions with cited synergies, ban-list legality, and Partner/Background pairing        |
+| [`apps/time-counters`](./apps/time-counters)                 | In-game counter companion for a Jeskai _Doctor Who_ Commander deck — Suspend, Vanishing, Fading, Sagas, commander tax, Time Travel |
 
-To check them out:
-
-```bash
-git submodule update --init --recursive
-```
+`pnpm install` at the repo root installs the whole workspace; see [`CLAUDE.md`](./CLAUDE.md) for
+the full command reference (`pnpm turbo run build/typecheck/lint/test`, per-app `pnpm dev`, etc.).
 
 ## Where this is going
 
 ```
 apps/
-  commander-recommender/    HardlyKnowHer
+  commander-recommender/    HardlyKnowHer — client/ + server/, each its own package
   time-counters/            DrWhoCompanionEDH
 packages/
+  config/         shared tsconfig / eslint / prettier / vitest bases — done
   rules/          CR-cited rules primitives + a vendored Comprehensive Rules snapshot
   scryfall/       bulk-data client
   card-model/     one normalized Card, one Scryfall projector
   mana/           mana glyphs, cost parsing, pips
   ui/             shared accessible primitives
   profile/        user preferences (liked/disliked cards, commanders, combos)
-  config/         shared tsconfig / eslint / prettier / vitest bases
 ```
 
 The point of the `packages/rules` layer is that adding a new tool shouldn't mean re-implementing
