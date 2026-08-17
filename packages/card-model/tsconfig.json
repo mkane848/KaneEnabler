@@ -1,0 +1,13 @@
+{
+  "extends": "@mtg/config/tsconfig.base.json",
+  "compilerOptions": {
+    // Plain .mjs, not .ts, throughout this package — see src/index.mjs's
+    // doc comment for why. checkJs types the JSDoc annotations the same way
+    // real .ts would be checked; noEmit is inherited from the base but
+    // stated again here since there is genuinely nothing to build — the
+    // source *is* the artifact both consumers import directly.
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["src"]
+}

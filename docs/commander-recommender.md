@@ -320,7 +320,9 @@ server/                Express + TS + better-sqlite3
     import-scryfall.ts       parses that file into server/data/cards.sqlite + card_face_names;
                              also detects Partner-family abilities and Background enchantments
                              (rule 702.124) from oracle text, and stores each DFC's back-face
-                             image/name for the art preview's flip control
+                             image/name for the art preview's flip control. Front-face-aware field
+                             reads (mana cost, power, toughness, images, back name) come from
+                             @mtg/card-model, not hand-rolled here — see docs/handoff.md's Phase 2
     test-parse-list.ts        npm test — parser cases (node:assert via tsx)
     test-spellbook.ts          npm test — Spellbook adapter cases, against a local mock
     test-bracket.ts             npm test — Bracket-estimate cases

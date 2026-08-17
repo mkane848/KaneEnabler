@@ -131,23 +131,54 @@ sidecar-written-last discipline; adopt DWC's `output.length < 1000` floor check 
 
 One `User-Agent` constant, derived from `package.json` — see [`api-policy.md`](./api-policy.md).
 
-### `@mtg/card-model`
+### `@mtg/card-model` — landed narrower than planned above, and why
 
-One normalised `Card` plus one `fromScryfall()` owning all face/DFC rules. There are currently three
-card shapes (`CardData`, `CommanderCardDTO`, `CardRow`) with ~7 of 9 core fields overlapping across
-three naming conventions.
+The original plan was one normalised `Card` plus one `fromScryfall()` owning all face/DFC rules,
+reasoning that `CardData`, `CommanderCardDTO`, and `CardRow` had ~7 of 9 core fields overlapping.
+Two things changed that by the time this phase actually ran:
 
-Two landmines to preserve rather than paper over:
+- **`CardRow` grew a lot of import-time-computed fields that were never raw Scryfall data in the
+  first place** — `is_commander_eligible`, `legality_commander`, `game_changer`, `partner_ability`/
+  `partner_target`, `is_background`. A "normalised Card" that included these would be modelling this
+  app's own derived facts, not Scryfall's; one that excluded them would be a much smaller overlap
+  with `CardRow` than the ~7/9 estimate assumed.
+- **Phase 3b landed first and already centralised the hardest part.** `frontFaceCharacteristics`
+  (front-face-only `type_line`/`oracle_text`, CR 712.4 — the actual domain knowledge behind audit
+  item 14, the client-side MDFC mana-cost bug that was already fixed directly) now lives in
+  `@mtg/rules`, tested and shared by both apps. There was no eligibility-adjacent face logic left
+  for this package to own.
 
-- `CardData.id` is Scryfall's **printing** id; HKH keys everything on `oracle_id`. Same field name,
-  different identifier space.
-- `CardData.oracleText` is populated **only** for time-counter cards (~100 of ~18,000). A shared
-  type declaring `oracleText?: string` would silently lie for the rest. Keep it a caller-supplied
-  projection option.
+What was still genuinely duplicated, once eligibility was out of the picture, was narrower: how
+`server/scripts/import-scryfall.ts` and `time-counters/scripts/fetch-card-data.mjs` each
+independently read a face-aware field (mana cost, power, toughness), an image URI, and a back
+face's name/picture off a raw Scryfall card object — plus, in the process of comparing the two,
+**a real bug**: `import-scryfall.ts`'s own `mana_cost` read had no front-face fallback at all (unlike
+its `power`/`toughness`/`colors` reads, which did), so every modal DFC's stored `mana_cost` was
+`null` and the client showed it with no pips — the same failure mode as audit item 14, just on the
+server's import instead of the client's render, and never separately caught. `@mtg/card-model`
+ships that toolkit (`frontFaceField`, `frontImageUri`, `backImageUri`, `backFaceName`,
+`isTwoSidedLayout`) and both scripts now call it; the bug is fixed as part of the same rewiring.
 
-This is where the MDFC mana-cost bug dies (audit item 14). HKH's three deliberately-different layout
-sets — `DFC_LAYOUTS`, `MULTI_FACE_LAYOUTS`, and the split-card exception in
-`frontFaceCharacteristics` — are the domain knowledge worth centralising here.
+`@mtg/card-model` did **not** land as one shared `Card` type. Each app's own shape stayed exactly as
+narrow as it already was, for reasons that turned out to be real rather than historical accident —
+`CardRow`'s SQLite JSON-string columns, `CardData`'s deliberately sparse `oracleText` (only ~100 of
+~18,000 cards), `CommanderCardDTO`'s wire-dedup shape (see `cardIndex.ts` in
+`docs/commander-recommender.md`). Forcing all three through one wide shape would have fought those
+constraints instead of respecting them; sharing the *reading*, not the *shape*, is what the
+duplication was.
+
+One more constraint decided the package's own implementation: `fetch-card-data.mjs` runs under bare
+`node` with no build step, so — unlike every other `packages/*` — this one is plain `.js` with JSDoc
+types, not `.ts` (same reason `time-counters/src/utils/colorIdentity.mjs` already isn't `.ts`). It
+still needs the same dual CJS/ESM story `@mtg/rules` needed, for the same underlying reason
+(commander-recommender/server has no `"type": "module"`, so `tsx`-run scripts there resolve it via
+`require()` at runtime) — see the package's own `src/index.js` for the exact mechanics.
+
+Two landmines from the original plan, now moot but worth remembering if a real shared `Card` type is
+ever revisited: `CardData.id` is Scryfall's **printing** id, while HKH keys everything on
+`oracle_id` — same field name, different identifier space. And `CardData.oracleText` being sparse
+by design (not a gap to fill) is exactly the kind of thing a wide shared shape would silently lie
+about.
 
 ### `@mtg/ui`
 

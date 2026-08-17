@@ -18,6 +18,14 @@ monorepo holding:
   and time-counters, but also built to real CommonJS for commander-recommender/server's bare-Node
   runtime (conditional package.json exports + a nested `dist/package.json` — see that package's
   own `tsconfig.build.json` before changing its module settings)
+- `packages/card-model` (`@mtg/card-model`) — face/DFC-aware Scryfall field readers
+  (`frontFaceField`, `frontImageUri`, `backImageUri`, `backFaceName`, `isTwoSidedLayout`) shared by
+  both apps' Scryfall-import build scripts (`commander-recommender/server/scripts/import-scryfall.ts`,
+  `time-counters/scripts/fetch-card-data.mjs`) — not a shared `Card` type; each app's own stored/wire
+  shape stays intentionally narrow, see `docs/handoff.md`'s Phase 2 for why. Plain `.js` with JSDoc
+  types, not `.ts` — `fetch-card-data.mjs` runs under bare `node` with no build step, so a `.ts`
+  source (even one only ever consumed via conditional exports) isn't loadable there, the same
+  constraint `time-counters/src/utils/colorIdentity.mjs` already works around
 - `packages/mana` (`@mtg/mana`) — mana-cost parsing and the inlined glyph SVG paths both clients render
 - `packages/ui` (`@mtg/ui`) — a `Modal` built on Radix Dialog (focus trap, Escape, scroll lock);
   time-counters' five panels use it, commander-recommender's own Dialog usages are unmigrated (see

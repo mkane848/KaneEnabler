@@ -21,6 +21,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
+import { frontFaceField, frontImageUri } from '@mtg/card-model';
 import { JESKAI_COLORS, isWithinIdentity } from '../src/utils/colorIdentity.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -153,32 +154,6 @@ function faceField(card, field) {
 }
 
 /**
- * The front face's own value for a field, falling back to the top-level
- * field for single-faced cards. Unlike faceField, this never combines both
- * faces — mana cost is a per-face characteristic, and a modal DFC is cast
- * as one face or the other, never both, so joining "{1}{G}" and "{3}{G}{G}"
- * into "{1}{G} // {3}{G}{G}" produced five pips for what should show one
- * cost. Same front-face principle as commander eligibility elsewhere in
- * this codebase (CR 712.4): a card outside the battlefield is its front
- * face only.
- */
-function frontFaceField(card, field) {
-  if (card[field] !== undefined) return card[field];
-  if (Array.isArray(card.card_faces) && card.card_faces.length > 0) {
-    return card.card_faces[0][field];
-  }
-  return undefined;
-}
-
-function imageSmall(card) {
-  if (card.image_uris?.small) return card.image_uris.small;
-  if (Array.isArray(card.card_faces) && card.card_faces[0]?.image_uris?.small) {
-    return card.card_faces[0].image_uris.small;
-  }
-  return undefined;
-}
-
-/**
  * Only the fields the UI actually reads. cmc, colors and the large image
  * sizes were dropped after an audit showed nothing rendered them; across
  * ~16k cards those add up to megabytes of dead payload.
@@ -192,7 +167,7 @@ export function toCardData(card) {
     manaCost: frontFaceField(card, 'mana_cost') || '',
     colorIdentity: card.color_identity ?? [],
   };
-  const img = imageSmall(card);
+  const img = frontImageUri(card, 'small');
   if (img) out.imageSmall = img;
   if (card.artist) out.artist = card.artist;
   if (oracleText && TIME_COUNTER_TEXT.test(oracleText)) out.oracleText = oracleText;

@@ -8,7 +8,14 @@
     // is unchanged.
     "module": "node16",
     "moduleResolution": "node16",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    // scripts/import-scryfall.ts imports @mtg/card-model, which is plain
+    // JSDoc-typed .mjs (not .ts) so it can also be imported by
+    // time-counters' fetch-card-data.mjs under bare node — see that
+    // package's own src/index.mjs for why. Without allowJs, tsc can't read
+    // its JSDoc types at all and the import falls back to an implicit any.
+    // Same fix time-counters' own tsconfig applies for colorIdentity.mjs.
+    "allowJs": true
   },
   "include": ["src", "scripts"]
 }
