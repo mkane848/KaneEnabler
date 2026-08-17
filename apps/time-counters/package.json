@@ -22,6 +22,7 @@
     "@mtg/mana": "workspace:*",
     "@mtg/rules": "workspace:*",
     "@mtg/ui": "workspace:*",
+    "@tanstack/react-form": "^1.33.5",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
