@@ -50,6 +50,48 @@ describe('useGameState — cards', () => {
     expect(result.current.state.cards).toEqual([]);
   });
 
+  it('undoRemove restores the most recently removed card', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput()));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.removeCard(id));
+    expect(result.current.state.cards).toEqual([]);
+    expect(result.current.lastRemoved?.card.instanceId).toBe(id);
+
+    act(() => result.current.undoRemove());
+    expect(result.current.state.cards).toHaveLength(1);
+    expect(result.current.state.cards[0]!.instanceId).toBe(id);
+    expect(result.current.lastRemoved).toBeNull();
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry!.title).toBe('Undo');
+  });
+
+  it('dismissLastRemoved clears the undo record without restoring the card', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput()));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.removeCard(id));
+    act(() => result.current.dismissLastRemoved());
+    expect(result.current.lastRemoved).toBeNull();
+
+    act(() => result.current.undoRemove());
+    expect(result.current.state.cards).toEqual([]);
+  });
+
+  it('a second removal replaces the undo record for the first', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ card: card({ id: 'c1', name: 'First' }) })));
+    act(() => result.current.addCard(addInput({ card: card({ id: 'c2', name: 'Second' }) })));
+    const [firstId, secondId] = result.current.state.cards.map((c) => c.instanceId);
+
+    act(() => result.current.removeCard(firstId!));
+    act(() => result.current.removeCard(secondId!));
+    expect(result.current.lastRemoved?.card.name).toBe('Second');
+
+    act(() => result.current.undoRemove());
+    expect(result.current.state.cards.map((c) => c.name)).toEqual(['Second']);
+  });
+
   it('setCount clamps to a non-negative whole number', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.addCard(addInput()));

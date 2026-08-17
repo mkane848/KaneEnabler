@@ -6,6 +6,7 @@ import {
   stripSearchParams,
 } from '@tanstack/react-router';
 import App from './App';
+import ErrorFallback from './components/ErrorFallback';
 import { DEFAULT_RECOMMENDER_SEARCH, validateRecommenderSearch } from './lib/searchSchema';
 
 const rootRoute = createRootRoute({
@@ -34,7 +35,21 @@ export const indexRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([indexRoute]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({
+  routeTree,
+  // The Router wraps every route's component in its own catch boundary
+  // (docs/rules-audit.md item 17) — a throw inside App is caught here, not
+  // by the ErrorBoundary in main.tsx, which only sees what's outside the
+  // routed tree (e.g. RouterProvider itself failing to initialize). Without
+  // this, a route render error falls through to Router's bare, unstyled
+  // built-in ErrorComponent instead.
+  defaultErrorComponent: ({ error, reset }) => (
+    <ErrorFallback
+      error={error instanceof Error ? error : new Error(String(error))}
+      onRetry={reset}
+    />
+  ),
+});
 
 declare module '@tanstack/react-router' {
   interface Register {

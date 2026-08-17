@@ -235,6 +235,10 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
     Pagination.tsx               shared pager, reused by the suggestion grid and each combo group
     SupportingCards.tsx          cited-card name + hover art preview list, factored out of
                                   CommanderCard.tsx
+    ErrorFallback.tsx             recovery screen for a caught render error — rendered both by
+                                   router.tsx's defaultErrorComponent (a route's own render errors)
+                                   and by main.tsx's top-level @mtg/ui ErrorBoundary (anything
+                                   outside the routed tree); "try again" resets, no data to clear
 
 server/                Express + TS + better-sqlite3
   src/
@@ -242,7 +246,12 @@ server/                Express + TS + better-sqlite3
     db.ts                   SQLite connection; findCardsByNames (incl. DFC face-name fallback),
                              getCommanderCandidates, getBackgroundCards (legal legendary Backgrounds)
     types.ts                CardRow shape (mirrors the cards table), incl. partner_ability/
-                             partner_target/is_background (rule 702.124)
+                             partner_target/is_background (rule 702.124); also parseJsonArray, the
+                             one shared decoder for CardRow's JSON-string columns (colors,
+                             color_identity, keywords, creature_types)
+    errorHandler.ts          last-resort Express error middleware, registered after every route —
+                             logs the full error server-side, returns a generic JSON `{ error }` to
+                             the client rather than Express's default HTML/stack-trace page
     routes/
       recommend.ts            POST /api/recommend — returns every suggestion scoreCommanders
                                clears its own bar for, uncapped; no server-side slice. The

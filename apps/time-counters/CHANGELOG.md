@@ -4,6 +4,49 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-08-17
+
+### Added
+
+- **A render crash no longer white-screens the app mid-game with no way
+  back.** Nothing caught an unexpected throw during render — the whole
+  screen unmounted with nothing in its place. The app is now wrapped in an
+  error boundary (the new shared `@mtg/ui` `ErrorBoundary`) that shows a
+  recovery screen instead: "Try again" re-attempts the render, and "Reset
+  game" clears the save and reloads if the same crash keeps happening. The
+  save itself is untouched unless you choose that second option.
+- **Removing a tracked card can be undone.** The `×` button is small and
+  easy to tap by accident, and until now there was no way back once a card
+  was gone. A brief "removed" prompt with an Undo action now appears after
+  every removal — from the card tile or from resolving a card in the Next
+  Turn summary — and stays up for a few seconds before dismissing itself.
+
+### Fixed
+
+- **A corrupted save could crash the app on load.** Loading only checked
+  that `turn` was a number and `cards` was an array; nothing validated an
+  individual tracked card, so a save containing something like `cards:
+  [{}]` (hand-edited, or corrupted some other way) passed the check and
+  then crashed `CardTile` on a missing field. Every card is now validated
+  field-by-field on load; one that doesn't pass is dropped (with a console
+  warning) rather than taking the rest of the save down with it.
+- **The counter steppers and remove button were smaller than Apple's and
+  Material's touch-target guidelines** (24×24 and ~20×20 against 44×44/
+  48×48), on the most-tapped controls in the app. Their visible size is
+  unchanged — enlarging them would have broken the compact card grid — but
+  the actual tappable area around each one is now at least 44×44, using an
+  invisible expanded hit area rather than a bigger button. Also wired up
+  `env(safe-area-inset-*)` (declared via `viewport-fit=cover` but never
+  actually read anywhere): the header, the add-card and card-list panels,
+  and the footer now keep clear of a notch or a home indicator instead of
+  sitting under one.
+- **The sticky header rendered in the Claude theme's background color even
+  under the Doctor Who theme.** It was hardcoded to
+  `rgba(20, 22, 43, 0.92)` — Claude's `--color-bg` at 92% opacity — instead
+  of reading the active theme's token, contradicting the app's own rule
+  that every component reads color from CSS custom properties. Now reads
+  `--color-bg` through `color-mix()`, so it tracks whichever theme is active.
+
 ## [1.2.1] - 2026-08-16
 
 ### Fixed

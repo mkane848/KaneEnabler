@@ -2,10 +2,14 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(20, 22, 43, 0.92);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-border-soft);
-  padding: 0.9rem 1.1rem 0.8rem;
+  /* max() keeps the normal padding where the inset is 0 (no notch); the
+     calc() adds a little breathing room beyond the notch itself where
+     there is one, rather than butting content right against it. */
+  padding: max(0.9rem, calc(env(safe-area-inset-top) + 0.5rem))
+    max(1.1rem, env(safe-area-inset-right)) 0.8rem max(1.1rem, env(safe-area-inset-left));
 }
 
 .top {

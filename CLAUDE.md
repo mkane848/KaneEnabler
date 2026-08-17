@@ -13,7 +13,9 @@ monorepo holding:
 - `packages/mana` (`@mtg/mana`) — mana-cost parsing and the inlined glyph SVG paths both clients render
 - `packages/ui` (`@mtg/ui`) — a `Modal` built on Radix Dialog (focus trap, Escape, scroll lock);
   time-counters' five panels use it, commander-recommender's own Dialog usages are unmigrated (see
-  that package's own file for why)
+  that package's own file for why). Also `ErrorBoundary`, a class component both apps wrap their
+  root in — `fallback` is a render prop so each app supplies its own themed recovery screen rather
+  than a fixed look, matching `Modal`'s className-hook approach
 
 **Read [`docs/handoff.md`](./docs/handoff.md) first.** It is the execution brief for the
 consolidation and everything that follows — target architecture, all seven phases, what's landed

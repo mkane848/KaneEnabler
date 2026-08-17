@@ -1,7 +1,7 @@
 .wrap {
   max-width: 640px;
   margin: 0 auto;
-  padding: 1rem 1.1rem 3rem;
+  padding: 1rem max(1.1rem, env(safe-area-inset-right)) 3rem max(1.1rem, env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
