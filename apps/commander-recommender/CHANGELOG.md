@@ -11,6 +11,24 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Added
 
+- **A render crash no longer white-screens the app.** Nothing caught an
+  unexpected throw during render — the whole page unmounted with nothing in
+  its place, mid-session, with no way back short of a manual reload. A crash
+  now shows a themed recovery screen with a "Try again" action instead.
+  TanStack Router wraps every route's own component in its own catch
+  boundary, which claims a route's render errors before an outer one ever
+  sees them, so the recovery screen is wired in at both levels: the router's
+  `defaultErrorComponent` for anything inside a route, and a top-level
+  boundary (new shared `@mtg/ui` `ErrorBoundary`) for anything outside the
+  routed tree.
+- **`/api/recommend`, `/api/combos`, and every other endpoint now return a
+  clean JSON error instead of a raw stack trace.** No error-handling
+  middleware was registered, so an unexpected throw — inside scoring, say —
+  fell through to Express's own default handler: an HTML page with the
+  stack trace, not a JSON body an API client could parse. A last-resort
+  error handler is now registered after every route; it logs the full
+  error server-side and returns a generic message to the client, never the
+  error's own text.
 - **Filters, sort, and the current page are now part of the URL**, so they
   survive a reload and a link you copy while looking at a filtered/sorted
   view reproduces it (paste your list back in against that link and you're
@@ -89,6 +107,15 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   target ("The new creature type can't be Wall"), not to reward it. The
   catch-all is gone; only the specific caring patterns and the
   sacrifice/tap/discard/exile "consumes" check grant the rewards role now.
+- **A modal double-faced commander candidate showed no mana cost at all.**
+  Scryfall gives a modal DFC no top-level `mana_cost` — it's cast as one
+  face or the other, never both — and the import script's read of it had no
+  fallback to the front face's own cost, unlike its `power`/`toughness`/
+  `colors` reads, which already did. Every modal DFC (Bala Ged Recovery //
+  Bala Ged Sanctuary, and others) was stored with a null mana cost and
+  rendered with no pips. Found while extracting `@mtg/card-model`'s shared
+  front-face field reader; the import now uses the same one for all three
+  fields, so the fallback is consistent instead of present on two of three.
 
 ## [1.7.1] — 2026-08-01
 

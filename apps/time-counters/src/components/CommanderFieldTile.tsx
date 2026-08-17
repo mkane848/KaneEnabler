@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { commanderTax } from '@mtg/rules';
 import type { CommanderId } from '../types';
 import styles from './CommanderFieldTile.module.css';
 
@@ -28,7 +29,7 @@ export default function CommanderFieldTile({
 }: CommanderFieldTileProps) {
   const [expanded, setExpanded] = useState(false);
   const { id, name, imageSmall, castCount } = commander;
-  const nextTax = castCount * 2;
+  const nextTax = commanderTax(castCount);
 
   return (
     <div className={styles.tile}>

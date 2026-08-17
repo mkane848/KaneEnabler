@@ -1,0 +1,10 @@
+{
+  "extends": "@mtg/config/tsconfig.base.json",
+  "compilerOptions": {
+    // Not auto-discovered otherwise: this is the first packages/* file that
+    // needs a Node global (console.warn, in singleton.ts) rather than only
+    // browser-safe code the way @mtg/mana and @mtg/ui's source is.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

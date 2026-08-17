@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Modal, ModalClose, ModalTitle } from '@mtg/ui';
+import { usesTimeCounters } from '@mtg/rules';
 import type { Mechanic, RoseTylerState, TrackedCard } from '../types';
 import type { TimeTravelTargetId } from '../hooks/useGameState';
-import { MECHANIC_COLOR, MECHANIC_LABEL, usesTimeCounters } from '../utils/counters';
+import { MECHANIC_COLOR, MECHANIC_LABEL } from '../utils/counters';
 import styles from './TimeTravelPanel.module.css';
 
 type Delta = -1 | 0 | 1;
@@ -21,7 +22,7 @@ export interface TimeTravelTarget {
 /**
  * Which cards and commander state are valid Time Travel targets right now —
  * Suspend/Vanishing cards (fade and lore counters aren't time counters, see
- * usesTimeCounters) and, once she has any, Rose Tyler's own Bad Wolf
+ * usesTimeCounters in @mtg/rules) and, once she has any, Rose Tyler's own Bad Wolf
  * counters. A card needs an actual counter still on it: once the last one's
  * removed, a suspended card has already been cast (rule 702.61) and a
  * Vanishing permanent has no time counter left either, so neither is a
@@ -76,7 +77,7 @@ interface TimeTravelPanelProps {
  * free stepper — the whole point is that you can only ever move a counter
  * by one in either direction per invocation. Fading and Saga cards are
  * never eligible (fade counters and lore counters aren't time counters —
- * see usesTimeCounters in utils/counters.ts), so the caller only ever
+ * see usesTimeCounters in @mtg/rules), so the caller only ever
  * passes Suspend/Vanishing cards and, when she has any, Rose Tyler.
  *
  * Some sources of Time Travel say "time travel N times" (The Tenth

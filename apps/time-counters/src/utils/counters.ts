@@ -128,23 +128,6 @@ export function hasHitTarget(
   return card.targetCount != null && card.count >= card.targetCount;
 }
 
-/**
- * Mechanics that use real *time counters* — the object Time Travel and
- * Rose Tyler's Bad Wolf both care about. Fading uses fade counters (rule
- * 702.32) and Saga uses lore counters — neither is a time counter, so both
- * are excluded here even though this app auto-adjusts them the same way.
- */
-export const TIME_COUNTER_MECHANICS: readonly Mechanic[] = ['suspend', 'vanishing'];
-
-export function usesTimeCounters(mechanic: Mechanic): boolean {
-  return TIME_COUNTER_MECHANICS.includes(mechanic);
-}
-
-/** Which turn step auto-adjusts a given mechanic's counter — see TurnStep in types.ts. */
-export function turnStepForMechanic(mechanic: Mechanic): 'upkeep' | 'precombatMain' {
-  return mechanic === 'saga' ? 'precombatMain' : 'upkeep';
-}
-
 /** Ordinal chapter numbers as Magic prints them, for chapter-ability labels. */
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 

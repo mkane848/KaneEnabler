@@ -1,22 +1,7 @@
+import { isCommanderLegal } from '@mtg/rules';
 import type { CardRow } from '../types';
 import type { ParsedListEntry } from './parseList';
 import type { OwnedCard } from './synergy';
-
-/**
- * Whether this card can actually sit in a Commander deck. Scryfall's
- * legality field covers more than the binary "legal"/"banned" the name
- * suggests — "not_legal" (never printed for a legal set, or a card type the
- * format doesn't allow) and "restricted" (a Vintage-only status that should
- * never appear here) both mean the same thing for a submitted list: this
- * card cannot go in the 99, so it should not silently count as synergy
- * support or deck-analysis evidence. getCommanderCandidates already applies
- * this same check when picking which cards can be suggested *as* a
- * commander — this is the same rule applied to the cards submitted
- * alongside one.
- */
-export function isCommanderLegal(row: CardRow): boolean {
-  return row.legality_commander === 'legal';
-}
 
 /**
  * Splits a parsed decklist into what actually counts toward synergy scoring

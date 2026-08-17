@@ -1,3 +1,4 @@
+import { commanderTax } from '@mtg/rules';
 import { Modal, ModalClose, ModalTitle } from '@mtg/ui';
 import type { RoseTylerState } from '../types';
 import styles from './CommanderTaxModal.module.css';
@@ -42,7 +43,7 @@ export default function CommanderTaxModal({
   onRoseAttacks,
   onOpenTimeyWimey,
 }: CommanderTaxModalProps) {
-  const nextTax = castCount * 2;
+  const nextTax = commanderTax(castCount);
 
   return (
     <Modal onClose={onClose} overlayClassName={styles.backdrop} contentClassName={styles.sheet}>

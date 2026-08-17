@@ -1,0 +1,24 @@
+{
+  // Build config, CommonJS output only. The client and time-counters (both
+  // Vite-bundled) resolve this package straight to src/index.ts via the
+  // "import" export condition and never touch this — it exists solely for
+  // commander-recommender/server, whose production runtime is bare `node
+  // dist/index.js` (no bundler, no tsx) and therefore cannot execute this
+  // package's TypeScript source directly the way a bundler can. See
+  // package.json's conditional "exports" for how a CJS consumer is routed
+  // here instead of to src/.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // "commonjs", not node16/nodenext — those respect this package's own
+    // "type": "module" and would emit ESM regardless, which is the whole
+    // problem this build exists to route around. Plain "commonjs" emits
+    // require()/exports unconditionally.
+    "module": "commonjs",
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "declaration": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "exclude": ["**/*.test.ts"]
+}

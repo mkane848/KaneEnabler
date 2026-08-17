@@ -8,6 +8,7 @@ import CommanderTaxModal from './components/CommanderTaxModal';
 import GameLogPanel from './components/GameLogPanel';
 import Header from './components/Header';
 import TimeTravelPanel, { buildTimeTravelTargets } from './components/TimeTravelPanel';
+import UndoToast from './components/UndoToast';
 import { useCommanderCards } from './hooks/useCommanderCards';
 import { useGameState } from './hooks/useGameState';
 import type { CommanderId } from './types';
@@ -17,8 +18,11 @@ export default function App() {
   const {
     state,
     lastUpkeep,
+    lastRemoved,
     addCard,
     removeCard,
+    undoRemove,
+    dismissLastRemoved,
     setCount,
     adjustCount,
     setTurn,
@@ -80,7 +84,8 @@ export default function App() {
           textAlign: 'center',
           fontSize: '0.72rem',
           color: 'var(--color-text-faint)',
-          padding: '0 1rem 2rem',
+          padding:
+            '0 max(1rem, env(safe-area-inset-right)) max(2rem, calc(env(safe-area-inset-bottom) + 1rem)) max(1rem, env(safe-area-inset-left))',
         }}
       >
         Card data via Scryfall. Magic: The Gathering is © Wizards of the Coast.
@@ -127,6 +132,13 @@ export default function App() {
                 }
               : undefined
           }
+        />
+      )}
+      {lastRemoved && (
+        <UndoToast
+          cardName={lastRemoved.card.name}
+          onUndo={undoRemove}
+          onDismiss={dismissLastRemoved}
         />
       )}
     </>

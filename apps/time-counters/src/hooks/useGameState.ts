@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { commanderTax, turnStepForMechanic, usesTimeCounters } from '@mtg/rules';
 import type {
   CardData,
   CommanderId,
@@ -17,8 +18,6 @@ import {
   defaultResolveNote,
   hasHitTarget,
   newlyTriggeredChapters,
-  turnStepForMechanic,
-  usesTimeCounters,
 } from '../utils/counters';
 import { clearState, loadState, saveState } from '../utils/storage';
 
@@ -116,12 +115,17 @@ export type TimeTravelTargetId = string | 'rose';
 interface TrackerState {
   game: GameState;
   lastUpkeep: TurnChange[] | null;
+  /** The most recently removed card and where it sat, so removeCard's ~20px
+   * × button (and ChangeSummaryModal's Resolve action, which shares the same
+   * function) has a way back. Single-level — a second removal overwrites it. */
+  lastRemoved: { card: TrackedCard; index: number } | null;
 }
 
 export function useGameState() {
-  const [{ game, lastUpkeep }, setTracker] = useState<TrackerState>(() => ({
+  const [{ game, lastUpkeep, lastRemoved }, setTracker] = useState<TrackerState>(() => ({
     game: loadState() ?? INITIAL_STATE,
     lastUpkeep: null,
+    lastRemoved: null,
   }));
 
   useEffect(() => {
@@ -160,7 +164,8 @@ export function useGameState() {
   /** Drops the card from the board and from any upkeep summary still on screen. */
   const removeCard = useCallback((instanceId: string) => {
     setTracker((prev) => {
-      const card = prev.game.cards.find((c) => c.instanceId === instanceId);
+      const index = prev.game.cards.findIndex((c) => c.instanceId === instanceId);
+      const card = index === -1 ? undefined : prev.game.cards[index];
       let log = prev.game.log;
       if (card) {
         const resolved = hasHitTarget(card);
@@ -179,8 +184,30 @@ export function useGameState() {
           log,
         },
         lastUpkeep: prev.lastUpkeep?.filter((c) => c.instanceId !== instanceId) ?? null,
+        lastRemoved: card ? { card, index } : prev.lastRemoved,
       };
     });
+  }, []);
+
+  /** Puts the most recently removed card back where it sat. No-op once dismissed or replaced by a newer removal. */
+  const undoRemove = useCallback(() => {
+    setTracker((prev) => {
+      if (!prev.lastRemoved) return prev;
+      const { card, index } = prev.lastRemoved;
+      const cards = [...prev.game.cards];
+      cards.splice(Math.min(index, cards.length), 0, card);
+      const log = appendLog(prev.game.log, {
+        turn: prev.game.turn,
+        title: 'Undo',
+        detail: `${card.name} restored to tracker`,
+      });
+      return { ...prev, game: { ...prev.game, cards, log }, lastRemoved: null };
+    });
+  }, []);
+
+  /** Hides the undo prompt without restoring the card — the window to undo has closed. */
+  const dismissLastRemoved = useCallback(() => {
+    setTracker((prev) => (prev.lastRemoved ? { ...prev, lastRemoved: null } : prev));
   }, []);
 
   /** Manual override — set a card's counters to an exact value. */
@@ -394,6 +421,7 @@ export function useGameState() {
         })),
       });
       return {
+        ...prev,
         game: { ...prev.game, turn, cards, log },
         // Only interrupt the player when something actually happened.
         lastUpkeep: changes.length > 0 ? changes : null,
@@ -413,7 +441,7 @@ export function useGameState() {
    *
    * Only Suspend and Vanishing cards are eligible targets — Fading uses
    * fade counters and Saga uses lore counters, neither of which is a time
-   * counter (see usesTimeCounters in utils/counters.ts), so the caller
+   * counter (see usesTimeCounters in @mtg/rules), so the caller
    * (TimeTravelPanel via App.tsx) never offers them a choice here. Rose
    * Tyler's own Bad Wolf time counters are a legitimate target too — she's
    * "a permanent you control with a time counter on it" — passed with the
@@ -487,7 +515,7 @@ export function useGameState() {
       const log = appendLog(prev.game.log, {
         turn: prev.game.turn,
         title: 'Cast from command zone',
-        detail: `${name} — cast ${castCount} time${castCount === 1 ? '' : 's'} this game; next cast costs an extra {${castCount * 2}}.`,
+        detail: `${name} — cast ${castCount} time${castCount === 1 ? '' : 's'} this game; next cast costs an extra {${commanderTax(castCount)}}.`,
       });
       return {
         ...prev,
@@ -564,7 +592,7 @@ export function useGameState() {
    * the second clause is explicitly about permanents *with a time counter
    * on them*, so a tracked Vanishing card with none left doesn't qualify.
    * Fading and Saga never count either way (neither uses time counters —
-   * see usesTimeCounters). Adds that many counters to Rose in one step
+   * see usesTimeCounters in @mtg/rules). Adds that many counters to Rose in one step
    * instead of the player counting the board by hand.
    */
   const roseAttacks = useCallback(() => {
@@ -599,14 +627,17 @@ export function useGameState() {
 
   const resetGame = useCallback(() => {
     clearState();
-    setTracker({ game: INITIAL_STATE, lastUpkeep: null });
+    setTracker({ game: INITIAL_STATE, lastUpkeep: null, lastRemoved: null });
   }, []);
 
   return {
     state: game,
     lastUpkeep,
+    lastRemoved,
     addCard,
     removeCard,
+    undoRemove,
+    dismissLastRemoved,
     setCount,
     adjustCount,
     setTurn,

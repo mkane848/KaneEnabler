@@ -1,10 +1,6 @@
 /**
  * Which cards can legally be a commander, judged the way the command zone
  * actually sees them.
- *
- * Lives apart from `import-scryfall.ts` (its only caller) so it can be tested
- * against real card shapes without running an import — the rules here are
- * fiddly enough that "it looked right in the bulk file" is not good enough.
  */
 
 /** The slice of a Scryfall card object these rules need. */

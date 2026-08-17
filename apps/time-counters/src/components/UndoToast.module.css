@@ -1,0 +1,61 @@
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.25rem, calc(env(safe-area-inset-bottom) + 1rem));
+  transform: translateX(-50%);
+  /* Above every modal (highest existing is GameLogPanel at 60/61) — a card
+     can be removed from inside ChangeSummaryModal's Resolve action, so the
+     undo prompt has to stay reachable even while a modal is still open. */
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100vw - 2rem);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+}
+
+.text {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.undoBtn {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-accent-strong);
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--radius-sm);
+}
+
+.undoBtn:hover {
+  background: var(--color-surface-hover);
+}
+
+.dismissBtn {
+  position: relative;
+  flex-shrink: 0;
+  color: var(--color-text-faint);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.3rem;
+}
+
+/* Same invisible hit-area technique as CardTile's stepper/remove buttons —
+   the × glyph stays small, the tap target doesn't. */
+.dismissBtn::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+
+.dismissBtn:hover {
+  color: var(--color-text);
+}

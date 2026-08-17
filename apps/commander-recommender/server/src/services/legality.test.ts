@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import { describe, it } from 'vitest';
 import type { CardRow } from '../types';
 import type { ParsedListEntry } from './parseList';
-import { isCommanderLegal, partitionSubmittedCards } from './legality';
+import { partitionSubmittedCards } from './legality';
 
 let counter = 0;
 function makeCard(overrides: Partial<CardRow> = {}): CardRow {
@@ -39,15 +39,6 @@ function makeCard(overrides: Partial<CardRow> = {}): CardRow {
 function entry(name: string, quantity = 1): ParsedListEntry {
   return { name, quantity, raw: name };
 }
-
-describe('isCommanderLegal', () => {
-  it('is true only for legality_commander === "legal"', () => {
-    assert.strictEqual(isCommanderLegal(makeCard({ legality_commander: 'legal' })), true);
-    assert.strictEqual(isCommanderLegal(makeCard({ legality_commander: 'banned' })), false);
-    assert.strictEqual(isCommanderLegal(makeCard({ legality_commander: 'not_legal' })), false);
-    assert.strictEqual(isCommanderLegal(makeCard({ legality_commander: 'restricted' })), false);
-  });
-});
 
 describe('partitionSubmittedCards', () => {
   it('a banned card is reported separately, not counted as submitted', () => {

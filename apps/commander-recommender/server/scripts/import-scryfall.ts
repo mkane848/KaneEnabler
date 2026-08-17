@@ -1,14 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { frontFaceCharacteristics, isCommanderEligible } from '../src/services/eligibility';
-import { faceNameEntries } from '../src/services/cardNames';
 import {
-  buildCardFacts,
-  buildVocabulary,
-  detectSignals,
-  parseCreatureTypes,
-} from '../src/services/signals';
+  backFaceName,
+  backImageUri as backFaceImageUri,
+  frontFaceField,
+  frontImageUri,
+} from '@mtg/card-model';
+import { frontFaceCharacteristics, isCommanderEligible, parseCreatureTypes } from '@mtg/rules';
+import { faceNameEntries } from '../src/services/cardNames';
+import { buildCardFacts, buildVocabulary, detectSignals } from '../src/services/signals';
 import type { CardRow } from '../src/types';
 import { IMPORT_VERSION, readSidecar } from '../src/services/dataSnapshot';
 import { readImportedSnapshot, writeImportedSnapshot } from '../src/services/importedSnapshot';
@@ -276,13 +277,6 @@ const insertFaceName = db.prepare(`
   INSERT INTO card_face_names (face_name_lower, oracle_id, face_index) VALUES (?, ?, ?)
 `);
 
-/** Layouts that are genuinely two-sided, so there's a second image to flip to
- * and a distinct back-face name to show. Split, adventure, prepare and flip
- * cards all print on one physical face — their "second face" is the same
- * picture — so they are deliberately not here. Which layouts get *name*
- * indexing is a wider and separate question; see services/cardNames.ts. */
-const DFC_LAYOUTS = new Set(['transform', 'modal_dfc']);
-
 let imported = 0;
 let skipped = 0;
 
@@ -302,17 +296,13 @@ const insertMany = db.transaction((rows: any[]) => {
         .map((f: { oracle_text?: string }) => f.oracle_text)
         .filter(Boolean)
         .join('\n');
-    const imageUri: string | null =
-      card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal ?? null;
-    // Only a genuinely two-sided card has a second image to flip to. Split,
-    // adventure and flip cards all print on one physical face, so their
-    // "second face" is the same picture.
-    const backImageUri: string | null = DFC_LAYOUTS.has(card.layout)
-      ? (card.card_faces?.[1]?.image_uris?.normal ?? null)
-      : null;
-    const backName: string | null = DFC_LAYOUTS.has(card.layout)
-      ? (card.card_faces?.[1]?.name ?? null)
-      : null;
+    const imageUri: string | null = frontImageUri(card, 'normal');
+    // Only a genuinely two-sided card has a second image to flip to and a
+    // distinct back-face name — see @mtg/card-model's isTwoSidedLayout for
+    // why split/adventure/flip cards don't. Which layouts get *name*
+    // indexing is a wider and separate question; see services/cardNames.ts.
+    const backImageUri: string | null = backFaceImageUri(card, 'normal');
+    const backName: string | null = backFaceName(card);
 
     // Eligibility reads the front face only — see services/eligibility.ts.
     // Westvale Abbey's joined type_line ("Land // Legendary Creature —
@@ -329,7 +319,11 @@ const insertMany = db.transaction((rows: any[]) => {
       oracle_id: card.oracle_id,
       name: card.name,
       name_lower: String(card.name).toLowerCase(),
-      mana_cost: card.mana_cost ?? null,
+      // Front face only (never combined) — a modal DFC has no top-level
+      // mana_cost at all, since it's cast as one face or the other, never
+      // both; without this fallback every modal DFC stored no mana cost,
+      // and the client showed it with no pips at all.
+      mana_cost: frontFaceField(card, 'mana_cost') ?? null,
       cmc: card.cmc ?? null,
       type_line: typeLine,
       oracle_text: oracleText,
@@ -342,8 +336,8 @@ const insertMany = db.transaction((rows: any[]) => {
       creature_types: JSON.stringify(parseCreatureTypes(front.typeLine, knownCreatureTypes)),
       // Kept so the card-detail dialog can show what a printed card shows,
       // and link out to the real page rather than reimplementing it.
-      power: card.power ?? card.card_faces?.[0]?.power ?? null,
-      toughness: card.toughness ?? card.card_faces?.[0]?.toughness ?? null,
+      power: frontFaceField(card, 'power') ?? null,
+      toughness: frontFaceField(card, 'toughness') ?? null,
       scryfall_uri: card.scryfall_uri ?? null,
       legality_commander: card.legalities?.commander ?? 'not_legal',
       game_changer: card.game_changer ? 1 : 0,

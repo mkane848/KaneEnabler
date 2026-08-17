@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
+import { ErrorBoundary } from '@mtg/ui';
+import ErrorFallback from './components/ErrorFallback';
 import { router } from './router';
 import './index.css';
 
@@ -25,10 +27,20 @@ const queryClient = new QueryClient({
   },
 });
 
+// Router.tsx's defaultErrorComponent is what actually catches a throw inside
+// App — Router wraps every route's own component in its own catch boundary,
+// which sits *inside* this one and claims the error first. This outer layer
+// only ever fires for something outside the routed tree (QueryClientProvider
+// or RouterProvider itself failing to initialize).
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <ErrorBoundary
+      fallback={(error, reset) => <ErrorFallback error={error} onRetry={reset} />}
+      onError={(error) => console.error('Uncaught render error:', error)}
+    >
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 );

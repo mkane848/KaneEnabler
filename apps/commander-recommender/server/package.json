@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "prebuild": "pnpm --filter @mtg/rules build",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc",
     "lint": "eslint .",
@@ -16,11 +17,13 @@
     "test:watch": "vitest",
     "start": "node dist/index.js",
     "fetch-scryfall": "tsx scripts/fetch-scryfall.ts",
+    "preimport-scryfall": "pnpm --filter @mtg/rules build && pnpm --filter @mtg/card-model build",
     "import-scryfall": "tsx scripts/import-scryfall.ts",
     "prepare-data": "npm run fetch-scryfall && npm run import-scryfall",
     "prepare-data:fresh": "tsx scripts/fetch-scryfall.ts --force && npm run import-scryfall"
   },
   "dependencies": {
+    "@mtg/rules": "workspace:*",
     "@types/compression": "^1.8.1",
     "better-sqlite3": "^13.0.1",
     "compression": "^1.8.1",
@@ -28,6 +31,7 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
+    "@mtg/card-model": "workspace:*",
     "@mtg/config": "workspace:*",
     "@types/better-sqlite3": "^7.6.11",
     "@types/cors": "^2.8.17",

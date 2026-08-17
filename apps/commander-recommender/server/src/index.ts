@@ -4,6 +4,7 @@ import cors from 'cors';
 import recommendRouter from './routes/recommend';
 import combosRouter from './routes/combos';
 import metaRouter from './routes/meta';
+import { errorHandler } from './errorHandler';
 
 const app = express();
 
@@ -27,6 +28,10 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api', recommendRouter);
 app.use('/api', combosRouter);
 app.use('/api', metaRouter);
+
+// Error middleware must be registered last — Express only routes a request
+// here once every route/middleware above it has run (or thrown).
+app.use(errorHandler);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(PORT, () => {

@@ -131,23 +131,54 @@ sidecar-written-last discipline; adopt DWC's `output.length < 1000` floor check 
 
 One `User-Agent` constant, derived from `package.json` — see [`api-policy.md`](./api-policy.md).
 
-### `@mtg/card-model`
+### `@mtg/card-model` — landed narrower than planned above, and why
 
-One normalised `Card` plus one `fromScryfall()` owning all face/DFC rules. There are currently three
-card shapes (`CardData`, `CommanderCardDTO`, `CardRow`) with ~7 of 9 core fields overlapping across
-three naming conventions.
+The original plan was one normalised `Card` plus one `fromScryfall()` owning all face/DFC rules,
+reasoning that `CardData`, `CommanderCardDTO`, and `CardRow` had ~7 of 9 core fields overlapping.
+Two things changed that by the time this phase actually ran:
 
-Two landmines to preserve rather than paper over:
+- **`CardRow` grew a lot of import-time-computed fields that were never raw Scryfall data in the
+  first place** — `is_commander_eligible`, `legality_commander`, `game_changer`, `partner_ability`/
+  `partner_target`, `is_background`. A "normalised Card" that included these would be modelling this
+  app's own derived facts, not Scryfall's; one that excluded them would be a much smaller overlap
+  with `CardRow` than the ~7/9 estimate assumed.
+- **Phase 3b landed first and already centralised the hardest part.** `frontFaceCharacteristics`
+  (front-face-only `type_line`/`oracle_text`, CR 712.4 — the actual domain knowledge behind audit
+  item 14, the client-side MDFC mana-cost bug that was already fixed directly) now lives in
+  `@mtg/rules`, tested and shared by both apps. There was no eligibility-adjacent face logic left
+  for this package to own.
 
-- `CardData.id` is Scryfall's **printing** id; HKH keys everything on `oracle_id`. Same field name,
-  different identifier space.
-- `CardData.oracleText` is populated **only** for time-counter cards (~100 of ~18,000). A shared
-  type declaring `oracleText?: string` would silently lie for the rest. Keep it a caller-supplied
-  projection option.
+What was still genuinely duplicated, once eligibility was out of the picture, was narrower: how
+`server/scripts/import-scryfall.ts` and `time-counters/scripts/fetch-card-data.mjs` each
+independently read a face-aware field (mana cost, power, toughness), an image URI, and a back
+face's name/picture off a raw Scryfall card object — plus, in the process of comparing the two,
+**a real bug**: `import-scryfall.ts`'s own `mana_cost` read had no front-face fallback at all (unlike
+its `power`/`toughness`/`colors` reads, which did), so every modal DFC's stored `mana_cost` was
+`null` and the client showed it with no pips — the same failure mode as audit item 14, just on the
+server's import instead of the client's render, and never separately caught. `@mtg/card-model`
+ships that toolkit (`frontFaceField`, `frontImageUri`, `backImageUri`, `backFaceName`,
+`isTwoSidedLayout`) and both scripts now call it; the bug is fixed as part of the same rewiring.
 
-This is where the MDFC mana-cost bug dies (audit item 14). HKH's three deliberately-different layout
-sets — `DFC_LAYOUTS`, `MULTI_FACE_LAYOUTS`, and the split-card exception in
-`frontFaceCharacteristics` — are the domain knowledge worth centralising here.
+`@mtg/card-model` did **not** land as one shared `Card` type. Each app's own shape stayed exactly as
+narrow as it already was, for reasons that turned out to be real rather than historical accident —
+`CardRow`'s SQLite JSON-string columns, `CardData`'s deliberately sparse `oracleText` (only ~100 of
+~18,000 cards), `CommanderCardDTO`'s wire-dedup shape (see `cardIndex.ts` in
+`docs/commander-recommender.md`). Forcing all three through one wide shape would have fought those
+constraints instead of respecting them; sharing the *reading*, not the *shape*, is what the
+duplication was.
+
+One more constraint decided the package's own implementation: `fetch-card-data.mjs` runs under bare
+`node` with no build step, so — unlike every other `packages/*` — this one is plain `.js` with JSDoc
+types, not `.ts` (same reason `time-counters/src/utils/colorIdentity.mjs` already isn't `.ts`). It
+still needs the same dual CJS/ESM story `@mtg/rules` needed, for the same underlying reason
+(commander-recommender/server has no `"type": "module"`, so `tsx`-run scripts there resolve it via
+`require()` at runtime) — see the package's own `src/index.js` for the exact mechanics.
+
+Two landmines from the original plan, now moot but worth remembering if a real shared `Card` type is
+ever revisited: `CardData.id` is Scryfall's **printing** id, while HKH keys everything on
+`oracle_id` — same field name, different identifier space. And `CardData.oracleText` being sparse
+by design (not a gap to fill) is exactly the kind of thing a wide shared shape would silently lie
+about.
 
 ### `@mtg/ui`
 
@@ -183,20 +214,24 @@ Typed functions, each citing the CR rule it implements, each tested against it. 
 here once; tools consume it and never re-derive it.** This is the answer to not wanting to revisit
 rules support every time a new feature is imagined.
 
-| Primitive                                          | CR                  | Source today                             |
-| -------------------------------------------------- | ------------------- | ---------------------------------------- |
-| `isCommanderEligible` / `frontFaceCharacteristics` | 903.3, 712.4, 709.4 | HKH `eligibility.ts`                     |
-| `singletonLimit` / `applySingletonLimits`          | 903.5b              | HKH `singleton.ts`                       |
-| `buildCommanderUnits` (all six Partner variants)   | 702.124             | HKH `partners.ts`                        |
-| `commanderTax(castCount)`                          | 903.10              | DWC — inlined in **3 places**            |
-| `isWithinIdentity` / `sortWubrg` / `identityName`  | 903.4               | split across both, 4 inline copies       |
-| Counter taxonomy: time vs fade vs lore             | 702.32, 702.62, 714 | DWC `counters.ts`                        |
-| Turn steps that matter (upkeep, precombat main)    | 500–514             | DWC — hardcoded twice                    |
-| `parseCreatureTypes`                               | 205.3m              | HKH `signals.ts`                         |
-| Format legality, ban list, Game Changers           | —                   | Scryfall fields; no hand-maintained list |
+| Primitive                                          | CR                  | Landed in `@mtg/rules`                                                                                                                                                                        |
+| -------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `isCommanderEligible` / `frontFaceCharacteristics` | 903.3, 712.4, 709.4 | `eligibility.ts` — moved wholesale from HKH's copy                                                                                                                                            |
+| `singletonLimit`                                   | 903.5b              | `singleton.ts` — the pure rule only; `applySingletonLimits`' list-merge orchestration isn't a Magic rule and stayed in HKH's `services/singleton.ts`, calling this                            |
+| `buildCommanderUnits` (all six Partner variants)   | 702.124             | `partners.ts` — HKH's own `services/partners.ts` is now a thin facade re-exporting this                                                                                                       |
+| `commanderTax(castCount)`                          | 903.10              | `commanderTax.ts` — DWC's 3 inline copies now call this                                                                                                                                       |
+| `isWithinColorIdentity`                            | 903.4               | `colorIdentity.ts` — every identity-subset check in both apps now calls this. `sortWubrg`/`identityName` stayed in HKH — display formatting, not a rule, and only ever had one implementation |
+| Counter taxonomy: time vs fade vs lore             | 702.32, 702.62, 714 | `counters.ts` — moved from DWC's `utils/counters.ts`                                                                                                                                          |
+| Turn steps that matter (upkeep, precombat main)    | 500–514             | `counters.ts` — same file; DWC's two hardcoded copies now call this                                                                                                                           |
+| `parseCreatureTypes`                               | 205.3m              | `creatureTypes.ts` — moved from HKH's `signals.ts`                                                                                                                                            |
+| Commander format legality                          | —                   | `legality.ts` — `isCommanderLegal` centralized here; ban list / Game Changers are still raw Scryfall fields, no primitive needed                                                              |
+| Deck size (100 cards)                              | 903.5a              | `deckLegality.ts` — new                                                                                                                                                                       |
+| Deck-wide colour-identity legality                 | 903.4               | `deckLegality.ts` — new (`combinedColorIdentity` + `findColorIdentityViolations`)                                                                                                             |
 
-Deck size (100 cards) and deck colour-identity legality are **not implemented anywhere today** —
-add them here.
+The last two are genuinely new: neither app has a deck-list-level validation feature today (both only
+score/suggest against a _submitted_ list, never validate a completed 100-card deck), so these two are
+tested and CR-cited but **not called from either app yet** — wire them in when a feature needs them,
+rather than leaving the rule undocumented until then.
 
 ## Phase 4 — Rules audit
 

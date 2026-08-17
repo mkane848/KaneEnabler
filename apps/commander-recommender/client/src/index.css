@@ -2113,3 +2113,64 @@ summary.explain-group-title::after {
   text-overflow: ellipsis;
   max-width: 9rem;
 }
+
+/* --- error boundary fallback --------------------------------------------- */
+
+.error-fallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(3rem, calc(env(safe-area-inset-top) + 1.5rem))
+    max(1.5rem, env(safe-area-inset-right)) max(3rem, calc(env(safe-area-inset-bottom) + 1.5rem))
+    max(1.5rem, env(safe-area-inset-left));
+}
+
+.error-fallback-box {
+  max-width: 30rem;
+  width: 100%;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-radius: 14px;
+  padding: 1.75rem;
+  text-align: center;
+}
+
+.error-fallback-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin: 0 0 0.6rem;
+}
+
+.error-fallback-body {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.error-fallback-detail {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  background: var(--ink);
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.5em 0.7em;
+  margin: 0 0 1.25rem;
+  word-break: break-word;
+}
+
+.error-fallback-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* .primary-button's margin-left: auto is meant for a flex row it pushes
+   itself to the end of — not this centered pair. */
+.error-fallback-actions .primary-button {
+  margin-left: 0;
+}
