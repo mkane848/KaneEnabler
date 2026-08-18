@@ -1,6 +1,7 @@
 packages:
   - 'apps/commander-recommender/client'
   - 'apps/commander-recommender/server'
+  - 'apps/home'
   - 'apps/time-counters'
   - 'packages/*'
 allowBuilds:
