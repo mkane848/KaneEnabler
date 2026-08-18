@@ -301,13 +301,14 @@ rather than leaving the rule undocumented until then.
 
 ## Phase 4 — Rules audit
 
-See [`rules-audit.md`](./rules-audit.md) for the full findings: 8 severity-1 correctness defects,
-4 architectural inconsistencies, 4 rendering/data-model defects, and 6 resilience/UX items.
-
-Highest priority: **Fading resolves one turn early** (a genuine rules bug), **manual edits bypass
-Saga chapter triggering**, and **two competing signal-detection paths** in the recommender.
-
-Each item should get a failing test before its fix.
+**Landed — all 22 findings.** [`rules-audit.md`](./rules-audit.md) is fully fixed or resolved as
+not-actually-defects — see that doc's own "Status" section (added 2026-08-18, checked against
+current code and, for #10, real imported-card data rather than trusted from when the audit was
+originally written) for the item-by-item breakdown. The three originally called out here as highest
+priority — **Fading resolving one turn early**, **manual edits bypassing Saga chapter triggering**,
+and **two competing signal-detection paths** — are all fixed, along with everything else the audit
+raised, including #20's touch targets (an invisible expanded hit area, not a bigger visible button —
+see `CHANGELOG.md`).
 
 ## Phase 5 — TanStack Router on Vite
 

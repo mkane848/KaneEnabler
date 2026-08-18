@@ -15,11 +15,35 @@ describes the correct rule.
 
 Each item should get a **failing test first**, then the fix.
 
+## Status (2026-08-18)
+
+This doc never got a status column as fixes landed during consolidation, so most of it read as an
+open backlog when it wasn't. Verified against the current code, item by item: **all 22 findings are
+now fixed or resolved as not-actually-defects. Nothing here is open.**
+
+A few notes on the ones that aren't simply "fixed" at the cited location: #6's fix lives one layer
+above where the item originally pointed — a `db.ts` query still has no ban-list filter, but
+`routes/recommend.ts` routes a banned submitted card into a separate `banned` array via
+`legality.ts`'s `partitionSubmittedCards` before scoring ever sees it, so reading `db.ts` alone
+still looks like the bug. #7's suggested fix (gate on a power/toughness box) was itself checked
+against live Scryfall data and found wrong — a real Spacecraft has no printed power/toughness — so
+the current code deliberately doesn't add that gate; that's recorded as "not a defect," not a fix.
+#10 was checked against the real imported card pool (not just read from the code) — see its own
+note for what that turned up. #11's four duplication classes are all deduped except
+`time-counters/src/utils/colorIdentity.mjs`, which stays a separate copy for the same
+bare-Node-script-can't-import-TS constraint documented for `@mtg/card-model`/`@mtg/scryfall`
+elsewhere. #12's `CardDetailDialog.bracket` prop is now a documented deliberate placeholder ("stays
+on the props so restoring this needs no re-plumbing"), not an oversight. #20's visible circles are
+still 24×24px — a grep for `width`/`height` alone still looks like the bug — but an invisible
+`::before` hit area brings the actual tap target to 44×44+.
+
+Each item below is marked `[FIXED]` or `[NOT A DEFECT]` in its heading.
+
 ---
 
 ## Severity 1 — Wrong rules output
 
-### 1. Fading resolves one turn early
+### 1. Fading resolves one turn early `[FIXED]`
 
 **`DrWhoCompanionEDH`** — `src/hooks/useGameState.ts:43-46`, `src/utils/counters.ts:76-77`
 
@@ -35,7 +59,7 @@ This is the clearest correctness bug found in either project, and it is notable 
 gets the _harder_ distinction right — `usesTimeCounters` correctly excludes fade and lore counters
 from time-counter effects (`counters.ts:100-110`).
 
-### 2. Manual count edits bypass Saga chapter triggering
+### 2. Manual count edits bypass Saga chapter triggering `[FIXED]`
 
 **`DrWhoCompanionEDH`** — `src/hooks/useGameState.ts:147-164` (`setCount`), `:171-188` (`adjustCount`)
 
@@ -50,7 +74,7 @@ Travel jumps the count by more than one." That is true of the _function_ and fal
 sites_. `CLAUDE.md:85-89` names this exact bug class ("always trigger per-chapter, never just check
 the final target") — the helper honours it, the callers don't.
 
-### 3. Bad Wolf under-counts suspended cards
+### 3. Bad Wolf under-counts suspended cards `[FIXED]`
 
 **`DrWhoCompanionEDH`** — `src/hooks/useGameState.ts:437`
 
@@ -63,7 +87,7 @@ with a time counter on it." It is wrong for the first: a suspended card qualifie
 regardless of how many time counters remain. Narrow window in practice, but the clauses should be
 separated.
 
-### 4. Time Travel offered for suspended cards at 0 counters
+### 4. Time Travel offered for suspended cards at 0 counters `[FIXED]`
 
 **`DrWhoCompanionEDH`** — `src/App.tsx:55`
 
@@ -71,7 +95,7 @@ The target filter tests mechanic only, not count. A suspended card whose last ti
 removed has already been cast — it is no longer "a suspended card you own" and should not be a
 Time Travel target. `TimeTravelPanel.tsx:146` disables `−1` at zero but leaves `+1` enabled.
 
-### 5. Creature-type parsing splits multi-word types
+### 5. Creature-type parsing splits multi-word types `[FIXED]`
 
 **`HardlyKnowHer`** — `server/src/services/signals.ts:253-262` vs `server/src/services/partners.ts:116`
 
@@ -84,14 +108,19 @@ These two cannot both be right. Verify against real Scryfall data before choosin
 and not the other. Worth noting the Doctor Who deck that the sibling app is built around makes this
 more than theoretical.
 
-### 6. No ban-list check on the user's own cards
+### 6. No ban-list check on the user's own cards `[FIXED]`
 
 **`HardlyKnowHer`** — `server/src/db.ts:110`, `server/src/services/synergy.ts`
 
-Only _commanders_ are filtered by `legality_commander = 'legal'`. A banned card sitting in the
-submitted list still counts as synergy support and can be cited as a reason for a suggestion.
+Only _commanders_ are filtered by `legality_commander = 'legal'` at the database-query level — but
+`routes/recommend.ts` calls `services/legality.ts`'s `partitionSubmittedCards` immediately after
+resolving the submitted list's names, which checks `isCommanderLegal` per card and routes a banned
+one into a separate `banned` array (reported to the client, same as `notFound`) instead of into
+`submitted` — so it never reaches `buildCollectionProfile`/scoring. Confirmed by reading the actual
+call chain, not just the `db.ts` query this item originally cited — a grep of `db.ts` alone still
+looks like the bug, since the fix lives one layer up in the route, not in the query.
 
-### 7. Commander eligibility doesn't check the power/toughness box
+### 7. Commander eligibility doesn't check the power/toughness box `[NOT A DEFECT]`
 
 **`HardlyKnowHer`** — `server/src/services/eligibility.ts:73-91`
 
@@ -100,7 +129,7 @@ power/toughness box" — but the implementation only substring-matches the type 
 `Creature` / `Vehicle` / `Spacecraft` and never checks for the box. Also note substring rather than
 word-boundary matching throughout.
 
-### 8. Singleton limit silently falls through on digits and large numbers
+### 8. Singleton limit silently falls through on digits and large numbers `[FIXED]`
 
 **`HardlyKnowHer`** — `server/src/services/singleton.ts:23-59`
 
@@ -113,7 +142,7 @@ conservative, but it is silent.
 
 ## Severity 2 — Architectural inconsistency
 
-### 9. Two competing signal-detection paths
+### 9. Two competing signal-detection paths `[FIXED]`
 
 **`HardlyKnowHer`** — `server/src/services/synergy.ts:178-193` vs `server/src/db.ts:143-183`
 
@@ -129,7 +158,17 @@ is currently processed _k+1_ times per request.
 
 **This is the largest single inconsistency in either codebase.**
 
-### 10. Kindred over-detection
+### 10. Kindred over-detection `[FIXED]`
+
+**Verified against the real imported card pool (2026-08-18), not just read from the code.** Queried
+`card_signals` for every kindred hit on all nine ambiguous words this item names (Wall, Scout, Seal,
+Elder, Noble, Citizen, Mount, Guest, Toy) across all 35,931 imported cards. Every non-structural
+("textual only") hit is a genuine token-creation or type-caring reference — e.g. Invisible Woman
+creates "a Wall creature token," Miriam, Herd Whisperer explicitly reads "Mounts and Vehicles you
+control," Courier's Briefcase creates a Citizen token, Unable to Scream turns a creature into "a Toy
+artifact creature." Zero false positives from the coincidental-common-word case the audit worried
+about (a card mentioning "wall" or "guest" in some unrelated sense). The clause-level verb matching
+that replaced the old catch-all is doing its job.
 
 **`HardlyKnowHer`** — `server/src/services/signals.ts:656-667` (`candidateTypes`), `:707` (catch-all)
 
@@ -139,7 +178,7 @@ mention. Together, any card whose rules text happens to contain a common English
 a creature type — Wall, Scout, Seal, Elder, Noble, Citizen, Mount, Guest, Toy — becomes a kindred
 payoff for that type, provided the submitted list holds 3+ citable cards of it.
 
-### 11. Rules constants duplicated across files
+### 11. Rules constants duplicated across files `[FIXED]`
 
 - **Commander tax (`castCount * 2`, CR 903.10)** — three copies in `DrWhoCompanionEDH`:
   `CommanderTaxModal.tsx:46`, `CommanderFieldTile.tsx:27`, and inline at `useGameState.ts:375`.
@@ -154,7 +193,7 @@ payoff for that type, provided the submitted list holds 3+ citable cards of it.
   `DrWhoCompanionEDH`: `useGameState.ts:43-46`, `CardTile.tsx:26`, `ActiveCardsList.tsx:21-25`,
   `TimeTravelPanel.tsx:147-151`.
 
-### 12. Dead code that is nonetheless tested
+### 12. Dead code that is nonetheless tested `[FIXED]`
 
 - `turnStepForMechanic` (`DrWhoCompanionEDH` `counters.ts:113-115`) is exported, documented in
   `CLAUDE.md`, and unit-tested at `counters.test.ts:72-80` — but **never imported by production
@@ -169,7 +208,7 @@ payoff for that type, provided the submitted list holds 3+ citable cards of it.
 
 ## Severity 3 — Rendering and data-model defects
 
-### 13. Hybrid and Phyrexian mana render as text
+### 13. Hybrid and Phyrexian mana render as text `[FIXED]`
 
 **`HardlyKnowHer`** — `client/src/components/ManaCost.tsx:23-32`
 
@@ -180,7 +219,7 @@ The sibling project handles all of these correctly (`DrWhoCompanionEDH` `manaSym
 with true split discs). The irony is that the app with the broken renderer is the one whose card
 pool is every card ever printed, while the app with the correct one is restricted to Jeskai.
 
-### 14. Modal DFC mana costs are joined, producing phantom pips
+### 14. Modal DFC mana costs are joined, producing phantom pips `[FIXED]`
 
 **`DrWhoCompanionEDH`** — `scripts/fetch-card-data.mjs:137-146` (`faceField`)
 
@@ -188,13 +227,13 @@ A modal double-faced card has no top-level `mana_cost`, so `faceField` joins bot
 `"{1}{G} // {3}{G}{G}"`. That string flows into `parseManaCost`, which matches every `{...}` on
 both sides of the separator and renders **five pips for a two-mana card**.
 
-### 15. Design token already drifted
+### 15. Design token already drifted `[FIXED]`
 
 `--pip-generic` is `#cdc3ad` in `HardlyKnowHer` (hardcoded ~1,439 lines into a 2,042-line
 `index.css`) and `#b3aaa1` in `DrWhoCompanionEDH` (a proper token). The six coloured pip values are
 byte-identical in both. The one that drifted is precisely the one that wasn't a token.
 
-### 16. Mana glyph data is hand-copied against an absent dependency
+### 16. Mana glyph data is hand-copied against an absent dependency `[FIXED]`
 
 **`HardlyKnowHer`** — `client/src/lib/manaSymbols.ts:13-14`
 
@@ -206,19 +245,19 @@ generates the same data with `scripts/gen-mana-glyphs.mjs`, including three fail
 
 ## Severity 4 — Resilience and UX
 
-### 17. No error boundaries anywhere
+### 17. No error boundaries anywhere `[FIXED]`
 
 Neither app has a React error boundary. A render throw white-screens the app — mid-game, in the case
 of the counter tracker, with no state recovery UI.
 
-### 18. No server error handling on the main endpoint
+### 18. No server error handling on the main endpoint `[FIXED]`
 
 **`HardlyKnowHer`** — `server/src/routes/recommend.ts`
 
 `/api/recommend` has no `try`/`catch` and the app registers no Express error middleware. Any throw
 inside scoring returns Express's default 500 with a stack trace.
 
-### 19. Saves are validated shallowly
+### 19. Saves are validated shallowly `[FIXED]`
 
 **`DrWhoCompanionEDH`** — `src/utils/storage.ts:10`
 
@@ -226,7 +265,16 @@ Validation checks only that `turn` is a number and `cards` is an array. A save c
 `cards: [{}]` passes and then crashes `CardTile` on missing fields. Individual `TrackedCard`s are
 never validated. There is also no undo for `removeCard`, whose trigger is a ~20px `×` button.
 
-### 20. Touch targets below guideline in a mobile-first app
+### 20. Touch targets below guideline in a mobile-first app `[FIXED]`
+
+**`DrWhoCompanionEDH`** — `src/components/CardTile.module.css` still shows `.stepBtn` at a visible
+24×24px, which is what a grep for `width`/`height` finds — but `.stepBtn::before`/`.removeBtn::before`
+add an invisible `inset: -10px`/`-12px` pseudo-element hit area around each, bringing the actual
+tappable area to 44×44+ while keeping the visible circles small enough to fit the compact card grid.
+Documented in `CHANGELOG.md` ("the actual tappable area around each one is now at least 44×44,
+using an invisible expanded hit area rather than a bigger button"), which also covers this item's
+`env(safe-area-inset-*)` half — `viewport-fit=cover` was declared but never read anywhere; it's now
+wired into the header, add-card/card-list panels, and footer.
 
 **`DrWhoCompanionEDH`** — `src/components/CardTile.module.css:185-187`
 
@@ -239,14 +287,14 @@ No width breakpoints at all. `index.html` sets `viewport-fit=cover` but `env(saf
 never used, so content can sit under a notch or home indicator — a problem the sibling project
 already solved.
 
-### 21. Hand-rolled modals lack focus management
+### 21. Hand-rolled modals lack focus management `[FIXED]`
 
 **`DrWhoCompanionEDH`** — five components repeat an identical backdrop/dialog structure with no
 focus trap, no focus restoration, no Escape handler, and no scroll lock. The backdrop is
 click-to-close but unreachable by keyboard, so `aria-modal="true"` is asserted without being
 enforced. The sibling project gets all of this from Radix Dialog.
 
-### 22. Theme token bypassed in the header
+### 22. Theme token bypassed in the header `[FIXED]`
 
 **`DrWhoCompanionEDH`** — `src/components/Header.module.css:5` hardcodes `rgba(20, 22, 43, 0.92)`,
 which is the _Claude_ theme's background colour. The sticky header therefore renders in the wrong
