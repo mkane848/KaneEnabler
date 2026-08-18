@@ -19,7 +19,10 @@ services:
     # Unlike npm, pnpm installs devDependencies by default regardless of
     # NODE_ENV — no --include=dev workaround needed. prepare-data/build still
     # need tsx and tsc, both devDependencies.
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run prepare-data && pnpm run build
+    # Render auto-detects the root package.json's packageManager field and
+    # runs corepack enable itself before this command — don't call it again
+    # here, it fails with EROFS trying to relink /usr/bin/pnpm.
+    buildCommand: pnpm install --frozen-lockfile && pnpm run prepare-data && pnpm run build
     startCommand: pnpm start
     envVars:
       - key: NODE_ENV
@@ -33,7 +36,7 @@ services:
     runtime: static
     name: mtg-recommender-client
     rootDir: apps/commander-recommender/client
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
+    buildCommand: pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
     staticPublishPath: dist
     envVars:
       - key: SERVER_HOST
