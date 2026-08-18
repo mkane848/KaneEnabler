@@ -260,6 +260,9 @@ importers:
       '@mtg/mana':
         specifier: workspace:*
         version: link:../../packages/mana
+      '@mtg/profile':
+        specifier: workspace:*
+        version: link:../../packages/profile
       '@mtg/rules':
         specifier: workspace:*
         version: link:../../packages/rules

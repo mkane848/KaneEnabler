@@ -26,3 +26,10 @@ services:
     # here, it fails with EROFS trying to relink /usr/bin/pnpm.
     buildCommand: cd apps/time-counters && pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
     staticPublishPath: apps/time-counters/dist
+    # Shared sign-in menu (same Supabase project as kaneenabler-home and
+    # mtg-recommender-client) — set manually in the dashboard, not here.
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false

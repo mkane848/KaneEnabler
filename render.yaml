@@ -84,3 +84,11 @@ services:
     # see the comment on mtg-recommender-client above.
     buildCommand: cd apps/time-counters && pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
     staticPublishPath: apps/time-counters/dist
+    # Same shared sign-in menu as kaneenabler-home and mtg-recommender-client
+    # (same Supabase project) — set manually in the dashboard, see the
+    # comment on kaneenabler-home above.
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false

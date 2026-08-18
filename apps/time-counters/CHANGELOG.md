@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-08-18
+
+### Added
+
+- A shared sign-in menu in the header, backed by the same Supabase project
+  as the platform's home page and commander recommender — one account works
+  across every tool now, not just the recommender. This app has no
+  account-gated preferences of its own yet; the menu just keeps sign-in
+  state consistent everywhere.
+
 ## [1.3.2] - 2026-08-18
 
 ### Fixed
