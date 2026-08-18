@@ -1,7 +1,7 @@
 {
   "name": "mtg-recommender-server",
   "private": true,
-  "version": "1.7.1",
+  "version": "1.8.0",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {

@@ -30,10 +30,9 @@ elsewhere. Delete items as you do them.
 - [ ] **Sign up → confirm → sign in → like/tag/favourite**, end to end, in a real browser against
       production. RLS itself is verified (`docs/handoff.md` Phase 7), but the actual signed-in
       browser flow has never been exercised — the sandbox can't reach Supabase to do it.
-- [ ] Favourite a combo, then reload the recommender profile with the network blocked (devtools
-      offline mode) — it should render from the stored `snapshot` with zero Spellbook requests. No
-      profile-browsing view exists yet to make this easy to trigger (see `docs/handoff.md`
-      Verification item 6).
+- [ ] Favourite a combo, then reload `apps/home`'s `/profile` page with the network blocked
+      (devtools offline mode) — it should render the combo from the stored `snapshot` with zero
+      Spellbook requests (see `docs/handoff.md` Phase 8, Verification item 6).
 
 ## Repo housekeeping
 

@@ -26,7 +26,7 @@ const SCRYFALL_HEADERS = {
   'User-Agent': buildUserAgent({
     product: 'CommanderIHardlyKnowEr',
     version: pkg.version,
-    contact: 'hobby project; https://github.com/mkane848/HardlyKnowHer',
+    contact: 'hobby project; https://github.com/mkane848/KaneEnabler',
   }),
   Accept: 'application/json;q=0.9,*/*;q=0.8',
 };

@@ -78,7 +78,8 @@ cached client-side via TanStack Query rather than re-queried per navigation.
    inside `tsconfig.build.json`'s `rootDir`, so importing `../../package.json` there would
    reintroduce the exact `__dirname`/`rootDir` mismatch that broke a deploy once (see its own
    comment). Its version was bumped to 1.7.1 as part of this fix, but will drift again the same way
-   until something resolves that constraint.
+   until something resolves that constraint — it already has once, re-synced to 1.8.0 by hand at
+   that release; the same manual step is needed at every one after, until it is.
 
 2. **Per-process in-memory Spellbook cache.** Fine for a single user. Once accounts exist, N users
    asking the same question costs them N calls instead of one. Move to a shared, persistent cache.
