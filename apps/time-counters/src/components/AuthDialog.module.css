@@ -1,0 +1,72 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 7, 20, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+}
+
+/* See CommanderTaxModal.module.css for why .sheet positions itself instead
+   of relying on .backdrop's flex centering (Radix portals them as siblings). */
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 51;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding: 1.1rem 1.1rem 1.5rem;
+  box-shadow: var(--shadow-modal);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.title {
+  font-size: 1.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.submit {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.switch {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 1rem;
+}
+
+.switchLink {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.note {
+  font-size: 0.8rem;
+  color: var(--color-text-faint);
+  margin-top: 1rem;
+}

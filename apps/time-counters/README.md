@@ -172,6 +172,8 @@ src/components/CommanderTaxModal.tsx   Per-commander tax tracker, opened from a 
 src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
 src/components/ThemeToggle.tsx         Switches between the two themes
 src/components/AboutModal.tsx          Version, credits, and repo/changelog links
+src/components/AccountMenu.tsx         Shared sign-in state (same account as the platform's other tools)
+src/components/AuthDialog.tsx          Sign in / sign up form, opened from AccountMenu
 ```
 
 ## Themes

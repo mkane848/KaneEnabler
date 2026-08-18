@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CommanderBanner from './CommanderBanner';
 import type { CommanderId } from '../types';
 import ThemeToggle from './ThemeToggle';
+import { AccountMenu } from './AccountMenu';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -57,6 +58,7 @@ export default function Header({
         </div>
         <div className={styles.topActions}>
           <ThemeToggle />
+          <AccountMenu />
           <button type="button" className={styles.logBtn} onClick={onOpenLog}>
             Game Log
           </button>
