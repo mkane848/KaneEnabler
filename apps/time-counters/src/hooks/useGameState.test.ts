@@ -385,6 +385,110 @@ describe('useGameState — Bad Wolf / Rose Tyler', () => {
   });
 });
 
+describe('useGameState — Time Travel', () => {
+  it('removes a time counter from a Suspend card', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'suspend', startingCount: 3 })));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.applyTimeTravel([{ id, delta: -1 }], { current: 1, total: 3 }));
+    expect(result.current.state.cards[0]!.count).toBe(2);
+  });
+
+  it('adds a time counter — no upper bound for a decrement-direction card', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'suspend', startingCount: 1 })));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.applyTimeTravel([{ id, delta: 1 }], { current: 1, total: 1 }));
+    expect(result.current.state.cards[0]!.count).toBe(2);
+  });
+
+  it('never drops a card below 0 counters', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'suspend', startingCount: 0 })));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.applyTimeTravel([{ id, delta: -1 }], { current: 1, total: 1 }));
+    expect(result.current.state.cards[0]!.count).toBe(0);
+  });
+
+  it('a delta that clamps back to the same count is not logged as a change', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'suspend', startingCount: 0 })));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.applyTimeTravel([{ id, delta: -1 }], { current: 1, total: 1 }));
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry!.changes).toEqual([]);
+    expect(entry!.detail).toBe('No counters added or removed this pass.');
+  });
+
+  it('a delta of 0 is a no-op and is not logged', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ mechanic: 'suspend', startingCount: 2 })));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.applyTimeTravel([{ id, delta: 0 }], { current: 1, total: 1 }));
+    expect(result.current.state.cards[0]!.count).toBe(2);
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry!.detail).toBe('No counters added or removed this pass.');
+  });
+
+  it('leaves a card untouched if it is not named in the choices at all', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => {
+      result.current.addCard(
+        addInput({ card: card({ id: 'a', name: 'A' }), mechanic: 'suspend', startingCount: 2 }),
+      );
+      result.current.addCard(
+        addInput({ card: card({ id: 'b', name: 'B' }), mechanic: 'suspend', startingCount: 2 }),
+      );
+    });
+    const [aId] = result.current.state.cards.map((c) => c.instanceId);
+    act(() => result.current.applyTimeTravel([{ id: aId!, delta: -1 }], { current: 1, total: 1 }));
+    expect(result.current.state.cards.map((c) => c.count)).toEqual([1, 2]);
+  });
+
+  it("adjusts Rose Tyler's own Bad Wolf counters via the 'rose' sentinel id", () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.adjustRoseTimeCounters(3));
+    act(() =>
+      result.current.applyTimeTravel([{ id: 'rose', delta: -1 }], { current: 1, total: 1 }),
+    );
+    expect(result.current.state.commanders.roseTyler.timeCounters).toBe(2);
+  });
+
+  it("never drops Rose Tyler's own counters below 0", () => {
+    const { result } = renderHook(() => useGameState());
+    act(() =>
+      result.current.applyTimeTravel([{ id: 'rose', delta: -1 }], { current: 1, total: 1 }),
+    );
+    expect(result.current.state.commanders.roseTyler.timeCounters).toBe(0);
+  });
+
+  it('logs one entry per pass, naming the pass number and every card/Rose that actually changed', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => {
+      result.current.addCard(
+        addInput({ card: card({ id: 'a', name: 'A' }), mechanic: 'suspend', startingCount: 2 }),
+      );
+      result.current.adjustRoseTimeCounters(1);
+    });
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() =>
+      result.current.applyTimeTravel(
+        [
+          { id, delta: -1 },
+          { id: 'rose', delta: 1 },
+        ],
+        { current: 2, total: 3 },
+      ),
+    );
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry!.title).toBe('Time Travel — pass 2 of 3');
+    expect(entry!.changes).toEqual([
+      { name: 'A', mechanic: 'suspend', from: 2, to: 1 },
+      { name: 'Rose Tyler — Bad Wolf counters', mechanic: 'custom', from: 1, to: 2 },
+    ]);
+  });
+});
+
 describe('useGameState — resetGame', () => {
   it('clears the board and turn back to initial state', () => {
     const { result } = renderHook(() => useGameState());

@@ -324,8 +324,17 @@ way it predicted):
 - React error boundaries in both apps; Express error middleware in the recommender.
 - Per-card save validation in DWC, plus undo for `removeCard`.
 - Split the 2,042-line `index.css`; adopt DWC's `--pip-*` / `--mechanic-*` token layer.
-- Component tests: HKH has **zero**. DWC's `applyTimeTravel` — its most rules-dense and
-  most-recently-corrected function — has **zero** coverage. `AddCardPanel` has none.
+- **Landed.** Component tests for HKH (`ResultFilters`, `LikeDislikeButtons`, `CommanderCard` —
+  a meaningful subset, not exhaustive coverage of every component; deferred ones are unremarkable
+  props-in/JSX-out or gated behind the same network/auth concerns already stood in for here) plus
+  `jsdom` + Testing Library infra (`vitest.config.ts`, `src/test/setup.ts`) it had none of before.
+  DWC's `applyTimeTravel` now has a dedicated `describe` block covering clamping at 0, the no-upper-
+  bound increment case, no-op/no-log deltas, Rose Tyler's sentinel `'rose'` id, and multi-card/
+  multi-pass log content. `AddCardPanel` (DWC) now covers Suspend/Vanishing auto-detection, Saga's
+  chapter-row validation and submit payload, manual entry, the quick-suspend flow, and Cancel —
+  10 cases, one of which caught a real async-timing gotcha: TanStack Form's `handleSubmit()` is a
+  `Promise` even with no validators, so a submission assertion needs a `waitFor`, not a bare
+  post-click check.
 - Add `@vitest/coverage-v8` with a threshold.
 - **Landed.** `useCommanderCards` now memoizes on `catalog` (stable after its one `useCardCatalog`
   load) instead of re-scanning on every render; `App.tsx`'s `commanderFieldCards` and
