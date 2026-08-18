@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# tsc -b (project references) emits these next to vite.config.ts as a
+# byproduct of type-checking it; the compiled output is never used.
+vite.config.js
+vite.config.d.ts

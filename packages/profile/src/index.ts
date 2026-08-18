@@ -2,6 +2,8 @@ export { supabase } from './client';
 export { comboKey } from './comboKey';
 export { useAuth } from './useAuth';
 export type { AuthResult, AuthState } from './useAuth';
+export { AccountMenu } from './AccountMenu';
+export { AuthDialog } from './AuthDialog';
 export {
   useCardPreferences,
   useSetCardPreference,

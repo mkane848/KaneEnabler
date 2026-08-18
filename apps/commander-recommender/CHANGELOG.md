@@ -36,6 +36,17 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   a badge on cards you've marked, not a new signal feeding the suggestion
   itself. See the About dialog for what's stored.
 
+- **A consistent NavBar shared with the platform's home page and time-counters** (`@mtg/ui`'s new
+  `NavBar`) — links to those two tools now show up in this app's header for the first time; the
+  About trigger moved into the bar alongside them. The sign-in menu (`AccountMenu`/`AuthDialog`)
+  now comes from `@mtg/profile` instead of this app's own copy (also moved off raw
+  `@radix-ui/react-dialog` onto `@mtg/ui`'s `Modal` in the process) — one implementation shared
+  with the other two tools instead of three hand-maintained ones. No behavior change beyond the new
+  links.
+- **`GET /api/cards`**, a read-only lookup resolving `card_preferences`' bare oracle_ids back to
+  card data (name, image, commander eligibility) — SQLite only, no new Scryfall call. Built for the
+  platform's new `/profile` page (`apps/home`), which had no other way to turn a liked/disliked
+  card back into something displayable; nothing in this app calls it itself.
 - **A render crash no longer white-screens the app.** Nothing caught an
   unexpected throw during render — the whole page unmounted with nothing in
   its place, mid-session, with no way back short of a manual reload. A crash

@@ -5,8 +5,11 @@ import { AuthDialog } from './AuthDialog';
 const signIn = vi.fn();
 const signUp = vi.fn();
 
-vi.mock('@mtg/profile', () => ({
-  useAuth: () => ({ signIn: (...args: unknown[]) => signIn(...args), signUp: (...args: unknown[]) => signUp(...args) }),
+vi.mock('./useAuth', () => ({
+  useAuth: () => ({
+    signIn: (...args: unknown[]) => signIn(...args),
+    signUp: (...args: unknown[]) => signUp(...args),
+  }),
 }));
 
 function fillAndSubmit(email: string, password: string) {

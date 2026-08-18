@@ -1,0 +1,126 @@
+.mtg-navbar {
+  background: var(--mtg-color-bg, transparent);
+  border-bottom: 1px solid var(--mtg-color-border, transparent);
+  font-family: var(--mtg-font-body, inherit);
+}
+
+.mtg-navbar-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.mtg-navbar-brand {
+  font-family: var(--mtg-font-display, inherit);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  color: var(--mtg-color-text, inherit);
+  text-decoration: none;
+}
+
+.mtg-navbar-brand:hover {
+  color: var(--mtg-color-accent, inherit);
+}
+
+.mtg-navbar-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.28rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--mtg-color-border, transparent);
+  border-radius: 0.4rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mtg-navbar-toggle-bar {
+  display: block;
+  width: 1.15rem;
+  height: 2px;
+  margin: 0 auto;
+  background: var(--mtg-color-text, currentcolor);
+  border-radius: 1px;
+}
+
+.mtg-navbar-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mtg-navbar-panel {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.mtg-navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.mtg-navbar-link {
+  padding: 0.4rem 0.65rem;
+  color: var(--mtg-color-text-muted, inherit);
+  font-size: 0.92rem;
+  text-decoration: none;
+  border-radius: 0.4rem;
+}
+
+.mtg-navbar-link:hover {
+  color: var(--mtg-color-text, inherit);
+  background: var(--mtg-color-surface, transparent);
+}
+
+.mtg-navbar-link-current {
+  color: var(--mtg-color-accent, inherit);
+  font-weight: 600;
+}
+
+.mtg-navbar-extra,
+.mtg-navbar-account {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .mtg-navbar-toggle {
+    display: flex;
+  }
+
+  .mtg-navbar-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem 1.25rem;
+    background: var(--mtg-color-surface, inherit);
+    border-bottom: 1px solid var(--mtg-color-border, transparent);
+  }
+
+  .mtg-navbar-panel-open {
+    display: flex;
+  }
+
+  .mtg-navbar-links {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+}

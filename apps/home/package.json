@@ -1,7 +1,7 @@
 {
   "name": "mtg-platform-home",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "engines": {
@@ -12,23 +12,32 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@mtg/profile": "workspace:*",
     "@mtg/ui": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
     "@mtg/config": "workspace:*",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
     "globals": "^15.14.0",
+    "jsdom": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -62,6 +62,10 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
 - **`server/src/db.ts`** — SQLite connection + `isSeeded` guard (returns 503 instead of a raw SQL
   error pre-import) + `findCardsByNames`, which falls back to a `card_face_names` table (built by
   `cardNames.ts`'s rules) so a decklist naming only one face of a DFC still resolves.
+  `findCardsByOracleIds` is the reverse direction — apps/home's `/profile` page's only way to turn
+  a stored `card_preferences` row (oracle_id only) back into a name/image, via `GET /api/cards`
+  (`routes/cards.ts`). Both routes' `CardRow` → wire-DTO mapping lives in
+  `services/cardDTO.ts` (`toCardDTO`), shared with `routes/recommend.ts` rather than duplicated.
 - **`server/scripts/fetch-scryfall.ts`** + **`import-scryfall.ts`** are the only place Scryfall is
   called from this app — see [`../../docs/api-policy.md`](../../docs/api-policy.md), a hard
   project rule, before changing what these call or when. The bulk-snapshot fetch/cache mechanics
@@ -98,12 +102,15 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   with the sibling app — this client has no `manaSymbols.ts` of its own anymore.
 - **Optional sign-in and preferences (Phase 7) live in `@mtg/profile` (`packages/profile`)**, not
   this client's own `store/` — `useAuth`, `useCardPreferences`, `useComboPreferences`, all backed
-  by Supabase (RLS, owner-only). `AccountMenu.tsx`/`AuthDialog.tsx` (nav + sign-in),
-  `LikeDislikeButtons.tsx` (`CommanderCard`'s badge row), `JankToggle` (inside
-  `CardDetailDialog.tsx`), and `ComboFavoriteButton.tsx` (inside `ComboFinder.tsx`) are the only
-  consumers. `supabase` is `null` when `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` aren't
-  set — every one of those components checks `useAuth().user` and renders nothing signed out, so
-  the whole feature degrades cleanly rather than gating the app on Supabase being configured.
+  by Supabase (RLS, owner-only), plus `AccountMenu`/`AuthDialog` themselves (this client no longer
+  has its own copies — it renders `@mtg/ui`'s shared `NavBar` with `@mtg/profile`'s `AccountMenu`
+  in its `accountSlot`, same as apps/home and apps/time-counters). `LikeDislikeButtons.tsx`
+  (`CommanderCard`'s badge row), `JankToggle` (inside `CardDetailDialog.tsx`), and
+  `ComboFavoriteButton.tsx` (inside `ComboFinder.tsx`) are this client's own remaining consumers —
+  the annotate-in-place UI apps/home's `/profile` page now also has a browse-and-manage view over.
+  `supabase` is `null` when `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` aren't set — every
+  one of those components checks `useAuth().user` and renders nothing signed out, so the whole
+  feature degrades cleanly rather than gating the app on Supabase being configured.
 - A suggestion is a `CommanderUnit` (1-2 `CardRow`s), not a single card — every DTO, filter, and
   sort in the client threads through that union, not a flattened card.
 

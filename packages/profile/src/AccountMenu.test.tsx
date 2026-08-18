@@ -5,7 +5,7 @@ import { AccountMenu } from './AccountMenu';
 const useAuth = vi.fn();
 const signOut = vi.fn();
 
-vi.mock('@mtg/profile', () => ({
+vi.mock('./useAuth', () => ({
   useAuth: () => useAuth(),
 }));
 

@@ -445,11 +445,16 @@ scope:
 - **Email/password only** — this section didn't specify a sign-in method. No OAuth provider, no
   magic link; the smallest surface that works, since a profile is optional scaffolding around the
   recommender's actual job, not a product of its own.
-- **No dedicated profile/browse page.** The "seven lists" below are all annotations at the point
-  you'd want them — a heart/✕ on a suggestion card and on a combo, a jank toggle in the card detail
-  view — not a separate screen that lists everything you've ever liked. Revisit if that's wanted;
-  the data model already supports it (`useCardPreferences`/`useComboPreferences` return everything,
-  a browse page would just be a new consumer of hooks that already exist).
+- **No dedicated profile/browse page** — true when this was written, no longer true. The "seven
+  lists" below were all annotations at the point you'd want them — a heart/✕ on a suggestion card
+  and on a combo, a jank toggle in the card detail view — not a separate screen that lists
+  everything you've ever liked. **Since landed** in Phase 8 below: a `/profile` route in
+  `apps/home` (not commander-recommender — see Phase 8 for why), exactly as predicted here — a new
+  consumer of the same `useCardPreferences`/`useComboPreferences`
+  hooks, no new Supabase schema. It resolves `card_preferences`' bare oracle_ids back to card data
+  via a new `GET /api/cards` on the recommender server (`services/cardDTO.ts`'s `toCardDTO`, shared
+  with `/api/recommend`'s existing mapping), and exposes the `note` field for the first time — the
+  schema always had it, but no UI ever let you write one before this.
 - **"Hidden or demoted" landed as annotated only.** A disliked card/commander shows the same ✕
   badge as a like, unfilled — nothing currently hides it from the grid or sorts it lower. This
   app already has a session-only "dismiss" for exactly the "get this out of my results" need
@@ -524,6 +529,42 @@ printing id is one of the landmines `@mtg/card-model` exists to resolve.
 
 ---
 
+## Phase 8 — NavBar and profile-page unification
+
+**Landed.** Two things that were true through Phase 0–7 stopped being true here, on purpose:
+
+- **`@mtg/profile` is no longer commander-recommender-only.** All three apps already shared one
+  Supabase identity (apps/home and apps/time-counters each had their own copy of `AccountMenu`/
+  `AuthDialog`, wired to the same `useAuth`) — that drift predates this phase. What changed: those
+  three near-identical copies (one raw-Radix, two already on `@mtg/ui`'s `Modal`) are now one
+  implementation, living in `@mtg/profile` itself (it already owned the hooks), styled through a
+  small set of `--mtg-*` CSS custom properties each app's own token file maps its existing palette
+  onto — additively, nothing renamed or removed. `@mtg/profile` gained a dependency on `@mtg/ui`
+  for this (`AuthDialog` uses `Modal`) — the one `packages/*` edge that isn't card-data-shaped.
+- **`@mtg/ui` gained a `NavBar`** — brand, cross-app links (none of the three apps linked to each
+  other from their headers before this), and slots for each app's account menu and anything else
+  that belongs in the bar (time-counters' theme toggle, the recommender's About trigger). Same
+  `--mtg-*` tokens, so it re-themes per app with zero extra code — including live, when
+  time-counters' Doctor Who/Claude toggle flips, since that toggle's own CSS variables are what the
+  `--mtg-*` block maps onto inside each `data-theme` block. The Doctor Who theme itself is
+  untouched — this phase unifies structure and mechanism, not each app's palette or the toggle.
+
+This also finally builds the profile/browse page Phase 7 predicted and deferred (see that phase's
+"No dedicated profile/browse page" note): a `/profile` route in `apps/home`, chosen over
+commander-recommender because the shared identity already lives at the platform level, even though
+the preference data itself is still recommender-specific. The one new gap that surfaced building
+it: `card_preferences` stores only `oracle_id`, and nothing resolved that back to a name/image
+outside the recommender client's own bundle. Fixed with one new read-only endpoint,
+`GET /api/cards` (`server/src/routes/cards.ts`, `db.ts`'s `findCardsByOracleIds`) — a SQLite lookup
+against data already on disk, not a new Scryfall call, so it isn't gated by `api-policy.md`.
+apps/home reaches it cross-origin via the same `VITE_API_URL` the recommender client's own
+`api/client.ts` uses, which the combined-platform build already passed into every sub-app's build
+env unused until now. Combos need no equivalent: `ComboFavoriteButton`'s stored `snapshot` already
+carries everything a list item renders (names, produces text, description, permalink) — the same
+"never re-fetch to display a favourite" rule Phase 7 established.
+
+---
+
 ## Verification
 
 Each phase must leave the tree green.
@@ -543,9 +584,8 @@ Each phase must leave the tree green.
 6. **Profiles:** RLS tested by querying another user's rows and asserting zero results — **done**,
    see Phase 7 above. Favourite-a-combo-with-the-network-blocked is also **done**:
    `ComboFavoriteButton.test.tsx` stubs `global.fetch` to throw and asserts the button still renders
-   its liked/disliked/neither state from `useComboPreferences`' stored `snapshot` alone. (There's
-   still no dedicated profile/browse page — this is the one component that reads a stored combo
-   preference back today, per Phase 7's note.)
+   its liked/disliked/neither state from `useComboPreferences`' stored `snapshot` alone. The
+   dedicated profile/browse page Phase 7 deferred has since landed — see Phase 8.
 7. Playwright is pre-installed in the remote environment — drive both UIs for the touch-target and
    modal-accessibility fixes.
 

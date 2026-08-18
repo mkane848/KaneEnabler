@@ -9,10 +9,13 @@ monorepo holding:
 
 - `apps/commander-recommender` — Commander recommender (React + Vite client, Express + SQLite server)
 - `apps/time-counters` — in-game counter companion for one specific Doctor Who deck
-- `apps/home` — shared platform landing page: links to both tools plus the one sign-in menu shared
-  across them (`@mtg/profile`, same Supabase project as the recommender's own account menu). Deploys
-  as part of the combined static site (see "Combined deploy" below), not as its own standalone app
-  in production, though it still builds and runs standalone for local dev
+- `apps/home` — shared platform landing page: links to both tools, the one sign-in menu shared
+  across them (`@mtg/profile`, same Supabase project as the recommender's own account menu), and
+  `/profile` — a page over the same `card_preferences`/`combo_preferences` data (liked/disliked
+  cards, jank tags, notes, favourited combos), resolving oracle_ids back to card data via the
+  recommender server's `/api/cards`. Deploys as part of the combined static site (see "Combined
+  deploy" below), not as its own standalone app in production, though it still builds and runs
+  standalone for local dev
 - `packages/config` (`@mtg/config`) — shared tsconfig/ESLint/Prettier/Vitest bases both apps extend
 - `packages/rules` (`@mtg/rules`) — CR-cited Magic rules primitives shared by both apps: commander
   eligibility, singleton limit, Partner/Background pairing, commander tax, color-identity subset
@@ -35,15 +38,22 @@ monorepo holding:
 - `packages/mana` (`@mtg/mana`) — mana-cost parsing and the inlined glyph SVG paths both clients render
 - `packages/ui` (`@mtg/ui`) — a `Modal` built on Radix Dialog (focus trap, Escape, scroll lock);
   time-counters' five panels use it, commander-recommender's own Dialog usages are unmigrated (see
-  that package's own file for why). Also `ErrorBoundary`, a class component both apps wrap their
+  that package's own file for why). `ErrorBoundary`, a class component all three apps wrap their
   root in — `fallback` is a render prop so each app supplies its own themed recovery screen rather
-  than a fixed look, matching `Modal`'s className-hook approach
-- `packages/profile` (`@mtg/profile`) — commander-recommender-only: a Supabase client, `useAuth`,
-  and RLS-scoped hooks over `card_preferences`/`combo_preferences` (like/dislike, jank tags,
-  favourited combos with an offline-rendered snapshot — see `docs/handoff.md`'s Phase 7). `null`
-  when `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` aren't set rather than throwing, since
-  profiles are additive and the rest of the app works with zero Supabase setup. time-counters
-  doesn't consume this; nothing blocks it later
+  than a fixed look, matching `Modal`'s className-hook approach. And `NavBar`, the site chrome
+  (brand, cross-app links, wherever the app plugs in its account menu/theme toggle) every app
+  renders at its root — styled through the `--mtg-*` platform tokens each app's own
+  tokens.css/App.css/index.css defines (additively, on top of that app's existing tokens), so one
+  component re-themes per app, and live with time-counters' Doctor Who/Claude toggle, with no
+  per-app CSS overrides
+- `packages/profile` (`@mtg/profile`) — shared by all three apps: a Supabase client, `useAuth`, the
+  `AccountMenu`/`AuthDialog` every app's `NavBar` renders (one implementation now, not three
+  per-app copies), and RLS-scoped hooks over `card_preferences`/`combo_preferences` (like/dislike,
+  jank tags, favourited combos with an offline-rendered snapshot — see `docs/handoff.md`'s Phase
+  7). `null` when `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` aren't set rather than
+  throwing, since profiles are additive and every app works with zero Supabase setup. Depends on
+  `@mtg/ui` (`AuthDialog` uses its `Modal`) — the one `packages/*` dependency edge that isn't
+  card-data-shaped
 - `packages/scryfall` (`@mtg/scryfall`) — hard-rule gated (`docs/api-policy.md`): the single place
   both apps' bulk-data fetch scripts (`commander-recommender/server/scripts/fetch-scryfall.ts`,
   `time-counters/scripts/fetch-card-data.mjs`) get their snapshot fetch/cache mechanics

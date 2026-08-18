@@ -1,9 +1,21 @@
 import { useEffect } from 'react';
+import { NavBar, type NavBarLink } from '@mtg/ui';
+import { AccountMenu } from '@mtg/profile';
 import { CardListUpload } from './components/CardListUpload';
 import { RecommendationResults } from './components/RecommendationResults';
 import { AboutDialog } from './components/AboutDialog';
-import { AccountMenu } from './components/AccountMenu';
 import { wakeServer } from './api/client';
+
+/**
+ * Root-relative platform subpaths, not relative to this app's own base —
+ * all three tools share one origin in production (root CLAUDE.md's
+ * "Combined deploy"), same as apps/home's own pre-existing tool links.
+ */
+const NAV_LINKS: NavBarLink[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Recommender', href: '/recommender/', current: true },
+  { label: 'Time Counters', href: '/time-counters/' },
+];
 
 function App() {
   // Start waking the API immediately, so a sleeping free instance is usually
@@ -12,17 +24,18 @@ function App() {
 
   return (
     <div className="app-shell">
-      <nav className="app-nav">
-        <span className="app-nav-brand">Commander? I Hardly Know 'Er</span>
-        <div className="app-nav-actions">
-          <AccountMenu />
+      <NavBar
+        brand={{ label: 'KaneEnabler', href: '/' }}
+        links={NAV_LINKS}
+        accountSlot={<AccountMenu />}
+        extraSlot={
           <AboutDialog>
             <button type="button" className="app-nav-link">
               About
             </button>
           </AboutDialog>
-        </div>
-      </nav>
+        }
+      />
 
       <header className="app-header">
         <h1 className="app-title">Find the Commander hiding in your collection</h1>

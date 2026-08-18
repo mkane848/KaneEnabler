@@ -104,6 +104,28 @@ export function findCardsByNames(names: string[]): Map<string, CardRow> {
   return map;
 }
 
+/**
+ * Resolves bare oracle_ids back to full card rows — what a stored
+ * preference (`@mtg/profile`'s `card_preferences`, keyed on oracle_id only)
+ * needs to render a name/image. Chunked like `findSignalsByOracleIds`,
+ * for the same reason (SQLite's 999 host-parameter cap).
+ */
+export function findCardsByOracleIds(oracleIds: string[]): CardRow[] {
+  if (!isSeeded || oracleIds.length === 0) return [];
+
+  const CHUNK = 400;
+  const rows: CardRow[] = [];
+  for (let i = 0; i < oracleIds.length; i += CHUNK) {
+    const chunk = oracleIds.slice(i, i + CHUNK);
+    rows.push(
+      ...(db
+        .prepare(`SELECT * FROM cards WHERE oracle_id IN (${chunk.map(() => '?').join(',')})`)
+        .all(...chunk) as CardRow[]),
+    );
+  }
+  return rows;
+}
+
 export function getCommanderCandidates(): CardRow[] {
   return db
     .prepare(`SELECT * FROM cards WHERE is_commander_eligible = 1 AND legality_commander = 'legal'`)

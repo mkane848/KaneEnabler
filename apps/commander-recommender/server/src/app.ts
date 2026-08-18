@@ -4,6 +4,7 @@ import cors from 'cors';
 import recommendRouter from './routes/recommend';
 import combosRouter from './routes/combos';
 import metaRouter from './routes/meta';
+import cardsRouter from './routes/cards';
 import { errorHandler } from './errorHandler';
 
 // Split from index.ts so tests can import the app without the `app.listen()`
@@ -31,6 +32,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api', recommendRouter);
 app.use('/api', combosRouter);
 app.use('/api', metaRouter);
+app.use('/api', cardsRouter);
 
 // Error middleware must be registered last — Express only routes a request
 // here once every route/middleware above it has run (or thrown).

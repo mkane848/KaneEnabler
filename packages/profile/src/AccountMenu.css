@@ -1,0 +1,24 @@
+.mtg-account-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mtg-account-menu-email {
+  color: var(--mtg-color-text-muted, inherit);
+  font-size: 0.9rem;
+}
+
+.mtg-account-menu-trigger {
+  padding: 0.4rem 0.6rem;
+  border: none;
+  border-radius: 0.4rem;
+  background: none;
+  color: var(--mtg-color-text, inherit);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.mtg-account-menu-trigger:hover {
+  background: var(--mtg-color-surface, transparent);
+}

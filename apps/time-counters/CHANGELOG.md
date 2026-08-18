@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-08-18
+
+### Added
+
+- **Links to the platform's other tools, from inside this app for the first time** — Home and the
+  Commander recommender now show up in the header via `@mtg/ui`'s new shared `NavBar`.
+
+### Changed
+
+- The header's theme toggle and sign-in menu moved into the new shared `NavBar` (a thin strip above
+  the existing game console); the turn tracker, commander banner, Game Log/About/New game controls
+  stay exactly where they were. The Doctor Who/Claude theme toggle behaves identically — the whole
+  page, NavBar included, still re-themes when it's flipped.
+- The sign-in menu (`AccountMenu`/`AuthDialog`) now comes from `@mtg/profile` instead of this app's
+  own copy — one implementation shared with the other two tools instead of three hand-maintained
+  ones. No behavior change.
+
 ## [1.4.0] - 2026-08-18
 
 ### Added

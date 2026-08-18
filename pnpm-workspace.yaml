@@ -12,6 +12,11 @@ allowBuilds:
 # instead of hand-synchronised copies drifting apart across packages.
 catalog:
   '@radix-ui/react-dialog': ^1.1.23
+  # Used by both commander-recommender/client and apps/home (the profile
+  # page) as of the NavBar/profile-page unification — catalog'd rather than
+  # hand-pinned per this file's own header comment, now that it's shared.
+  '@tanstack/react-query': ^5.101.4
+  '@tanstack/react-router': ^1.170.29
   '@testing-library/jest-dom': ^6.9.1
   '@testing-library/react': ^16.3.2
   '@types/node': ^22.18.0
