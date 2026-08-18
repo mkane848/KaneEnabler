@@ -29,6 +29,38 @@ Both projects are unusually well documented for hobby work (near-total "why" com
 683-line `handoff.md`, real CHANGELOGs). Neither has a linter. Both encode overlapping Magic rules
 knowledge **differently**, which is where the bugs are.
 
+## Current status (2026-08-18)
+
+**All seven phases below have landed**, including every package (`@mtg/config`, `@mtg/mana`,
+`@mtg/ui`, `@mtg/rules`, `@mtg/card-model`, `@mtg/profile`, `@mtg/scryfall`) and the hard-rule-gated
+Phase 7 (user profiles) and `@mtg/scryfall` work. A fresh session with no more assigned work from
+the repo owner should treat this as a stable resting point, not a queue of pending tasks — read the
+specific phase section below before touching anything, since "landed" often comes with a documented
+scope difference from what the phase originally proposed.
+
+What's genuinely still open, gathered here so a fresh session doesn't have to re-scan every phase:
+
+- **Phase 3a (CR ingestion) is blocked, not done** — this sandbox's egress proxy blocks all three
+  source domains (re-confirmed 2026-08-18). Needs to run locally or in GitHub Actions; see that
+  section for why the ingestion script itself was deliberately not written blind.
+- **`@mtg/profile`'s Supabase-backed hooks have no test coverage** (`useAuth`,
+  `useCardPreferences`/`useSetCardPreference`/`useRemoveCardPreference`, the combo equivalents,
+  `rows.ts`) — only `comboKey.ts` is tested. The Phase 6 coverage-threshold work made this honestly
+  visible (9.3% statements) rather than hidden behind Vitest's default of only counting imported
+  files, but didn't fix it.
+- **No integration test for `/api/recommend`** end-to-end (parse → singleton → collection profile →
+  units → score → select → analysis → serialise) — see Verification, item 3.
+- **The real Scryfall fetch isn't exercised in CI**, only manually / at deploy time — see
+  Verification, item 5. `import-scryfall.ts`'s floor check (Phase 6) now exists to catch a bad
+  import, but nothing runs it on a schedule to catch a bad _fetch_ before it's deployed.
+- **Favourited-combo-renders-from-snapshot-with-network-blocked is untested**, and has no view to
+  run it against yet — see Verification, item 6, and Phase 7's "no dedicated profile/browse page."
+- **Deck-size and whole-deck color-identity validation** (`@mtg/rules`' `deckLegality.ts`) are
+  tested and CR-cited but not wired into either app — neither has a deck-list-validation feature
+  for them to back yet. See Phase 3b's primitives table.
+- **The Spellbook cache is per-process, in-memory** — fine for one user, not once accounts exist.
+  See `api-policy.md`'s "known violations," item 2.
+
 ## Decisions on record
 
 | Question                | Decision                                                                                                                                    |
@@ -355,8 +387,11 @@ way it predicted):
 
 ## Phase 6 — Quality pass
 
-- React error boundaries in both apps; Express error middleware in the recommender.
-- Per-card save validation in DWC, plus undo for `removeCard`.
+- **Landed.** React error boundaries in both apps (`@mtg/ui`'s `ErrorBoundary`, wrapping each app's
+  root in `main.tsx`); Express error middleware in the recommender (`errorHandler.ts`, registered
+  last in `index.ts`).
+- **Landed.** Per-card save validation in DWC (`storage.ts` drops a corrupted card and logs how many,
+  rather than failing the whole load), plus undo for `removeCard` (`UndoToast` + `undoRemove`).
 - **Landed.** Split HKH's 2,364-line `index.css` into `styles/tokens.css` plus one file per UI
   area (`layout`, `upload`, `results`, `filters`, `commander-card`, `dialogs`, `combos`,
   `deck-summary`, `error-fallback`, `auth`), `index.css` reduced to a plain `@import` manifest —
@@ -383,7 +418,14 @@ way it predicted):
   10 cases, one of which caught a real async-timing gotcha: TanStack Form's `handleSubmit()` is a
   `Promise` even with no validators, so a submission assertion needs a `waitFor`, not a bare
   post-click check.
-- Add `@vitest/coverage-v8` with a threshold.
+- **Landed.** `@vitest/coverage-v8` wired into every package via the shared
+  `packages/config/vitest.base.ts`, with per-package thresholds set as a regression floor at each
+  package's real current numbers, not an aspirational target. Along the way: Vitest 4 only counts a
+  file toward coverage if a test actually imports it, so `@mtg/profile` reported 100% by default
+  while only 1 of its 8 source files (`comboKey.ts`) had any test at all — `coverage.include:
+['src/**']` in the shared base surfaces the honest number (9.3%) instead. That gap itself
+  (`useAuth`/`useCardPreferences`/`useComboPreferences`/`rows.ts` all untested) is real and still
+  open — not fixed here, just no longer hidden.
 - **Landed.** `useCommanderCards` now memoizes on `catalog` (stable after its one `useCardCatalog`
   load) instead of re-scanning on every render; `App.tsx`'s `commanderFieldCards` and
   `timeTravelTargets` are memoized too. Found the same bug independently duplicated in
