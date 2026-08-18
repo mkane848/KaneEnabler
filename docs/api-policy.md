@@ -22,8 +22,13 @@ don't look like network changes. They look like refactors.
 | Bulk       | For mass lookups (names, images, prices), use the bulk-data exports. Never loop per-card against the API.                                                         |
 | Backoff    | On 429 or 503, retry with exponential backoff and jitter — or don't retry at all.                                                                                 |
 
-**Enforced in:** `packages/scryfall` (`@mtg/scryfall`), which is the single choke point for all
-Scryfall traffic. No app should construct a Scryfall request directly.
+**Enforced in:** `packages/scryfall` (`@mtg/scryfall`) — the bulk-data snapshot fetch/cache
+mechanics (`ensureOracleCardsSnapshot`) and the `User-Agent` formatter (`buildUserAgent`) both apps'
+fetch scripts use. Not a hard rule that every Scryfall call routes through it: each app's own
+companion fetches (HKH's creature-type catalog and re-skinned-name lookups in `fetch-scryfall.ts`)
+call `fetch()` directly, since they aren't duplicated between the two apps — but they build their
+headers from this package too, so a `User-Agent` fix here reaches every request, not just the bulk
+download.
 
 ### Commander Spellbook
 
@@ -66,10 +71,14 @@ cached client-side via TanStack Query rather than re-queried per navigation.
 
 ## Known violations to fix
 
-1. **Stale `User-Agent`.** The recommender sends `CommanderIHardlyKnowEr/1.0.0` while the app is at
-   1.7.1, from three hand-synchronised copies (`spellbook.ts`, `fetch-scryfall.ts`, and the header
-   constant). Scryfall asks callers to identify themselves accurately; a stale version defeats the
-   purpose. Fix: one constant in `@mtg/scryfall`, derived from `package.json`.
+1. ~~**Stale `User-Agent`.**~~ **Fixed.** `fetch-scryfall.ts` and `fetch-card-data.mjs` now derive
+   their version from their own app's `package.json` via `@mtg/scryfall`'s `buildUserAgent`, so it
+   can't drift the way `CommanderIHardlyKnowEr/1.0.0` did while the app moved on to 1.7.1.
+   `spellbook.ts` is the one exception, and stays hand-synced on purpose: it lives in `server/src/`,
+   inside `tsconfig.build.json`'s `rootDir`, so importing `../../package.json` there would
+   reintroduce the exact `__dirname`/`rootDir` mismatch that broke a deploy once (see its own
+   comment). Its version was bumped to 1.7.1 as part of this fix, but will drift again the same way
+   until something resolves that constraint.
 
 2. **Per-process in-memory Spellbook cache.** Fine for a single user. Once accounts exist, N users
    asking the same question costs them N calls instead of one. Move to a shared, persistent cache.

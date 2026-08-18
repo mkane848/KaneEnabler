@@ -13,11 +13,12 @@
     "typecheck": "tsc",
     "build": "tsc -p tsconfig.build.json && cp cjs-dist-package.json dist/package.json",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "@mtg/config": "workspace:*",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
     "globals": "^15.14.0",
     "typescript": "catalog:",

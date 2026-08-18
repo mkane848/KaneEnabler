@@ -120,16 +120,39 @@ to HKH's 6.
 
 ### `@mtg/scryfall`
 
-Two near-line-for-line reimplementations, including a `describeFailure` helper that is
-character-for-character the same. Both independently discovered the `jsonl_download_uri` migration.
+**Landed.** Hard-rule gated (docs/api-policy.md) — implemented only after explicit repo-owner
+sign-off on the one real behavior change it required: DWC's cache check moves from "reuse if the
+local file is under 7 days old" (zero network calls most runs) to HKH's "compare Scryfall's
+published `updated_at`" (one small `GET /bulk-data` request every run, full download only when the
+snapshot actually changed). Confirmed: DWC's own 7-day heuristic was "wrong in both directions" the
+same way HKH's superseded one was, per HKH's own comment recorded before this landed.
 
-Merge to **HKH's snapshot-based cache**, which compares the _published_ `updated_at` — its own
-comment records that this replaced a 7-day mtime heuristic that was "wrong in both directions."
-**DWC is still running exactly that superseded heuristic.** Keep HKH's streamed gunzip and
-sidecar-written-last discipline; adopt DWC's `output.length < 1000` floor check and its
-`ensure-catalog.mjs` seed fallback.
+What moved into the package: `ensureOracleCardsSnapshot` (list → compare `updated_at` against a
+sidecar → stream-download-and-gunzip only on change — HKH's streamed approach, kept, over DWC's
+buffer-then-`gunzipSync`), `describeFailure`, and `buildUserAgent`. Both `fetch-scryfall.ts` and
+`fetch-card-data.mjs` now derive their `User-Agent` version from their own `package.json` — see
+[`api-policy.md`](./api-policy.md)'s "known violations" entry for what this fixed and the one place
+(`spellbook.ts`) it deliberately didn't reach.
 
-One `User-Agent` constant, derived from `package.json` — see [`api-policy.md`](./api-policy.md).
+What stayed local to HKH, on purpose: `IMPORT_VERSION` and the sqlite `meta`-table comparison
+(`dataSnapshot.ts`/`importedSnapshot.ts`) — that's "was the _database_ built from this file, by this
+version of the _import_?", which depends on HKH's own import code and has no DWC equivalent (DWC has
+one fetch-and-write stage, not a separate fetch-then-import pipeline). HKH's
+`fetchCreatureTypes`/`fetchFlavorNames` companion fetches stayed put too — they're real Scryfall
+calls, but never were duplicated between the two apps, so there was nothing to consolidate. Also
+added: a floor check on `import-scryfall.ts`'s final imported-card count (mirrors DWC's own
+`output.length < 1000` check, scaled to HKH's ~36k unfiltered count) — the doc's original ask,
+implemented as HKH's own analogous check rather than shared code, since the two counts and their
+filtering logic have nothing in common to share. Not carried over: DWC's `SCRYFALL_BULK_INDEX` env
+override (undocumented dead capability — nothing in the repo ever set it) and a seed-fallback for
+HKH matching DWC's `ensure-catalog.mjs` (HKH already degrades cleanly pre-import via a 503, not a
+crash; committing a seed dataset and wiring a new fallback script felt like scope growth for a
+consolidation pass, not something this bullet's own "adopt X" phrasing clearly asked for).
+
+Verified against the live API (this sandbox can reach `api.scryfall.com`) for both apps, both
+directions: a real download-and-cache run and a real skip-because-current run, followed by a full
+`import-scryfall` run (35,931 cards imported, floor check didn't trip) and a real `fetch-cards` run
+(18,407 Jeskai cards), each confirmed against the actually-running app in a browser.
 
 ### `@mtg/card-model` — landed narrower than planned above, and why
 
@@ -200,6 +223,17 @@ glossary, committed to the repo.
 > The ingestion script must therefore run **where egress exists** — locally, or in GitHub Actions —
 > and commit its output. That is the right design regardless: the CR changes roughly 4× a year, and
 > a vendored snapshot keeps builds deterministic and offline-capable.
+>
+> Re-confirmed 2026-08-18 (`curl` against `api.academyruins.com`, `magic.wizards.com`, and
+> `mtgjson.com` all failed identically: `CONNECT tunnel failed, response 403`) — still blocked, no
+> change from when this was first written. Deliberately not attempting the ingestion script itself
+> from here even as unrun code: CR parsing (nested rule numbers like 702.32a, cross-references,
+> examples, glossary entries) is exactly the kind of text-processing task this project's own "never
+> write oracle text from memory" rule exists for, and that principle applies just as much to parsing
+> logic nobody can verify against the real source text in this environment. Writing it blind would
+> trade the appearance of progress for something that looks plausible and might be subtly wrong in a
+> way nothing here could catch. This genuinely needs to run — and be checked against real output —
+> somewhere with egress to those three domains.
 
 - Primary source: the official CR `.txt` from magic.wizards.com/en/rules
 - Cross-check: [Academy Ruins API](https://api.academyruins.com) (AGPL-3.0), which already publishes
@@ -323,7 +357,21 @@ way it predicted):
 
 - React error boundaries in both apps; Express error middleware in the recommender.
 - Per-card save validation in DWC, plus undo for `removeCard`.
-- Split the 2,042-line `index.css`; adopt DWC's `--pip-*` / `--mechanic-*` token layer.
+- **Landed.** Split HKH's 2,364-line `index.css` into `styles/tokens.css` plus one file per UI
+  area (`layout`, `upload`, `results`, `filters`, `commander-card`, `dialogs`, `combos`,
+  `deck-summary`, `error-fallback`, `auth`), `index.css` reduced to a plain `@import` manifest —
+  verified line-for-line against the original (sorted-content diff showed only the expected
+  `@media` wrapper duplication from splitting one shared breakpoint block across four files) and
+  visually, in a live run against seeded data, before and after. `--pip-*`/`--pip-*-ink` turned out
+  to already be shared identically between both apps' `index.css` files — that part of this bullet
+  was actually satisfied back in Phase 2's `@mtg/mana` work, just not marked as such here.
+  `--mechanic-*` (Suspend/Vanishing/Fading/Saga color coding) wasn't adopted — HKH has no
+  counter-mechanic concept to code by color, so that token family is DWC-specific domain
+  vocabulary, not a generically shareable design token. `--radius-*`/`--shadow-*` were considered
+  and also not adopted: DWC's uniform 3-step radius scale doesn't fit HKH's actual usage (14
+  distinct `border-radius` values on inspection, several one-off compound corners for card-shaped
+  elements), so forcing DWC's specific values in would be a lossy visual change for a cleanup item,
+  not a genuine deduplication.
 - **Landed.** Component tests for HKH (`ResultFilters`, `LikeDislikeButtons`, `CommanderCard` —
   a meaningful subset, not exhaustive coverage of every component; deferred ones are unremarkable
   props-in/JSX-out or gated behind the same network/auth concerns already stood in for here) plus

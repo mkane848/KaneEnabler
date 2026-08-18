@@ -17,10 +17,10 @@
  * handful of cards would produce a green build serving a broken app.
  */
 
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gunzipSync } from 'node:zlib';
+import { buildUserAgent, ensureOracleCardsSnapshot } from '@mtg/scryfall';
 import { frontFaceField, frontImageUri } from '@mtg/card-model';
 import { JESKAI_COLORS, isWithinIdentity } from '../src/utils/colorIdentity.mjs';
 
@@ -28,15 +28,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT_PATH = path.join(ROOT, 'public', 'cards.json');
 const CACHE_DIR = path.join(ROOT, '.cache');
-const BULK_CACHE_PATH = path.join(CACHE_DIR, 'oracle-cards.json');
+// JSONL, not JSON: Scryfall's bulk endpoint publishes newline-delimited
+// JSON, gzipped — @mtg/scryfall's ensureOracleCardsSnapshot writes the
+// decompressed stream straight to this path.
+const BULK_CACHE_PATH = path.join(CACHE_DIR, 'oracle-cards.jsonl');
 
-/** How long a downloaded bulk file is considered good enough to reuse. */
-const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-
-const USER_AGENT = 'mtg-time-tracker/0.1 (personal Commander companion app)';
-
-/** Overridable so the pipeline can be exercised against a local mirror or fixture. */
-const BULK_INDEX_URL = process.env.SCRYFALL_BULK_INDEX ?? 'https://api.scryfall.com/bulk-data';
+/**
+ * Deliberately not computed at module scope: importing this file just for
+ * toCardData (as fetch-card-data.test.mjs does) shouldn't also read
+ * package.json off disk on every test run.
+ */
+async function scryfallHeaders() {
+  const pkg = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8'));
+  return {
+    'User-Agent': buildUserAgent({
+      product: 'mtg-time-tracker',
+      version: pkg.version,
+      contact: 'personal Commander companion app',
+    }),
+    Accept: 'application/json',
+  };
+}
 
 /**
  * Oracle text is only consulted to pre-fill a starting count, so it is kept
@@ -48,95 +60,43 @@ const BULK_INDEX_URL = process.env.SCRYFALL_BULK_INDEX ?? 'https://api.scryfall.
  */
 const TIME_COUNTER_TEXT = /suspend|vanishing|fading|time counter|fade counter|time travel/i;
 
-/** Scryfall returns an HTML error page often enough that the body is worth logging. */
-async function describeFailure(res) {
-  let body = '';
-  try {
-    body = (await res.text()).trim();
-  } catch {
-    /* keep the status */
-  }
-  if (!body) return `HTTP ${res.status}`;
-  return `HTTP ${res.status}: ${body.length > 500 ? body.slice(0, 500) + '…' : body}`;
-}
-
-async function fetchBulkDataUrl() {
-  const res = await fetch(BULK_INDEX_URL, {
-    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-  });
-  if (!res.ok)
-    throw new Error(`Scryfall bulk-data index request failed: ${await describeFailure(res)}`);
-  const body = await res.json();
-  const entry = body.data.find((d) => d.type === 'oracle_cards');
-  if (!entry)
-    throw new Error('Could not find an "oracle_cards" entry in the Scryfall bulk-data index.');
-  // Scryfall used to publish a plain-JSON `download_uri`; it now only
-  // publishes a gzip-compressed JSON-Lines file (see fetchBulkCards).
-  if (!entry.jsonl_download_uri) {
-    throw new Error(
-      'The "oracle_cards" bulk-data entry has no jsonl_download_uri — Scryfall changed its format again.',
-    );
-  }
-  return entry.jsonl_download_uri;
-}
-
 /**
- * Describes the cached bulk file if it's recent enough to reuse, else null.
- *
- * Re-pulling ~190MB is by far the slowest part of a run, and the fields this
- * script reads only change when Scryfall republishes (roughly daily), so a
- * week-old copy is fine while iterating locally. Deploys are unaffected: Render
- * builds from a clean checkout with no .cache directory, so the download always
- * happens there and a deployed catalog is never stale.
+ * Returns the parsed bulk card array, downloading it only when the
+ * published snapshot has changed since the last run (or `force` is set) —
+ * @mtg/scryfall compares Scryfall's own `updated_at` rather than guessing
+ * from local file age, the same way commander-recommender/server already
+ * did. That replaces a 7-day file-mtime heuristic that was wrong in both
+ * directions: it happily served a week-old copy after Scryfall had
+ * published something new, and forced a full re-download of a file that
+ * hadn't changed. Deploys are unaffected either way: Render builds from a
+ * clean checkout with no .cache directory, so the download always happens
+ * there and a deployed catalog is never stale.
  */
-async function readFreshCache() {
-  let stats;
-  try {
-    stats = await stat(BULK_CACHE_PATH);
-  } catch {
-    return null;
-  }
-  if (stats.size === 0) return null; // a truncated download is worse than none
-
-  const ageMs = Date.now() - stats.mtimeMs;
-  if (ageMs >= MAX_AGE_MS) return null;
-
-  return {
-    ageHours: Math.floor(ageMs / (60 * 60 * 1000)),
-    sizeMb: (stats.size / 1024 / 1024).toFixed(1),
-  };
-}
-
-/** Returns the parsed bulk card array, downloading it only when needed. */
 async function fetchBulkCards(force) {
-  const cached = force ? null : await readFreshCache();
-  if (cached) {
+  await mkdir(CACHE_DIR, { recursive: true });
+  const result = await ensureOracleCardsSnapshot({
+    destPath: BULK_CACHE_PATH,
+    headers: await scryfallHeaders(),
+    force,
+  });
+
+  if (result.downloaded) {
+    const sizeMb = result.compressedSize
+      ? `~${(result.compressedSize / 1024 / 1024).toFixed(1)}MB compressed`
+      : 'size unknown';
+    console.log(`Downloaded Oracle Cards (updated ${result.updatedAt}, ${sizeMb}).`);
+  } else {
     console.log(
-      `Reusing cached bulk file (${cached.sizeMb}MB, ${cached.ageHours}h old).\n` +
+      `Reusing cached bulk file (published ${result.updatedAt}).\n` +
         '  Pass --force to download a fresh copy.',
     );
-    return JSON.parse(await readFile(BULK_CACHE_PATH, 'utf8'));
   }
 
-  const downloadUri = await fetchBulkDataUrl();
-  console.log(`Downloading Scryfall Oracle Cards bulk file…\n  ${downloadUri}`);
-  const res = await fetch(downloadUri, { headers: { 'User-Agent': USER_AGENT } });
-  if (!res.ok) throw new Error(`Bulk data download failed: ${await describeFailure(res)}`);
-
-  // The file is gzip-compressed JSON Lines (one card object per line), not
-  // a single JSON array — Scryfall retired the plain-JSON bulk download.
-  const compressed = Buffer.from(await res.arrayBuffer());
-  const cards = gunzipSync(compressed)
-    .toString('utf8')
+  const text = await readFile(BULK_CACHE_PATH, 'utf8');
+  return text
     .split('\n')
     .filter((line) => line.trim().length > 0)
     .map((line) => JSON.parse(line));
-
-  await mkdir(CACHE_DIR, { recursive: true });
-  await writeFile(BULK_CACHE_PATH, JSON.stringify(cards));
-  console.log(`Cached to ${path.relative(ROOT, BULK_CACHE_PATH)}.`);
-
-  return cards;
 }
 
 /** Reads a field from the card, falling back to combining its faces for DFCs/MDFCs. */

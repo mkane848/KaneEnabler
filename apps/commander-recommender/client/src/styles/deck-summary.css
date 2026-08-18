@@ -1,0 +1,189 @@
+/* Deck summary — what the uploaded list is doing, and what it's missing */
+
+.deck-summary {
+  margin: 0 0 1.75rem;
+}
+
+.deck-summary h2 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
+  color: var(--text-primary);
+}
+
+.deck-summary-intro {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0 0 0.9rem;
+  max-width: 60ch;
+}
+
+.deck-themes {
+  display: grid;
+  /* Wider than the commander grid: these panels hold prose and card rows
+     rather than card art, and two columns of them at tablet width leaves
+     each too narrow to read. */
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.deck-theme {
+  background: var(--parchment);
+  color: var(--ink-text);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+}
+
+.deck-theme > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  cursor: pointer;
+  list-style: none;
+}
+
+.deck-theme > summary::-webkit-details-marker {
+  display: none;
+}
+
+.deck-theme-label {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.deck-theme-count {
+  font-size: 0.78rem;
+  color: var(--ink-text-muted);
+}
+
+.deck-theme-status {
+  margin-left: auto;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.deck-theme-status.is-complete {
+  color: #2f6b45;
+}
+
+.deck-theme-status.is-short {
+  color: #8c5a12;
+  /* The list of short slots can be long; let it wrap rather than push the
+     panel wider than its grid track. */
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.deck-theme-description {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0.55rem 0 0;
+}
+
+.deck-slots {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.deck-slot {
+  border-top: 1px solid var(--parchment-dim);
+  padding-top: 0.7rem;
+}
+
+.deck-slot-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.deck-slot-mark {
+  font-size: 0.85rem;
+}
+
+.deck-slot.is-filled .deck-slot-mark {
+  color: #2f6b45;
+}
+
+.deck-slot.is-short .deck-slot-mark {
+  color: #8c5a12;
+}
+
+.deck-slot-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.deck-slot-count {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--ink-text-muted);
+}
+
+/* Marked as a guess, and styled like one: quieter than the slot label it
+   sits beside, because the confidence behind it is lower. See
+   LifecycleSlot.commonlyMissing. */
+.slot-hint {
+  font-size: 0.7rem;
+  color: #8c5a12;
+  cursor: help;
+  border-bottom: 1px dotted currentColor;
+}
+
+.deck-slot-description {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--ink-text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.deck-slot-cards {
+  margin-top: 0.4rem;
+}
+
+.deck-slot-cards > summary {
+  font-size: 0.76rem;
+  color: #7a5a12;
+  cursor: pointer;
+}
+
+.slot-suggestions {
+  margin-top: 0.5rem;
+}
+
+.slot-suggestions-label {
+  font-size: 0.76rem;
+  color: var(--ink-text-muted);
+  margin: 0 0 0.25rem;
+}
+
+.slot-suggestions .link-button {
+  font-size: 0.76rem;
+  margin-top: 0.35rem;
+}
+
+.slot-also-fits {
+  font-size: 0.68rem;
+  color: var(--ink-text-muted);
+  white-space: nowrap;
+  /* Truncates rather than widening the row — the full list is in the
+     title attribute. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 9rem;
+}

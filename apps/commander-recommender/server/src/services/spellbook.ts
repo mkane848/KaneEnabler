@@ -23,13 +23,16 @@ const MAX_CARDS = 250; // a Commander deck is 100; this is a sanity bound
 
 // Not read from package.json: that file sits outside src/'s rootDir (see the
 // note in tsconfig.build.json), so importing it here would reintroduce the
-// same __dirname/rootDir mismatch that already broke a deploy once. Bump the
-// version by hand when package.json's version changes.
+// same __dirname/rootDir mismatch that already broke a deploy once.
+// fetch-scryfall.ts (in scripts/, outside that rootDir) reads its own
+// version from package.json via @mtg/scryfall's buildUserAgent — this one
+// can't do the same and still needs bumping by hand when package.json's
+// version changes.
 const HEADERS = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
   'User-Agent':
-    'CommanderIHardlyKnowEr/1.0.0 (hobby project; https://github.com/mkane848/HardlyKnowHer)',
+    'CommanderIHardlyKnowEr/1.7.1 (hobby project; https://github.com/mkane848/HardlyKnowHer)',
 };
 
 export interface ComboResult {
