@@ -234,11 +234,7 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
       ComboFavoriteButton.tsx     like/hate a combo — stores a snapshot at favourite time
                                    (comboKey from @mtg/profile), never re-queries Spellbook
       AboutDialog.tsx             version, credits, repo link, and (Phase 7) a privacy note on
-                                   what signing in stores
-      AuthDialog.tsx              email/password sign in/up (@mtg/profile's useAuth); the only
-                                   auth surface — no OAuth, no magic link
-      AccountMenu.tsx             nav-bar sign-in trigger, or the signed-in account's email +
-                                   sign out; renders nothing if Supabase isn't configured
+                                   what signing in stores; rendered via App.tsx's NavBar extraSlot
       LikeDislikeButtons.tsx      like/dislike a suggestion's card(s), rendered in
                                    CommanderCard's badge row; a Partner pair is liked/disliked
                                    as one unit (both oracleIds together)

@@ -172,9 +172,12 @@ src/components/CommanderTaxModal.tsx   Per-commander tax tracker, opened from a 
 src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
 src/components/ThemeToggle.tsx         Switches between the two themes
 src/components/AboutModal.tsx          Version, credits, and repo/changelog links
-src/components/AccountMenu.tsx         Shared sign-in state (same account as the platform's other tools)
-src/components/AuthDialog.tsx          Sign in / sign up form, opened from AccountMenu
 ```
+
+The sign-in menu (shared account state, same Supabase project as the platform's other tools) is
+`@mtg/profile`'s `AccountMenu`/`AuthDialog`, not a local component — rendered via the shared
+`@mtg/ui` `NavBar` in `App.tsx`, one implementation shared with the other two tools rather than a
+copy local to this app.
 
 ## Themes
 

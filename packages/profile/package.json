@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./AccountMenu.css": "./src/AccountMenu.css",
+    "./AuthDialog.css": "./src/AuthDialog.css"
   },
   "scripts": {
     "typecheck": "tsc",
@@ -13,6 +15,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@mtg/ui": "workspace:*",
     "@supabase/supabase-js": "^2.112.3"
   },
   "peerDependencies": {

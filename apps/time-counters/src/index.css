@@ -78,6 +78,25 @@
   --font-display: 'Orbitron', 'Michroma', system-ui, sans-serif;
   --font-body: 'Titillium Web', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Platform tokens — read by shared components from @mtg/ui/@mtg/profile
+     (NavBar, AccountMenu, AuthDialog) so they re-theme live with the
+     Doctor Who/Claude toggle below, without per-app overrides. Mapped from
+     this theme's own tokens above; nothing above is renamed or removed.
+     Font stack deliberately stays Doctor Who's own (Orbitron/Titillium/
+     JetBrains) — that's the preserved theme identity, not something this
+     unification touches. */
+  --mtg-color-bg: var(--color-bg);
+  --mtg-color-surface: var(--color-surface-raised);
+  --mtg-color-border: var(--color-border);
+  --mtg-color-text: var(--color-text);
+  --mtg-color-text-muted: var(--color-text-muted);
+  --mtg-color-accent: var(--color-accent);
+  --mtg-color-accent-hover: var(--color-accent-strong);
+  --mtg-color-danger: var(--color-danger);
+  --mtg-font-display: var(--font-display);
+  --mtg-font-body: var(--font-body);
+  --mtg-font-mono: var(--font-mono);
 }
 
 /* ==========================================================================
@@ -105,6 +124,19 @@
   --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* See the 'who' block above for why these platform tokens exist. */
+  --mtg-color-bg: var(--color-bg);
+  --mtg-color-surface: var(--color-surface-raised);
+  --mtg-color-border: var(--color-border);
+  --mtg-color-text: var(--color-text);
+  --mtg-color-text-muted: var(--color-text-muted);
+  --mtg-color-accent: var(--color-accent);
+  --mtg-color-accent-hover: var(--color-accent-strong);
+  --mtg-color-danger: var(--color-danger);
+  --mtg-font-display: var(--font-display);
+  --mtg-font-body: var(--font-body);
+  --mtg-font-mono: var(--font-mono);
 }
 
 * {

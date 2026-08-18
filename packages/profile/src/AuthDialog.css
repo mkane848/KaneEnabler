@@ -1,0 +1,95 @@
+.mtg-auth-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 60%);
+}
+
+.mtg-auth-dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 41;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  background: var(--mtg-color-surface, #1c1b2c);
+  border: 1px solid var(--mtg-color-border, transparent);
+  border-radius: 0.75rem;
+  color: var(--mtg-color-text, inherit);
+  font-family: var(--mtg-font-body, inherit);
+  transform: translate(-50%, -50%);
+}
+
+.mtg-auth-dialog-title {
+  margin: 0 0 1rem;
+  font-family: var(--mtg-font-display, inherit);
+  font-size: 1.3rem;
+}
+
+.mtg-auth-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mtg-auth-dialog-label {
+  margin-top: 0.5rem;
+  color: var(--mtg-color-text-muted, inherit);
+  font-size: 0.85rem;
+}
+
+.mtg-auth-dialog-input {
+  padding: 0.5rem 0.6rem;
+  background: var(--mtg-color-bg, transparent);
+  border: 1px solid var(--mtg-color-border, transparent);
+  border-radius: 0.4rem;
+  color: var(--mtg-color-text, inherit);
+  font-size: 0.95rem;
+}
+
+.mtg-auth-dialog-error {
+  margin: 0.25rem 0 0;
+  color: var(--mtg-color-danger, inherit);
+  font-size: 0.85rem;
+}
+
+.mtg-auth-dialog-submit {
+  margin-top: 1rem;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 0.4rem;
+  background: var(--mtg-color-accent, #8b7fe8);
+  color: var(--mtg-color-bg, #14131f);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mtg-auth-dialog-submit:hover {
+  background: var(--mtg-color-accent-hover, var(--mtg-color-accent, #8b7fe8));
+}
+
+.mtg-auth-dialog-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.mtg-auth-dialog-switch {
+  margin: 1rem 0 0;
+  color: var(--mtg-color-text-muted, inherit);
+  font-size: 0.85rem;
+}
+
+.mtg-auth-dialog-switch-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--mtg-color-accent-hover, var(--mtg-color-accent, inherit));
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.mtg-auth-dialog-note {
+  margin-top: 1rem;
+  color: var(--mtg-color-text-muted, inherit);
+  font-size: 0.85rem;
+}

@@ -5,6 +5,9 @@ import { RouterProvider } from '@tanstack/react-router';
 import { ErrorBoundary } from '@mtg/ui';
 import ErrorFallback from './components/ErrorFallback';
 import { router } from './router';
+import '@mtg/ui/NavBar.css';
+import '@mtg/profile/AccountMenu.css';
+import '@mtg/profile/AuthDialog.css';
 import './index.css';
 
 // These defaults are deliberately quieter than TanStack's out-of-the-box

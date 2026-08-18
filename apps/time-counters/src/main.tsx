@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { ErrorBoundary } from '@mtg/ui';
 import App from './App';
 import ErrorFallback from './components/ErrorFallback';
+import '@mtg/ui/NavBar.css';
+import '@mtg/profile/AccountMenu.css';
+import '@mtg/profile/AuthDialog.css';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

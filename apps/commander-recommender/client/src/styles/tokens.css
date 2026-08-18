@@ -38,4 +38,20 @@
   --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
 
   color-scheme: dark;
+
+  /* Platform tokens — read by shared components from @mtg/ui/@mtg/profile
+     (NavBar, AccountMenu, AuthDialog) so they re-theme per app without
+     per-app overrides. Mapped from this app's own tokens above; nothing
+     above is renamed or removed. */
+  --mtg-color-bg: var(--ink);
+  --mtg-color-surface: var(--ink-raised);
+  --mtg-color-border: var(--ink-border);
+  --mtg-color-text: var(--text-primary);
+  --mtg-color-text-muted: var(--text-muted);
+  --mtg-color-accent: var(--brass);
+  --mtg-color-accent-hover: var(--brass-bright);
+  --mtg-color-danger: var(--danger);
+  --mtg-font-display: var(--font-display);
+  --mtg-font-body: var(--font-body);
+  --mtg-font-mono: var(--font-mono);
 }

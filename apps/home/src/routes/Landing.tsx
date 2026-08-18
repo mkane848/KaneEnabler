@@ -1,5 +1,3 @@
-import { AccountMenu } from './components/AccountMenu';
-
 interface Tool {
   name: string;
   tagline: string;
@@ -32,29 +30,22 @@ const TOOLS: Tool[] = [
   },
 ];
 
-export default function App() {
+export default function Landing() {
   return (
-    <div className="page">
-      <header className="page-header">
-        <span className="brand">KaneEnabler</span>
-        <AccountMenu />
-      </header>
+    <main className="page-main">
+      <h1 className="page-title">Magic: The Gathering tools</h1>
+      <p className="page-subtitle">Pick a tool to get started. One account works across both.</p>
 
-      <main className="page-main">
-        <h1 className="page-title">Magic: The Gathering tools</h1>
-        <p className="page-subtitle">Pick a tool to get started. One account works across both.</p>
-
-        <div className="tool-grid">
-          {TOOLS.map((tool) => (
-            <a key={tool.href} className="tool-card" href={tool.href}>
-              <span className="tool-tagline">{tool.tagline}</span>
-              <h2 className="tool-name">{tool.name}</h2>
-              <p className="tool-description">{tool.description}</p>
-              <span className="tool-cta">Open →</span>
-            </a>
-          ))}
-        </div>
-      </main>
-    </div>
+      <div className="tool-grid">
+        {TOOLS.map((tool) => (
+          <a key={tool.href} className="tool-card" href={tool.href}>
+            <span className="tool-tagline">{tool.tagline}</span>
+            <h2 className="tool-name">{tool.name}</h2>
+            <p className="tool-description">{tool.description}</p>
+            <span className="tool-cta">Open →</span>
+          </a>
+        ))}
+      </div>
+    </main>
   );
 }

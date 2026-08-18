@@ -19,6 +19,7 @@ import { buildCommanderUnits, unitKey } from '../services/partners';
 import { estimateBracket } from '../services/bracket';
 import { applySingletonLimits } from '../services/singleton';
 import { createCardIndex } from '../services/cardIndex';
+import { toCardDTO } from '../services/cardDTO';
 import { analyzeDeck } from '../services/deckAnalysis';
 import { attachSuggestions, collectionColors, requiredSignalKeys } from '../services/packages';
 import { parseJsonArray } from '../types';
@@ -101,22 +102,7 @@ router.post('/recommend', (req, res) => {
 
     return {
       unitId: unitKey(s),
-      cards: s.cards.map((c) => ({
-        oracleId: c.oracle_id,
-        name: c.name,
-        imageUri: c.image_uri,
-        backImageUri: c.back_image_uri ?? null,
-        backName: c.back_name ?? null,
-        colorIdentity: parseJsonArray(c.color_identity),
-        typeLine: c.type_line,
-        oracleText: c.oracle_text,
-        manaCost: c.mana_cost,
-        manaValue: c.cmc,
-        power: c.power,
-        toughness: c.toughness,
-        scryfallUri: c.scryfall_uri,
-        isGameChanger: !!c.game_changer,
-      })),
+      cards: s.cards.map(toCardDTO),
       colorIdentity,
       // One decimal, not whole numbers: density-based scores are small, so
       // rounding to an integer would collapse genuinely different matches

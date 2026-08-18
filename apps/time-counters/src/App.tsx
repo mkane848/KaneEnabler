@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { NavBar, type NavBarLink } from '@mtg/ui';
+import { AccountMenu } from '@mtg/profile';
 import AboutModal from './components/AboutModal';
 import AddCardPanel from './components/AddCardPanel';
 import ActiveCardsList from './components/ActiveCardsList';
@@ -7,12 +9,24 @@ import ChangeSummaryModal from './components/ChangeSummaryModal';
 import CommanderTaxModal from './components/CommanderTaxModal';
 import GameLogPanel from './components/GameLogPanel';
 import Header from './components/Header';
+import ThemeToggle from './components/ThemeToggle';
 import TimeTravelPanel, { buildTimeTravelTargets } from './components/TimeTravelPanel';
 import UndoToast from './components/UndoToast';
 import { useCommanderCards } from './hooks/useCommanderCards';
 import { useGameState } from './hooks/useGameState';
 import type { CommanderId } from './types';
 import { COMMANDER_IDS, COMMANDER_NAME } from './utils/commanders';
+
+/**
+ * Root-relative platform subpaths, not relative to this app's own base —
+ * all three tools share one origin in production (root CLAUDE.md's
+ * "Combined deploy"), same as apps/home's own pre-existing tool links.
+ */
+const NAV_LINKS: NavBarLink[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Recommender', href: '/recommender/' },
+  { label: 'Time Counters', href: '/time-counters/', current: true },
+];
 
 export default function App() {
   const {
@@ -62,6 +76,12 @@ export default function App() {
 
   return (
     <>
+      <NavBar
+        brand={{ label: 'KaneEnabler', href: '/' }}
+        links={NAV_LINKS}
+        accountSlot={<AccountMenu />}
+        extraSlot={<ThemeToggle />}
+      />
       <Header
         turn={state.turn}
         onSetTurn={setTurn}

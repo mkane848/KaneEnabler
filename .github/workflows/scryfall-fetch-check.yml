@@ -42,5 +42,10 @@ jobs:
       - name: commander-recommender — /api/recommend integration test
         run: pnpm --filter mtg-recommender-server exec vitest run src/routes/recommend.integration.test.ts
 
+      # Same story as above, for the oracle_id -> card lookup the profile
+      # page (apps/home) uses. See cards.integration.test.ts.
+      - name: commander-recommender — /api/cards integration test
+        run: pnpm --filter mtg-recommender-server exec vitest run src/routes/cards.integration.test.ts
+
       - name: time-counters — real Scryfall fetch
         run: pnpm --filter mtg-time-tracker run fetch-cards

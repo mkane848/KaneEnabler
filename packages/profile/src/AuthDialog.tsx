@@ -1,17 +1,17 @@
 import { useState, type FormEvent } from 'react';
-import { useAuth } from '@mtg/profile';
 import { Modal, ModalTitle } from '@mtg/ui';
-import styles from './AuthDialog.module.css';
+import { useAuth } from './useAuth';
 
 type Mode = 'sign-in' | 'sign-up';
 
 /**
- * Email+password only, same scope as commander-recommender's own
- * AuthDialog — they share the same Supabase project and auth.users table,
- * so signing in here also signs you in there. This app has no
- * account-gated features of its own yet; the sign-in menu exists so the
- * platform's one identity is consistent everywhere, not just where the
- * recommender's like/dislike/jank preferences live.
+ * Email + password only — no OAuth provider, no magic link. A profile is
+ * optional scaffolding (every app stays fully usable signed out), so this
+ * stays the smallest sign-in surface that works. Was three near-identical
+ * copies (one raw-Radix, two already on @mtg/ui's Modal); this is the one
+ * implementation every app now renders, styled via the --mtg-* platform
+ * tokens so each app's sheet/backdrop keeps its own look without a
+ * per-app override (same reasoning as AccountMenu.tsx/NavBar.tsx).
  */
 export function AuthDialog({ onClose }: { onClose: () => void }) {
   const { signIn, signUp } = useAuth();
@@ -46,21 +46,27 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal onClose={onClose} overlayClassName={styles.backdrop} contentClassName={styles.sheet}>
+    <Modal
+      onClose={onClose}
+      overlayClassName="mtg-auth-dialog-overlay"
+      contentClassName="mtg-auth-dialog-content"
+    >
       <ModalTitle asChild>
-        <h2 className={styles.title}>{mode === 'sign-in' ? 'Sign in' : 'Create an account'}</h2>
+        <h2 className="mtg-auth-dialog-title">
+          {mode === 'sign-in' ? 'Sign in' : 'Create an account'}
+        </h2>
       </ModalTitle>
 
       {confirmSent ? (
-        <p className={styles.note}>Check {email} for a confirmation link, then sign in.</p>
+        <p className="mtg-auth-dialog-note">Check {email} for a confirmation link, then sign in.</p>
       ) : (
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <label className={styles.label} htmlFor="auth-email">
+        <form className="mtg-auth-dialog-form" onSubmit={handleSubmit}>
+          <label className="mtg-auth-dialog-label" htmlFor="auth-email">
             Email
           </label>
           <input
             id="auth-email"
-            className="input"
+            className="mtg-auth-dialog-input"
             type="email"
             autoComplete="email"
             required
@@ -68,12 +74,12 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <label className={styles.label} htmlFor="auth-password">
+          <label className="mtg-auth-dialog-label" htmlFor="auth-password">
             Password
           </label>
           <input
             id="auth-password"
-            className="input"
+            className="mtg-auth-dialog-input"
             type="password"
             autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
             required
@@ -83,23 +89,23 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
           />
 
           {error && (
-            <p className={styles.error} role="alert">
+            <p className="mtg-auth-dialog-error" role="alert">
               {error}
             </p>
           )}
 
-          <button type="submit" className={`btn btn-primary ${styles.submit}`} disabled={submitting}>
+          <button type="submit" className="mtg-auth-dialog-submit" disabled={submitting}>
             {submitting ? 'Working…' : mode === 'sign-in' ? 'Sign in' : 'Sign up'}
           </button>
         </form>
       )}
 
       {!confirmSent && (
-        <p className={styles.switch}>
+        <p className="mtg-auth-dialog-switch">
           {mode === 'sign-in' ? "Don't have an account? " : 'Already have an account? '}
           <button
             type="button"
-            className={styles.switchLink}
+            className="mtg-auth-dialog-switch-link"
             onClick={() => {
               setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
               setError(null);
@@ -110,7 +116,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
         </p>
       )}
 
-      <p className={styles.note}>
+      <p className="mtg-auth-dialog-note">
         One account works across every tool on the platform. Your email and preferences are stored
         only to run this feature and are never shared.
       </p>
