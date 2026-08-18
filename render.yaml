@@ -1,9 +1,28 @@
 # Root Blueprint for the KaneEnabler monorepo — Render's Blueprint feature only
-# looks for render.yaml at the repo root, so this combines both apps' services.
-# apps/commander-recommender/render.yaml and apps/time-counters/render.yaml are
-# kept as the per-app source of truth for their own build/start commands; keep
-# this file's service definitions in sync with those if either changes.
+# looks for render.yaml at the repo root, so this combines all three apps'
+# services. apps/commander-recommender/render.yaml, apps/home/render.yaml, and
+# apps/time-counters/render.yaml are kept as the per-app source of truth for
+# their own build/start commands; keep this file's service definitions in
+# sync with those if any changes.
 services:
+  # Shared platform landing page — links out to the two tools below and
+  # hosts the one sign-in menu shared across them (same Supabase project as
+  # mtg-recommender-client's own account menu). VITE_SUPABASE_URL/
+  # VITE_SUPABASE_PUBLISHABLE_KEY are set manually in the dashboard
+  # (sync: false) rather than here, matching how mtg-recommender-client's
+  # copies of the same two vars are set — see docs/handoff.md's Phase 7.
+  - type: web
+    runtime: static
+    name: kaneenabler-home
+    # No rootDir — see the comment on mtg-recommender-client below for why.
+    buildCommand: cd apps/home && pnpm install --frozen-lockfile && pnpm run build
+    staticPublishPath: apps/home/dist
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+
   # Express API — builds its own SQLite card database from Scryfall's bulk
   # data during the build step, since the free plan's filesystem is
   # ephemeral. The data is static reference data (never written to at
