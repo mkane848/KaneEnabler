@@ -9,6 +9,10 @@ monorepo holding:
 
 - `apps/commander-recommender` — Commander recommender (React + Vite client, Express + SQLite server)
 - `apps/time-counters` — in-game counter companion for one specific Doctor Who deck
+- `apps/home` — shared platform landing page: links to both tools plus the one sign-in menu shared
+  across them (`@mtg/profile`, same Supabase project as the recommender's own account menu). Deploys
+  as part of the combined static site (see "Combined deploy" below), not as its own standalone app
+  in production, though it still builds and runs standalone for local dev
 - `packages/config` (`@mtg/config`) — shared tsconfig/ESLint/Prettier/Vitest bases both apps extend
 - `packages/rules` (`@mtg/rules`) — CR-cited Magic rules primitives shared by both apps: commander
   eligibility, singleton limit, Partner/Background pairing, commander tax, color-identity subset
@@ -73,6 +77,12 @@ Run from the repo root unless noted. Every command fans out per-package via Turb
 - Card-data fetch scripts (`prepare-data`, `fetch-cards`, etc.) need network access to Scryfall —
   see each app's own `CLAUDE.md`/`README.md` and [`docs/api-policy.md`](./docs/api-policy.md)
   before touching them.
+- `node scripts/build-platform.mjs` — builds the combined production static site (`apps/home` at
+  the root, `apps/commander-recommender/client` and `apps/time-counters` under their own
+  `/recommender` and `/time-counters` subpaths) into `dist-platform/` at the repo root. This is
+  what the `kaneenabler-platform` Render service runs; there's normally no reason to run it
+  yourself outside of debugging that build — `pnpm dev`/`pnpm build` on an individual app is what
+  you want for everyday work.
 
 ## Architecture
 
@@ -80,6 +90,15 @@ Run from the repo root unless noted. Every command fans out per-package via Turb
   and `CHANGELOG.md` — they are not versioned together. `apps/commander-recommender` additionally
   splits into `client/` and `server/`, each its own pnpm workspace package (see its own
   `render.yaml`/`CLAUDE.md` for why).
+- **Combined deploy**: production serves `apps/home`, `apps/commander-recommender/client`, and
+  `apps/time-counters` from **one** Render static site (`kaneenabler-platform`), not three — same-
+  origin subpaths mean the shared Supabase sign-in session (browser storage) actually carries
+  across every tool, not just "same account, separate tabs." Each app still builds and runs
+  standalone for local dev (`pnpm --filter <app> dev`/`build`, `base: '/'`); only
+  `scripts/build-platform.mjs` sets `VITE_BASE_PATH` to build a given app for its subpath. Don't
+  hardcode a `/`-rooted asset path or fetch URL in either app without reading it back through
+  `import.meta.env.BASE_URL` (see `apps/time-counters/src/utils/cardCatalog.ts` for the existing
+  pattern) — anything that assumes it's mounted at the origin root breaks under the subpath build.
 - **`packages/*`** are internal (`workspace:*`), unpublished, and ship plain TS source with no build
   step — both apps' Vite bundlers and `tsc`'s `moduleResolution: "bundler"` resolve a package's
   `exports` straight to its `src/index.ts`. `packages/rules` and `packages/card-model` are the

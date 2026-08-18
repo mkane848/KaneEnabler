@@ -115,6 +115,10 @@ from the repo root.
   `localStorage` touchpoints (game state, theme preference respectively).
   `storage.ts` default-fills `commanders` for saves from before that field
   existed — extend that migration pattern for any future `GameState` field.
+- This app deploys under `/time-counters` as part of the combined platform static site (root
+  `CLAUDE.md`'s "Combined deploy") — `vite.config.ts`'s `base` sets that at build time, and
+  `cardCatalog.ts` reads `${import.meta.env.BASE_URL}cards.json` rather than a hardcoded
+  `/cards.json`. Anything new that fetches a public/ asset or builds a link needs the same pattern.
 
 ## Conventions
 
