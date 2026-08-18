@@ -31,6 +31,12 @@ function getBuildDate(): string {
 
 export default defineConfig({
   plugins: [react()],
+  // Unset (the default '/') for this app's own standalone deploy; the
+  // combined-platform build (scripts/build-platform.mjs at the repo root)
+  // sets this to '/recommender/' so assets and router.tsx's basepath
+  // (read from import.meta.env.BASE_URL at runtime) resolve correctly when
+  // served from a subpath alongside the other tools.
+  base: process.env.VITE_BASE_PATH || '/',
   define: {
     __APP_VERSION__: JSON.stringify(rootPackageJson.version),
     __APP_BUILD_DATE__: JSON.stringify(getBuildDate()),

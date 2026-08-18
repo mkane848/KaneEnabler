@@ -37,6 +37,10 @@ const routeTree = rootRoute.addChildren([indexRoute]);
 
 export const router = createRouter({
   routeTree,
+  // Matches vite.config.ts's `base` at runtime — '/' for this app's own
+  // standalone deploy, '/recommender/' when served as part of the combined
+  // platform build (see scripts/build-platform.mjs at the repo root).
+  basepath: import.meta.env.BASE_URL,
   // The Router wraps every route's component in its own catch boundary
   // (docs/rules-audit.md item 17) — a throw inside App is caught here, not
   // by the ErrorBoundary in main.tsx, which only sees what's outside the

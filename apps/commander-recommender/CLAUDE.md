@@ -89,7 +89,10 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
 - **`client/src/router.tsx`** is the third place client state can live: `RecommendationResults`'
   filters/sort are search params on the one route (`lib/searchSchema.ts`'s
   `validateRecommenderSearch`), not `useState` — shareable and survives a refresh, which neither
-  Zustand store's split above was designed for.
+  Zustand store's split above was designed for. Its `basepath` reads `import.meta.env.BASE_URL` at
+  runtime rather than hardcoding `/` — this app is deployed under `/recommender` as part of the
+  combined platform static site (root `CLAUDE.md`'s "Combined deploy"), and `vite.config.ts`'s
+  `base` is what actually sets `BASE_URL` per build.
 - **`client/src/lib/mtg.ts`** — WUBRG ordering and color-identity naming ("Golgari", never
   "Black/Green"). Mana glyph paths and cost parsing live in `@mtg/mana` (`packages/mana`), shared
   with the sibling app — this client has no `manaSymbols.ts` of its own anymore.
