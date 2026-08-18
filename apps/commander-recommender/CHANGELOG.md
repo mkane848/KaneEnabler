@@ -57,6 +57,14 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Fixed
 
+- **Sign-up confirmation emails linked to `localhost` instead of the deployed
+  site.** `useAuth`'s `signUp` call never passed `emailRedirectTo`, so
+  Supabase fell back to the project's Auth "Site URL", which was left at its
+  local-dev default. Now passes the page's own origin explicitly. The
+  Supabase project's Site URL and Redirect URL allow-list also need to be
+  updated in the dashboard to the deployed client URL — this fix alone isn't
+  sufficient without that.
+
 - **Multi-word creature types like Time Lord were silently dropped.**
   `parseCreatureTypes` filtered the type line word-by-word against Scryfall's
   creature-type catalog, so a two-word type could never survive — neither

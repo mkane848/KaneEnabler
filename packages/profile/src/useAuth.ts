@@ -47,7 +47,11 @@ export function useAuth(): AuthState {
 
   async function signUp(email: string, password: string): Promise<AuthResult> {
     if (!supabase) return { error: NOT_CONFIGURED };
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
     return { error: error?.message ?? null };
   }
 
