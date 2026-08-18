@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import AboutModal from './components/AboutModal';
 import AddCardPanel from './components/AddCardPanel';
 import ActiveCardsList from './components/ActiveCardsList';
@@ -44,16 +44,21 @@ export default function App() {
     imageSmall?: string;
   } | null>(null);
 
-  const commanderFieldCards: CommanderFieldCard[] = COMMANDER_IDS.filter(
-    (id) => state.commanders[id].onBattlefield,
-  ).map((id) => ({
-    id,
-    name: COMMANDER_NAME[id],
-    imageSmall: commanderCatalog[id]?.imageSmall,
-    castCount: state.commanders[id].castCount,
-  }));
+  const commanderFieldCards: CommanderFieldCard[] = useMemo(
+    () =>
+      COMMANDER_IDS.filter((id) => state.commanders[id].onBattlefield).map((id) => ({
+        id,
+        name: COMMANDER_NAME[id],
+        imageSmall: commanderCatalog[id]?.imageSmall,
+        castCount: state.commanders[id].castCount,
+      })),
+    [state.commanders, commanderCatalog],
+  );
 
-  const timeTravelTargets = buildTimeTravelTargets(state.cards, state.commanders.roseTyler);
+  const timeTravelTargets = useMemo(
+    () => buildTimeTravelTargets(state.cards, state.commanders.roseTyler),
+    [state.cards, state.commanders.roseTyler],
+  );
 
   return (
     <>

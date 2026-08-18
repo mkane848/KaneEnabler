@@ -1,6 +1,5 @@
-import { useCardCatalog } from '../hooks/useCardCatalog';
+import { useCommanderCards } from '../hooks/useCommanderCards';
 import type { CommanderId } from '../types';
-import { findCardByName } from '../utils/cardCatalog';
 import { COMMANDER_IDS, COMMANDER_NAME } from '../utils/commanders';
 import styles from './CommanderBanner.module.css';
 
@@ -15,17 +14,17 @@ interface CommanderBannerProps {
  * that commander's tax/Bad-Wolf tracker (CommanderTaxModal).
  */
 export default function CommanderBanner({ onOpenCommander }: CommanderBannerProps) {
-  const { cards: catalog } = useCardCatalog();
+  // useCommanderCards already does (and memoizes) the same catalog lookup —
+  // this used to redo it here with its own unmemoized findCardByName loop.
+  const commanderCards = useCommanderCards();
 
-  const portraits = catalog
-    ? COMMANDER_IDS.map((id) => ({
-        id,
-        name: COMMANDER_NAME[id],
-        card: findCardByName(catalog, COMMANDER_NAME[id]),
-      })).filter((c): c is typeof c & { card: NonNullable<typeof c.card> } =>
-        Boolean(c.card?.imageSmall),
-      )
-    : [];
+  const portraits = COMMANDER_IDS.map((id) => ({
+    id,
+    name: COMMANDER_NAME[id],
+    card: commanderCards[id],
+  })).filter((c): c is typeof c & { card: NonNullable<typeof c.card> } =>
+    Boolean(c.card?.imageSmall),
+  );
 
   return (
     <div className={styles.wrap}>
