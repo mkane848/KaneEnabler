@@ -89,6 +89,14 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
 - **`client/src/lib/mtg.ts`** — WUBRG ordering and color-identity naming ("Golgari", never
   "Black/Green"). Mana glyph paths and cost parsing live in `@mtg/mana` (`packages/mana`), shared
   with the sibling app — this client has no `manaSymbols.ts` of its own anymore.
+- **Optional sign-in and preferences (Phase 7) live in `@mtg/profile` (`packages/profile`)**, not
+  this client's own `store/` — `useAuth`, `useCardPreferences`, `useComboPreferences`, all backed
+  by Supabase (RLS, owner-only). `AccountMenu.tsx`/`AuthDialog.tsx` (nav + sign-in),
+  `LikeDislikeButtons.tsx` (`CommanderCard`'s badge row), `JankToggle` (inside
+  `CardDetailDialog.tsx`), and `ComboFavoriteButton.tsx` (inside `ComboFinder.tsx`) are the only
+  consumers. `supabase` is `null` when `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` aren't
+  set — every one of those components checks `useAuth().user` and renders nothing signed out, so
+  the whole feature degrades cleanly rather than gating the app on Supabase being configured.
 - A suggestion is a `CommanderUnit` (1-2 `CardRow`s), not a single card — every DTO, filter, and
   sort in the client threads through that union, not a flattened card.
 

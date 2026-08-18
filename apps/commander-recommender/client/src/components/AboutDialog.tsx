@@ -97,6 +97,12 @@ export function AboutDialog({ children }: { children: ReactNode }) {
                 </a>{' '}
                 for what's changed.
               </p>
+
+              <p className="about-caveat">
+                Signing in is optional and only powers liked/disliked cards, jank tags, and
+                favourite combos. It stores your email and those preferences — nothing else about
+                your list or session — and nothing you mark is shown to anyone but you.
+              </p>
             </div>
           </div>
 

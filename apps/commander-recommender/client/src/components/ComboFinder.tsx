@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { usePreferencesStore, COMBOS_PAGE_SIZE_OPTIONS } from '../store/usePreferencesStore';
 import { useCombos } from '../api/queries';
+import { ComboFavoriteButton } from './ComboFavoriteButton';
 import { Pagination } from './Pagination';
 import type { ComboDTO } from '../types';
 
@@ -34,7 +35,10 @@ function ComboList({
       <ul className="combo-list">
         {page.map((combo) => (
           <li key={combo.id ?? combo.cards.join('+')} className="combo-item">
-            <p className="combo-cards">{combo.cards.join(' + ')}</p>
+            <p className="combo-cards">
+              {combo.cards.join(' + ')}
+              <ComboFavoriteButton combo={combo} />
+            </p>
 
             {combo.produces.length > 0 && (
               <p className="combo-produces">

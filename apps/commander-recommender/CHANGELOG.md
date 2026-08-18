@@ -11,6 +11,21 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Added
 
+- **Optional sign-in, for liking/disliking cards and commanders, tagging a
+  liked card as favourite jank, and favouriting or hating combos.**
+  Everything else about the app works exactly as before, signed out — this
+  is additive, not a gate. Email/password only, via a new `@mtg/profile`
+  package (Supabase auth + Postgres, RLS scoping every row to its owner).
+  A commander is a card, so "favourite commander" is the same
+  `card_preferences` row read where the card is commander-eligible — no
+  second table to drift from it. A combo's snapshot is stored at the
+  moment you favourite it and rendered from that snapshot afterward;
+  favouriting or unfavouriting never re-queries Commander Spellbook, only
+  an explicit per-combo refresh does (see `docs/api-policy.md`). Nothing
+  about the scoring or ranking changes — this is filter-and-annotate only,
+  a badge on cards you've marked, not a new signal feeding the suggestion
+  itself. See the About dialog for what's stored.
+
 - **A render crash no longer white-screens the app.** Nothing caught an
   unexpected throw during render — the whole page unmounted with nothing in
   its place, mid-session, with no way back short of a manual reload. A crash

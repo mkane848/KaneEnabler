@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { ComboFinder } from './ComboFinder';
 import { CardDetailDialog } from './CardDetailDialog';
 import { CardImageDialog } from './CardImageDialog';
+import { LikeDislikeButtons } from './LikeDislikeButtons';
 import { cardCount, SupportingCardList } from './SupportingCards';
 import { useAppStore } from '../store/useAppStore';
 import { identityName, sortWubrg } from '../lib/mtg';
@@ -249,6 +250,7 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
         ))}
 
         <div className="badge-row">
+          <LikeDislikeButtons oracleIds={suggestion.cards.map((c) => c.oracleId)} />
           <ScoreBadge suggestion={suggestion} />
           {/* Bracket badge and its note are hidden while the estimate is
               being reworked — `bracket` is still on the DTO and still drives

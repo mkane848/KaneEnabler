@@ -211,7 +211,9 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
                                   dialog, which is a better view on a small screen than a
                                   thumbnail your own finger would be covering anyway.
       CardDetailDialog.tsx        full rules-text modal for one card of a unit (art, mana cost,
-                                   full text, Scryfall link); takes `card` + the unit's `bracket`
+                                   full text, Scryfall link); takes `card` + the unit's `bracket`.
+                                   Also renders JankToggle (same file) — a liked card's own
+                                   "favourite jank card" tag, hidden unless signed in and liked
       CardImageDialog.tsx         whole-card art-only preview (no rules text) — separate from
                                    CardDetailDialog above; used for commander art and every
                                    cited supporting card's name
@@ -223,8 +225,19 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
                                    usePreferencesStore's `combosPerPage`; the whole results
                                    block can be hidden after fetching without discarding
                                    the query (TanStack Query still has it cached — collapsing
-                                   is a view-state toggle, not a re-fetch)
-      AboutDialog.tsx             version, credits, repo link
+                                   is a view-state toggle, not a re-fetch). Each combo item
+                                   renders ComboFavoriteButton (favourite/hate, @mtg/profile)
+      ComboFavoriteButton.tsx     like/hate a combo — stores a snapshot at favourite time
+                                   (comboKey from @mtg/profile), never re-queries Spellbook
+      AboutDialog.tsx             version, credits, repo link, and (Phase 7) a privacy note on
+                                   what signing in stores
+      AuthDialog.tsx              email/password sign in/up (@mtg/profile's useAuth); the only
+                                   auth surface — no OAuth, no magic link
+      AccountMenu.tsx             nav-bar sign-in trigger, or the signed-in account's email +
+                                   sign out; renders nothing if Supabase isn't configured
+      LikeDislikeButtons.tsx      like/dislike a suggestion's card(s), rendered in
+                                   CommanderCard's badge row; a Partner pair is liked/disliked
+                                   as one unit (both oracleIds together)
   scripts/                 npm test — dependency-free node:assert + tsx, no framework
     fixtures.ts               makeSuggestion/makeCommanderCard/makeSupportingCard test builders
     test-mtg.ts                WUBRG ordering + color-identity naming cases

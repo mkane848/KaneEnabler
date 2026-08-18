@@ -266,15 +266,15 @@ state across players' devices would be the trigger).
 
 ### What to adopt
 
-| Module      | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Router**  | Both apps. Type-safe routes; URL-as-state for the recommender's filters/sort/page, which today lives in component state and is lost on refresh and unshareable. Also gives the CR rules browser real routes. **Landed.**                                                                                                                                                                                                                                       |
-| **Query**   | Keep. Already used correctly with deliberate non-default config. Also replaces DWC's hand-rolled ~25-line cache/in-flight/retry logic in `cardCatalog.ts`.                                                                                                                                                                                                                                                                                                     |
-| **Table**   | **Not adopted — the row below explains why, since this reverses what this table originally said.**                                                                                                                                                                                                                                                                                                                                                             |
-| **Virtual** | **Recommender only — landed differently than planned; DWC explicitly not, see below.**                                                                                                                                                                                                                                                                                                                                                                         |
-| **Form**    | **DWC `AddCardPanel.tsx` only.** 16 `useState` hooks in one 485-line component, three conditional entry modes, a variable-length `chapters: string[]` field array. (The `resetAll()` silently-misses-`mechanic` defect cited here originally is already fixed directly — a one-line addition, not a reason to adopt Form on its own. The rest of the case for Form still stands.) Not for HKH, whose only form is a textarea plus a file input. Still pending. |
-| **Store**   | No. Alpha, and Zustand already does this job well here.                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **DB**      | No. Sync/offline-first is its purpose; neither app syncs anything.                                                                                                                                                                                                                                                                                                                                                                                             |
+| Module      | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Router**  | Both apps. Type-safe routes; URL-as-state for the recommender's filters/sort/page, which today lives in component state and is lost on refresh and unshareable. Also gives the CR rules browser real routes. **Landed.**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Query**   | Keep. Already used correctly with deliberate non-default config. Also replaces DWC's hand-rolled ~25-line cache/in-flight/retry logic in `cardCatalog.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Table**   | **Not adopted — the row below explains why, since this reverses what this table originally said.**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Virtual** | **Recommender only — landed differently than planned; DWC explicitly not, see below.**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Form**    | **Landed — DWC `AddCardPanel.tsx` only.** The fields actually submitted by the "configure" stage (mechanic, direction, customLabel, starting/target count, autoAdjust, resolveNote, and the variable-length `chapters: string[]` array) now live in one `useForm()` instance, wired via one outer `form.Subscribe` and per-field `form.Field`s; `chapters` uses Form's `mode: 'array'`. Panel flow/selection state that was never a submitted field — stage, search query, manual/quick-suspend/token-creation mode flags, the selected card, the oracle-text-detected-count hint — stayed as plain `useState`, not folded into the form. (The `resetAll()` silently-misses-`mechanic` defect cited here originally was already fixed directly, before Form landed — a one-line addition, not a reason to adopt Form on its own; the rest of the case for Form held.) Not for HKH, whose only form is a textarea plus a file input. |
+| **Store**   | No. Alpha, and Zustand already does this job well here.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **DB**      | No. Sync/offline-first is its purpose; neither app syncs anything.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 **Keep** Zustand + TanStack Query with the split the recommender already uses correctly — Zustand
 for client state only, Query owning everything fetched. The `retry: false` /
@@ -331,6 +331,40 @@ way it predicted):
   memoise the two derived arrays in DWC's `App.tsx`.
 
 ## Phase 7 — User profiles
+
+**Landed** — commander-recommender only, per the "DWC stays deck-specific" decision below. The
+schema, RLS, and `@mtg/profile` package match this plan closely; three things differ from what's
+written below, recorded so they aren't mistaken for gaps in the plan rather than deliberate v1
+scope:
+
+- **Email/password only** — this section didn't specify a sign-in method. No OAuth provider, no
+  magic link; the smallest surface that works, since a profile is optional scaffolding around the
+  recommender's actual job, not a product of its own.
+- **No dedicated profile/browse page.** The "seven lists" below are all annotations at the point
+  you'd want them — a heart/✕ on a suggestion card and on a combo, a jank toggle in the card detail
+  view — not a separate screen that lists everything you've ever liked. Revisit if that's wanted;
+  the data model already supports it (`useCardPreferences`/`useComboPreferences` return everything,
+  a browse page would just be a new consumer of hooks that already exist).
+- **"Hidden or demoted" landed as annotated only.** A disliked card/commander shows the same ✕
+  badge as a like, unfilled — nothing currently hides it from the grid or sorts it lower. This
+  app already has a session-only "dismiss" for exactly the "get this out of my results" need
+  (`useAppStore`); wiring a persistent dislike into that same behavior, or into `sort.ts`, is a
+  reasonable follow-up but wasn't done here to avoid reaching into the sort/filter pipeline in the
+  same pass as the data layer.
+
+Runs on its own Supabase project ("kaneenabler"), not the account's other one — that one already
+holds an unrelated app's data (campaigns/characters/party, nothing to do with Magic).
+
+RLS verified directly against the live project (two throwaway users, impersonated via
+`SET LOCAL request.jwt.claims`, cleaned up after): user A's `SELECT` never returns user B's row,
+an `UPDATE` targeting user B's row while authenticated as A affects nothing, and an `INSERT`
+claiming `user_id = B` while authenticated as A is rejected by the `WITH CHECK` clause. What
+_isn't_ verified: the actual signed-in browser flow (sign up → confirm → sign in → like/tag/
+favourite) — this sandbox's egress proxy rejects `ctkrhgvboeohmijcpiji.supabase.co` with a 403
+("policy denial"), the same class of restriction as the Scryfall-image case elsewhere in this doc.
+The UI itself is exercised as far as that block allows (rendering, mode-switching, validation, and
+a real network failure surfacing as an inline error rather than a crash); the rest needs a real
+browser outside this sandbox, or the block lifted.
 
 The project's first **writable** data.
 
@@ -399,9 +433,11 @@ Each phase must leave the tree green.
 4. **Time-counters end-to-end:** `pnpm --filter time-counters dev`, add a Suspend card, advance a
    turn, run Time Travel, confirm the log. Re-verify Fading N grants N+1 turns after that fix.
 5. **Card data:** run the real Scryfall fetch in CI, not just the seed. Assert the floor check fires.
-6. **Profiles:** RLS tested by querying another user's rows and asserting zero results. Favourite a
-   combo, then load the profile **with the network blocked** — it must render from `snapshot`. Any
-   Spellbook request during that load is a test failure.
+6. **Profiles:** RLS tested by querying another user's rows and asserting zero results — **done**,
+   see Phase 7 above. Still open: favourite a combo, then load the profile **with the network
+   blocked** — it must render from `snapshot`. Any Spellbook request during that load is a test
+   failure. (There's no profile-browsing view yet to run this against — see Phase 7's "no dedicated
+   profile/browse page" note.)
 7. Playwright is pre-installed in the remote environment — drive both UIs for the touch-target and
    modal-accessibility fixes.
 
@@ -412,6 +448,6 @@ Plus the API-limits regression guards in [`api-policy.md`](./api-policy.md).
 Phases 0–2 are prerequisites. Phases 3 and 4 can proceed in parallel once packages exist. Phase 5 is
 Router first (it unblocks URL-as-state, the rules browser, and Phase 7's profile screens), then
 Virtual in the recommender (Table turned out not to apply — see "Table and Virtual, revisited"
-above), then Form in `AddCardPanel` (still pending). Phase 7 follows Router. Phase 6 is continuous.
+above), then Form in `AddCardPanel`. Phase 7 follows Router. Phase 6 is continuous.
 
 Ship each phase as its own PR.
