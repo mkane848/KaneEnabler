@@ -31,12 +31,23 @@ services:
   # hostname automatically so you don't have to hardcode it. Static sites
   # have no "plan" field — they're served free via CDN, not run on a
   # compute instance like the server above.
+  #
+  # No rootDir here (unlike the server above): Render's static-site builds
+  # run an automatic dependency-install step ahead of buildCommand, scoped
+  # to rootDir if set. That step detects the package manager by looking for
+  # a lockfile in that directory — since this is a single-root-lockfile pnpm
+  # workspace (no per-app pnpm-lock.yaml), a rootDir-scoped static site finds
+  # none and silently falls back to npm, which then can't resolve
+  # workspace:* deps. Keeping rootDir unset makes that auto-install step scan
+  # the repo root instead, where pnpm-lock.yaml actually lives. cd into the
+  # app dir ourselves instead, and don't call corepack enable — Render
+  # already runs it before buildCommand once it detects the root
+  # package.json's packageManager field.
   - type: web
     runtime: static
     name: mtg-recommender-client
-    rootDir: apps/commander-recommender/client
-    buildCommand: pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
-    staticPublishPath: dist
+    buildCommand: cd apps/commander-recommender/client && pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
+    staticPublishPath: apps/commander-recommender/client/dist
     envVars:
       - key: SERVER_HOST
         fromService:
@@ -47,10 +58,10 @@ services:
   - type: web
     runtime: static
     name: drwho-companion-edh
-    rootDir: apps/time-counters
     # fetch-cards regenerates public/cards.json from Scryfall so the deployed
     # catalog is current. It fails the build loudly if Scryfall is unreachable,
     # rather than quietly shipping the small committed seed. Unlike npm, pnpm
-    # installs devDependencies by default regardless of NODE_ENV.
-    buildCommand: pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
-    staticPublishPath: dist
+    # installs devDependencies by default regardless of NODE_ENV. No rootDir —
+    # see the comment on mtg-recommender-client above.
+    buildCommand: cd apps/time-counters && pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
+    staticPublishPath: apps/time-counters/dist
