@@ -13,5 +13,8 @@ services:
     # catalog is current. It fails the build loudly if Scryfall is unreachable,
     # rather than quietly shipping the small committed seed. Unlike npm, pnpm
     # installs devDependencies by default regardless of NODE_ENV.
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
+    # Render auto-detects the root package.json's packageManager field and
+    # runs corepack enable itself before this command — don't call it again
+    # here, it fails with EROFS trying to relink /usr/bin/pnpm.
+    buildCommand: pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
     staticPublishPath: dist
