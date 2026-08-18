@@ -5,10 +5,18 @@
 # below is repo-root-relative either way, but Render has to be told where to
 # find this file first.
 services:
+  # No rootDir: Render's static-site builds run an automatic
+  # dependency-install step ahead of buildCommand, scoped to rootDir if set.
+  # That step detects the package manager by looking for a lockfile in that
+  # directory — since this is a single-root-lockfile pnpm workspace (no
+  # per-app pnpm-lock.yaml), a rootDir-scoped static site finds none and
+  # silently falls back to npm, which then can't resolve workspace:* deps.
+  # Keeping rootDir unset makes that auto-install step scan the repo root
+  # instead, where pnpm-lock.yaml actually lives — cd into the app dir
+  # ourselves instead.
   - type: web
     runtime: static
     name: drwho-companion-edh
-    rootDir: apps/time-counters
     # fetch-cards regenerates public/cards.json from Scryfall so the deployed
     # catalog is current. It fails the build loudly if Scryfall is unreachable,
     # rather than quietly shipping the small committed seed. Unlike npm, pnpm
@@ -16,5 +24,5 @@ services:
     # Render auto-detects the root package.json's packageManager field and
     # runs corepack enable itself before this command — don't call it again
     # here, it fails with EROFS trying to relink /usr/bin/pnpm.
-    buildCommand: pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
-    staticPublishPath: dist
+    buildCommand: cd apps/time-counters && pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
+    staticPublishPath: apps/time-counters/dist
