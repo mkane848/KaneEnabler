@@ -1,0 +1,46 @@
+name: Scryfall fetch check
+
+# Runs the *real* Scryfall bulk-data fetch (not just the import/floor-check
+# against an already-downloaded file) on a schedule, separate from the main
+# CI workflow so a normal PR never triggers extra Scryfall traffic — see
+# docs/api-policy.md before changing what this calls, how often, or what
+# triggers it. Catches a bad *fetch* (a changed bulk-data shape, a moved
+# field) before a real deploy hits it, which docs/handoff.md flagged as a
+# gap: import-scryfall.ts's floor check only catches a bad *import* against
+# whatever file is already on disk.
+on:
+  schedule:
+    - cron: '0 13 * * 1' # Monday 13:00 UTC
+  workflow_dispatch:
+
+jobs:
+  fetch-check:
+    name: Real Scryfall fetch (commander-recommender + time-counters)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Both scripts' own floor checks throw (see import-scryfall.ts and
+      # fetch-card-data.mjs) on a suspiciously low card count, which fails
+      # this step and the workflow run — that's the actual regression guard,
+      # not anything added here.
+      - name: commander-recommender — real Scryfall fetch + import
+        run: pnpm --filter mtg-recommender-server run prepare-data
+
+      # Exercises the whole /api/recommend pipeline against the data just
+      # fetched above — the one place this test actually runs, since it
+      # skips itself (isSeeded) everywhere else. See recommend.integration.test.ts.
+      - name: commander-recommender — /api/recommend integration test
+        run: pnpm --filter mtg-recommender-server exec vitest run src/routes/recommend.integration.test.ts
+
+      - name: time-counters — real Scryfall fetch
+        run: pnpm --filter mtg-time-tracker run fetch-cards

@@ -9,11 +9,11 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '**/dist/**'],
     coverage: {
       ...baseTestConfig.coverage,
-      // Only comboKey.ts is tested today — the Supabase-backed hooks
-      // (useAuth, useCardPreferences, useComboPreferences) and rows.ts have
-      // none yet. This floor reflects that honestly rather than hiding it;
-      // see docs/handoff.md's Phase 6 note on this package.
-      thresholds: { statements: 5, branches: 0, functions: 5, lines: 10 },
+      // Every source file is tested now (useAuth, useCardPreferences,
+      // useComboPreferences, rows, client, comboKey) — a regression floor a
+      // little below the real current numbers (~95% statements/lines, ~92%
+      // branches, 100% functions), not an aspirational target.
+      thresholds: { statements: 90, branches: 85, functions: 95, lines: 95 },
     },
   },
 });

@@ -11,6 +11,16 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Added
 
+- **Test coverage for previously-untested paths.** `/api/recommend` now has an end-to-end
+  integration test against a real seeded database (`recommend.integration.test.ts`, via
+  `supertest`) — `server/src/app.ts` was split out of `index.ts` so tests can import the Express
+  app without triggering `app.listen()`. Partner/Background pairing is now spot-checked against
+  real Scryfall data (`packages/rules/src/partners.real-data.test.ts`), which found that Tiana,
+  Ship's Caretaker isn't actually part of the Partner family as printed today. Favourited combos
+  rendering from their stored snapshot with the network blocked is now tested
+  (`ComboFavoriteButton.test.tsx`). No behaviour changed — see `docs/handoff.md` and
+  `docs/api-policy.md` for details.
+
 - **Optional sign-in, for liking/disliking cards and commanders, tagging a
   liked card as favourite jank, and favouriting or hating combos.**
   Everything else about the app works exactly as before, signed out — this
