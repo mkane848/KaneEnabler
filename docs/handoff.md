@@ -43,23 +43,25 @@ What's genuinely still open, gathered here so a fresh session doesn't have to re
 - **Phase 3a (CR ingestion) is blocked, not done** — this sandbox's egress proxy blocks all three
   source domains (re-confirmed 2026-08-18). Needs to run locally or in GitHub Actions; see that
   section for why the ingestion script itself was deliberately not written blind.
-- **`@mtg/profile`'s Supabase-backed hooks have no test coverage** (`useAuth`,
-  `useCardPreferences`/`useSetCardPreference`/`useRemoveCardPreference`, the combo equivalents,
-  `rows.ts`) — only `comboKey.ts` is tested. The Phase 6 coverage-threshold work made this honestly
-  visible (9.3% statements) rather than hidden behind Vitest's default of only counting imported
-  files, but didn't fix it.
-- **No integration test for `/api/recommend`** end-to-end (parse → singleton → collection profile →
-  units → score → select → analysis → serialise) — see Verification, item 3.
-- **The real Scryfall fetch isn't exercised in CI**, only manually / at deploy time — see
-  Verification, item 5. `import-scryfall.ts`'s floor check (Phase 6) now exists to catch a bad
-  import, but nothing runs it on a schedule to catch a bad _fetch_ before it's deployed.
-- **Favourited-combo-renders-from-snapshot-with-network-blocked is untested**, and has no view to
-  run it against yet — see Verification, item 6, and Phase 7's "no dedicated profile/browse page."
 - **Deck-size and whole-deck color-identity validation** (`@mtg/rules`' `deckLegality.ts`) are
   tested and CR-cited but not wired into either app — neither has a deck-list-validation feature
   for them to back yet. See Phase 3b's primitives table.
 - **The Spellbook cache is per-process, in-memory** — fine for one user, not once accounts exist.
   See `api-policy.md`'s "known violations," item 2.
+
+**Landed since the list above was last trimmed (2026-08-18):** `@mtg/profile`'s Supabase-backed
+hooks (`useAuth`, `useCardPreferences`/`useSetCardPreference`/`useRemoveCardPreference`, the combo
+equivalents, `rows.ts`, `client.ts`) are now tested — 95%/92%/100%/100% statements/branches/
+functions/lines, up from 9.3% statements. The real Scryfall fetch is now exercised weekly in CI,
+separate from the main workflow — see `.github/workflows/scryfall-fetch-check.yml` and
+`api-policy.md`'s "Regression guards." Partner/Background pairing is now spot-checked against real
+Scryfall data (`partners.real-data.test.ts`), which also caught that Tiana, Ship's Caretaker isn't
+actually part of the Partner family as printed — see `commander-recommender.md`. `/api/recommend`
+now has an end-to-end integration test (`recommend.integration.test.ts`, `server/src/app.ts` split
+out of `index.ts` so `app.listen()` isn't a side effect of importing it) — it `skipIf`s itself
+outside the one place a seeded database exists (the weekly fetch-check workflow). And
+favourited-combo-renders-from-snapshot-with-network-blocked is tested against `ComboFavoriteButton`,
+the one component that reads a stored combo preference back today — see Verification items 3 and 6.
 
 ## Decisions on record
 
@@ -530,17 +532,20 @@ Each phase must leave the tree green.
 2. **Rules primitives:** every function in `@mtg/rules` has a test naming its CR rule. Each
    `rules-audit.md` defect gets a failing test first, then the fix.
 3. **Recommender end-to-end:** `pnpm --filter commander-recommender dev`, paste a real decklist,
-   confirm suggestions return. There is currently **no integration test for `/api/recommend`** — add
-   one covering parse → singleton → collection profile → units → score → select → analysis →
-   serialise. (Note: "profile" there is `CollectionProfile`, unrelated to Phase 7.)
+   confirm suggestions return. **Done:** `recommend.integration.test.ts` covers parse → singleton →
+   collection profile → units → score → select → analysis → serialise against the real app and a
+   real seeded database via supertest (`app.ts` split out of `index.ts` for this). Skips itself when
+   no seeded database exists — real execution happens in `scryfall-fetch-check.yml` after
+   `prepare-data`. (Note: "profile" there is `CollectionProfile`, unrelated to Phase 7.)
 4. **Time-counters end-to-end:** `pnpm --filter time-counters dev`, add a Suspend card, advance a
    turn, run Time Travel, confirm the log. Re-verify Fading N grants N+1 turns after that fix.
 5. **Card data:** run the real Scryfall fetch in CI, not just the seed. Assert the floor check fires.
 6. **Profiles:** RLS tested by querying another user's rows and asserting zero results — **done**,
-   see Phase 7 above. Still open: favourite a combo, then load the profile **with the network
-   blocked** — it must render from `snapshot`. Any Spellbook request during that load is a test
-   failure. (There's no profile-browsing view yet to run this against — see Phase 7's "no dedicated
-   profile/browse page" note.)
+   see Phase 7 above. Favourite-a-combo-with-the-network-blocked is also **done**:
+   `ComboFavoriteButton.test.tsx` stubs `global.fetch` to throw and asserts the button still renders
+   its liked/disliked/neither state from `useComboPreferences`' stored `snapshot` alone. (There's
+   still no dedicated profile/browse page — this is the one component that reads a stored combo
+   preference back today, per Phase 7's note.)
 7. Playwright is pre-installed in the remote environment — drive both UIs for the touch-target and
    modal-accessibility fixes.
 

@@ -267,7 +267,11 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
 
 server/                Express + TS + better-sqlite3
   src/
-    index.ts               app entry; CORS via optional CLIENT_ORIGIN env var
+    app.ts                  Express app construction (CORS via optional CLIENT_ORIGIN env var,
+                             compression, JSON parsing, the three routers, errorHandler) — no
+                             app.listen(), so recommend.integration.test.ts can import it directly
+                             with supertest
+    index.ts                imports app from app.ts; PORT + app.listen() only
     db.ts                   SQLite connection; findCardsByNames (incl. DFC face-name fallback),
                              getCommanderCandidates, getBackgroundCards (legal legendary Backgrounds)
     types.ts                CardRow shape (mirrors the cards table), incl. partner_ability/
@@ -290,6 +294,10 @@ server/                Express + TS + better-sqlite3
       meta.ts                   GET /api/meta — how current the card data is (reads
                                  importedSnapshot.ts); deliberately separate from /api/health,
                                  which stays a trivial liveness probe
+      recommend.integration.test.ts  real end-to-end check against app.ts + a real seeded
+                                      database (supertest) — parse through serialise in one pass,
+                                      not the per-service unit tests below. skipIf(!isSeeded); the
+                                      weekly scryfall-fetch-check.yml workflow is what actually runs it
     services/
       parseList.ts            decklist text -> [{name, quantity}]; handles the major export formats
       singleton.ts             merges repeated cards and trims copies to what 903.5b allows,
@@ -722,13 +730,19 @@ Spellbook lookup can be run against a pair. There is no "Partner" badge in
 the UI by design — Partner-family keywords stay excluded from the generic
 shared-keyword signal (see `synergy.ts`'s `EXCLUDED_KEYWORDS` note) rather
 than surfaced as a tag, since the pairing itself is the feature.
-Unverified against real Scryfall data — this environment has no network
-access to Scryfall, so the detection regexes and pairing logic were
-validated against hand-authored fixtures modeled on real card templating,
-not the live bulk file. Worth a spot-check against a handful of real
-Partner/Background cards (e.g. Tymna the Weaver, Kraum Ludevic's Opus,
-Tiana Ship's Caretaker + a real Background) after the next `prepare-data`
-run.
+**Spot-checked against real Scryfall data (2026-08-18)** —
+`packages/rules/src/partners.real-data.test.ts`, fields copied verbatim
+from a real `prepare-data` import. Confirms real cards pair correctly for
+all six variants (Tymna the Weaver + Kraum, Halsin + two real Backgrounds,
+Sophina + Othelm, Nyssa of Traken + real Doctor creatures, Lore Weaver +
+Ley Weaver, Donatello + Raphael), plus a negative case: Tiana, Ship's
+Caretaker — named in this section's original spot-check suggestion — turns
+out to have no partner ability at all as actually printed (`partner_ability:
+null`), so she's kept as a real ordinary-legendary-creature case proving
+buildCommanderUnits doesn't pair her with anything. The hand-authored
+fixtures in `partners.test.ts` remain the exhaustive coverage of the
+pairing rules themselves; this file is the "does it also work on the real
+data" check that was missing.
 
 ## Merged with `main`'s independent Partner/Background work
 

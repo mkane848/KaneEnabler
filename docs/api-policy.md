@@ -89,5 +89,16 @@ These belong in CI so the policy survives future refactors:
 
 - A test that fails if any Scryfall or Spellbook request is issued without the shared headers.
 - A test asserting Commander Spellbook is **never** called during page load or route loading.
-- A test that loads a user profile with the network blocked and asserts favorited combos still
-  render from their stored snapshot.
+- **Landed:** `.github/workflows/scryfall-fetch-check.yml` runs the real Scryfall fetch (not just
+  the import against a file already on disk) weekly, separate from the main CI workflow so a normal
+  PR generates no extra Scryfall traffic — confirmed with the repo owner before implementation, per
+  this doc's own rule, including the cadence. Catches a bad *fetch* (a changed bulk-data shape, a
+  moved field) via each script's own floor check before a real deploy hits it. The same workflow now
+  also runs `recommend.integration.test.ts` (`server/src/routes/`) right after the fetch, exercising
+  the whole `/api/recommend` pipeline against real freshly-imported data — that test `skipIf`s itself
+  everywhere else, since normal CI and fresh clones have no seeded database.
+- **Landed:** `ComboFavoriteButton.test.tsx` (`client/src/components/`) stubs `global.fetch` to throw
+  and asserts a favourited combo still renders — liked, disliked, or neither — from
+  `useComboPreferences`' stored `snapshot` alone, with zero network calls. There's no dedicated
+  favourites-browsing page yet (`ComboFinder.tsx` only fetches live results after an explicit
+  click), so this is the one component that reads a stored combo preference back today.
