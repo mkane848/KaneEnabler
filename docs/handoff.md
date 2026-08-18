@@ -332,6 +332,40 @@ way it predicted):
 
 ## Phase 7 — User profiles
 
+**Landed** — commander-recommender only, per the "DWC stays deck-specific" decision below. The
+schema, RLS, and `@mtg/profile` package match this plan closely; three things differ from what's
+written below, recorded so they aren't mistaken for gaps in the plan rather than deliberate v1
+scope:
+
+- **Email/password only** — this section didn't specify a sign-in method. No OAuth provider, no
+  magic link; the smallest surface that works, since a profile is optional scaffolding around the
+  recommender's actual job, not a product of its own.
+- **No dedicated profile/browse page.** The "seven lists" below are all annotations at the point
+  you'd want them — a heart/✕ on a suggestion card and on a combo, a jank toggle in the card detail
+  view — not a separate screen that lists everything you've ever liked. Revisit if that's wanted;
+  the data model already supports it (`useCardPreferences`/`useComboPreferences` return everything,
+  a browse page would just be a new consumer of hooks that already exist).
+- **"Hidden or demoted" landed as annotated only.** A disliked card/commander shows the same ✕
+  badge as a like, unfilled — nothing currently hides it from the grid or sorts it lower. This
+  app already has a session-only "dismiss" for exactly the "get this out of my results" need
+  (`useAppStore`); wiring a persistent dislike into that same behavior, or into `sort.ts`, is a
+  reasonable follow-up but wasn't done here to avoid reaching into the sort/filter pipeline in the
+  same pass as the data layer.
+
+Runs on its own Supabase project ("kaneenabler"), not the account's other one — that one already
+holds an unrelated app's data (campaigns/characters/party, nothing to do with Magic).
+
+RLS verified directly against the live project (two throwaway users, impersonated via
+`SET LOCAL request.jwt.claims`, cleaned up after): user A's `SELECT` never returns user B's row,
+an `UPDATE` targeting user B's row while authenticated as A affects nothing, and an `INSERT`
+claiming `user_id = B` while authenticated as A is rejected by the `WITH CHECK` clause. What
+_isn't_ verified: the actual signed-in browser flow (sign up → confirm → sign in → like/tag/
+favourite) — this sandbox's egress proxy rejects `ctkrhgvboeohmijcpiji.supabase.co` with a 403
+("policy denial"), the same class of restriction as the Scryfall-image case elsewhere in this doc.
+The UI itself is exercised as far as that block allows (rendering, mode-switching, validation, and
+a real network failure surfacing as an inline error rather than a crash); the rest needs a real
+browser outside this sandbox, or the block lifted.
+
 The project's first **writable** data.
 
 > This breaks a documented assumption. HKH's `handoff.md` states the card SQLite is _"static
@@ -399,9 +433,11 @@ Each phase must leave the tree green.
 4. **Time-counters end-to-end:** `pnpm --filter time-counters dev`, add a Suspend card, advance a
    turn, run Time Travel, confirm the log. Re-verify Fading N grants N+1 turns after that fix.
 5. **Card data:** run the real Scryfall fetch in CI, not just the seed. Assert the floor check fires.
-6. **Profiles:** RLS tested by querying another user's rows and asserting zero results. Favourite a
-   combo, then load the profile **with the network blocked** — it must render from `snapshot`. Any
-   Spellbook request during that load is a test failure.
+6. **Profiles:** RLS tested by querying another user's rows and asserting zero results — **done**,
+   see Phase 7 above. Still open: favourite a combo, then load the profile **with the network
+   blocked** — it must render from `snapshot`. Any Spellbook request during that load is a test
+   failure. (There's no profile-browsing view yet to run this against — see Phase 7's "no dedicated
+   profile/browse page" note.)
 7. Playwright is pre-installed in the remote environment — drive both UIs for the touch-target and
    modal-accessibility fixes.
 

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { CardListUpload } from './components/CardListUpload';
 import { RecommendationResults } from './components/RecommendationResults';
 import { AboutDialog } from './components/AboutDialog';
+import { AccountMenu } from './components/AccountMenu';
 import { wakeServer } from './api/client';
 
 function App() {
@@ -13,11 +14,14 @@ function App() {
     <div className="app-shell">
       <nav className="app-nav">
         <span className="app-nav-brand">Commander? I Hardly Know 'Er</span>
-        <AboutDialog>
-          <button type="button" className="app-nav-link">
-            About
-          </button>
-        </AboutDialog>
+        <div className="app-nav-actions">
+          <AccountMenu />
+          <AboutDialog>
+            <button type="button" className="app-nav-link">
+              About
+            </button>
+          </AboutDialog>
+        </div>
       </nav>
 
       <header className="app-header">

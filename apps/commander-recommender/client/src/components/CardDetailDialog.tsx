@@ -1,9 +1,50 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
+import { useAuth, useCardPreferences, useSetCardPreference } from '@mtg/profile';
 import { identityName, sortWubrg } from '../lib/mtg';
 import { ManaSymbol } from './ManaSymbol';
 import { ManaCost } from './ManaCost';
 import type { BracketEstimateDTO, CommanderCardDTO } from '../types';
+
+/**
+ * Jank is a tag on a liked card, not a separate list (docs/handoff.md's
+ * Phase 7) — so it only makes sense, and only shows, once the card is
+ * already liked. Toggling it preserves the row's other tags rather than
+ * overwriting them, in case this ever grows a second tag.
+ */
+function JankToggle({ oracleId }: { oracleId: string }) {
+  const { user } = useAuth();
+  const { data: preferences } = useCardPreferences(user?.id ?? null);
+  const setPreference = useSetCardPreference();
+
+  if (!user) return null;
+  const preference = preferences?.find((p) => p.oracleId === oracleId);
+  if (preference?.sentiment !== 'like') return null;
+
+  const isJank = preference.tags.includes('jank');
+
+  function toggleJank() {
+    if (!user || !preference) return;
+    const tags = isJank
+      ? preference.tags.filter((t) => t !== 'jank')
+      : [...preference.tags, 'jank'];
+    setPreference.mutate({
+      userId: user.id,
+      input: { oracleId, sentiment: 'like', tags, note: preference.note ?? undefined },
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      className={`jank-toggle${isJank ? ' is-active' : ''}`}
+      aria-pressed={isJank}
+      onClick={toggleJank}
+    >
+      {isJank ? '★ Favourite jank card' : 'Mark as favourite jank card'}
+    </button>
+  );
+}
 
 interface Props {
   card: CommanderCardDTO;
@@ -92,6 +133,8 @@ export function CardDetailDialog({ card, children }: Props) {
                   View on Scryfall — printings, rulings, prices
                 </a>
               )}
+
+              <JankToggle oracleId={card.oracleId} />
             </div>
           </div>
 

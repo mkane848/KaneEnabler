@@ -13,8 +13,10 @@ monorepo holding:
 - `packages/rules` (`@mtg/rules`) — CR-cited Magic rules primitives shared by both apps: commander
   eligibility, singleton limit, Partner/Background pairing, commander tax, color-identity subset
   checks, counter taxonomy/turn steps, creature-type parsing, and commander format legality, plus
-  deck size and whole-deck color-identity validation (built and tested, not yet called from either
-  app's UI — see `docs/handoff.md`'s Phase 3b table). Consumed straight from `.ts` source by Vite
+  deck size and whole-deck color-identity validation. Every primitive except the last two is already
+  called from both apps — the deck-size and whole-deck color-identity checks are tested and CR-cited
+  but not wired in yet, since neither app has a deck-list-validation feature for them to back (see
+  `docs/handoff.md`'s Phase 3b table). Consumed straight from `.ts` source by Vite
   and time-counters, but also built to real CommonJS for commander-recommender/server's bare-Node
   runtime (conditional package.json exports + a nested `dist/package.json` — see that package's
   own `tsconfig.build.json` before changing its module settings)
@@ -32,6 +34,12 @@ monorepo holding:
   that package's own file for why). Also `ErrorBoundary`, a class component both apps wrap their
   root in — `fallback` is a render prop so each app supplies its own themed recovery screen rather
   than a fixed look, matching `Modal`'s className-hook approach
+- `packages/profile` (`@mtg/profile`) — commander-recommender-only: a Supabase client, `useAuth`,
+  and RLS-scoped hooks over `card_preferences`/`combo_preferences` (like/dislike, jank tags,
+  favourited combos with an offline-rendered snapshot — see `docs/handoff.md`'s Phase 7). `null`
+  when `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` aren't set rather than throwing, since
+  profiles are additive and the rest of the app works with zero Supabase setup. time-counters
+  doesn't consume this; nothing blocks it later
 
 **Read [`docs/handoff.md`](./docs/handoff.md) first.** It is the execution brief for the
 consolidation and everything that follows — target architecture, all seven phases, what's landed
@@ -68,9 +76,9 @@ Run from the repo root unless noted. Every command fans out per-package via Turb
 - **`packages/*`** are internal (`workspace:*`), unpublished, and ship plain TS source with no build
   step — both apps' Vite bundlers and `tsc`'s `moduleResolution: "bundler"` resolve a package's
   `exports` straight to its `src/index.ts`. `packages/config`, `packages/mana`, and `packages/ui`
-  exist today; `docs/handoff.md`'s remaining Phase 2–3 packages (`@mtg/rules`, `@mtg/scryfall`,
-  `@mtg/card-model`, `@mtg/profile`) land incrementally — check that doc for current status before
-  assuming one exists.
+  exist today, alongside `packages/rules`, `packages/card-model`, and `packages/profile` described
+  above; `docs/handoff.md`'s remaining package (`@mtg/scryfall`) lands incrementally — check that
+  doc for current status before assuming it exists.
 - **Shared dependency versions live in `pnpm-workspace.yaml`'s `catalog:`**, not hand-copied across
   `package.json` files — reference `"catalog:"` rather than pinning a version directly for anything
   more than one package depends on, so drift can't reoccur the way it did before consolidation.
