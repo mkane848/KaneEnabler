@@ -1,0 +1,56 @@
+# Root Blueprint for the KaneEnabler monorepo — Render's Blueprint feature only
+# looks for render.yaml at the repo root, so this combines both apps' services.
+# apps/commander-recommender/render.yaml and apps/time-counters/render.yaml are
+# kept as the per-app source of truth for their own build/start commands; keep
+# this file's service definitions in sync with those if either changes.
+services:
+  # Express API — builds its own SQLite card database from Scryfall's bulk
+  # data during the build step, since the free plan's filesystem is
+  # ephemeral. The data is static reference data (never written to at
+  # runtime), so rebuilding it on every deploy is the right tradeoff: no
+  # persistent disk needed, and the ban list / Game Changers list stay
+  # current each time you redeploy.
+  - type: web
+    name: mtg-recommender-server
+    runtime: node
+    plan: free
+    rootDir: apps/commander-recommender/server
+    # Unlike npm, pnpm installs devDependencies by default regardless of
+    # NODE_ENV — no --include=dev workaround needed. prepare-data/build still
+    # need tsx and tsc, both devDependencies. Render auto-detects the root
+    # package.json's packageManager field and runs corepack enable itself
+    # before this command — don't call it again here, it fails with EROFS
+    # trying to relink /usr/bin/pnpm.
+    buildCommand: pnpm install --frozen-lockfile && pnpm run prepare-data && pnpm run build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  # Static Vite build. VITE_API_URL is wired to the server service's
+  # hostname automatically so you don't have to hardcode it. Static sites
+  # have no "plan" field — they're served free via CDN, not run on a
+  # compute instance like the server above.
+  - type: web
+    runtime: static
+    name: mtg-recommender-client
+    rootDir: apps/commander-recommender/client
+    buildCommand: pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
+    staticPublishPath: dist
+    envVars:
+      - key: SERVER_HOST
+        fromService:
+          name: mtg-recommender-server
+          type: web
+          property: host
+
+  - type: web
+    runtime: static
+    name: drwho-companion-edh
+    rootDir: apps/time-counters
+    # fetch-cards regenerates public/cards.json from Scryfall so the deployed
+    # catalog is current. It fails the build loudly if Scryfall is unreachable,
+    # rather than quietly shipping the small committed seed. Unlike npm, pnpm
+    # installs devDependencies by default regardless of NODE_ENV.
+    buildCommand: pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
+    staticPublishPath: dist
