@@ -13,14 +13,15 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
     "start": "node dist/index.js",
+    "prefetch-scryfall": "pnpm --filter @mtg/scryfall build",
     "fetch-scryfall": "tsx scripts/fetch-scryfall.ts",
-    "preimport-scryfall": "pnpm --filter @mtg/rules build && pnpm --filter @mtg/card-model build",
+    "preimport-scryfall": "pnpm --filter @mtg/rules build && pnpm --filter @mtg/card-model build && pnpm --filter @mtg/scryfall build",
     "import-scryfall": "tsx scripts/import-scryfall.ts",
     "prepare-data": "npm run fetch-scryfall && npm run import-scryfall",
-    "prepare-data:fresh": "tsx scripts/fetch-scryfall.ts --force && npm run import-scryfall"
+    "prepare-data:fresh": "npm run fetch-scryfall -- --force && npm run import-scryfall"
   },
   "dependencies": {
     "@mtg/rules": "workspace:*",
@@ -33,10 +34,12 @@
   "devDependencies": {
     "@mtg/card-model": "workspace:*",
     "@mtg/config": "workspace:*",
+    "@mtg/scryfall": "workspace:*",
     "@types/better-sqlite3": "^7.6.11",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
     "tsx": "^4.19.1",
     "typescript": "catalog:",

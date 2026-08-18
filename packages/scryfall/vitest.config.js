@@ -5,12 +5,11 @@ import { baseTestConfig } from '@mtg/config/vitest.base.js';
 export default defineConfig({
   test: {
     ...baseTestConfig,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    environment: 'node',
     exclude: ['**/node_modules/**', '**/dist/**'],
     coverage: {
       ...baseTestConfig.coverage,
-      thresholds: { statements: 100, branches: 75, functions: 100, lines: 100 },
+      thresholds: { statements: 100, branches: 100, functions: 100, lines: 100 },
     },
   },
 });

@@ -64,7 +64,11 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   `cardNames.ts`'s rules) so a decklist naming only one face of a DFC still resolves.
 - **`server/scripts/fetch-scryfall.ts`** + **`import-scryfall.ts`** are the only place Scryfall is
   called from this app — see [`../../docs/api-policy.md`](../../docs/api-policy.md), a hard
-  project rule, before changing what these call or when.
+  project rule, before changing what these call or when. The bulk-snapshot fetch/cache mechanics
+  and `User-Agent` are shared with time-counters via `@mtg/scryfall` (`packages/scryfall`); this
+  app's own companion fetches (creature types, re-skinned names) and its `IMPORT_VERSION`/sqlite
+  `meta`-table freshness check (`dataSnapshot.ts`/`importedSnapshot.ts`) stay local — see
+  `docs/handoff.md`'s `@mtg/scryfall` section for why those didn't move.
 - **`server/src/services/spellbook.ts`** — Commander Spellbook adapter. Click-triggered only, 1-hour
   in-memory cache, no retry on 429. Same hard-rule constraints apply.
 - **Cited-card dedup**: the server sends each cited card once (`server/src/services/cardIndex.ts`)

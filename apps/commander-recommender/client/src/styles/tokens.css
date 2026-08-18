@@ -1,0 +1,41 @@
+:root {
+  --ink: #17140f;
+  --ink-raised: #221d15;
+  --ink-border: #3a3225;
+  --parchment: #f4ecd8;
+  --parchment-dim: #e6d9b8;
+  --brass: #b8842a;
+  --brass-bright: #dba53f;
+  --text-primary: #f4ecd8;
+  --text-muted: #a89a80;
+  --ink-text: #241f16;
+  --ink-text-muted: #6b5f4a;
+
+  --pip-w: #f8f4e3;
+  --pip-w-ink: rgba(20, 16, 10, 0.82);
+  --pip-u: #0f6ab5;
+  --pip-u-ink: rgba(248, 244, 227, 0.92);
+  --pip-b: #2c2620;
+  --pip-b-ink: rgba(248, 244, 227, 0.92);
+  --pip-r: #c6362a;
+  --pip-r-ink: rgba(248, 244, 227, 0.92);
+  --pip-g: #1f7a45;
+  --pip-g-ink: rgba(248, 244, 227, 0.92);
+  --pip-c: #8c7a63;
+  --pip-c-ink: rgba(20, 16, 10, 0.82);
+  --pip-s: #c2d4e0;
+  --pip-s-ink: rgba(20, 16, 10, 0.82);
+  --pip-generic: #b3aaa1;
+  --pip-generic-ink: rgba(20, 16, 10, 0.82);
+
+  /* Destructive actions. Muted enough not to fight the brass accent, red
+     enough to read as "this removes something". */
+  --danger: #8c2f2f;
+  --danger-text: #f8f4e3;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  color-scheme: dark;
+}

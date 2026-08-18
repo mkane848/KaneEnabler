@@ -165,7 +165,11 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
                              rather than component state lost on refresh (docs/handoff.md
                              Phase 5). Not a multi-page app; stripSearchParams keeps a bare
                              visit at a bare "/"
-    index.css              design system: parchment/ink palette, mana pips
+    index.css              pure @import manifest, one line per file in styles/ below
+    styles/                 split from one 2,364-line index.css (docs/handoff.md Phase 6);
+                             tokens.css has the parchment/ink palette + mana pip colors,
+                             the rest are one file per UI area (commander-card.css,
+                             filters.css, dialogs.css, combos.css, deck-summary.css, etc.)
     store/useAppStore.ts   client state only: rawList, submittedList, dismissed
     store/usePreferencesStore.ts  durable UI prefs (currently just combosPerPage — the
                                    suggestion grid has no page-size preference of its own
@@ -325,9 +329,9 @@ server/                Express + TS + better-sqlite3
       cardNames.ts                which names a card can be written down as (single-face lookup
                                    for DFCs) — lives apart from import-scryfall.ts so the rule can
                                    be tested without running an import
-      dataSnapshot.ts             which Scryfall bulk snapshot the local data on disk came from,
-                                   compared by content-addressed URL + published `updated_at`
-                                   rather than a time-based heuristic
+      dataSnapshot.ts             just IMPORT_VERSION now — the "is the file on disk current?"
+                                   half (sidecar compared against published `updated_at`) moved to
+                                   @mtg/scryfall, shared with time-counters (docs/handoff.md)
       importedSnapshot.ts          which snapshot the database itself was built from, recorded
                                     inside the database — deliberately separate from
                                     dataSnapshot.ts, since "downloaded but not yet imported" is a

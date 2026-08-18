@@ -1,0 +1,118 @@
+/* Results */
+
+.status-error {
+  color: var(--pip-r);
+  font-weight: 500;
+}
+
+.status-empty {
+  color: var(--text-muted);
+}
+
+.status-waking {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--brass-bright);
+  margin: 0;
+}
+
+.results-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.results-summary details summary {
+  cursor: pointer;
+  color: var(--brass-bright);
+}
+
+.results-summary ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--text-muted);
+}
+
+.export-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.export-button {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 7px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.export-button:hover {
+  border-color: var(--brass);
+}
+
+/* Virtualized suggestion grid (RecommendationResults.tsx) — replaces what
+   used to be a plain `display: grid; grid-template-columns: repeat(auto-fill,
+   minmax(260px, 1fr))` container holding every CommanderCard at once. The
+   column math that auto-fill used to do implicitly now happens in JS
+   (useGridColumns), since a virtualizer has to know row membership before
+   anything renders; --suggestion-grid-columns carries that count in per row.
+   .suggestion-grid-virtual's own height is set inline to the virtualizer's
+   getTotalSize(), so the page scrollbar reflects the full result count even
+   though only the rows near the viewport are actually mounted. */
+.suggestion-grid-virtual {
+  position: relative;
+  width: 100%;
+}
+
+.suggestion-grid-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--suggestion-grid-columns, 1), 1fr);
+  gap: 1.25rem;
+  /* A little breathing room between rows — auto-fill's own row gap did this
+     for free; a manually-positioned row needs it explicitly. */
+  padding-bottom: 1.25rem;
+}
+
+/* Shown above results when nothing cleared the quality bar. Bordered rather
+   than coloured like an error — the request succeeded, the answer is just
+   less confident than usual. */
+.weak-match-note {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-left: 3px solid var(--brass);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  margin: 0 0 1.25rem;
+}
+
+@media (max-width: 520px) {
+  /* The export buttons sit on the same row as the match summary on desktop;
+     on a narrow screen they get their own full-width row instead of being
+     squeezed against the edge. */
+  .export-controls {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .export-button {
+    flex: 1;
+    padding: 0.5rem 0.7rem;
+  }
+}

@@ -9,12 +9,13 @@
   "scripts": {
     "typecheck": "tsc",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
     "gen-glyphs": "node scripts/gen-mana-glyphs.mjs"
   },
   "devDependencies": {
     "@mtg/config": "workspace:*",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
     "globals": "^15.14.0",
     "mana-font": "1.18.0",

@@ -40,6 +40,13 @@ monorepo holding:
   when `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` aren't set rather than throwing, since
   profiles are additive and the rest of the app works with zero Supabase setup. time-counters
   doesn't consume this; nothing blocks it later
+- `packages/scryfall` (`@mtg/scryfall`) — hard-rule gated (`docs/api-policy.md`): the single place
+  both apps' bulk-data fetch scripts (`commander-recommender/server/scripts/fetch-scryfall.ts`,
+  `time-counters/scripts/fetch-card-data.mjs`) get their snapshot fetch/cache mechanics
+  (`ensureOracleCardsSnapshot`, comparing Scryfall's published `updated_at` rather than guessing
+  from local file age) and `User-Agent` (`buildUserAgent`, derived from each app's own
+  `package.json` rather than hand-copied). Same plain-`.js`-with-JSDoc, dual CJS/ESM shape as
+  `@mtg/card-model`, for the same reason — `fetch-card-data.mjs` runs under bare `node`
 
 **Read [`docs/handoff.md`](./docs/handoff.md) first.** It is the execution brief for the
 consolidation and everything that follows — target architecture, all seven phases, what's landed
@@ -75,10 +82,11 @@ Run from the repo root unless noted. Every command fans out per-package via Turb
   `render.yaml`/`CLAUDE.md` for why).
 - **`packages/*`** are internal (`workspace:*`), unpublished, and ship plain TS source with no build
   step — both apps' Vite bundlers and `tsc`'s `moduleResolution: "bundler"` resolve a package's
-  `exports` straight to its `src/index.ts`. `packages/config`, `packages/mana`, and `packages/ui`
-  exist today, alongside `packages/rules`, `packages/card-model`, and `packages/profile` described
-  above; `docs/handoff.md`'s remaining package (`@mtg/scryfall`) lands incrementally — check that
-  doc for current status before assuming it exists.
+  `exports` straight to its `src/index.ts`. `packages/rules` and `packages/card-model` are the
+  exception each: also built to real CommonJS (`dist/`) for commander-recommender/server's bare-Node
+  `tsx` scripts, which can't load their ESM source directly — see each package's own
+  `tsconfig.build.json`. `packages/config`, `packages/mana`, `packages/ui`, `packages/profile`, and
+  `packages/scryfall` round out today's set; all seven `docs/handoff.md` packages have landed.
 - **Shared dependency versions live in `pnpm-workspace.yaml`'s `catalog:`**, not hand-copied across
   `package.json` files — reference `"catalog:"` rather than pinning a version directly for anything
   more than one package depends on, so drift can't reoccur the way it did before consolidation.

@@ -1,0 +1,142 @@
+/* Combo lookup */
+
+.combo-button-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.combo-button {
+  align-self: flex-start;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-text);
+  background: var(--brass-bright);
+  border: none;
+  border-radius: 7px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.combo-button:hover {
+  background: var(--brass);
+}
+
+.combo-button-placeholder {
+  background: transparent;
+  color: var(--ink-text-muted);
+  border: 1px dashed var(--parchment-dim);
+  cursor: not-allowed;
+}
+
+.combo-button-placeholder:hover {
+  background: transparent;
+}
+
+.combo-error {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--pip-r);
+  margin: 0;
+}
+
+.combo-list {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.combo-item {
+  background: rgba(36, 31, 22, 0.05);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.combo-cards {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.combo-favorite-row {
+  flex: none;
+}
+
+.combo-produces {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.combo-arrow {
+  color: var(--brass);
+  font-weight: 700;
+}
+
+.combo-produces-list {
+  font-weight: 600;
+  color: #7a5615;
+  background: rgba(184, 132, 42, 0.14);
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+}
+
+.combo-missing {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pip-r);
+  background: rgba(198, 54, 42, 0.1);
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+  margin: 0;
+}
+
+.combo-steps-details {
+  font-size: 0.75rem;
+}
+
+.combo-steps-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #7a5615;
+}
+
+.combo-steps-details summary::marker {
+  color: var(--brass);
+}
+
+.combo-steps {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0.35rem 0 0;
+  white-space: pre-line;
+}
+
+.combo-link,
+.combo-credit a {
+  font-size: 0.72rem;
+  color: #7a5615;
+}
+
+.combo-credit {
+  font-size: 0.72rem;
+  color: var(--ink-text-muted);
+  margin: 0.2rem 0 0;
+}

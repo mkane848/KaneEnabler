@@ -8,10 +8,11 @@ import {
   frontImageUri,
 } from '@mtg/card-model';
 import { frontFaceCharacteristics, isCommanderEligible, parseCreatureTypes } from '@mtg/rules';
+import { readSidecar } from '@mtg/scryfall';
 import { faceNameEntries } from '../src/services/cardNames';
 import { buildCardFacts, buildVocabulary, detectSignals } from '../src/services/signals';
 import type { CardRow } from '../src/types';
-import { IMPORT_VERSION, readSidecar } from '../src/services/dataSnapshot';
+import { IMPORT_VERSION } from '../src/services/dataSnapshot';
 import { readImportedSnapshot, writeImportedSnapshot } from '../src/services/importedSnapshot';
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -361,6 +362,22 @@ const insertMany = db.transaction((rows: any[]) => {
 insertMany(cards);
 
 console.log(`\nImported ${imported} cards (skipped ${skipped} non-gameplay entries).`);
+
+// A count this far off expectations means an upstream format change (a
+// renamed field silently reading as undefined, say) rather than a normal
+// Scryfall print run — mirrors time-counters' own floor check on its
+// filtered catalog. 20,000 is well under the real count (currently ~36k)
+// but far above what a broken parse would produce. The bad data is already
+// written to cards.sqlite by this point (there's no staging copy to swap in
+// instead), but exiting non-zero here fails prepare-data's build/deploy step
+// rather than silently shipping it.
+if (imported < 20_000) {
+  throw new Error(
+    `Only ${imported} cards survived import — that is far below the expected ~36,000 and ` +
+      'suggests Scryfall changed its data format.',
+  );
+}
+
 const eligible = db
   .prepare('SELECT COUNT(*) as c FROM cards WHERE is_commander_eligible = 1')
   .get() as { c: number };

@@ -1,173 +1,81 @@
-import fs from 'node:fs';
+import fs, { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { Readable } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
-import { createGunzip } from 'node:zlib';
-import { diskHasSnapshot, writeSidecar } from '../src/services/dataSnapshot';
+import { buildUserAgent, describeFailure, ensureOracleCardsSnapshot } from '@mtg/scryfall';
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 // JSONL, not JSON: Scryfall's bulk endpoint now publishes newline-delimited
-// JSON, gzipped. See BulkDataEntry below.
+// JSON, gzipped.
 const OUTPUT_PATH = path.join(DATA_DIR, 'oracle-cards.jsonl');
 // Small companion file — see fetchFlavorNames below for why this isn't part
 // of the bulk download.
 const FLAVOR_NAMES_PATH = path.join(DATA_DIR, 'flavor-names.json');
 const CREATURE_TYPES_PATH = path.join(DATA_DIR, 'creature-types.json');
 
-/**
- * Reuse is decided by comparing the *published snapshot* against the one on
- * disk, not by how old the file is.
- *
- * This replaced a 7-day file-mtime heuristic, which was wrong in both
- * directions: it happily served a week-old copy after Scryfall had published
- * something new, and forced a full re-download of a file that hadn't
- * changed. Scryfall gives an exact answer — every snapshot has its own
- * `updated_at` and its own content-addressed URL — so guessing from a
- * timestamp was never necessary.
- *
- * It has no effect on a deploy either way: the build starts from a clean
- * checkout with no data directory, so there is nothing to reuse and the
- * download always happens. See docs/card-data-strategy.md for what it would
- * take to change that.
- */
+// __dirname, not import.meta.url: this app has no "type": "module", so tsc
+// (node16 module resolution) compiles this file as CommonJS and rejects
+// import.meta outright — see tsconfig.json's own note on why.
+const pkg = JSON.parse(readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8')) as {
+  version: string;
+};
 
 // Scryfall requires both of these on every request and answers 400 without
 // them. The User-Agent must identify this app specifically — they flag the
 // defaults HTTP libraries send (Node's built-in fetch included) as junk
 // traffic. See https://scryfall.com/docs/api
-// Kept in sync with services/spellbook.ts's User-Agent by hand — see the
-// note there on why it isn't read from package.json.
 const SCRYFALL_HEADERS = {
-  'User-Agent':
-    'CommanderIHardlyKnowEr/1.0.0 (hobby project; https://github.com/mkane848/HardlyKnowHer)',
+  'User-Agent': buildUserAgent({
+    product: 'CommanderIHardlyKnowEr',
+    version: pkg.version,
+    contact: 'hobby project; https://github.com/mkane848/HardlyKnowHer',
+  }),
   Accept: 'application/json;q=0.9,*/*;q=0.8',
 };
-
-/**
- * One entry in Scryfall's bulk-data list.
- *
- * Scryfall changed this shape: entries used to carry `download_uri` (a plain
- * uncompressed JSON array) and `size`. Both are gone. The replacements are
- * `jsonl_download_uri` — newline-delimited JSON, gzipped — and
- * `compressed_size`. Reading the old field names silently yielded
- * `undefined`, which surfaced as "Failed to parse URL from undefined" and a
- * download size of "~NaNMB".
- *
- * Both fields are optional here so a future rename fails with the explicit
- * check below rather than another undefined-URL crash.
- */
-interface BulkDataEntry {
-  type: string;
-  updated_at: string;
-  jsonl_download_uri?: string;
-  compressed_size?: number;
-}
-
-/**
- * Builds the "what went wrong" half of a failure message.
- *
- * Scryfall explains rejections in the response body — a JSON error object
- * whose `details` field says exactly what it objected to — while the status
- * code alone rarely narrows it down. These requests only ever run
- * unattended in a build log, so there's no chance to re-run them by hand
- * with more logging; whatever we print here is all you get.
- */
-async function describeFailure(res: Response): Promise<string> {
-  let body = '';
-  try {
-    body = (await res.text()).trim();
-  } catch {
-    // An unreadable body shouldn't swallow the status code.
-  }
-
-  if (!body) return `HTTP ${res.status}`;
-  // Bounded in case a proxy or error page answers with a wall of HTML.
-  const snippet = body.length > 500 ? `${body.slice(0, 500)}…` : body;
-  return `HTTP ${res.status}: ${snippet}`;
-}
 
 async function main() {
   const force = process.argv.includes('--force');
 
-  // The listing is looked up first, and unconditionally: it is one small
-  // request, and its `updated_at` is the only thing that can answer "is my
-  // copy current?" without downloading 24MB to find out.
-  console.log('Looking up the latest Scryfall bulk data URL...');
-  const listRes = await fetch('https://api.scryfall.com/bulk-data', {
-    headers: SCRYFALL_HEADERS,
-  });
-  if (!listRes.ok) {
-    throw new Error(`Failed to list Scryfall bulk data (${await describeFailure(listRes)})`);
-  }
-  const { data } = (await listRes.json()) as { data: BulkDataEntry[] };
-  const oracleCards = data.find((entry) => entry.type === 'oracle_cards');
-  if (!oracleCards) {
-    throw new Error('Could not find an "oracle_cards" entry in the Scryfall bulk data list.');
-  }
-
-  const downloadUri = oracleCards.jsonl_download_uri;
-  if (!downloadUri) {
-    throw new Error(
-      'The "oracle_cards" bulk entry has no `jsonl_download_uri`. Scryfall has probably renamed the ' +
-        'field again — check https://scryfall.com/docs/api/bulk-data for the current shape. ' +
-        `Fields present: ${Object.keys(oracleCards).join(', ')}`,
-    );
-  }
-
-  const publishedUpdatedAt = oracleCards.updated_at;
-
-  if (!force && diskHasSnapshot(OUTPUT_PATH, publishedUpdatedAt)) {
-    console.log(
-      `Already have the current snapshot (published ${publishedUpdatedAt}). Skipping download.\n` +
-        'Pass --force to download it again anyway.',
-    );
-    // Still fetch the re-skin names if we've never got them. Skipping the
-    // bulk download must not mean permanently skipping a companion file that
-    // didn't exist when that copy was downloaded.
-    if (!fs.existsSync(FLAVOR_NAMES_PATH)) await fetchFlavorNames();
-    if (!fs.existsSync(CREATURE_TYPES_PATH)) await fetchCreatureTypes();
-    return;
-  }
-
-  const sizeMb = oracleCards.compressed_size
-    ? `~${(oracleCards.compressed_size / 1024 / 1024).toFixed(1)}MB compressed`
-    : 'size unknown';
-  console.log(`Found Oracle Cards (updated ${publishedUpdatedAt}, ${sizeMb}). Downloading...`);
-
-  const fileRes = await fetch(downloadUri, { headers: SCRYFALL_HEADERS });
-  if (!fileRes.ok) {
-    throw new Error(`Failed to download bulk file (${await describeFailure(fileRes)})`);
-  }
-  if (!fileRes.body) {
-    throw new Error('Bulk file response had no body.');
-  }
-
+  // Reuse is decided by comparing the *published* snapshot against the one
+  // on disk (@mtg/scryfall's ensureOracleCardsSnapshot), not by how old the
+  // file is — that replaced a 7-day file-mtime heuristic, which was wrong in
+  // both directions: it happily served a week-old copy after Scryfall had
+  // published something new, and forced a full re-download of a file that
+  // hadn't changed.
+  //
+  // It has no effect on a deploy either way: the build starts from a clean
+  // checkout with no data directory, so there is nothing to reuse and the
+  // download always happens. See docs/card-data-strategy.md for what it
+  // would take to change that.
+  console.log('Checking Scryfall for the current Oracle Cards snapshot...');
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-
-  // Streamed rather than buffered: the file is ~25MB gzipped but expands to
-  // several hundred MB, and there's no reason to hold all of that in memory
-  // on the way to disk.
-  await pipeline(
-    Readable.fromWeb(fileRes.body as Parameters<typeof Readable.fromWeb>[0]),
-    createGunzip(),
-    fs.createWriteStream(OUTPUT_PATH),
-  );
-
-  const written = fs.statSync(OUTPUT_PATH).size;
-  console.log(`Saved to ${OUTPUT_PATH} (${(written / 1024 / 1024).toFixed(1)}MB uncompressed).`);
-
-  // Written only after the file is fully on disk, so an interrupted download
-  // can never leave a sidecar claiming a snapshot we don't actually have.
-  writeSidecar(OUTPUT_PATH, {
-    updatedAt: publishedUpdatedAt,
-    downloadUri,
-    fetchedAt: new Date().toISOString(),
+  const result = await ensureOracleCardsSnapshot({
+    destPath: OUTPUT_PATH,
+    headers: SCRYFALL_HEADERS,
+    force,
   });
 
-  await fetchFlavorNames();
-  await fetchCreatureTypes();
+  if (!result.downloaded) {
+    console.log(
+      `Already have the current snapshot (published ${result.updatedAt}). Skipping download.\n` +
+        'Pass --force to download it again anyway.',
+    );
+  } else {
+    const sizeMb = result.compressedSize
+      ? `~${(result.compressedSize / 1024 / 1024).toFixed(1)}MB compressed`
+      : 'size unknown';
+    const written = fs.statSync(OUTPUT_PATH).size;
+    console.log(
+      `Downloaded Oracle Cards (updated ${result.updatedAt}, ${sizeMb}), ` +
+        `saved to ${OUTPUT_PATH} (${(written / 1024 / 1024).toFixed(1)}MB uncompressed).`,
+    );
+  }
+
+  // Still fetch the re-skin names / creature types if we've never got them.
+  // Skipping the bulk download must not mean permanently skipping a
+  // companion file that didn't exist when that copy was downloaded.
+  if (!fs.existsSync(FLAVOR_NAMES_PATH)) await fetchFlavorNames();
+  if (!fs.existsSync(CREATURE_TYPES_PATH)) await fetchCreatureTypes();
 }
 
 /**

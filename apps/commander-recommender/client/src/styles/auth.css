@@ -1,0 +1,153 @@
+.account-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.account-email {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-dialog-card {
+  max-width: 24rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.auth-field-label {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink-text-muted);
+  margin-top: 0.5rem;
+}
+
+.auth-field-label:first-child {
+  margin-top: 0;
+}
+
+.auth-input {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink-text);
+  background: var(--parchment);
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.auth-error {
+  font-size: 0.82rem;
+  color: var(--danger);
+  margin: 0.3rem 0 0;
+}
+
+.auth-submit {
+  margin-top: 0.7rem;
+  align-self: flex-start;
+}
+
+.auth-switch {
+  font-size: 0.82rem;
+  color: var(--ink-text-muted);
+  margin: 0.9rem 0 0;
+}
+
+.auth-switch-link {
+  font: inherit;
+  color: var(--brass);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-confirm-note {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0.9rem 0 0;
+}
+
+.auth-privacy-note {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 1.1rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--parchment-dim);
+}
+
+.like-dislike-row {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.like-dislike-btn {
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 999px;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.like-dislike-btn:hover {
+  border-color: var(--brass);
+}
+
+.like-dislike-btn.is-liked {
+  color: var(--pip-r);
+  border-color: var(--pip-r);
+  background: rgba(198, 54, 42, 0.15);
+}
+
+.like-dislike-btn.is-disliked {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(140, 47, 47, 0.15);
+}
+
+.jank-toggle {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--ink-text-muted);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  margin-top: 0.6rem;
+}
+
+.jank-toggle.is-active {
+  color: var(--brass);
+  border-color: var(--brass);
+  background: rgba(184, 132, 42, 0.15);
+}

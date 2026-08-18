@@ -1,0 +1,18 @@
+{
+  "extends": "@mtg/config/tsconfig.base.json",
+  "compilerOptions": {
+    // Plain .js, not .ts, throughout this package — time-counters'
+    // fetch-card-data.mjs runs under bare `node` with no build step or
+    // loader (same constraint @mtg/card-model already works around), so a
+    // .ts source wouldn't be loadable there. checkJs types the JSDoc
+    // annotations the same way real .ts would be checked; noEmit is
+    // inherited from the base but stated again since there is genuinely
+    // nothing to build — the source *is* the artifact both consumers import
+    // directly, except commander-recommender/server's bare-Node runtime
+    // (see tsconfig.build.json).
+    "allowJs": true,
+    "checkJs": true,
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

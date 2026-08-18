@@ -1,11 +1,11 @@
 {
-  "name": "@mtg/rules",
+  "name": "@mtg/scryfall",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
+      "import": "./src/index.js",
       "require": "./dist/index.js"
     }
   },
@@ -21,6 +21,7 @@
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
+    "globals": "^15.14.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

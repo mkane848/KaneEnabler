@@ -1,0 +1,347 @@
+/* Card detail dialog */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 7, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+}
+
+.dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(94vw, 460px);
+  /* dvh rather than vh so a mobile URL bar sliding into view shrinks this
+     instead of pushing its top and bottom off-screen. */
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 21;
+  border-radius: 14px;
+}
+
+.dialog-card {
+  background: var(--parchment);
+  color: var(--ink-text);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Full-card dialog.
+   No aspect-ratio and no fixed height anywhere in here: the image keeps its
+   natural proportions and is bounded by the viewport, so a tall card scales
+   down on a short screen instead of being squashed into a box that doesn't
+   fit it. dvh (not vh) so a mobile URL bar sliding in doesn't crop it, and
+   the safe-area insets keep it clear of notches and home indicators. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.card-image-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(92vw, 460px);
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* Both bounds are in viewport units rather than percentages: the dialog is
+   position:fixed with an auto width, so a percentage here would resolve
+   against a box that is itself sized by this image, and collapse. */
+.card-image-full {
+  display: block;
+  max-width: min(92vw, 460px);
+  /* Leaves room for the footer line beneath the card. */
+  max-height: calc(100dvh - 5.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4.75% / 3.5%; /* matches the rounding of a real card */
+  box-shadow: 0 18px 44px rgba(12, 10, 7, 0.6);
+}
+
+.card-image-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.card-image-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-image-link {
+  font-size: 0.78rem;
+  color: var(--brass-bright);
+}
+
+/* Only rendered for a genuine two-sided card, so it never sits inert next to
+   a single-faced one. */
+.card-image-flip {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.card-image-flip:hover {
+  border-color: var(--brass);
+}
+
+.dialog-art {
+  width: 100%;
+  display: block;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  object-position: top;
+}
+
+.dialog-body {
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.dialog-titlebar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dialog-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.mana-cost {
+  display: inline-flex;
+  gap: 0.18rem;
+  flex: none;
+  font-size: 0.95rem;
+}
+
+.dialog-type {
+  font-size: 0.85rem;
+  color: var(--ink-text-muted);
+  margin: 0;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--parchment-dim);
+}
+
+.dialog-oracle {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  margin: 0;
+}
+
+.dialog-stats {
+  align-self: flex-end;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dialog-meta {
+  margin: 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--parchment-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.dialog-meta > div {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dialog-meta dt {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--brass);
+  min-width: 8.5rem;
+}
+
+.dialog-meta dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dialog-pips {
+  display: inline-flex;
+  gap: 0.2rem;
+  font-size: 0.95rem;
+}
+
+.dialog-link {
+  font-size: 0.8rem;
+  color: #7a5615;
+}
+
+/* 44px is the minimum comfortable touch target, and it matters most here:
+   this control sits at the top of the screen on mobile, right where the URL
+   bar and notch encroach. */
+.dialog-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink-text);
+  background: rgba(244, 236, 216, 0.9);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.dialog-close:hover {
+  color: var(--pip-r);
+}
+
+/* About dialog */
+
+.about-dialog-card {
+  /* No art strip like the card-detail dialog, so the body starts at the top. */
+  display: block;
+}
+
+.about-version {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.about-build-date {
+  opacity: 0.75;
+}
+
+.about-blurb {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0.9rem 0 0;
+}
+
+.about-credits {
+  margin-top: 1rem;
+}
+
+.about-credits a {
+  color: #7a5615;
+}
+
+.about-caveat {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 1rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--parchment-dim);
+}
+
+.about-caveat a {
+  color: #7a5615;
+}
+
+/* On the image dialog the close button overlays the card art rather than a
+   parchment panel, so it needs its own contrast to stay readable. */
+.card-image-close {
+  top: 0.4rem;
+  right: 0.4rem;
+  background: rgba(20, 16, 10, 0.75);
+  border-color: rgba(244, 236, 216, 0.4);
+  color: var(--text-primary);
+}
+
+.card-image-close:hover {
+  background: rgba(20, 16, 10, 0.9);
+}
+
+/* Confirmation dialog for destructive actions. Narrower than the card
+   dialogs — it holds a sentence and two buttons, not artwork. */
+.confirm-dialog-card {
+  max-width: 26rem;
+}
+
+.confirm-description {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0.75rem 0 1.4rem;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.danger-button {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--danger-text);
+  background: var(--danger);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.danger-button:hover {
+  filter: brightness(1.12);
+}
+
+.danger-button:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}

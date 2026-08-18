@@ -1,0 +1,732 @@
+.commander-card {
+  background: var(--parchment);
+  color: var(--ink-text);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--parchment-dim);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dismiss-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 6;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--ink-text-muted);
+  background: rgba(244, 236, 216, 0.85);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Revealed on hover, but never invisible while focused — :focus as well as
+   :focus-visible, so the control can't be focused-but-unseen however focus
+   arrived. Always visible on touch, where there is no hover to reveal it. */
+.commander-card:hover .dismiss-button,
+.commander-card:focus-within .dismiss-button,
+.dismiss-button:focus,
+.dismiss-button:focus-visible {
+  opacity: 1;
+}
+
+.dismiss-button:hover {
+  color: var(--pip-r);
+}
+
+@media (hover: none) {
+  .dismiss-button {
+    opacity: 1;
+  }
+}
+
+/* The cropped hero shot is what the grid wants — the whole card is a tap
+   away in the dialog, which is the only place it can be shown at its own
+   proportions without either distorting it or dictating the card's height. */
+.commander-art-trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+}
+
+.commander-image {
+  width: 100%;
+  display: block;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  object-position: top;
+  transition: transform 0.2s ease;
+}
+
+.commander-art-trigger:hover .commander-image {
+  transform: scale(1.03);
+}
+
+/* A Partner/Background pair shows both cards' art side by side rather than
+   picking one to represent the unit — neither card outranks the other
+   (702.124e). */
+.commander-image-row {
+  display: flex;
+}
+
+.commander-image-row .commander-art-trigger {
+  width: 50%;
+  /* Only the row's own outer corners round; a raw 14px on every trigger
+     would round both inner edges too, leaving a visible gap at the seam. */
+  border-radius: 0;
+}
+
+.commander-image-row .commander-art-trigger:first-child {
+  border-radius: 14px 0 0 0;
+}
+
+.commander-image-row .commander-art-trigger:last-child {
+  border-radius: 0 14px 0 0;
+}
+
+.commander-image-row .commander-image {
+  width: 100%;
+  aspect-ratio: 5 / 6;
+}
+
+/* One card's name/type/rules-text block within a commander unit. A solo
+   commander has one; a pair stacks two, separated by a rule so it reads as
+   two distinct cards rather than one confused card. */
+.commander-face {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.commander-face + .commander-face {
+  margin-top: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--parchment-dim);
+}
+
+.commander-body {
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  /* Fill the card so the footer's margin-top:auto has slack to push against.
+     Without this the body is only as tall as its content and the footers sit
+     at ragged heights once rules text lengths differ. */
+  flex: 1;
+}
+
+.commander-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* Both halves of a pair as one title. Slightly smaller than a solo name
+   because it carries two of them, and it wraps rather than truncating —
+   a commander's name is the one thing that must never be cut off. */
+.commander-name-pair {
+  font-size: 1.05rem;
+}
+
+.pair-plus {
+  color: var(--brass);
+  font-weight: 400;
+}
+
+/* Caption above each half's type line and rules text, telling you which card
+   the text belongs to. Deliberately quiet: the pair title above is the
+   heading, and this only needs to attribute. */
+.commander-face-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--brass);
+  margin: 0;
+}
+
+.pip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Mana pip: colored disc here, glyph from inlined SVG (see ManaSymbol and
+   ManaCost). Mirrors how printed symbols look — colored circle, contrasting
+   glyph, soft shadow. --pip-bg-a/-ink-a drive a single-color pip (set by
+   the .pip-* classes below); a hybrid additionally sets --pip-bg-b/-ink-b
+   and .pip-hybrid for the second half — see ManaCost.tsx, which is the only
+   caller that ever needs two colors in one disc, so those are set inline
+   per instance rather than as a fixed set of classes (there's no enumerating
+   36 color pairs). overflow keeps the hybrid gradient inside the circle. */
+.pip {
+  --pip-bg-a: var(--pip-c);
+  --pip-ink-a: var(--pip-c-ink);
+  position: relative;
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--pip-bg-a);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.pip svg {
+  width: 68%;
+  height: 68%;
+  display: block;
+  fill: var(--pip-ink-a);
+}
+
+.pip-w {
+  --pip-bg-a: var(--pip-w);
+  --pip-ink-a: var(--pip-w-ink);
+}
+.pip-u {
+  --pip-bg-a: var(--pip-u);
+  --pip-ink-a: var(--pip-u-ink);
+}
+.pip-b {
+  --pip-bg-a: var(--pip-b);
+  --pip-ink-a: var(--pip-b-ink);
+}
+.pip-r {
+  --pip-bg-a: var(--pip-r);
+  --pip-ink-a: var(--pip-r-ink);
+}
+.pip-g {
+  --pip-bg-a: var(--pip-g);
+  --pip-ink-a: var(--pip-g-ink);
+}
+.pip-c {
+  --pip-bg-a: var(--pip-c);
+  --pip-ink-a: var(--pip-c-ink);
+}
+.pip-s {
+  --pip-bg-a: var(--pip-s);
+  --pip-ink-a: var(--pip-s-ink);
+}
+.pip-generic {
+  --pip-bg-a: var(--pip-generic);
+  --pip-ink-a: var(--pip-generic-ink);
+}
+
+/* Hybrids are split corner to corner, each half tinted by its own symbol,
+   the same way they're printed. */
+.pip-hybrid {
+  background: linear-gradient(135deg, var(--pip-bg-a) 0 50%, var(--pip-bg-b) 50% 100%);
+}
+
+/* The two miniatures of a hybrid, tucked into opposite corners of the split. */
+.pip-half {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48%;
+  height: 48%;
+}
+.pip-half:first-child {
+  top: 6%;
+  left: 6%;
+}
+.pip-half:last-child {
+  right: 6%;
+  bottom: 6%;
+}
+.pip-half svg {
+  width: 100%;
+  height: 100%;
+}
+.pip-half:last-child svg {
+  fill: var(--pip-ink-b, var(--pip-ink-a));
+}
+
+/* Numerals and X/Y/Z, which have no glyph — drawn as text on the disc. */
+.pip-text {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.62em;
+  line-height: 1;
+  color: var(--pip-ink-a);
+}
+.pip-half .pip-text {
+  font-size: 0.4em;
+}
+.pip-half:last-child .pip-text {
+  color: var(--pip-ink-b, var(--pip-ink-a));
+}
+
+.pip-row .pip {
+  font-size: 1.05rem;
+}
+
+.identity-name {
+  margin-left: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-text-muted);
+}
+
+.commander-type {
+  font-size: 0.82rem;
+  color: var(--ink-text-muted);
+  margin: 0;
+}
+
+/* The rules text box, and the button wrapping it that opens the full card. */
+.commander-oracle-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  margin: 0.15rem 0 0;
+  padding: 0.6rem 0.7rem;
+  background: rgba(36, 31, 22, 0.05);
+  border: 1px solid var(--parchment-dim);
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.commander-oracle-button:hover {
+  background: rgba(36, 31, 22, 0.09);
+  border-color: var(--brass);
+}
+
+/* pre-line keeps the break between each ability, which is how oracle text is
+   written and how players scan it. Clamped to four lines so a wordy commander
+   doesn't set the height for its whole row. */
+.commander-oracle {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.oracle-more {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #7a5615;
+}
+
+.badge-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0.15rem 0;
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.badge-bracket {
+  background: rgba(184, 132, 42, 0.18);
+  color: #7a5615;
+}
+
+.badge-gc {
+  background: rgba(198, 54, 42, 0.15);
+  color: var(--pip-r);
+}
+
+/* Relative match-strength badge + its hover/tap tooltip. Positioned so the
+   tooltip can float above the card without pushing other badges around. */
+.match-badge-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.badge-match {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  background: rgba(15, 106, 181, 0.15);
+  color: #0f5c9c;
+  transition: background 0.15s ease;
+}
+
+.badge-match:hover,
+.badge-match:focus-visible {
+  background: rgba(15, 106, 181, 0.25);
+}
+
+.match-tooltip {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: 15rem;
+  max-width: 60vw;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.match-badge-wrap:hover .match-tooltip,
+.match-badge-wrap:focus-within .match-tooltip,
+.match-badge-wrap.is-open .match-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.commander-meta {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.commander-tags {
+  font-size: 0.82rem;
+  margin: 0;
+  color: var(--ink-text-muted);
+}
+
+.commander-tags-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brass);
+  margin-right: 0.35rem;
+}
+
+.commander-bracket-note {
+  font-size: 0.78rem;
+  color: var(--ink-text-muted);
+  /* auto pushes the note and the toggle beneath it to the bottom of the
+     card, so those line up across a row even though rules text lengths
+     differ. Grid already equalises card heights within a row. */
+  margin: 0.4rem 0 0;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--parchment-dim);
+}
+
+/* "Why this commander?" disclosure */
+
+.explain-toggle {
+  margin-top: 0.6rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7a5615;
+  background: rgba(184, 132, 42, 0.12);
+  border: 1px solid rgba(184, 132, 42, 0.35);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.explain-toggle:hover {
+  background: rgba(184, 132, 42, 0.22);
+}
+
+.explain-chevron {
+  font-size: 0.6rem;
+}
+
+.explain-panel {
+  margin-top: 0.75rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--parchment-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.explain-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.explain-heading {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+  margin: 0;
+}
+
+/* Combos' heading + its "Hide/Show results" toggle, and the results' own
+   "Searched N cards" line + page-size picker — both need the label on the
+   left and a control pinned to the right without wrapping onto its own line. */
+.explain-section-header,
+.explain-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.explain-group-header .explain-group-desc {
+  margin: 0;
+}
+
+/* A <details>, so each group's cards start collapsed — expanding "Why this
+   commander?" should show the shape of the reasoning at a glance, not a
+   page-length wall of card names. Block rather than flex: a <details> has no
+   wrapper around its content, so flex would lay out the summary and every
+   sibling as flex items and fight the disclosure behaviour. */
+.explain-group {
+  display: block;
+}
+
+.explain-group > * + * {
+  margin-top: 0.35rem;
+}
+
+.explain-group-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.1rem 0;
+}
+
+/* The click-to-expand affordance (pointer cursor, chevron) belongs only to
+   an actual <summary> — CommanderCard's kindred/theme/keyword/Game Changer
+   groups. ComboFinder's Ready-to-go/Almost-there groups share the base
+   .explain-group-title typography above but are plain, non-collapsible <p>s
+   (each is already bounded by its own pagination instead), so they must not
+   inherit a "this expands" affordance that does nothing on click. */
+summary.explain-group-title {
+  cursor: pointer;
+  /* Suppress the native marker in both engines — the chevron below replaces
+     it, so it can sit at the end of the row rather than crowding the label. */
+  list-style: none;
+}
+
+summary.explain-group-title::-webkit-details-marker {
+  display: none;
+}
+
+summary.explain-group-title::after {
+  content: '▾';
+  display: inline-block;
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ink-text-muted);
+  transition: transform 120ms ease;
+}
+
+.explain-group[open] > summary.explain-group-title::after {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  summary.explain-group-title::after {
+    transition: none;
+  }
+}
+
+.explain-count {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--ink-text-muted);
+}
+
+.explain-group-desc {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0;
+}
+
+.support-cards {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--parchment-dim);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.support-card {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.78rem;
+  background: rgba(36, 31, 22, 0.04);
+}
+
+.support-card + .support-card {
+  border-top: 1px solid var(--parchment-dim);
+}
+
+.support-name-wrap {
+  flex: 1;
+  /* Lets the name truncate instead of overflowing past the mana value and
+     GC badges — a plain flex child has no min-width by default, so its
+     content would keep the row as wide as the longest name. */
+  min-width: 0;
+}
+
+.support-name {
+  /* A button, but it reads as the list's text — the underline on hover is
+     what says it's tappable, rather than a control's chrome in every row. */
+  display: block;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.support-name:hover,
+.support-name:focus-visible {
+  text-decoration: underline;
+  color: #7a5615;
+}
+
+/* Portalled to <body> by Radix HoverCard, so it escapes .support-cards'
+   own overflow: hidden (there for its rounded-corner row backgrounds)
+   instead of being clipped by it. */
+.card-hover-preview {
+  width: 200px;
+  max-width: 60vw;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  line-height: 0;
+}
+
+.card-hover-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* A standard card's proportions, reserved up front — without this the box
+     is 0-height until the image finishes loading, so it either doesn't
+     render at all yet or pops in and shoves the page under it once it does. */
+  aspect-ratio: 63 / 88;
+  background: var(--ink-raised);
+  object-fit: cover;
+}
+
+.support-qty {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-text-muted);
+  min-width: 1.5em;
+}
+
+.support-cost {
+  /* Shrinks before the name does when a row is tight, but never below the
+     pips' own width — a truncated mana cost would be misinformation, not
+     just clipped text. */
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.support-gc {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--pip-r);
+  background: rgba(198, 54, 42, 0.13);
+  border-radius: 4px;
+  padding: 0.05rem 0.25rem;
+}
+
+.explain-caveat {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--ink-text-muted);
+  margin: 0;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--parchment-dim);
+}
+
+@media (max-width: 520px) {
+  /* Keyed to width rather than only to (hover: none): a phone-sized screen
+     wants a real touch target whether or not the browser claims a pointer,
+     and this is the control nearest the screen edge. */
+  .dismiss-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.35rem;
+  }
+}
+
+@media (hover: none) {
+  .dismiss-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.35rem;
+  }
+}

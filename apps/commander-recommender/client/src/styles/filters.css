@@ -1,0 +1,327 @@
+/* Filters */
+
+.filter-bar {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  min-width: 4.5rem;
+}
+
+.filter-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.toggle-group {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.toggle-pip {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  padding: 0.2rem;
+  line-height: 0;
+  cursor: pointer;
+  opacity: 0.45;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.toggle-pip .pip {
+  font-size: 1.1rem;
+}
+
+.toggle-pip:hover {
+  opacity: 0.8;
+}
+
+/* Include/exclude read as color, not just a filled-in state, since both
+   are "active" — green ring to require a value, red ring to rule it out. */
+.toggle-pip-include {
+  opacity: 1;
+  border-color: #2e8c50;
+  box-shadow: 0 0 0 1px #2e8c50;
+}
+
+.toggle-pip-exclude {
+  opacity: 1;
+  border-color: var(--pip-r);
+  box-shadow: 0 0 0 1px var(--pip-r);
+}
+
+.toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.toggle-chip:hover {
+  border-color: var(--brass);
+  color: var(--text-primary);
+}
+
+.toggle-chip-include {
+  background: rgba(46, 140, 80, 0.18);
+  border-color: #2e8c50;
+  color: #dff5e5;
+}
+
+.toggle-chip-exclude {
+  background: rgba(198, 54, 42, 0.18);
+  border-color: var(--pip-r);
+  color: #ffd9d4;
+}
+
+.chip-mode-icon {
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  /* A flex item won't shrink below its min-content width by default, and
+     this one's is set by the longest option text — enough to push the bar
+     past the viewport on a phone. */
+  min-width: 0;
+}
+
+.sort-control select {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--ink);
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.filter-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--ink-border);
+  margin-top: 0.1rem;
+  padding-top: 0.75rem;
+}
+
+.filter-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.filter-clear,
+.link-button {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--brass-bright);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-button {
+  margin-left: 0.5rem;
+}
+
+.dismissed-note,
+.singleton-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Pagination */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  margin-top: 1.75rem;
+  /* Wraps so the jump box drops below the controls on a narrow screen
+     rather than squeezing the numbers. */
+  flex-wrap: wrap;
+}
+
+/* Type a page number. Only rendered once there are enough pages that the
+   numbered buttons start collapsing behind ellipses. */
+.page-jump {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.page-jump-input {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  /* Wide enough for four digits — a list long enough to need more pages than
+     that has other problems. */
+  width: 3.6rem;
+  padding: 0.35rem 0.4rem;
+  text-align: center;
+}
+
+.page-jump-input:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.page-jump-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.page-button {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.page-button:hover:not(:disabled) {
+  border-color: var(--brass);
+}
+
+.page-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-status {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Numbered page buttons. Wraps rather than overflowing: with a long result
+   set the ellipsis keeps this short, but a narrow screen can still run out
+   of room for first + window + last. */
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-number {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  /* min-width so single- and double-digit pages don't jitter the row width
+     as you move through them. */
+  min-width: 2rem;
+  padding: 0.35rem 0.4rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.page-number:hover {
+  border-color: var(--ink-border);
+  color: var(--text-primary);
+}
+
+.page-number.is-current {
+  color: var(--brass-bright);
+  border-color: var(--brass);
+  font-weight: 600;
+}
+
+.page-gap {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 0 0.1rem;
+}
+
+/* Reverses whichever sort mode is selected; sits beside that control. */
+.sort-direction {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.sort-direction:hover {
+  border-color: var(--brass);
+}
+
+@media (max-width: 520px) {
+  .sort-control {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sort-control select {
+    flex: 1;
+  }
+}
