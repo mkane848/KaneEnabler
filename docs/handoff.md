@@ -327,8 +327,11 @@ way it predicted):
 - Component tests: HKH has **zero**. DWC's `applyTimeTravel` — its most rules-dense and
   most-recently-corrected function — has **zero** coverage. `AddCardPanel` has none.
 - Add `@vitest/coverage-v8` with a threshold.
-- Fix `useCommanderCards` (new object literal every render, two linear scans over ~18k cards) and
-  memoise the two derived arrays in DWC's `App.tsx`.
+- **Landed.** `useCommanderCards` now memoizes on `catalog` (stable after its one `useCardCatalog`
+  load) instead of re-scanning on every render; `App.tsx`'s `commanderFieldCards` and
+  `timeTravelTargets` are memoized too. Found the same bug independently duplicated in
+  `CommanderBanner.tsx` — its own unmemoized `findCardByName` loop — while fixing this; it now
+  consumes `useCommanderCards()` instead of re-deriving the same lookup.
 
 ## Phase 7 — User profiles
 

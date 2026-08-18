@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.2] - 2026-08-18
+
+### Fixed
+
+- **Casting a commander, ticking a counter, or any other action anywhere in
+  the app re-scanned the ~18k-card catalog for both commanders' art.**
+  `useCommanderCards` built a brand-new result object and ran two full
+  linear scans (`findCardByName`, once per commander) on every render,
+  with no memoization — so any state change anywhere in the app, not just
+  ones that touch commander data, paid that cost again. The header's
+  commander portraits (`CommanderBanner`) independently duplicated the
+  same unmemoized scan a second time. Both now go through one memoized
+  `useCommanderCards()`, which only re-scans when the catalog itself
+  changes (once, when it finishes loading) instead of on every render.
+  Also memoized the two arrays `App.tsx` derives every render
+  (`commanderFieldCards`, `timeTravelTargets`).
+
 ## [1.3.1] - 2026-08-17
 
 ### Fixed
