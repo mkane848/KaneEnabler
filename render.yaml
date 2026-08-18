@@ -1,24 +1,19 @@
 # Root Blueprint for the KaneEnabler monorepo — Render's Blueprint feature only
 # looks for render.yaml at the repo root, so this combines every service.
-# apps/commander-recommender/render.yaml, apps/home/render.yaml, and
-# apps/time-counters/render.yaml describe each app's own standalone build —
-# kaneenabler-platform below is the actual "one deployed app" front door
-# (see its own comment); kaneenabler-home, mtg-recommender-client, and
-# drwho-companion-edh are its now-superseded predecessors, kept live here
-# only until kaneenabler-platform is confirmed working. There's no Render
-# API to delete a service, so retiring those three has to happen by hand in
-# the dashboard once that's confirmed — do that before removing their
-# definitions from this file, or Render will just leave the orphaned
-# services running unmanaged.
+# apps/commander-recommender/render.yaml describes that app's own standalone
+# build — kaneenabler-platform below is the actual "one deployed app" front
+# door (see its own comment). Its three predecessors (kaneenabler-home,
+# mtg-recommender-client, drwho-companion-edh) have been retired from the
+# Render dashboard and removed from this file.
 services:
   # The combined static site: apps/home's landing page at the root, with
   # apps/commander-recommender/client and apps/time-counters built under
   # their own /recommender and /time-counters subpaths and copied in
   # alongside it (scripts/build-platform.mjs). Same-origin subpaths mean
   # the shared Supabase sign-in session (browser localStorage) actually
-  # carries across every tool automatically, unlike the three separate
-  # origins below — that's the point of merging the deploy, not just the
-  # linking-out home page from the previous two PRs.
+  # carries across every tool automatically, unlike the three now-retired
+  # separate origins this replaced — that's the point of merging the
+  # deploy, not just the linking-out home page from the previous two PRs.
   - type: web
     runtime: static
     name: kaneenabler-platform
@@ -33,26 +28,6 @@ services:
           name: mtg-recommender-server
           type: web
           property: host
-      - key: VITE_SUPABASE_URL
-        sync: false
-      - key: VITE_SUPABASE_PUBLISHABLE_KEY
-        sync: false
-
-  # --- Superseded by kaneenabler-platform above — see the top-of-file note. ---
-
-  # Shared platform landing page — links out to the two tools below and
-  # hosts the one sign-in menu shared across them (same Supabase project as
-  # mtg-recommender-client's own account menu). VITE_SUPABASE_URL/
-  # VITE_SUPABASE_PUBLISHABLE_KEY are set manually in the dashboard
-  # (sync: false) rather than here, matching how mtg-recommender-client's
-  # copies of the same two vars are set — see docs/handoff.md's Phase 7.
-  - type: web
-    runtime: static
-    name: kaneenabler-home
-    # No rootDir — see the comment on mtg-recommender-client below for why.
-    buildCommand: cd apps/home && pnpm install --frozen-lockfile && pnpm run build
-    staticPublishPath: apps/home/dist
-    envVars:
       - key: VITE_SUPABASE_URL
         sync: false
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
@@ -80,50 +55,3 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-
-  # Static Vite build. VITE_API_URL is wired to the server service's
-  # hostname automatically so you don't have to hardcode it. Static sites
-  # have no "plan" field — they're served free via CDN, not run on a
-  # compute instance like the server above.
-  #
-  # No rootDir here (unlike the server above): Render's static-site builds
-  # run an automatic dependency-install step ahead of buildCommand, scoped
-  # to rootDir if set. That step detects the package manager by looking for
-  # a lockfile in that directory — since this is a single-root-lockfile pnpm
-  # workspace (no per-app pnpm-lock.yaml), a rootDir-scoped static site finds
-  # none and silently falls back to npm, which then can't resolve
-  # workspace:* deps. Keeping rootDir unset makes that auto-install step scan
-  # the repo root instead, where pnpm-lock.yaml actually lives. cd into the
-  # app dir ourselves instead, and don't call corepack enable — Render
-  # already runs it before buildCommand once it detects the root
-  # package.json's packageManager field.
-  - type: web
-    runtime: static
-    name: mtg-recommender-client
-    buildCommand: cd apps/commander-recommender/client && pnpm install --frozen-lockfile && VITE_API_URL="https://${SERVER_HOST}.onrender.com" pnpm run build
-    staticPublishPath: apps/commander-recommender/client/dist
-    envVars:
-      - key: SERVER_HOST
-        fromService:
-          name: mtg-recommender-server
-          type: web
-          property: host
-
-  - type: web
-    runtime: static
-    name: drwho-companion-edh
-    # fetch-cards regenerates public/cards.json from Scryfall so the deployed
-    # catalog is current. It fails the build loudly if Scryfall is unreachable,
-    # rather than quietly shipping the small committed seed. Unlike npm, pnpm
-    # installs devDependencies by default regardless of NODE_ENV. No rootDir —
-    # see the comment on mtg-recommender-client above.
-    buildCommand: cd apps/time-counters && pnpm install --frozen-lockfile && pnpm run fetch-cards && pnpm run build
-    staticPublishPath: apps/time-counters/dist
-    # Same shared sign-in menu as kaneenabler-home and mtg-recommender-client
-    # (same Supabase project) — set manually in the dashboard, see the
-    # comment on kaneenabler-home above.
-    envVars:
-      - key: VITE_SUPABASE_URL
-        sync: false
-      - key: VITE_SUPABASE_PUBLISHABLE_KEY
-        sync: false
