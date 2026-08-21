@@ -318,3 +318,39 @@ Recorded so a future reader doesn't "fix" them:
 - **Kindred requiring the card to _care_ about a type, not merely _have_ it.**
 - **Never writing oracle text from memory** — Scryfall has moved much self-referential wording to
   "this creature"/"this land", which silently broke two rules written from recall.
+
+---
+
+## Post-consolidation additions (2026-08-21)
+
+Found in a tech-stack audit of the consolidated monorepo, same class of defect as #14 above (a
+multi-faced card's joined Scryfall data leaking past the front-face-only boundary) but on two
+fields #14's fix never touched. Both verified against live Scryfall data before being fixed.
+
+### 23. A DFC's back face leaks into signal detection through the stored `type_line` `[FIXED]`
+
+**`apps/commander-recommender/server/scripts/import-scryfall.ts`** (the `typeLine` local, before this
+fix) and **`services/signals.ts:372-374`** (`isLand`/`isEquipment`/`isAura`, regexed against it).
+
+`import-scryfall.ts` stored Scryfall's joined `type_line` rather than the front face alone, even
+though the same function already computes the correct front-face-only reading
+(`frontFaceCharacteristics`) for eligibility, creature types, and the legendary/Background flags —
+just not for this column. Confirmed live: Halvar, God of Battle // Sword of the Realms' top-level
+`type_line` is `"Legendary Creature — God // Legendary Artifact — Equipment"`, which made the
+front-face creature register as Equipment (feeding a false Voltron signal); Binding Geist //
+Spectral Binding's `"Creature — Spirit // Enchantment — Aura"` made it register as an Aura.
+
+### 24. A split/adventure/flip card's own name isn't recognised in its own oracle text `[FIXED]`
+
+**`services/signals.ts`** — `stripSelfReferences`'s call site in `buildCardFacts`, and
+`detectsSelfSacrifice`.
+
+Self-reference stripping passed the whole Scryfall-joined `name` ("Bonecrusher Giant // Stomp")
+plus `back_name` — but `back_name` (`@mtg/card-model`'s `backFaceName`) is null for anything outside
+`transform`/`modal_dfc`, even though split, adventure, and flip cards join their stored name with
+" // " the exact same way. A bare face name in oracle text (Bonecrusher Giant's Adventure half,
+"Stomp deals 2 damage...", copied verbatim from Scryfall) was never stripped, defeating the
+function's whole purpose for roughly 329 cards (adventure + split + flip, per `cardNames.ts`'s own
+count) — any one of them whose face name happens to also be a creature type or keyword word would
+read as caring about it purely from its own name, the exact failure mode #10 already documented for
+single-faced cards.

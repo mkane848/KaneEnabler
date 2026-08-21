@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-08-21
+
+### Fixed
+
+- **A favourited combo's stored permalink could render with any URL scheme,**
+  including `javascript:`. `combo_preferences.snapshot` is jsonb with no
+  server-side content validation (RLS only enforces row ownership), so a
+  user could write anything there directly via the Supabase client. The
+  `/profile` page now only ever renders the link when its scheme is
+  `https:`. RLS still limits the practical impact to a user's own signed-in
+  browser.
+- **The sign-in menu could get stuck loading forever after a network hiccup**
+  — `@mtg/profile`'s `useAuth` had no `.catch` on its initial session check,
+  so a rejected `getSession()` call left the account menu (and the whole
+  `/profile` route, which gates its render on the same `loading` flag)
+  hidden instead of degrading to signed-out.
+
 ## [0.2.0] - 2026-08-18
 
 ### Added

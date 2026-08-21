@@ -115,6 +115,29 @@ describe('names are never evidence', () => {
     assert.ok(rolesOf(signals, 'landsMatter').includes('rewards'));
   });
 
+  it('strips a bare face name on an Adventure card, whose stored name is never that face alone', () => {
+    // Bonecrusher Giant // Stomp — real oracle text. Scryfall joins the
+    // stored `name` as "Bonecrusher Giant // Stomp", which never appears
+    // verbatim in the card's own text — the Adventure half refers to itself
+    // as bare "Stomp". `back_name` doesn't help here either: it's only
+    // populated for transform/modal_dfc (see @mtg/card-model's
+    // isTwoSidedLayout), not adventure. Splitting the stored name on " // "
+    // is what recovers "Stomp" as a strippable self-reference.
+    const card = makeCard({
+      name: 'Bonecrusher Giant // Stomp',
+      type_line: 'Creature — Giant // Instant — Adventure',
+      back_name: null,
+      oracle_text:
+        "Whenever this creature becomes the target of a spell, this creature deals 2 damage to " +
+        "that spell's controller.\n" +
+        "Damage can't be prevented this turn. Stomp deals 2 damage to any target.",
+    });
+    const vocab = buildVocabulary([], []);
+    const facts = buildCardFacts(card, vocab);
+
+    assert.ok(!/\bStomp\b/.test(facts.text), facts.text);
+  });
+
   it('a card is a kindred member by type while caring about something else', () => {
     // Goblin Sharpshooter — real oracle text. Note Scryfall now writes "this
     // creature" rather than the card's name, so this is no longer an instance

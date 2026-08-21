@@ -161,6 +161,7 @@ export default function App() {
       )}
       {lastRemoved && (
         <UndoToast
+          instanceId={lastRemoved.card.instanceId}
           cardName={lastRemoved.card.name}
           onUndo={undoRemove}
           onDismiss={dismissLastRemoved}

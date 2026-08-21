@@ -60,4 +60,10 @@ describe.skipIf(!isSeeded)('GET /api/cards — real seeded database', () => {
     const empty = await request(app).get('/api/cards?ids=');
     expect(empty.status).toBe(400);
   });
+
+  it('400s rather than running an unbounded query when "ids" lists too many cards', async () => {
+    const tooMany = Array.from({ length: 501 }, (_, i) => `not-a-real-id-${i}`).join(',');
+    const res = await request(app).get(`/api/cards?ids=${tooMany}`);
+    expect(res.status).toBe(400);
+  });
 });

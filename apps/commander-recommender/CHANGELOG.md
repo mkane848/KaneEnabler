@@ -9,6 +9,56 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A double-faced commander's back face could leak into signal detection
+  through the stored `type_line`.** `import-scryfall.ts` stored Scryfall's
+  *joined* `type_line` ("Legendary Creature — God // Legendary Artifact —
+  Equipment" for Halvar, God of Battle // Sword of the Realms) rather than
+  the front face alone, even though the very same function already computes
+  the correct front-face-only reading (`frontFaceCharacteristics`) for
+  eligibility, creature types, and the legendary/Background flags — just not
+  for this column. `signals.ts` regexes `type_line` for `isLand`/
+  `isEquipment`/`isAura`, so a transform or modal DFC whose back face is a
+  different card type (Halvar as Equipment, Binding Geist // Spectral
+  Binding as an Aura) was misread as having that type on its front face,
+  feeding a false Voltron/Auras signal. Also removed `isCreature`, which
+  this same regex-set computed but nothing ever read.
+- **A split/adventure/flip card's own name, spoken by its non-front half,
+  wasn't recognised as a self-reference.** Self-reference stripping (so a
+  card's own name doesn't get mistaken for caring about a creature type or
+  keyword that's merely part of it) passed the whole Scryfall-joined name
+  ("Bonecrusher Giant // Stomp") plus `back_name` — but `back_name` is only
+  populated for transform/modal_dfc, not split/adventure/flip, even though
+  those layouts join their stored name with " // " the same way. A bare
+  face name in oracle text (Stomp's own "Stomp deals 2 damage...") was never
+  stripped. Now splits the stored name on " // " so every face's own name is
+  checked, regardless of layout.
+- **An Adventure card's mana cost showed both halves' pips joined together.**
+  Scryfall's top-level `mana_cost` for an Adventure card (Bonecrusher Giant,
+  Brazen Borrower, and others) is the creature and its Adventure spell joined
+  ("{2}{R} // {1}{R}"), the same shape a split card's combined cost uses — but
+  unlike a split card, only the front (creature) face's own cost is real
+  outside the stack. `@mtg/card-model`'s `frontFaceField` preferred that
+  top-level value whenever it was defined, so every Adventure card's stored
+  `mana_cost` (and by extension its rendered pips) silently included the
+  Adventure spell's cost tacked on. Fixed at the source so both apps' imports
+  pick it up; modal DFC and split cards render unchanged.
+- **A malformed request body was reported as a 500, not a 400.** `express.json()`
+  throws a `SyntaxError` with `status: 400` when a POST body isn't valid JSON,
+  before any route handler runs — the shared error middleware discarded that
+  and always answered 500, misreporting a client mistake as a server
+  incident to anything that branches on status code.
+- **`GET /api/cards` had no upper bound on how many oracle_ids one request
+  could list**, letting a single request force an unbounded number of
+  chunked SQLite queries. Capped at 500, the same purpose `MAX_CARDS` already
+  serves for Commander Spellbook requests.
+- **The sign-in menu could get stuck loading forever after a network hiccup.**
+  `@mtg/profile`'s `useAuth` had no `.catch` on its initial session check; a
+  rejected `getSession()` call (a dropped connection, a CSP block) left
+  `loading` `true` permanently, hiding the account menu instead of degrading
+  to signed-out. Affects every app's `NavBar`.
+
 ## [1.8.0] — 2026-08-18
 
 ### Added

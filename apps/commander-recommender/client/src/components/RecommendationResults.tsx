@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useAppStore } from '../store/useAppStore';
@@ -40,12 +40,16 @@ function downloadTextFile(filename: string, text: string) {
  * "waking the server" notice elsewhere — confirm, then get out of the way. */
 function ExportControls({ suggestions }: { suggestions: CommanderSuggestionDTO[] }) {
   const [copied, setCopied] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(toExportText(suggestions));
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       // Clipboard access can be denied by the browser; the download button
       // next to this one still works, so there's no need to surface an error.

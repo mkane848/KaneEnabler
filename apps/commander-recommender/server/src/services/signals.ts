@@ -158,7 +158,6 @@ export interface CardFacts {
    * pattern. */
   sacrificesItself: boolean;
   isLand: boolean;
-  isCreature: boolean;
   isEquipment: boolean;
   isAura: boolean;
 }
@@ -315,12 +314,31 @@ function wordPattern(word: string): RegExp {
  * "Sacrifice this creature:". Both are read off the RAW text — the
  * name-stripped copy renders the first form as a bare "Sacrifice :".
  */
-function detectsSelfSacrifice(rawText: string, name: string): boolean {
+function detectsSelfSacrifice(rawText: string, names: string[]): boolean {
   if (/\bsacrifice this\b/i.test(rawText)) return true;
-  // .split() on any string always returns at least one element.
-  const short = name.split(',')[0]!.trim();
-  if (!short) return false;
-  return new RegExp(`sacrifice ${escapeRegExp(short)}\\b`, 'i').test(rawText);
+  return names.some((name) => {
+    // .split() on any string always returns at least one element.
+    const short = name.split(',')[0]!.trim();
+    return short !== '' && new RegExp(`sacrifice ${escapeRegExp(short)}\\b`, 'i').test(rawText);
+  });
+}
+
+/**
+ * The individual face names inside a Scryfall-joined card name
+ * ("Front // Back" -> ["Front", "Back"]). A single-faced card's name has no
+ * " // " and splits into just itself.
+ *
+ * Needed because oracle text names only the face it belongs to ("Stomp
+ * deals 2 damage...", never "Bonecrusher Giant // Stomp deals..."), but
+ * `row.back_name` alone doesn't cover this — it's null for split, adventure,
+ * and flip layouts (see @mtg/card-model's isTwoSidedLayout, which reserves
+ * it for transform/modal_dfc only), even though those layouts join their
+ * stored `name` with " // " the exact same way. Without this, a bare face
+ * name in oracle text (Bonecrusher Giant's Adventure half, "Stomp") was
+ * never recognised as a self-reference and so never stripped.
+ */
+function faceNamesIn(name: string): string[] {
+  return name.split(' // ');
 }
 
 /**
@@ -337,7 +355,10 @@ function stripReminderText(text: string): string {
 
 export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
   const rawText = row.oracle_text ?? '';
-  const text = stripReminderText(stripSelfReferences(rawText, row.name, row.back_name ?? null));
+  const faceNames = faceNamesIn(row.name);
+  const text = stripReminderText(
+    stripSelfReferences(rawText, ...faceNames, row.back_name ?? null),
+  );
   const typeLine = row.type_line ?? '';
   return {
     name: row.name,
@@ -347,9 +368,8 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     creatureTypes: parseJsonArray(row.creature_types),
     keywords: parseJsonArray(row.keywords),
     producedTokenTypes: findProducedTokenTypes(text, vocab),
-    sacrificesItself: detectsSelfSacrifice(rawText, row.name),
+    sacrificesItself: detectsSelfSacrifice(rawText, faceNames),
     isLand: /\bLand\b/.test(typeLine),
-    isCreature: /\bCreature\b/.test(typeLine),
     isEquipment: /\bEquipment\b/.test(typeLine),
     isAura: /\bAura\b/.test(typeLine),
   };

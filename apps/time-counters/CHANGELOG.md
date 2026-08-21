@@ -4,6 +4,26 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] - 2026-08-21
+
+### Fixed
+
+- **The undo toast could dismiss early if you removed two same-named cards in
+  quick succession.** Its auto-dismiss timer restarted only when the removed
+  card's *name* changed, not on each removal — two copies of the same card
+  (or two same-named tokens) removed within the 6-second window shared one
+  timer, cutting the second toast's undo window short. Now keyed on the
+  removed card's own instance instead.
+- **An Adventure card's mana cost showed both halves' pips joined together**
+  (e.g. Bonecrusher Giant's creature cost plus its Adventure spell's cost, as
+  one run of pips) — the same underlying `@mtg/card-model` fix as the
+  commander recommender's own CHANGELOG entry for this; time-counters' card
+  catalog is rebuilt from the same shared field reader.
+- **The sign-in menu could get stuck loading forever after a network hiccup**
+  — `@mtg/profile`'s `useAuth` had no `.catch` on its initial session check,
+  so a rejected `getSession()` call left the account menu hidden instead of
+  degrading to signed-out.
+
 ## [1.5.0] - 2026-08-18
 
 ### Added

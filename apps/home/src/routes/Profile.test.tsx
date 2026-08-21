@@ -203,6 +203,28 @@ describe('Profile', () => {
     expect(screen.getByText('Thassa + Consuming Aberration')).toBeInTheDocument();
     expect(screen.getByText('Infinite mill')).toBeInTheDocument();
     expect(screen.getByText('Mill your opponents out.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view on commander spellbook/i })).toHaveAttribute(
+      'href',
+      'https://commanderspellbook.com/combo/abc',
+    );
+  });
+
+  it('never renders a combo permalink with a non-https scheme, since snapshot is unvalidated jsonb', () => {
+    useAuth.mockReturnValue({ user: { id: 'user-1' }, loading: false, configured: true });
+    useComboPreferences.mockReturnValue({
+      data: [
+        {
+          ...COMBO_PREFERENCE,
+          snapshot: {
+            ...(COMBO_PREFERENCE.snapshot as Record<string, unknown>),
+            permalink: 'javascript:alert(1)',
+          },
+        },
+      ],
+    });
+
+    render(<Profile />);
+    expect(screen.queryByRole('link', { name: /view on commander spellbook/i })).toBeNull();
   });
 
   it('surfaces a card-lookup error', () => {
