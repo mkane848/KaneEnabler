@@ -94,6 +94,21 @@ Run from the repo root unless noted. Every command fans out per-package via Turb
   yourself outside of debugging that build — `pnpm dev`/`pnpm build` on an individual app is what
   you want for everyday work.
 
+## CI
+
+Two workflows in `.github/workflows/`:
+
+- **`ci.yml`** — every push to `main` and every PR: `pnpm turbo run lint typecheck test build` at
+  the root. Deliberately doesn't fetch real Scryfall data — lint/typecheck/build don't need it, and
+  the committed seed data is enough for `test`, so a normal PR never triggers extra Scryfall traffic.
+- **`scryfall-fetch-check.yml`** — scheduled (Monday 13:00 UTC) plus manual dispatch, kept separate
+  from `ci.yml` for the same reason. Runs the *real* Scryfall bulk-data fetch for both apps
+  (`mtg-recommender-server`'s `prepare-data`, `mtg-time-tracker`'s `fetch-cards`), which is also the
+  only place `recommend.integration.test.ts` and `cards.integration.test.ts` actually execute
+  (they `skipIf` themselves everywhere else, since they need a real seeded database). This is the
+  regression guard for a bad *fetch* (a changed bulk-data shape, a moved field) — see
+  `docs/api-policy.md` before changing what it calls, how often, or what triggers it.
+
 ## Architecture
 
 - **`apps/*`** are independently deployable products with their own `package.json` name, version,
