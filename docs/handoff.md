@@ -427,8 +427,8 @@ way it predicted):
   file toward coverage if a test actually imports it, so `@mtg/profile` reported 100% by default
   while only 1 of its 8 source files (`comboKey.ts`) had any test at all — `coverage.include:
 ['src/**']` in the shared base surfaces the honest number (9.3%) instead. That gap itself
-  (`useAuth`/`useCardPreferences`/`useComboPreferences`/`rows.ts` all untested) is real and still
-  open — not fixed here, just no longer hidden.
+  (`useAuth`/`useCardPreferences`/`useComboPreferences`/`rows.ts` all untested) was real at the time
+  — since closed, see "Landed since the list above was last trimmed" above (95%/92%/100%/100%).
 - **Landed.** `useCommanderCards` now memoizes on `catalog` (stable after its one `useCardCatalog`
   load) instead of re-scanning on every render; `App.tsx`'s `commanderFieldCards` and
   `timeTravelTargets` are memoized too. Found the same bug independently duplicated in
