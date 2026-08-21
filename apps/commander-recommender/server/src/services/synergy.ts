@@ -344,10 +344,15 @@ export function scoreCommanders(
     // families; everything else is an archetype.
     const kindredSupport: KindredSupport[] = matched
       .filter(({ signal }) => signal.archetype === 'kindred')
+      // detectKindred (signals.ts) always sets qualifier to the creature
+      // type for every 'kindred' signal it produces — the filter above
+      // guarantees every signal reaching here came from there.
       .map(({ signal, cards }) => ({ type: signal.qualifier!, cards }));
 
     const keywordSupport: KeywordSupport[] = matched
       .filter(({ signal }) => signal.archetype === 'keywordCare')
+      // Same guarantee as kindredSupport above, via detectKeywordCare
+      // (signals.ts), which always sets qualifier to the keyword itself.
       .map(({ signal, cards }) => ({ keyword: signal.qualifier!, cards }));
 
     const themeSupport: ThemeSupport[] = matched

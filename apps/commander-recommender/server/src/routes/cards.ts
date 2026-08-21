@@ -4,6 +4,11 @@ import { toCardDTO } from '../services/cardDTO';
 
 const router = Router();
 
+// No real user has anywhere near this many liked/disliked cards or jank
+// tags — this is a request-size bound, not a product limit, the same
+// purpose Spellbook's own MAX_CARDS serves in services/spellbook.ts.
+const MAX_IDS = 500;
+
 /**
  * Resolves oracle_ids back to card data — what `@mtg/profile`'s
  * `card_preferences` (Phase 7) needs to render a liked/disliked card's
@@ -30,6 +35,9 @@ router.get('/cards', (req, res) => {
         .filter(Boolean),
     ),
   ];
+  if (oracleIds.length > MAX_IDS) {
+    return res.status(400).json({ error: `"ids" cannot list more than ${MAX_IDS} cards.` });
+  }
   const rows = findCardsByOracleIds(oracleIds);
   res.json({
     cards: rows.map((row) => ({

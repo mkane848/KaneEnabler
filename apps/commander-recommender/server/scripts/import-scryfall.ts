@@ -290,7 +290,6 @@ const insertMany = db.transaction((rows: any[]) => {
       continue;
     }
 
-    const typeLine: string = card.type_line ?? card.card_faces?.[0]?.type_line ?? '';
     const oracleText: string =
       card.oracle_text ??
       (card.card_faces ?? [])
@@ -308,7 +307,12 @@ const insertMany = db.transaction((rows: any[]) => {
     // Eligibility reads the front face only — see services/eligibility.ts.
     // Westvale Abbey's joined type_line ("Land // Legendary Creature —
     // Demon") satisfied a naive Legendary+Creature check off its *back*,
-    // making a non-legendary land look like a legal commander.
+    // making a non-legendary land look like a legal commander. The stored
+    // `type_line` column below uses this same front-face-only reading for
+    // the same reason: signals.ts regexes it for isLand/isEquipment/isAura,
+    // and Halvar, God of Battle // Sword of the Realms' joined type_line
+    // ("Legendary Creature — God // Legendary Artifact — Equipment") once
+    // made the front-face creature register as Equipment for Voltron.
     const front = frontFaceCharacteristics(card);
     const isLegendary = front.typeLine.includes('Legendary') ? 1 : 0;
     const commanderEligible = isCommanderEligible(card) ? 1 : 0;
@@ -326,7 +330,7 @@ const insertMany = db.transaction((rows: any[]) => {
       // and the client showed it with no pips at all.
       mana_cost: frontFaceField(card, 'mana_cost') ?? null,
       cmc: card.cmc ?? null,
-      type_line: typeLine,
+      type_line: front.typeLine,
       oracle_text: oracleText,
       colors: JSON.stringify(card.colors ?? card.card_faces?.[0]?.colors ?? []),
       color_identity: JSON.stringify(card.color_identity ?? []),
