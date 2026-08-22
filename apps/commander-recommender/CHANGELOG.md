@@ -153,6 +153,27 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     Kalamax's deck reports `Copy Effects (Instant)` with 11 cards (its
     second-largest theme, after Spellslinger), and Obeka's, Y'shtola's, and
     the Tenth Doctor's decks each report `Copy Effects (Creature)`.
+- **Signal engine, Phase C1 — `freeSpells` archetype.** See
+  `docs/signals-rework.md` Phase C. Casting a spell for less than its
+  printed cost, or for free. `definingRole: produces` — no separate payoff
+  role, since granting a free or reduced cast is the identity itself, the
+  same shape as `selfMill`/`opponentMill`:
+  - Reads `alternativeCost` (Fierce Guardianship, Dismember — Phase B part
+    4), plus a new `FREE_CAST_KEYWORDS` list (Cascade, Discover, Suspend,
+    Plot, Rebound) checked against the bare keyword alone, since each of
+    these keywords' own reminder text is the *only* place it says "without
+    paying its mana cost", and reminder text is stripped.
+  - A broader, non-self-referential "without paying its mana cost" pattern
+    also catches a card that grants a free cast to *something else*
+    (Rashmi, Eternities Crafter, Mindclaw Shaman) rather than casting
+    itself for less.
+  - Verified against the real seeded database and the full 20-deck corpus:
+    Y'shtola's deck — `alternativeCost`'s own motivating example (Fierce
+    Guardianship, Dismember, Snuff Out) — finally reports `Free Spells` as
+    a theme (6 cards), closing the loop from Phase B part 4. The Tenth
+    Doctor's deck reports 8 cards (Suspend/Vanishing-heavy), and Bre's,
+    Kalamax's, Radagast's, and The First Sliver's decks each report a
+    smaller `Free Spells` theme too.
 
 ### Fixed
 

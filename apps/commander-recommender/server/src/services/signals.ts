@@ -707,6 +707,15 @@ const PERMANENT_SUBTYPE_BY_WORD = new Map(
  * Pits), Convoke (Vault Guardsman). */
 const ALTERNATIVE_COST_KEYWORDS = ['Evoke', 'Cleave', 'Delve', 'Convoke'];
 
+/** Keywords whose only "without paying its mana cost"-shaped text lives in
+ * their own reminder text, which `stripReminderText` deletes — Cascade
+ * (Maelstrom Colossus), Discover (Hurl into History, the same mechanic under
+ * a newer name), Suspend (Lotus Bloom), Plot (Unscrupulous Contractor: pay
+ * now, cast free later), Rebound (Staggershock: cast again free from
+ * exile). Feeds `freeSpells`, since the bare keyword is all that survives
+ * in `facts.text` for these. */
+const FREE_CAST_KEYWORDS = ['Cascade', 'Discover', 'Suspend', 'Plot', 'Rebound'];
+
 /**
  * The two self-referential templates Wizards uses for "you may cast this
  * spell for something other than its mana cost": Fierce Guardianship's
@@ -1017,6 +1026,27 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /\btoken that'?s a copy of\b/i,
         /\benters? as a copy of\b/i,
         /\bbecomes? a copy of\b/i,
+      ],
+    },
+  },
+  {
+    key: 'freeSpells',
+    label: 'Free Spells',
+    description:
+      'Casting spells for less than their printed cost, or for free — Cascade, Suspend, cards with ' +
+      'an alternative cost of their own, and effects that grant a free cast to something else.',
+    weight: 20,
+    // No separate payoff role: granting a free/reduced cast is the identity
+    // itself, the same shape as selfMill/opponentMill.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        (f: CardFacts) => f.alternativeCost,
+        (f: CardFacts) => FREE_CAST_KEYWORDS.some((keyword) => f.keywords.includes(keyword)),
+        // Broader than alternativeCost's own self-referential pattern —
+        // this also catches a card granting a free cast to *something
+        // else* (Rashmi, Gandalf, Mindclaw Shaman, Discover, Impulsivity).
+        /\bwithout paying its mana cost\b/i,
       ],
     },
   },

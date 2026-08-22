@@ -28,10 +28,20 @@ type nearby that names something other than a restriction on what's copied — E
 Prodigy and Weaver of Harmony's ability *source* ("... ability you control from a
 creature/enchantment source"), and Agrus Kos, Eternal Soldier's copies' *target* ("copy that ability
 for each other creature you control") — all three correctly stay unqualified rather than becoming
-`copyEffects:Creature`/`copyEffects:Enchantment`; recorded in archetypes.md. Still to come:
-`freeSpells` (now that `alternativeCost` exists to back it) and `artifacts`. The corpus this is
-derived from is committed at
-`apps/commander-recommender/server/src/services/__fixtures__/decks/`.
+`copyEffects:Creature`/`copyEffects:Enchantment`; recorded in archetypes.md.
+
+`freeSpells` has also landed: `definingRole: produces` (no separate payoff role — granting a
+free/reduced cast is the identity itself, same shape as `selfMill`/`opponentMill`), reading
+`alternativeCost` plus Cascade/Discover/Suspend/Plot/Rebound from the bare keyword alone (their own
+reminder text is the only place any of them says "without paying its mana cost", and reminder text
+is stripped) plus a broader, non-self-referential "without paying its mana cost" pattern for cards
+that grant a free cast to something else (Rashmi, Gandalf, Mindclaw Shaman). Verified against the
+real seeded database and the full 20-deck corpus: Y'shtola's deck — `alternativeCost`'s own
+motivating example (Fierce Guardianship, Dismember, Snuff Out) — finally reports `Free Spells` as a
+theme, closing the loop from Phase B part 4.
+
+Still to come in C1: `artifacts` (+ `Vehicle`/`Food`/`Clue`/`Treasure`). The corpus this is derived
+from is committed at `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
