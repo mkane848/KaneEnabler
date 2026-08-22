@@ -123,9 +123,16 @@ export function hasActiveRole(roles: Role[]): boolean {
   return roles.some((r) => ACTIVE_ROLES.includes(r));
 }
 
-/** What a qualifier narrows a signal to. Open to growth — card types and
- * permanent types are the obvious next two. */
-export type QualifierKind = 'creatureType' | 'keyword';
+/**
+ * What a qualifier narrows a signal to. `cardType` and `permanentSubtype`
+ * are read off `CardFacts.cardTypes`/`permanentSubtypes` by
+ * `supporterMatches` (synergy.ts) exactly like `creatureType`/`keyword` —
+ * neither has a consuming archetype yet (that's Phase C1's `copyEffects`
+ * and `artifacts`), so the plumbing here is exercised directly rather than
+ * through `detectSignals`. `counterType` and `gameState` are further out —
+ * see docs/signals-rework.md's Phase B status note.
+ */
+export type QualifierKind = 'creatureType' | 'keyword' | 'cardType' | 'permanentSubtype';
 
 /** One archetype a card participates in, with the capacities it does so in. */
 export interface SignalMatch {
@@ -195,6 +202,17 @@ export interface CardFacts {
   isLand: boolean;
   isEquipment: boolean;
   isAura: boolean;
+  /** This face's own card types (Creature, Instant, Sorcery, Artifact,
+   * Enchantment, Land, Planeswalker, Battle, Kindred) — the part of the type
+   * line before the em dash. Feeds `qualifierKind: 'cardType'` — Kalamax
+   * copies *instants*, not sorceries, and suggesting one for the other is
+   * wrong. */
+  cardTypes: string[];
+  /** Permanent subtypes worth qualifying a signal by, from a curated list
+   * (Vehicle, Equipment, Saga, Clue, Treasure, Food) rather than a full
+   * Scryfall subtype catalog fetch — see `PERMANENT_SUBTYPES`. Miles's
+   * fifteen Vehicles and Sophia's Food engine both ride this qualifier. */
+  permanentSubtypes: string[];
 }
 
 /**
@@ -548,6 +566,38 @@ function normalizeLordWording(text: string, vocab: Vocabulary): string {
   return out;
 }
 
+/** The card types a `cardType` qualifier can narrow to — the part of the
+ * type line before the em dash, supertypes (Legendary, Basic, Snow, World,
+ * Ongoing) excluded because they say nothing about what the card *is*. */
+const CARD_TYPES = [
+  'Creature',
+  'Instant',
+  'Sorcery',
+  'Artifact',
+  'Enchantment',
+  'Land',
+  'Planeswalker',
+  'Battle',
+  'Kindred',
+];
+
+function findCardTypes(typeLine: string): string[] {
+  const beforeDash = typeLine.split('—')[0] ?? typeLine;
+  return CARD_TYPES.filter((type) => new RegExp(`\\b${type}\\b`, 'i').test(beforeDash));
+}
+
+/**
+ * Permanent subtypes a `permanentSubtype` qualifier can narrow to. A curated
+ * constant rather than a full Scryfall subtype catalog fetch — that would be
+ * an api-policy-gated change (see docs/api-policy.md) for a handful of
+ * subtypes the corpus actually cares about.
+ */
+const PERMANENT_SUBTYPES = ['Vehicle', 'Equipment', 'Saga', 'Clue', 'Treasure', 'Food'];
+
+function findPermanentSubtypes(typeLine: string): string[] {
+  return PERMANENT_SUBTYPES.filter((subtype) => new RegExp(`\\b${subtype}\\b`, 'i').test(typeLine));
+}
+
 export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
   const rawText = row.oracle_text ?? '';
   const faceNames = faceNamesIn(row.name);
@@ -571,6 +621,8 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     isLand: /\bLand\b/.test(typeLine),
     isEquipment: /\bEquipment\b/.test(typeLine),
     isAura: /\bAura\b/.test(typeLine),
+    cardTypes: findCardTypes(typeLine),
+    permanentSubtypes: findPermanentSubtypes(typeLine),
   };
 }
 

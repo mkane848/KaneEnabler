@@ -4,14 +4,17 @@ The companion to [`archetypes.md`](./archetypes.md). That document says what the
 and why; this one says what to **change**, in what order, and how to know it worked.
 
 **Phases A and A2 have landed**, and Phase B is in progress (see their sections below and the
-`[Unreleased]` entries in `apps/commander-recommender/CHANGELOG.md`). Phase B's first landed slice is
-the `Role` addition (`enables`/`protects`) — this also resolved A2's `voltron`/`spellslinger`
-deferrals (equip-cost reduction, free-equip, Dualcast). Still outstanding within Phase B: the
-`QualifierKind` additions (`cardType`, `permanentSubtype`, `counterType`, `gameState`) and their
-`CardFacts`/`supporterMatches` plumbing, widening `@mtg/rules`' counters taxonomy, the card-property
-layer (`alternativeCost`, `modified`, `alternateWin`), and the unqualified-supports-qualified signal
-containment merge. Cascade (`freeSpells`) still needs a Phase C archetype that doesn't exist yet. The
-corpus this is derived from is committed at
+`[Unreleased]` entries in `apps/commander-recommender/CHANGELOG.md`). Landed so far within Phase B:
+the `Role` addition (`enables`/`protects` — this also resolved A2's `voltron`/`spellslinger`
+deferrals: equip-cost reduction, free-equip, Dualcast), and the `cardType`/`permanentSubtype`
+`QualifierKind` additions with their `CardFacts`/`supporterMatches` plumbing (no consuming archetype
+yet — that's Phase C1's `copyEffects`/`artifacts` — so exercised directly in tests). Still outstanding
+within Phase B: `counterType` (needs an invasive rename/widening of the existing `counters` archetype
+plus importing and widening `@mtg/rules`' counters taxonomy — deliberately its own increment rather
+than bundled with cardType/permanentSubtype), `gameState` (needs its own archetype, arguably Phase
+C2's job), the card-property layer (`alternativeCost`, `modified`, `alternateWin`), and the
+unqualified-supports-qualified signal containment merge. Cascade (`freeSpells`) still needs a Phase C
+archetype that doesn't exist yet. The corpus this is derived from is committed at
 `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as

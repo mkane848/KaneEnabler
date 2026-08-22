@@ -492,6 +492,85 @@ describe('qualifiers', () => {
     // The four Slivers, not the ten graveyard cards.
     assert.strictEqual(reanimator.cards.length, 4);
   });
+
+  // cardType and permanentSubtype narrowing (supporterMatches, synergy.ts)
+  // have no consuming archetype yet — that's Phase C1's copyEffects and
+  // artifacts. Exercised directly here, against a real archetype's real
+  // detection (aristocrats), with a qualifier hand-attached to the
+  // candidate's signal the way a future archetype would set one.
+  it('a cardType qualifier only counts cards of that card type', () => {
+    const copyMakers = (n: number, typeLine: string) =>
+      Array.from({ length: n }, (_, i) =>
+        makeCard({
+          name: `${typeLine} Copier ${i}`,
+          type_line: typeLine,
+          color_identity: JSON.stringify(['U']),
+          oracle_text:
+            "Create a token that's a copy of target artifact.\nWhenever a creature you control dies, you gain 1 life.",
+        }),
+      );
+    const instants = copyMakers(3, 'Instant');
+    const sorceries = copyMakers(3, 'Sorcery');
+    const candidate = makeCard({ name: 'Candidate', color_identity: JSON.stringify(['U']) });
+    const entries = [...instants, ...sorceries].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const signal: SignalMatch = {
+      archetype: 'aristocrats',
+      label: 'Aristocrats (Instant)',
+      description: '',
+      weight: 20,
+      qualifier: 'Instant',
+      qualifierKind: 'cardType',
+      roles: ['rewards'],
+    };
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      new Map([[candidate.oracle_id, [signal]]]),
+    );
+    const support = suggestions[0]!.themeSupport.find((t) => t.label === 'Aristocrats (Instant)');
+    assert.ok(support);
+    // The three Instants, not the six copy-makers.
+    assert.strictEqual(support.cards.length, 3);
+  });
+
+  it('a permanentSubtype qualifier only counts cards of that subtype', () => {
+    const copyMakers = (n: number, typeLine: string) =>
+      Array.from({ length: n }, (_, i) =>
+        makeCard({
+          name: `${typeLine} Copier ${i}`,
+          type_line: typeLine,
+          color_identity: JSON.stringify(['U']),
+          oracle_text:
+            "Create a token that's a copy of target artifact.\nWhenever a creature you control dies, you gain 1 life.",
+        }),
+      );
+    const vehicles = copyMakers(3, 'Artifact — Vehicle');
+    const others = copyMakers(3, 'Artifact');
+    const candidate = makeCard({ name: 'Candidate', color_identity: JSON.stringify(['U']) });
+    const entries = [...vehicles, ...others].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const signal: SignalMatch = {
+      archetype: 'aristocrats',
+      label: 'Aristocrats (Vehicle)',
+      description: '',
+      weight: 20,
+      qualifier: 'Vehicle',
+      qualifierKind: 'permanentSubtype',
+      roles: ['rewards'],
+    };
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      new Map([[candidate.oracle_id, [signal]]]),
+    );
+    const support = suggestions[0]!.themeSupport.find((t) => t.label === 'Aristocrats (Vehicle)');
+    assert.ok(support);
+    // The three Vehicles, not the six copy-makers.
+    assert.strictEqual(support.cards.length, 3);
+  });
 });
 
 describe('scoring measures focus, not color reach', () => {

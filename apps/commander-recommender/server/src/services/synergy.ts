@@ -237,6 +237,12 @@ function supporterMatches(signal: SignalMatch, facts: CardFacts | undefined): bo
   if (signal.qualifierKind === 'keyword') {
     return facts.keywords.includes(signal.qualifier);
   }
+  if (signal.qualifierKind === 'cardType') {
+    return facts.cardTypes.includes(signal.qualifier);
+  }
+  if (signal.qualifierKind === 'permanentSubtype') {
+    return facts.permanentSubtypes.includes(signal.qualifier);
+  }
   return true;
 }
 
