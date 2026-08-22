@@ -1423,3 +1423,104 @@ describe('card properties: alternativeCost, modified, alternateWin', () => {
     assert.strictEqual(buildCardFacts(noCost, buildVocabulary([], [])).cmc, 0);
   });
 });
+
+describe('Copy Effects: spells, abilities, and permanents', () => {
+  it('qualifies a spell-copy payoff by the card type it restricts to', () => {
+    // Kalamax, the Stormsire — real oracle text.
+    const kalamax = makeCard({
+      name: 'Kalamax, the Stormsire',
+      type_line: 'Legendary Creature — Elemental Dinosaur',
+      oracle_text:
+        'Whenever you cast your first instant spell each turn, if Kalamax is tapped, copy that ' +
+        'spell. You may choose new targets for the copy.\n' +
+        'Whenever you copy an instant spell, put a +1/+1 counter on Kalamax.',
+    });
+    const signals = signalsFor(kalamax);
+    assert.ok(find(signals, 'copyEffects', 'Instant'), 'expected an Instant-qualified copy signal');
+  });
+
+  it('does not qualify an ability-copy payoff by its source permanent\'s type', () => {
+    // Weaver of Harmony — real oracle text: the ability copied isn't itself
+    // an Enchantment just because it comes from one.
+    const weaver = makeCard({
+      name: 'Weaver of Harmony',
+      type_line: 'Creature — Human Druid',
+      oracle_text:
+        'Other enchantment creatures you control get +1/+1.\n' +
+        '{G}, {T}: Copy target activated or triggered ability you control from an enchantment ' +
+        'source. You may choose new targets for the copy.',
+    });
+    const signals = signalsFor(weaver);
+    assert.ok(
+      find(signals, 'copyEffects', undefined),
+      'expected an unqualified copy signal, not Enchantment',
+    );
+    assert.strictEqual(find(signals, 'copyEffects', 'Enchantment'), undefined);
+  });
+
+  it('does not qualify an ability-copy payoff by what the copies can target', () => {
+    // Agrus Kos, Eternal Soldier — real oracle text: the ability copied
+    // isn't itself a Creature just because the copies target creatures.
+    const agrusKos = makeCard({
+      name: 'Agrus Kos, Eternal Soldier',
+      type_line: 'Legendary Creature — Human Soldier',
+      oracle_text:
+        'Vigilance\n' +
+        'Whenever Agrus Kos becomes the target of an ability that targets only it, you may pay ' +
+        '{1}{R/W}. If you do, copy that ability for each other creature you control that ability ' +
+        'could target. Each copy targets a different one of those creatures.',
+    });
+    const signals = signalsFor(agrusKos);
+    assert.ok(
+      find(signals, 'copyEffects', undefined),
+      'expected an unqualified copy signal, not Creature',
+    );
+    assert.strictEqual(find(signals, 'copyEffects', 'Creature'), undefined);
+  });
+
+  it('qualifies a token-copy payoff by what it copies', () => {
+    // Rite of Replication — real oracle text.
+    const rite = makeCard({
+      name: 'Rite of Replication',
+      type_line: 'Sorcery',
+      oracle_text:
+        'Kicker {5} (You may pay an additional {5} as you cast this spell.)\n' +
+        "Create a token that's a copy of target creature. If this spell was kicked, create five " +
+        'of those tokens instead.',
+    });
+    const signals = signalsFor(rite);
+    assert.ok(find(signals, 'copyEffects', 'Creature'));
+  });
+
+  it('recognizes a clone/shapeshift copy with no "token" wording', () => {
+    // Sculpting Steel and Mirrorweave — real oracle text. "Enter as a copy
+    // of" and "becomes a copy of" are different templates (only the first
+    // uses "as"), both worth recognizing.
+    const sculptingSteel = makeCard({
+      name: 'Sculpting Steel',
+      type_line: 'Artifact',
+      oracle_text: 'You may have this artifact enter as a copy of any artifact on the battlefield.',
+    });
+    assert.ok(find(signalsFor(sculptingSteel), 'copyEffects', 'Artifact'));
+
+    const mirrorweave = makeCard({
+      name: 'Mirrorweave',
+      type_line: 'Instant',
+      oracle_text: 'Each other creature becomes a copy of target nonlegendary creature until end of turn.',
+    });
+    assert.ok(find(signalsFor(mirrorweave), 'copyEffects', 'Creature'));
+  });
+
+  it('leaves an ability-copy payoff unqualified when it names no card type at all', () => {
+    // Kirol, Attentive First-Year — real oracle text.
+    const kirol = makeCard({
+      name: 'Kirol, Attentive First-Year',
+      type_line: 'Legendary Creature — Vampire Cleric',
+      oracle_text:
+        'Tap two untapped creatures you control: Copy target triggered ability you control. You ' +
+        'may choose new targets for the copy. Activate only once each turn.',
+    });
+    const signals = signalsFor(kirol);
+    assert.ok(find(signals, 'copyEffects', undefined));
+  });
+});

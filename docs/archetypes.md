@@ -196,6 +196,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `opponentMill` | `produces` ×1    | An attack, not a resource. Kept separate on purpose.                                 |
 | `kindred`      | `rewards` **×2** | Generated per creature type.                                                         |
 | `keywordCare`  | `rewards` ×1     | Heavily restricted — see the keyword-shadow rule.                                    |
+| `copyEffects`  | `rewards` ×1     | Becomes `qualifiable: cardType`. No lifecycle yet — one undifferentiated `rewards` role, same shape as `selfMill`/`opponentMill`. |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -204,8 +205,8 @@ deck is a guess.
 
 | Tier   | Key                                                                                                  | Decks  | What it is                                                                                                                                                                            |
 | ------ | ---------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **C1** | `copyEffects`                                                                                        | 6      | Copying **spells, abilities and permanents** — Kalamax (spells), Kirol and Agrus Kos (abilities), Rite of Replication and Necroduality and Sculpting Steel (permanents)               |
-|        | cost reduction _(as `enables`, not an archetype)_                                                    | 6      | Modelled once, parameterised by what it reduces, instead of a regex per archetype                                                                                                     |
+| **C1** | ~~`copyEffects`~~ **Shipped** — see "Shipping today" above                                           | 6      | Copying **spells, abilities and permanents** — Kalamax (spells), Kirol and Agrus Kos, Eternal Soldier (abilities), Rite of Replication, Necroduality and Sculpting Steel (permanents) |
+|        | cost reduction _(as `enables`, not an archetype)_ — **shipped in Phase B**                           | 6      | Modelled once, parameterised by what it reduces, instead of a regex per archetype                                                                                                     |
 |        | `freeSpells`                                                                                         | 5      | Cascade, suspend, `"without paying its mana cost"`, alternative costs                                                                                                                 |
 |        | `artifacts` (+ `Vehicle` / `Food` / `Clue` / `Treasure`)                                             | 5      | Miles's Vehicles and Sophia's Food ride one qualifier                                                                                                                                 |
 | **C2** | `lifegain`                                                                                           | 3      | **The largest single gap** — one of the format's most-built themes, entirely absent                                                                                                   |
@@ -303,6 +304,13 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   outside her matcher's match text entirely (`"Each Sliver creature card ... has encore"` — the
   matcher only hits bare `"encore"`), so the whole-clause scan remains the fallback when no matcher's
   own match text names a type.
+- **`findQualifier`'s whole-clause fallback never fires for an ability-copy clause.** An ability is
+  never itself a card type, so a real card type sitting near one describes something else — Echo,
+  Perceptive Prodigy and Weaver of Harmony's "copy target ... ability you control from a
+  creature/enchantment source" names the ability's *source*, and Agrus Kos, Eternal Soldier's "copy
+  that ability for each other creature you control" names the copies' *targets*. All three found while
+  building `copyEffects` and correctly stay unqualified rather than becoming
+  `copyEffects:Creature`/`copyEffects:Enchantment`.
 
 ---
 
