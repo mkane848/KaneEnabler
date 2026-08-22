@@ -207,6 +207,21 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     cards), and Sophia's deck reports both `Artifacts (Clue)` and
     `Artifacts (Food)` (10 cards each) — archetypes.md's own motivating
     examples, confirmed exactly.
+- **Signal engine, Phase F — import-time coverage report**, landed early
+  as the re-measurement checkpoint between Phase C1 and C2 that
+  `docs/signals-rework.md`'s own sequencing calls for.
+  `import-scryfall.ts` now prints how many commander-eligible cards
+  produce zero *active* signals, with a sample — the number Obeka's own
+  gap (`scoreCommanders` skips any unit with no active signal) had been
+  an opinion about until now. Tracked via `hasActiveRole` during the same
+  pass that inserts `card_signals`, not a naive "zero rows" check — Obeka
+  herself has two rows (`kindred:Ogre[is]`, `kindred:Wizard[is]`), both
+  structural and neither active, so a "zero rows" check would have missed
+  her entirely. **Measured: 898 of 4,049 commander-eligible cards produce
+  zero active signals** — between the doc's own two reference points
+  (~20 meaning extend the catalog, ~2,000 meaning build a
+  colour-identity-only fallback), closer to "extend the catalog." Decided:
+  keep extending via Phase C rather than building that fallback yet.
 
 ### Fixed
 
