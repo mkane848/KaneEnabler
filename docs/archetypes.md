@@ -198,6 +198,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `keywordCare`  | `rewards` ×1     | Heavily restricted — see the keyword-shadow rule.                                    |
 | `copyEffects`  | `rewards` ×1     | Becomes `qualifiable: cardType`. No lifecycle yet — one undifferentiated `rewards` role, same shape as `selfMill`/`opponentMill`. |
 | `freeSpells`   | `produces` ×1    | No separate payoff role — granting a free/reduced cast is the identity itself. Reads `alternativeCost`, plus Cascade/Discover/Suspend/Plot/Rebound from the bare keyword (their own reminder text is the only place they say "without paying its mana cost", and reminder text is stripped). |
+| `artifacts`    | `rewards` ×1     | Becomes `qualifiable: permanentSubtype`, scoped to `Vehicle`/`Food`/`Clue`/`Treasure` only — `Equipment`/`Saga` are `PERMANENT_SUBTYPES` too, but voltron's and counters' territory, not this archetype's `is` role. A card's own structural subtype qualifies it directly (Smuggler's Copter needs no text to be a Vehicle) *except* when its own reward reads artifacts generically (Cranial Plating is an Equipment but "for each artifact you control" doesn't restrict to Equipment — see below). |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -209,7 +210,7 @@ deck is a guess.
 | **C1** | ~~`copyEffects`~~ **Shipped** — see "Shipping today" above                                           | 6      | Copying **spells, abilities and permanents** — Kalamax (spells), Kirol and Agrus Kos, Eternal Soldier (abilities), Rite of Replication, Necroduality and Sculpting Steel (permanents) |
 |        | cost reduction _(as `enables`, not an archetype)_ — **shipped in Phase B**                           | 6      | Modelled once, parameterised by what it reduces, instead of a regex per archetype                                                                                                     |
 |        | ~~`freeSpells`~~ **Shipped** — see "Shipping today" above                                           | 5      | Cascade, suspend, `"without paying its mana cost"`, alternative costs                                                                                                                 |
-|        | `artifacts` (+ `Vehicle` / `Food` / `Clue` / `Treasure`)                                             | 5      | Miles's Vehicles and Sophia's Food ride one qualifier                                                                                                                                 |
+|        | ~~`artifacts`~~ **Shipped** — see "Shipping today" above                                             | 5      | Miles's Vehicles and Sophia's Food ride one qualifier                                                                                                                                 |
 | **C2** | `lifegain`                                                                                           | 3      | **The largest single gap** — one of the format's most-built themes, entirely absent                                                                                                   |
 |        | `drain`                                                                                              | 2      | Life loss as a _trigger_. Sanguine Bond and Vito are the bridge cards to `lifegain`                                                                                                   |
 |        | `cyclingDiscard`                                                                                     | 3      | Discard as a resource, which the engine only sees as "mill"                                                                                                                           |
@@ -312,6 +313,16 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   that ability for each other creature you control" names the copies' *targets*. All three found while
   building `copyEffects` and correctly stay unqualified rather than becoming
   `copyEffects:Creature`/`copyEffects:Enchantment`.
+- **A `permanentSubtype` archetype's structural qualifier is scoped to the subtypes its own `is` role
+  tracks, not every `PERMANENT_SUBTYPES` entry.** Cranial Plating ("Equipped creature gets +1/+0 for
+  each artifact you control") is structurally an Equipment — voltron's territory — but its own reward
+  reads *every* artifact, not Equipment specifically. Qualifying it `artifacts:Equipment` just because
+  it happens to be one would misrepresent what it actually cares about; it correctly stays unqualified.
+  Also found while building `artifacts`: a token-doubling `amplifies` clause needed including in the
+  qualifier scan for Xorn's own Treasure restriction, and "one of each" (Academy Manufactor: Clue,
+  Food, *and* Treasure at once) needed an explicit skip so the clause can't arbitrarily qualify as
+  whichever type it mentions first — the same shape of bug as Angel of Glory's Rise above, just via a
+  different matcher.
 
 ---
 

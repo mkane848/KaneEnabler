@@ -174,6 +174,39 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     Doctor's deck reports 8 cards (Suspend/Vanishing-heavy), and Bre's,
     Kalamax's, Radagast's, and The First Sliver's decks each report a
     smaller `Free Spells` theme too.
+- **Signal engine, Phase C1 — `artifacts` archetype (completing Phase C1).**
+  See `docs/signals-rework.md` Phase C. Building around artifacts as a
+  category — the Vehicle, Food, Clue, and Treasure subtypes specifically —
+  token production, payoffs that scale with artifact count, and effects
+  that multiply the tokens themselves. `qualifiable: permanentSubtype`,
+  scoped to `Vehicle`/`Food`/`Clue`/`Treasure` — `Equipment`/`Saga` are
+  `PERMANENT_SUBTYPES` too, but voltron's and counters' territory, not
+  this archetype's:
+  - A card's own structural subtype qualifies it directly (Smuggler's
+    Copter needs no text to be a Vehicle), alongside token production
+    ("create a Clue/Food/Treasure token", Investigate), payoffs that read
+    artifact count ("for each artifact you control", "sacrifice a
+    Food/Clue/Treasure"), Vehicle-specific triggers, and amplifiers that
+    double token creation (Xorn: Treasure-specific; Academy Manufactor:
+    Clue, Food, and Treasure at once, so unqualified).
+  - `findQualifier` gained two fixes discovered verifying this archetype
+    against real cards: its qualifying scan didn't include `amplifies`
+    matchers at all (missing Xorn's own Treasure restriction, which lives
+    there), and a card's structural subtype was preferred unconditionally,
+    which wrongly qualified Cranial Plating (structurally an Equipment)
+    as `artifacts:Equipment` even though its own reward ("for each
+    artifact you control") doesn't restrict to Equipment at all — now
+    scoped to the subtypes `artifacts`'s own `is` role tracks. A regression
+    this surfaced during development (Gothmog, Morgul Lieutenant's `amass`
+    ability incorrectly gaining a `goWide:Orc` qualifier) was caught by
+    the existing test suite before shipping and fixed by keeping
+    `produces` out of the qualifying scan — production is evidence a
+    theme exists, not a restriction on what it produces.
+  - Verified against the real seeded database and the full 20-deck corpus:
+    Miles's deck reports `Artifacts (Vehicle)` as its top theme (21
+    cards), and Sophia's deck reports both `Artifacts (Clue)` and
+    `Artifacts (Food)` (10 cards each) — archetypes.md's own motivating
+    examples, confirmed exactly.
 
 ### Fixed
 

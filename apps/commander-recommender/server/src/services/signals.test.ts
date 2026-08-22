@@ -1656,3 +1656,107 @@ describe('Free Spells: casting for less than the printed cost', () => {
     assert.strictEqual(find(signalsFor(lightningBolt), 'freeSpells', undefined), undefined);
   });
 });
+
+describe('Artifacts: Vehicle, Food, Clue, and Treasure', () => {
+  it('qualifies structurally by its own subtype, no text required', () => {
+    // Smuggler's Copter — real oracle text.
+    const smugglersCopter = makeCard({
+      name: "Smuggler's Copter",
+      type_line: 'Artifact — Vehicle',
+      oracle_text:
+        'Flying\nWhenever this Vehicle attacks or blocks, you may draw a card. If you do, discard ' +
+        'a card.\nCrew 1 (Tap any number of creatures you control with total power 1 or more: ' +
+        "This Vehicle becomes an artifact creature until end of turn.)",
+    });
+    const signals = signalsFor(smugglersCopter);
+    assert.ok(find(signals, 'artifacts', 'Vehicle'));
+  });
+
+  it('does not qualify by a structural subtype the archetype does not track', () => {
+    // Cranial Plating — real oracle text. It's structurally an Equipment
+    // (voltron's territory), and its own reward doesn't restrict to
+    // Equipment at all — it reads *any* artifact, so it must not become
+    // artifacts:Equipment just because it happens to be one.
+    const cranialPlating = makeCard({
+      name: 'Cranial Plating',
+      type_line: 'Artifact — Equipment',
+      oracle_text:
+        'Equipped creature gets +1/+0 for each artifact you control.\n' +
+        '{B}{B}: Attach this Equipment to target creature you control.\n' +
+        'Equip {1}',
+    });
+    const signals = signalsFor(cranialPlating);
+    assert.ok(find(signals, 'artifacts', undefined), 'expected an unqualified artifacts signal');
+    assert.strictEqual(find(signals, 'artifacts', 'Equipment'), undefined);
+  });
+
+  it('qualifies a token-doubling amplifier by the type it restricts to', () => {
+    // Xorn — real oracle text: Treasure-specific.
+    const xorn = makeCard({
+      name: 'Xorn',
+      type_line: 'Creature — Elemental',
+      oracle_text:
+        'If you would create one or more Treasure tokens, instead create those tokens plus an ' +
+        'additional Treasure token.',
+    });
+    assert.ok(find(signalsFor(xorn), 'artifacts', 'Treasure'));
+  });
+
+  it('leaves a token-doubler unqualified when it touches every type equally', () => {
+    // Academy Manufactor — real oracle text: Clue, Food, *and* Treasure at
+    // once, so it must not arbitrarily pick whichever type word the clause
+    // happens to mention first.
+    const academyManufactor = makeCard({
+      name: 'Academy Manufactor',
+      type_line: 'Artifact Creature — Assembly-Worker',
+      oracle_text: 'If you would create a Clue, Food, or Treasure token, instead create one of each.',
+    });
+    const signals = signalsFor(academyManufactor);
+    assert.ok(hasActiveRole(rolesOf(signals, 'artifacts')));
+    assert.strictEqual(find(signals, 'artifacts', 'Clue'), undefined);
+    assert.strictEqual(find(signals, 'artifacts', 'Food'), undefined);
+    assert.strictEqual(find(signals, 'artifacts', 'Treasure'), undefined);
+  });
+
+  it('recognizes a payoff that reads artifact count generically', () => {
+    // Monumental Corruption — real oracle text, no subtype restriction.
+    const monumentalCorruption = makeCard({
+      name: 'Monumental Corruption',
+      type_line: 'Sorcery',
+      oracle_text: 'Target player draws X cards and loses X life, where X is the number of artifacts you control.',
+    });
+    assert.ok(find(signalsFor(monumentalCorruption), 'artifacts', undefined));
+  });
+
+  it('recognizes sacrificing a Food as a payoff', () => {
+    // Wicked Wolf — real oracle text.
+    const wickedWolf = makeCard({
+      name: 'Wicked Wolf',
+      type_line: 'Creature — Boar',
+      oracle_text:
+        "When this creature enters, it fights up to one target creature you don't control.\n" +
+        'Sacrifice a Food: Put a +1/+1 counter on this creature. It gains indestructible until ' +
+        'end of turn.',
+    });
+    assert.ok(find(signalsFor(wickedWolf), 'artifacts', 'Food'));
+  });
+
+  it('recognizes Investigate as production, unqualified (the Clue it makes is reminder-only)', () => {
+    // Lazav, Wearer of Faces — real oracle text. Investigate's own "Create
+    // a Clue token" is inside its reminder text and stripped, so this
+    // stays unqualified rather than qualifying Clue — the same "unqualified
+    // supports qualified" relation that lets it still back a qualified
+    // Artifacts (Clue) theme once grouped with cards that do restrict.
+    const lazav = makeCard({
+      name: 'Lazav, Wearer of Faces',
+      type_line: 'Legendary Creature — Zombie Shapeshifter',
+      keywords: '[]',
+      oracle_text:
+        'Whenever Lazav attacks, exile target card from a graveyard, then investigate. (Create a ' +
+        'Clue token. It\'s an artifact with "{2}, Sacrifice this token: Draw a card.")',
+    });
+    const signals = signalsFor(lazav);
+    assert.ok(hasActiveRole(rolesOf(signals, 'artifacts')));
+    assert.strictEqual(find(signals, 'artifacts', 'Clue'), undefined);
+  });
+});
