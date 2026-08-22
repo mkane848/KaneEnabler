@@ -49,6 +49,22 @@ C1 and C2 (see its own section below): **898 of 4,049 commander-eligible cards p
 signals** — closer to "extend the catalog" than "build a fallback" on the doc's own scale, so Phase C
 continues rather than that fallback getting built yet.
 
+**Phase C2 has started: `gameState` is shipped**, the item explicitly deferred from Phase B above.
+`qualifiable: gameState`, five named states (`theRing`, `monarch`, `initiative`, `maxSpeed`,
+`dayNight`) computed once onto `CardFacts.gameStates` by a dedicated detector — the same
+all-clauses-scanned, order-independent shape as `counterType`, not the payoff-matcher clause scan
+`cardType`/`permanentSubtype` use, since a card can produce and reward on completely different
+mechanics within the same clause set. Max speed and day/night lean on the literal Scryfall `keywords`
+array (`Start your engines!`, `Daybound`, `Nightbound`) because reminder text is the only place those
+mechanics name themselves and reminder text is stripped; the Ring, the monarch, and the initiative
+have no such keyword and stay text-only. One real bug found and fixed: the initiative `rewards`
+matcher's first draft only matched `"you've"/"you have" the initiative`, which missed Undercellar
+Sweep's actual third-person `"if you or a player you're attacking has the initiative"` entirely — see
+archetypes.md's "Behaviours verified as correct". Verified against the full corpus: `sauron.txt`
+reports `Game State (theRing)` with 11 supporting cards and `miles.txt` reports `Game State
+(maxSpeed)` with 4, both matching archetypes.md's own motivating decks. Re-measured after shipping:
+**889 of 4,049 commander-eligible cards now produce zero active signals**, down from 898.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 
