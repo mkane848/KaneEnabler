@@ -224,6 +224,27 @@ export interface CardFacts {
    * own text cares about — see `findCounterKind`. Feeds
    * `qualifierKind: 'counterType'`. */
   counterKinds: string[];
+  /** Mana value, straight off the printed cost — a property, not a role, but
+   * archetypes read it alongside `alternativeCost`: Y'shtola triggers on "a
+   * noncreature spell with mana value 3 or greater" regardless of what was
+   * actually paid, which is the whole reason `alternativeCost` matters. */
+  cmc: number;
+  /** The card can be cast for something other than its own mana cost:
+   * Phyrexian mana pips, "rather than pay this spell's mana cost" (Snuff
+   * Out), "without paying its mana cost" (Fierce Guardianship's commander
+   * clause), or Evoke/Cleave/Delve/Convoke. Not itself a role — nothing
+   * consumes this yet (`freeSpells` is Phase C1) — but designed alongside
+   * `CardFacts` rather than bolted into an archetype matcher later. */
+  alternativeCost: boolean;
+  /** The card cares about a permanent being "modified" — CR's umbrella term
+   * for having a counter on it, or an Equipment/Aura attached (Kodama of the
+   * West Tree's own reminder text). Not itself a role yet — see
+   * `alternativeCost`'s comment. */
+  modified: boolean;
+  /** The card's own text contains an actual "you win the game" outcome, not
+   * a mere "can't lose/win" prevention effect (The Book of Exalted Deeds
+   * grants the latter to an Angel, not the former, to itself). */
+  alternateWin: boolean;
 }
 
 /**
@@ -673,6 +694,44 @@ function findPermanentSubtypes(typeLine: string): string[] {
   return PERMANENT_SUBTYPES.filter((subtype) => new RegExp(`\\b${subtype}\\b`, 'i').test(typeLine));
 }
 
+/** Keywords that are themselves an alternative cost, rather than text saying
+ * so — Evoke (Walker of the Grove), Cleave (Lantern Flare), Delve (Empty the
+ * Pits), Convoke (Vault Guardsman). */
+const ALTERNATIVE_COST_KEYWORDS = ['Evoke', 'Cleave', 'Delve', 'Convoke'];
+
+/**
+ * The two self-referential templates Wizards uses for "you may cast this
+ * spell for something other than its mana cost": Fierce Guardianship's
+ * commander clause ("cast this spell without paying its mana cost") and the
+ * pay-alternative template (Snuff Out, Thunderclap, Force of Despair,
+ * "rather than pay this spell's mana cost"). Deliberately scoped to "this
+ * spell" — Nissa, Worldsoul Speaker's "rather than pay the mana cost for
+ * permanent spells you cast" reduces *other* spells' cost, which is
+ * `enables` (`reducesCostOf`), not a property of Nissa herself.
+ */
+const SELF_ALTERNATIVE_COST_PATTERN =
+  /\bcast this spell without paying its mana cost\b|\brather than pay(?:ing)? this spell'?s mana cost\b/i;
+
+function hasAlternativeCost(text: string, manaCost: string | null, keywords: string[]): boolean {
+  if (manaCost?.includes('/P')) return true;
+  if (ALTERNATIVE_COST_KEYWORDS.some((keyword) => keywords.includes(keyword))) return true;
+  return SELF_ALTERNATIVE_COST_PATTERN.test(text);
+}
+
+/** "Modified creature(s)/permanent(s)" and "is/was modified" — CR's umbrella
+ * term for a permanent with a counter on it or an Equipment/Aura attached.
+ * Excludes "these modified rules" (Booster Blitz's house-rule variant,
+ * nothing to do with the Modified mechanic). */
+const MODIFIED_PATTERN =
+  /\bmodified (?:creatures?|permanents?)\b|\b(?:is|are|was|were|it'?s) modified\b/i;
+
+/** An actual win condition ("you win the game"), not a mere prevention
+ * effect. The Book of Exalted Deeds grants an Angel "you can't lose the game
+ * and your opponents can't win the game" — a symmetric protection clause,
+ * not a win condition for its own controller — so it correctly reads false
+ * here despite archetypes.md naming it as an example. */
+const ALTERNATE_WIN_PATTERN = /\byou win the game\b/i;
+
 export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
   const rawText = row.oracle_text ?? '';
   const faceNames = faceNamesIn(row.name);
@@ -699,6 +758,10 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     cardTypes: findCardTypes(typeLine),
     permanentSubtypes: findPermanentSubtypes(typeLine),
     counterKinds: findAllCounterKinds(text),
+    cmc: row.cmc ?? 0,
+    alternativeCost: hasAlternativeCost(text, row.mana_cost, parseJsonArray(row.keywords)),
+    modified: MODIFIED_PATTERN.test(text),
+    alternateWin: ALTERNATE_WIN_PATTERN.test(text),
   };
 }
 

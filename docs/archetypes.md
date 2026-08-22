@@ -162,11 +162,17 @@ zero mana and 4 life) all trigger her for nearly nothing.
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `alternativeCost` | Phyrexian pips in `mana_cost`; `"rather than pay this spell's mana cost"`; `"if you control a commander"`; `"without paying its mana cost"`; evoke, cleave, delve, convoke | `freeSpells`; combined with `cmc` it answers _"your commander wants mana value 3+ — here are cards with mana value 3+ that cost less than that to cast"_ |
 | `modified`        | Equipment attached, Auras attached, counters on it (a CR umbrella term)                                                                                                    | `voltron`, `counters` — Kodama of the West Tree                                                                                                          |
-| `alternateWin`    | `"you win the game"`                                                                                                                                                       | Knuckles the Echidna, Approach of the Second Sun, Book of Exalted Deeds. Probably a property rather than an archetype: a card quality, not a plan        |
+| `alternateWin`    | `"you win the game"`                                                                                                                                                       | Knuckles the Echidna, Approach of the Second Sun. Probably a property rather than an archetype: a card quality, not a plan        |
 
 `cards` already stores both `cmc` and `mana_cost`, so this is a derived fact in `buildCardFacts`, not
 new data. It also explains why Snuff Out belongs to two lists at once: not two archetypes, **one
 property read by both**.
+
+**Correction, checked against the seeded database:** The Book of Exalted Deeds does not itself
+qualify for `alternateWin`. Its own text only ever *grants* an Angel "you can't lose the game and
+your opponents can't win the game" — a symmetric protection clause, not a win condition for its own
+controller. That shape (also on Platinum Persecutor, Herald of Eternal Dawn, Celestine Reef,
+Everybody Lives!) is a different property with no archetype reading it yet.
 
 ---
 

@@ -68,6 +68,35 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     database: Morcant's deck detects -1/-1 production via Blight, The
     Watcher in the Water gets `Counters (stun)`, and the Tenth Doctor deck
     gets `Counters (time)` for its ~25 Suspend/Vanishing cards.
+- **Signal engine, Phase B (part 4) — the card-property layer.** `CardFacts`
+  gains `cmc`, `alternativeCost`, `modified`, and `alternateWin` —
+  properties a card *is*, which an archetype can read, rather than roles of
+  their own (docs/archetypes.md's "Card properties"). Verified against the
+  real seeded database:
+  - **`alternativeCost`** — Phyrexian mana pips (Dismember), the
+    self-referential "cast this spell without paying its mana cost"
+    template (Fierce Guardianship's commander clause), "rather than pay
+    this spell's mana cost" (Snuff Out), and Evoke/Cleave/Delve/Convoke.
+    Deliberately scoped to a card's cost for *itself* — Nissa, Worldsoul
+    Speaker reduces the cost of other permanent spells, which is `enables`
+    (`reducesCostOf`), not this property.
+  - **`modified`** — the CR umbrella term for a permanent with a counter on
+    it or an Equipment/Aura attached ("modified creature(s)/permanent(s)",
+    "is/was modified" — Kodama of the West Tree, the card the property is
+    named for), excluding Booster Blitz's unrelated "these modified rules"
+    house-rule text.
+  - **`alternateWin`** — an actual "you win the game" outcome (Knuckles the
+    Echidna, Approach of the Second Sun), not a mere "can't lose/win"
+    prevention effect. Checking The Book of Exalted Deeds against the real
+    database found it doesn't qualify — its own text only ever *grants* an
+    Angel "you can't lose the game and your opponents can't win the game",
+    a symmetric protection clause, not a win condition for its own
+    controller. archetypes.md named it as an `alternateWin` example; that
+    was inaccurate and is corrected there.
+
+  None of the three has a consuming archetype yet — `alternativeCost` is
+  `freeSpells`'s job (Phase C1); `modified`/`alternateWin` are exercised
+  directly in tests, same as `cardType`/`permanentSubtype` before them.
 
 ### Fixed
 
