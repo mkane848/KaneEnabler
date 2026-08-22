@@ -295,6 +295,14 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   Goblin kindred purely on its name.
 - **Reminder text is stripped** — Sliver Gravemother's Encore reminder ends _"They gain haste"_, which
   read as granting haste to your team. Correct, but see below.
+- **`findQualifier` ties the candidate type word to the matcher that actually hit, not a clause-wide
+  scan.** Angel of Glory's Rise's "exile all Zombies, then return all Human creature cards from your
+  graveyard to the battlefield" now qualifies `reanimator:Human` — the thing actually returned — not
+  `reanimator:Zombie`, which is merely exiled earlier in the same clause and outside the reward
+  matcher's own match text. Sliver Gravemother still qualifies correctly too: her restriction sits
+  outside her matcher's match text entirely (`"Each Sliver creature card ... has encore"` — the
+  matcher only hits bare `"encore"`), so the whole-clause scan remains the fallback when no matcher's
+  own match text names a type.
 
 ---
 
@@ -325,17 +333,6 @@ today's breadth is mostly phantom themes, so the measurement would be meaningles
 _because_ his threats are uncrewed Vehicles. Curiosity on Papalymo is a draw engine because Papalymo
 pings. Both are real, deliberate, and currently inexpressible — the engine classifies cards, not
 pairs.
-
-**`findQualifier` picks the first known type word in the clause, not the one the payoff verb
-actually restricts.** Angel of Glory's Rise: "exile all Zombies, then return all Human creature
-cards from your graveyard to the battlefield" reanimates *Humans*, but "Zombies" appears earlier in
-the same clause — it's what gets exiled, not what's returned — so it comes back qualified
-`reanimator:Zombie` instead of `reanimator:Human`. Found while verifying the unqualified-supports-
-qualified merge against Giada's deck, and newly *visible* because of it (the merge is what pushed
-this group over `MIN_THEME_CARDS`), but not caused by it — `findQualifier` already had this
-imprecision, the group was simply below threshold before now. A real fix needs the candidate type
-word tied to the specific matched pattern's own position, not a clause-wide scan for the first known
-type; out of scope for the merge itself.
 
 ---
 

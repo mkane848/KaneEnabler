@@ -128,6 +128,24 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Fixed
 
+- **Signal engine — `findQualifier` ties the candidate type word to the
+  payoff matcher's own match text, not a clause-wide scan.** Follow-up to
+  Phase B (part 5)'s signal containment merge, which surfaced this as a
+  "Known tension" in `docs/archetypes.md` rather than fixing it there.
+  Angel of Glory's Rise — "exile all Zombies, then return all Human
+  creature cards from your graveyard to the battlefield" — mis-qualified as
+  `reanimator:Zombie` instead of `reanimator:Human`: the old code scanned
+  every word in the whole clause and returned the first recognized type,
+  which was "Zombies" (merely exiled, earlier in the clause) rather than
+  "Human" (the thing actually returned). Now each payoff matcher's own
+  match text is checked first — for the `return`/`put` reanimator
+  matchers, the type-restricting word sits inside the match itself, so this
+  correctly excludes "Zombies," which the match never reaches. Falls back
+  to the whole clause only when no matcher's own match text names a type,
+  which Sliver Gravemother needs: her restriction ("Each Sliver creature
+  card ... has encore") sits structurally outside the bare `encore`
+  keyword her matcher hits, verified still correctly qualified as
+  `reanimator:Sliver`.
 - **Signal engine, Phase A ("stop the false positives"):** see
   `docs/signals-rework.md` for the full plan this lands the first phase of.
   - **A theme needs at least one card that cares, not just cards that belong

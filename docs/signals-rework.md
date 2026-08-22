@@ -24,12 +24,17 @@ synergy.ts) — verified against the real Wilhelt corpus fixture: Liliana, Death
 unqualified reanimation spell now folds into `Reanimator (Zombie)` alongside Tomb Tyrant and Zombie
 Apocalypse, clearing `MIN_THEME_CARDS` where three sub-threshold fragments previously reported
 nothing (archetypes.md's own motivating example, confirmed exactly). Verifying this against the full
-20-deck corpus also surfaced a pre-existing, unrelated `findQualifier` imprecision (Angel of Glory's
-Rise mis-qualifying as Zombie instead of Human) — newly visible because of the merge, not caused by
-it; recorded as a new "Known tension" in archetypes.md rather than fixed here, since it's a different
-bug than the one this phase scopes. Still outstanding within Phase B: `gameState` (needs its own
-archetype, arguably Phase C2's job). Cascade (`freeSpells`) still needs a Phase C archetype that
-doesn't exist yet. The corpus this is derived from is committed at
+20-deck corpus also surfaced a pre-existing, unrelated `findQualifier` imprecision, fixed as its own
+follow-up: Angel of Glory's Rise ("exile all Zombies, then return all Human creature cards from your
+graveyard to the battlefield") mis-qualified as `reanimator:Zombie` instead of `reanimator:Human`,
+because the old code scanned the whole clause for the first known type word rather than tying the
+candidate to the payoff matcher's own match text. Now qualified correctly, with Sliver Gravemother
+(whose restriction sits outside her matcher's match text entirely) verified still correct via the
+whole-clause fallback.
+
+**Phase B is otherwise complete.** Only `gameState` remains (needs its own archetype, arguably Phase
+C2's job). Cascade (`freeSpells`) still needs a Phase C archetype that doesn't exist yet. The corpus
+this is derived from is committed at
 `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
