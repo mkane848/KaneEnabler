@@ -326,6 +326,17 @@ _because_ his threats are uncrewed Vehicles. Curiosity on Papalymo is a draw eng
 pings. Both are real, deliberate, and currently inexpressible — the engine classifies cards, not
 pairs.
 
+**`findQualifier` picks the first known type word in the clause, not the one the payoff verb
+actually restricts.** Angel of Glory's Rise: "exile all Zombies, then return all Human creature
+cards from your graveyard to the battlefield" reanimates *Humans*, but "Zombies" appears earlier in
+the same clause — it's what gets exiled, not what's returned — so it comes back qualified
+`reanimator:Zombie` instead of `reanimator:Human`. Found while verifying the unqualified-supports-
+qualified merge against Giada's deck, and newly *visible* because of it (the merge is what pushed
+this group over `MIN_THEME_CARDS`), but not caused by it — `findQualifier` already had this
+imprecision, the group was simply below threshold before now. A real fix needs the candidate type
+word tied to the specific matched pattern's own position, not a clause-wide scan for the first known
+type; out of scope for the merge itself.
+
 ---
 
 ## What is deliberately not modelled

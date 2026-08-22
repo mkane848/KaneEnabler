@@ -448,9 +448,15 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
 });
 
 describe('qualifiers', () => {
-  it('a subtype-restricted payoff only counts cards of that subtype', () => {
-    // A Sliver-restricted graveyard payoff must not be credited with the
-    // non-Sliver creatures in the same list.
+  it('a subtype-restricted payoff still counts generic support, but not a bystander', () => {
+    // A Sliver-restricted graveyard payoff is backed by every unrestricted
+    // reanimation spell in the list, whatever creature type they happen to
+    // be printed as — none of them names Sliver, so none of them is choosy
+    // about what they bring back (docs/signals-rework.md's "unqualified
+    // supports qualified" — the same relation that lets Wilhelt's generic
+    // reanimation spells back "Reanimator (Zombie)"). A card with no
+    // reanimator participation at all is not pulled in just for sharing a
+    // creature type.
     const slivers = Array.from({ length: 4 }, (_, i) =>
       makeCard({
         name: `Sliver ${i}`,
@@ -467,13 +473,19 @@ describe('qualifiers', () => {
         oracle_text: 'Return target creature card from your graveyard to the battlefield.',
       }),
     );
+    const bystander = makeCard({
+      name: 'Bystander',
+      color_identity: JSON.stringify(['B']),
+      creature_types: JSON.stringify(['Zombie']),
+      oracle_text: 'Vigilance',
+    });
     const gravemother = makeCard({
       name: 'Sliver Gravemother',
       color_identity: JSON.stringify(['B']),
       creature_types: JSON.stringify(['Sliver']),
       oracle_text: 'Sliver spells you cast have encore.',
     });
-    const entries = [...slivers, ...others].map((c) => owned(c));
+    const entries = [...slivers, ...others, bystander].map((c) => owned(c));
     const units = [solo(gravemother)];
     const suggestions = scoreCommanders(
       units,
@@ -489,8 +501,9 @@ describe('qualifiers', () => {
     const reanimator = suggestions[0]!.themeSupport.find((t) => t.label.startsWith('Reanimator'));
     assert.ok(reanimator, JSON.stringify(suggestions[0]!.themeSupport.map((t) => t.label)));
     assert.strictEqual(reanimator.label, 'Reanimator (Sliver)');
-    // The four Slivers, not the ten graveyard cards.
-    assert.strictEqual(reanimator.cards.length, 4);
+    // All ten unrestricted reanimation spells, but not the vanilla bystander.
+    assert.strictEqual(reanimator.cards.length, 10);
+    assert.ok(!reanimator.cards.some((c) => c.name === 'Bystander'));
   });
 
   // cardType and permanentSubtype narrowing (supporterMatches, synergy.ts)
@@ -498,7 +511,7 @@ describe('qualifiers', () => {
   // artifacts. Exercised directly here, against a real archetype's real
   // detection (aristocrats), with a qualifier hand-attached to the
   // candidate's signal the way a future archetype would set one.
-  it('a cardType qualifier only counts cards of that card type', () => {
+  it('a cardType qualifier still counts an unrestricted supporter, but not a bystander', () => {
     const copyMakers = (n: number, typeLine: string) =>
       Array.from({ length: n }, (_, i) =>
         makeCard({
@@ -511,8 +524,14 @@ describe('qualifiers', () => {
       );
     const instants = copyMakers(3, 'Instant');
     const sorceries = copyMakers(3, 'Sorcery');
+    const bystander = makeCard({
+      name: 'Bystander',
+      type_line: 'Instant',
+      color_identity: JSON.stringify(['U']),
+      oracle_text: 'Draw a card.',
+    });
     const candidate = makeCard({ name: 'Candidate', color_identity: JSON.stringify(['U']) });
-    const entries = [...instants, ...sorceries].map((c) => owned(c));
+    const entries = [...instants, ...sorceries, bystander].map((c) => owned(c));
     const units = [solo(candidate)];
     const signal: SignalMatch = {
       archetype: 'aristocrats',
@@ -531,11 +550,15 @@ describe('qualifiers', () => {
     );
     const support = suggestions[0]!.themeSupport.find((t) => t.label === 'Aristocrats (Instant)');
     assert.ok(support);
-    // The three Instants, not the six copy-makers.
-    assert.strictEqual(support.cards.length, 3);
+    // Neither the Instants nor the Sorceries name a card type of their own —
+    // both are unqualified Aristocrats participants, so both back the
+    // hand-attached "(Instant)" qualifier. The Bystander plays no Aristocrats
+    // role at all and is not pulled in just for being an Instant.
+    assert.strictEqual(support.cards.length, 6);
+    assert.ok(!support.cards.some((c) => c.name === 'Bystander'));
   });
 
-  it('a permanentSubtype qualifier only counts cards of that subtype', () => {
+  it('a permanentSubtype qualifier still counts an unrestricted supporter, but not a bystander', () => {
     const copyMakers = (n: number, typeLine: string) =>
       Array.from({ length: n }, (_, i) =>
         makeCard({
@@ -548,8 +571,14 @@ describe('qualifiers', () => {
       );
     const vehicles = copyMakers(3, 'Artifact — Vehicle');
     const others = copyMakers(3, 'Artifact');
+    const bystander = makeCard({
+      name: 'Bystander',
+      type_line: 'Artifact — Vehicle',
+      color_identity: JSON.stringify(['U']),
+      oracle_text: 'Crew 2',
+    });
     const candidate = makeCard({ name: 'Candidate', color_identity: JSON.stringify(['U']) });
-    const entries = [...vehicles, ...others].map((c) => owned(c));
+    const entries = [...vehicles, ...others, bystander].map((c) => owned(c));
     const units = [solo(candidate)];
     const signal: SignalMatch = {
       archetype: 'aristocrats',
@@ -568,8 +597,12 @@ describe('qualifiers', () => {
     );
     const support = suggestions[0]!.themeSupport.find((t) => t.label === 'Aristocrats (Vehicle)');
     assert.ok(support);
-    // The three Vehicles, not the six copy-makers.
-    assert.strictEqual(support.cards.length, 3);
+    // Neither group names a permanent subtype of its own — both are
+    // unqualified Aristocrats participants, so both back the hand-attached
+    // "(Vehicle)" qualifier. The Bystander plays no Aristocrats role at all
+    // and is not pulled in just for being a Vehicle.
+    assert.strictEqual(support.cards.length, 6);
+    assert.ok(!support.cards.some((c) => c.name === 'Bystander'));
   });
 });
 

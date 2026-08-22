@@ -121,6 +121,22 @@ function groupByTheme(
     }
   }
 
+  // Unqualified supports qualified, never the reverse (docs/signals-rework.md,
+  // Phase B). Wilhelt's generic reanimation spells never name Zombies, but
+  // they back "Reanimator (Zombie)" all the same — a card that doesn't
+  // restrict itself supports every restricted variant of the same archetype.
+  // Fold each unqualified group's participants into every qualified group of
+  // the same archetype; the unqualified group's own count is untouched,
+  // since the relation runs one way only.
+  for (const group of groups.values()) {
+    if (group.signal.qualifier) continue;
+    for (const other of groups.values()) {
+      if (other === group || !other.signal.qualifier) continue;
+      if (other.signal.archetype !== group.signal.archetype) continue;
+      other.participants.push(...group.participants);
+    }
+  }
+
   return groups;
 }
 

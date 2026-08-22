@@ -97,6 +97,34 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   None of the three has a consuming archetype yet — `alternativeCost` is
   `freeSpells`'s job (Phase C1); `modified`/`alternateWin` are exercised
   directly in tests, same as `cardType`/`permanentSubtype` before them.
+- **Signal engine, Phase B (part 5) — the signal containment merge:
+  unqualified supports qualified, never the reverse.** `groupByTheme`
+  (deckAnalysis.ts) and `supporterMatches` (synergy.ts) used to treat, say,
+  `reanimator` and `reanimator:Zombie` as unrelated buckets. Wilhelt's real
+  decklist has exactly the corpus case this broke: Liliana, Death's
+  Majesty's reanimation spell doesn't restrict what it returns (unqualified),
+  while Tomb Tyrant's and Zombie Apocalypse's do (`reanimator:Zombie`) —
+  three cards that all plainly work together, split into two sub-threshold
+  groups (1 and 2, both under `MIN_THEME_CARDS`), reporting no reanimation
+  theme at all despite the deck plainly reanimating.
+  - `groupByTheme` now folds every unqualified group's participants into
+    every qualified group of the *same* archetype after building them —
+    the unqualified group's own count is untouched, since the relation
+    runs one way only. Verified against the real Wilhelt fixture: the three
+    cards above now report as one `Reanimator (Zombie)` theme.
+  - `synergy.ts` gains the same relation as a shared `ownSignalContains`
+    helper, used both by `supporterMatches` (a new containment path
+    alongside the existing raw-fact/type checks — an owned card can support
+    a qualified commander signal via either) and by `playsDefiningRole`
+    (refactored onto the same helper, unchanged behavior).
+  - Verifying this against the full 20-deck corpus surfaced a pre-existing,
+    unrelated imprecision in `findQualifier` (Angel of Glory's Rise
+    mis-qualifies as `reanimator:Zombie` instead of `reanimator:Human`,
+    because it scans the whole clause for the first known type word rather
+    than the one the payoff verb actually restricts) — newly *visible*
+    because the merge pushed that group over threshold, not caused by it.
+    Recorded as a new "Known tension" in `docs/archetypes.md` rather than
+    fixed here, since it's a different bug than this phase scopes.
 
 ### Fixed
 

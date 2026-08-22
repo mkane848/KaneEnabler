@@ -18,10 +18,19 @@ Second Sun in the seeded database — no consuming archetype yet (`alternativeCo
 job, Phase C1; `modified`/`alternateWin` likewise exercised directly in tests), same as
 `cardType`/`permanentSubtype` before it. Checking Book of Exalted Deeds against the real database
 turned up an archetypes.md inaccuracy (corrected there): its own text doesn't win the game, it only
-grants a "can't lose/win" clause to an Angel. Still outstanding within Phase B: `gameState` (needs its
-own archetype, arguably Phase C2's job) and the unqualified-supports-qualified signal containment
-merge. Cascade (`freeSpells`) still needs a Phase C archetype that doesn't exist yet. The corpus this
-is derived from is committed at `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
+grants a "can't lose/win" clause to an Angel. And the **signal containment merge** — unqualified
+supports qualified, never the reverse (`groupByTheme` in deckAnalysis.ts, `supporterMatches` in
+synergy.ts) — verified against the real Wilhelt corpus fixture: Liliana, Death's Majesty's
+unqualified reanimation spell now folds into `Reanimator (Zombie)` alongside Tomb Tyrant and Zombie
+Apocalypse, clearing `MIN_THEME_CARDS` where three sub-threshold fragments previously reported
+nothing (archetypes.md's own motivating example, confirmed exactly). Verifying this against the full
+20-deck corpus also surfaced a pre-existing, unrelated `findQualifier` imprecision (Angel of Glory's
+Rise mis-qualifying as Zombie instead of Human) — newly visible because of the merge, not caused by
+it; recorded as a new "Known tension" in archetypes.md rather than fixed here, since it's a different
+bug than the one this phase scopes. Still outstanding within Phase B: `gameState` (needs its own
+archetype, arguably Phase C2's job). Cascade (`freeSpells`) still needs a Phase C archetype that
+doesn't exist yet. The corpus this is derived from is committed at
+`apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
