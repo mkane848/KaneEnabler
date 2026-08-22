@@ -471,3 +471,568 @@ describe('Voltron', () => {
     assert.ok(rolesOf(signalsFor(gauntlets), 'voltron').includes('rewards'));
   });
 });
+
+describe('sacrificesACreature/sacrificesKind read the cost side only', () => {
+  it('a sacrifice cost naming a creature type is an Aristocrats outlet, not just kindred', () => {
+    // Siege-Gang Commander — real oracle text. Says "Sacrifice a Goblin",
+    // never the literal word "creature".
+    const siegeGang = makeCard({
+      name: 'Siege-Gang Commander',
+      type_line: 'Creature — Goblin',
+      creature_types: JSON.stringify(['Goblin']),
+      oracle_text:
+        'When this creature enters, create three 1/1 red Goblin creature tokens.\n' +
+        '{1}{R}, Sacrifice a Goblin: This creature deals 2 damage to any target.',
+    });
+    const roles = rolesOf(signalsFor(siegeGang, ['Goblin']), 'aristocrats');
+    assert.ok(roles.includes('consumes'), JSON.stringify(roles));
+  });
+
+  it('a spell-cost sacrifice naming a creature type is still an Aristocrats outlet', () => {
+    // Goblin Grenade — real oracle text. An additional cost, not an
+    // activated ability, so there is no ':' at all.
+    const grenade = makeCard({
+      name: 'Goblin Grenade',
+      type_line: 'Sorcery',
+      oracle_text:
+        'As an additional cost to cast this spell, sacrifice a Goblin.\n' + 'Deals 5 damage to any target.',
+    });
+    assert.ok(rolesOf(signalsFor(grenade, ['Goblin']), 'aristocrats').includes('consumes'));
+  });
+
+  it("a kindred consumer is read from the cost, not wherever the type is mentioned", () => {
+    // Wilhelt, the Rotcleaver — real oracle text. "You may sacrifice a
+    // Zombie" is a real Zombie consumer and a real Aristocrats outlet, which
+    // the old check missed entirely because it required the literal word
+    // "creature".
+    const wilhelt = makeCard({
+      name: 'Wilhelt, the Rotcleaver',
+      type_line: 'Legendary Creature — Zombie Warrior',
+      creature_types: JSON.stringify(['Zombie', 'Warrior']),
+      oracle_text:
+        "Whenever another Zombie you control dies, if it didn't have decayed, create a 2/2 black Zombie " +
+        'creature token with decayed.\n' +
+        'At the beginning of your end step, you may sacrifice a Zombie. If you do, draw a card.',
+    });
+    const signals = signalsFor(wilhelt, ['Zombie']);
+    assert.ok(rolesOf(signals, 'kindred', 'Zombie').includes('consumes'));
+    assert.ok(rolesOf(signals, 'aristocrats').includes('consumes'));
+  });
+
+  it('Sophia does not consume Dogs — she sacrifices an artifact token', () => {
+    // Sophia, Dogged Detective — real oracle text. "Dog" appears only in the
+    // EFFECT half of the ability, past the ':'; reading the whole clause
+    // used to credit her with consuming Dogs, which she does not.
+    const sophia = makeCard({
+      name: 'Sophia, Dogged Detective',
+      type_line: 'Legendary Creature — Human Detective',
+      creature_types: JSON.stringify(['Human', 'Detective']),
+      oracle_text:
+        'When Sophia enters, create Tiny, a legendary 2/2 green Dog Detective creature token with trample.\n' +
+        '{1}, Sacrifice an artifact token: Put a +1/+1 counter on each Dog you control.\n' +
+        'Whenever a Dog you control deals combat damage to a player, create a Food token, then investigate.',
+    });
+    const signals = signalsFor(sophia, ['Dog']);
+    assert.ok(!rolesOf(signals, 'kindred', 'Dog').includes('consumes'));
+    // She still isn't an Aristocrats *outlet* — an artifact token isn't a
+    // creature, so nothing here should read as a sacrifice outlet, even
+    // though her token-making elsewhere legitimately makes her a producer.
+    assert.ok(!rolesOf(signals, 'aristocrats').includes('consumes'));
+  });
+
+  it('an edict is still not a sacrifice outlet', () => {
+    const edict = makeCard({
+      name: 'Test Edict',
+      oracle_text: 'Each player sacrifices a creature.',
+    });
+    assert.ok(!rolesOf(signalsFor(edict), 'aristocrats').includes('consumes'));
+  });
+});
+
+describe('reminder-only keywords get explicit matchers', () => {
+  it('Exploit is an Aristocrats outlet even though its cost text is reminder-only', () => {
+    // Fell Stinger — real oracle text.
+    const fellStinger = makeCard({
+      name: 'Fell Stinger',
+      type_line: 'Creature — Zombie Scorpion',
+      creature_types: JSON.stringify(['Zombie', 'Scorpion']),
+      keywords: JSON.stringify(['Exploit', 'Deathtouch']),
+      oracle_text:
+        'Deathtouch\n' +
+        'Exploit (When this creature enters, you may sacrifice a creature.)\n' +
+        'When this creature exploits a creature, target player draws two cards and loses 2 life.',
+    });
+    assert.ok(rolesOf(signalsFor(fellStinger), 'aristocrats').includes('consumes'));
+  });
+
+  it('a Decayed creature is Aristocrats fodder — it is guaranteed to sacrifice itself', () => {
+    // Rot-Curse Rakshasa — real oracle text.
+    const rakshasa = makeCard({
+      name: 'Rot-Curse Rakshasa',
+      type_line: 'Creature — Demon',
+      creature_types: JSON.stringify(['Demon']),
+      keywords: JSON.stringify(['Trample', 'Decayed']),
+      oracle_text:
+        'Trample\n' +
+        "Decayed (This creature can't block. When it attacks, sacrifice it at end of combat.)\n" +
+        'Renew — {X}{B}{B}, Exile this card from your graveyard: Put a decayed counter on each of X target ' +
+        'creatures. Activate only as a sorcery.',
+    });
+    assert.ok(rolesOf(signalsFor(rakshasa), 'aristocrats').includes('produces'));
+  });
+
+  it('Evoke and Blitz creatures are Aristocrats fodder for the same reason', () => {
+    // Walker of the Grove and Workshop Warchief — real oracle text.
+    const walker = makeCard({
+      name: 'Walker of the Grove',
+      type_line: 'Creature — Elemental',
+      creature_types: JSON.stringify(['Elemental']),
+      keywords: JSON.stringify(['Evoke']),
+      oracle_text:
+        'When this creature leaves the battlefield, create a 4/4 green Elemental creature token.\n' +
+        "Evoke {4}{G} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+    });
+    assert.ok(rolesOf(signalsFor(walker), 'aristocrats').includes('produces'));
+
+    const warchief = makeCard({
+      name: 'Workshop Warchief',
+      type_line: 'Creature — Rhino Warrior',
+      creature_types: JSON.stringify(['Rhino', 'Warrior']),
+      keywords: JSON.stringify(['Trample', 'Blitz']),
+      oracle_text:
+        'Trample\n' +
+        'When this creature enters, you gain 3 life.\n' +
+        'When this creature dies, create a 4/4 green Rhino Warrior creature token.\n' +
+        'Blitz {4}{G}{G} (If you cast this spell for its blitz cost, it gains haste and "When this creature ' +
+        'dies, draw a card." Sacrifice it at the beginning of the next end step.)',
+    });
+    assert.ok(rolesOf(signalsFor(warchief), 'aristocrats').includes('produces'));
+  });
+
+  it('"For Mirrodin!" is a Voltron attach and a creature-token producer, though its own text is reminder-only', () => {
+    // Mirran Bardiche — real oracle text.
+    const bardiche = makeCard({
+      name: 'Mirran Bardiche',
+      type_line: 'Artifact — Equipment',
+      keywords: JSON.stringify(['Equip', 'Vigilance']),
+      oracle_text:
+        'For Mirrodin! (When this Equipment enters, create a 2/2 red Rebel creature token, then attach ' +
+        'this to it.)\n' +
+        'Equipped creature gets +2/+1 and has vigilance.\n' +
+        'Equip {3}{W} ({3}{W}: Attach to target creature you control. Equip only as a sorcery.)',
+    });
+    const signals = signalsFor(bardiche);
+    assert.ok(rolesOf(signals, 'voltron').includes('produces'));
+    assert.ok(rolesOf(signals, 'goWide').includes('produces'));
+  });
+
+  it('Demonstrate is a Spellslinger amplifier, though its own copy text is reminder-only', () => {
+    // Incarnation Technique — real oracle text.
+    const technique = makeCard({
+      name: 'Incarnation Technique',
+      type_line: 'Sorcery',
+      keywords: JSON.stringify(['Demonstrate']),
+      oracle_text:
+        'Demonstrate (When you cast this spell, you may copy it. If you do, choose an opponent to also ' +
+        'copy it.)\n' +
+        'Mill five cards, then return a creature card from your graveyard to the battlefield.',
+    });
+    assert.ok(rolesOf(signalsFor(technique), 'spellslinger').includes('amplifies'));
+  });
+
+  it('Myriad is a Go-Wide producer, though its own token-copy text is reminder-only', () => {
+    // Conclave Evangelist — real oracle text.
+    const evangelist = makeCard({
+      name: 'Conclave Evangelist',
+      type_line: 'Creature — Elephant Cleric',
+      creature_types: JSON.stringify(['Elephant', 'Cleric']),
+      keywords: JSON.stringify(['Myriad']),
+      oracle_text:
+        'Myriad (Whenever this creature attacks, for each opponent other than defending player, you may ' +
+        "create a token copy that's tapped and attacking that player or a planeswalker they control. Exile " +
+        'the tokens at end of combat.)\n' +
+        'Whenever this creature deals combat damage to a player, create a token that\'s a copy of this creature.',
+    });
+    assert.ok(rolesOf(signalsFor(evangelist), 'goWide').includes('produces'));
+  });
+});
+
+describe('lord wording is normalised onto one shape', () => {
+  it('"All X creatures get" registers the same as "X creatures you control get"', () => {
+    // Muscle Sliver — real oracle text.
+    const muscleSliver = makeCard({
+      name: 'Muscle Sliver',
+      type_line: 'Creature — Sliver',
+      creature_types: JSON.stringify(['Sliver']),
+      oracle_text: 'All Sliver creatures get +1/+1.',
+    });
+    assert.ok(rolesOf(signalsFor(muscleSliver, ['Sliver']), 'goWide', 'Sliver').includes('rewards'));
+  });
+
+  it('"X you control get" (no "creatures") registers the same way', () => {
+    // Tomb Tyrant — real oracle text.
+    const tombTyrant = makeCard({
+      name: 'Tomb Tyrant',
+      type_line: 'Creature — Zombie Noble',
+      creature_types: JSON.stringify(['Zombie', 'Noble']),
+      oracle_text:
+        'Other Zombies you control get +1/+1.\n' +
+        '{2}{B}, {T}, Sacrifice a creature: Return a Zombie creature card at random from your graveyard to ' +
+        'the battlefield. Activate only during your turn and only if there are at least three Zombie ' +
+        'creature cards in your graveyard.',
+    });
+    assert.ok(rolesOf(signalsFor(tombTyrant, ['Zombie']), 'goWide', 'Zombie').includes('rewards'));
+  });
+});
+
+describe('a spelled-out death definition counts as a death trigger', () => {
+  it('"put into a graveyard or exile from the battlefield" is Aristocrats rewards', () => {
+    // Psychomancer — real oracle text. Never says "dies"/"dying" at all.
+    const psychomancer = makeCard({
+      name: 'Psychomancer',
+      type_line: 'Creature — Vampire Wizard',
+      creature_types: JSON.stringify(['Vampire', 'Wizard']),
+      oracle_text:
+        'Flying\n' +
+        'Harbinger of Despair — Whenever this creature or another nontoken artifact you control is put ' +
+        'into a graveyard from the battlefield or is put into exile from the battlefield, target opponent ' +
+        'loses 1 life and you gain 1 life.',
+    });
+    assert.ok(rolesOf(signalsFor(psychomancer), 'aristocrats').includes('rewards'));
+  });
+});
+
+describe('graveyard filling beyond mill', () => {
+  it('"search your library for ... put them into your graveyard" is Self-Mill production', () => {
+    // Buried Alive, Unmarked Grave, Disciples of Gix — real oracle text.
+    const buriedAlive = makeCard({
+      name: 'Buried Alive',
+      type_line: 'Sorcery',
+      oracle_text: 'Search your library for up to three creature cards, put them into your graveyard, then shuffle.',
+    });
+    assert.ok(rolesOf(signalsFor(buriedAlive), 'selfMill').includes('produces'));
+
+    const unmarkedGrave = makeCard({
+      name: 'Unmarked Grave',
+      type_line: 'Sorcery',
+      oracle_text: 'Search your library for a nonlegendary card, put that card into your graveyard, then shuffle.',
+    });
+    assert.ok(rolesOf(signalsFor(unmarkedGrave), 'selfMill').includes('produces'));
+  });
+
+  it('"Mill N cards, then ..." registers even with a comma, not just a period', () => {
+    // Incarnation Technique — real oracle text.
+    const technique = makeCard({
+      name: 'Incarnation Technique',
+      type_line: 'Sorcery',
+      oracle_text: 'Mill five cards, then return a creature card from your graveyard to the battlefield.',
+    });
+    assert.ok(rolesOf(signalsFor(technique), 'selfMill').includes('produces'));
+  });
+
+  it('discarding your own cards is Self-Mill production', () => {
+    // Faithless Looting, Thrill of Possibility, Windfall, Ideas Unbound —
+    // real oracle text.
+    const looting = makeCard({
+      name: 'Faithless Looting',
+      type_line: 'Sorcery',
+      oracle_text:
+        'Draw two cards, then discard two cards.\n' +
+        'Flashback {2}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)',
+    });
+    assert.ok(rolesOf(signalsFor(looting), 'selfMill').includes('produces'));
+
+    const thrill = makeCard({
+      name: 'Thrill of Possibility',
+      type_line: 'Instant',
+      oracle_text: 'As an additional cost to cast this spell, discard a card.\nDraw two cards.',
+    });
+    assert.ok(rolesOf(signalsFor(thrill), 'selfMill').includes('produces'));
+
+    const windfall = makeCard({
+      name: 'Windfall',
+      type_line: 'Sorcery',
+      oracle_text:
+        'Each player discards their hand, then draws cards equal to the greatest number of cards a player ' +
+        'discarded this way.',
+    });
+    assert.ok(rolesOf(signalsFor(windfall), 'selfMill').includes('produces'));
+  });
+
+  it('making an OPPONENT discard is not Self-Mill production', () => {
+    const edict = makeCard({
+      name: 'Test Hand Attack',
+      oracle_text: 'Target opponent discards a card.',
+    });
+    assert.ok(!rolesOf(signalsFor(edict), 'selfMill').includes('produces'));
+  });
+});
+
+describe('reanimation misses', () => {
+  it('reanimating from an opponent\'s graveyard still counts', () => {
+    // Gruesome Encore, Puppeteer Clique — real oracle text.
+    const gruesomeEncore = makeCard({
+      name: 'Gruesome Encore',
+      type_line: 'Sorcery',
+      oracle_text:
+        "Put target creature card from an opponent's graveyard onto the battlefield under your control. It " +
+        'gains haste. Exile it at the beginning of the next end step. If that creature would leave the ' +
+        'battlefield, exile it instead of putting it anywhere else.',
+    });
+    assert.ok(rolesOf(signalsFor(gruesomeEncore), 'reanimator').includes('rewards'));
+  });
+
+  it('reanimating any "permanent card", not just a creature card, still counts', () => {
+    // Sun Titan — real oracle text.
+    const sunTitan = makeCard({
+      name: 'Sun Titan',
+      type_line: 'Creature — Giant',
+      creature_types: JSON.stringify(['Giant']),
+      oracle_text:
+        'Vigilance\n' +
+        'Whenever this creature enters or attacks, you may return target permanent card with mana value 3 ' +
+        'or less from your graveyard to the battlefield.',
+    });
+    assert.ok(rolesOf(signalsFor(sunTitan), 'reanimator').includes('rewards'));
+  });
+});
+
+describe('"Nth spell each turn" is one family, not just "first"', () => {
+  it("Eukrasia's own second-spell trigger registers, without an instant/sorcery restriction", () => {
+    // Alphinaud Leveilleur — real oracle text.
+    const alphinaud = makeCard({
+      name: 'Alphinaud Leveilleur',
+      type_line: 'Legendary Creature — Human Wizard',
+      oracle_text:
+        'Partner with Alisaie Leveilleur (When this creature enters, target player may put Alisaie ' +
+        'Leveilleur into their hand from their library, then shuffle.)\n' +
+        'Vigilance\n' +
+        'Eukrasia — Whenever you cast your second spell each turn, draw a card.',
+    });
+    assert.ok(rolesOf(signalsFor(alphinaud), 'spellslinger').includes('rewards'));
+  });
+});
+
+describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
+  it("Hardened Scales' own passive-voice amplifier registers", () => {
+    const hardenedScales = makeCard({
+      name: 'Hardened Scales',
+      type_line: 'Enchantment',
+      oracle_text:
+        'If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 ' +
+        'counters are put on it instead.',
+    });
+    assert.ok(rolesOf(signalsFor(hardenedScales), 'counters').includes('amplifies'));
+  });
+
+  it('"creature with a +1/+1 counter on it" is the dominant payoff templating', () => {
+    // Herald of Secret Streams, Ainok Bond-Kin, Inspiring Call — real oracle
+    // text.
+    const herald = makeCard({
+      name: 'Herald of Secret Streams',
+      type_line: 'Creature — Merfolk Warrior',
+      creature_types: JSON.stringify(['Merfolk', 'Warrior']),
+      oracle_text: "Creatures you control with +1/+1 counters on them can't be blocked.",
+    });
+    assert.ok(rolesOf(signalsFor(herald), 'counters').includes('rewards'));
+
+    const ainok = makeCard({
+      name: 'Ainok Bond-Kin',
+      type_line: 'Creature — Dog Soldier',
+      creature_types: JSON.stringify(['Dog', 'Soldier']),
+      oracle_text:
+        'Outlast {1}{W} ({1}{W}, {T}: Put a +1/+1 counter on this creature. Outlast only as a sorcery.)\n' +
+        'Each creature you control with a +1/+1 counter on it has first strike.',
+    });
+    assert.ok(rolesOf(signalsFor(ainok), 'counters').includes('rewards'));
+
+    const inspiringCall = makeCard({
+      name: 'Inspiring Call',
+      type_line: 'Instant',
+      oracle_text:
+        'Draw a card for each creature you control with a +1/+1 counter on it. Those creatures gain ' +
+        'indestructible until end of turn.',
+    });
+    assert.ok(rolesOf(signalsFor(inspiringCall), 'counters').includes('rewards'));
+  });
+
+  it('The Ozolith is a payoff even though it never says "+1/+1"', () => {
+    const ozolith = makeCard({
+      name: 'The Ozolith',
+      type_line: 'Legendary Artifact',
+      oracle_text:
+        'Whenever a creature you control leaves the battlefield, if it had counters on it, put those ' +
+        'counters on The Ozolith.\n' +
+        'At the beginning of combat on your turn, if The Ozolith has counters on it, you may move all ' +
+        'counters from The Ozolith onto target creature.',
+    });
+    assert.ok(rolesOf(signalsFor(ozolith), 'counters').includes('rewards'));
+  });
+
+  it('"enters with N +1/+1 counters" is production, not just "put"', () => {
+    // Faithful Watchdog, Wildwood Scourge, District Mascot, Giada — real
+    // oracle text.
+    const watchdog = makeCard({
+      name: 'Faithful Watchdog',
+      type_line: 'Creature — Dog',
+      creature_types: JSON.stringify(['Dog']),
+      oracle_text: 'Vigilance\nThis creature enters with three +1/+1 counters on it.',
+    });
+    assert.ok(rolesOf(signalsFor(watchdog), 'counters').includes('produces'));
+
+    const giada = makeCard({
+      name: 'Giada, Font of Hope',
+      type_line: 'Legendary Creature — Angel',
+      creature_types: JSON.stringify(['Angel']),
+      oracle_text:
+        'Flying, vigilance\n' +
+        'Each other Angel you control enters with an additional +1/+1 counter on it for each Angel you ' +
+        'already control.\n' +
+        '{T}: Add {W}. Spend this mana only to cast an Angel spell.',
+    });
+    assert.ok(rolesOf(signalsFor(giada), 'counters').includes('produces'));
+  });
+
+  it('Distribute and Proliferate are also production', () => {
+    const ajani = makeCard({
+      name: 'Ajani, Mentor of Heroes',
+      type_line: 'Legendary Planeswalker — Ajani',
+      oracle_text:
+        '+1: Distribute three +1/+1 counters among one, two, or three target creatures you control.\n' +
+        '+1: Look at the top four cards of your library. You may reveal an Aura, creature, or planeswalker ' +
+        'card from among them and put it into your hand. Put the rest on the bottom of your library in any ' +
+        'order.\n' +
+        '−8: You gain 100 life.',
+    });
+    assert.ok(rolesOf(signalsFor(ajani), 'counters').includes('produces'));
+
+    const proliferator = makeCard({
+      name: 'Test Proliferator',
+      oracle_text: 'Proliferate.',
+      keywords: JSON.stringify(['Proliferate']),
+    });
+    assert.ok(rolesOf(signalsFor(proliferator), 'counters').includes('produces'));
+  });
+});
+
+describe('token descriptor stripping is scoped to token-creation clauses', () => {
+  it('two intervening words are stripped, not just one', () => {
+    // Their Number Is Legion — real oracle text. It genuinely makes Necron
+    // tokens (a real `produces`), but one intervening word was not enough
+    // to strip "Necron Warrior artifact creature tokens" from the *caring*
+    // scan, so "equal to the number of artifacts you control" — a clause
+    // that has nothing to do with Necrons — falsely added `rewards` too,
+    // reading it as a Necron payoff rather than just a Necron producer.
+    const theirNumber = makeCard({
+      name: 'Their Number Is Legion',
+      type_line: 'Sorcery',
+      oracle_text:
+        'Create X tapped 2/2 black Necron Warrior artifact creature tokens, then you gain life equal to ' +
+        'the number of artifacts you control. Exile Their Number Is Legion.\n' +
+        'You may cast this card from your graveyard.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(theirNumber, ['Necron']), 'kindred', 'Necron'), ['produces']);
+  });
+
+  it('a token-type mention OUTSIDE a create clause is not erased', () => {
+    // Gleaming Overseer, Eternal Skylord, Dreadhorde Invasion — real oracle
+    // text. Their own Zombie-token payoffs live in a separate ability from
+    // the (reminder-only) amass clause that makes the token.
+    const gleamingOverseer = makeCard({
+      name: 'Gleaming Overseer',
+      type_line: 'Creature — Zombie Wizard',
+      creature_types: JSON.stringify(['Zombie', 'Wizard']),
+      oracle_text:
+        'When this creature enters, amass Zombies 1. (Put a +1/+1 counter on an Army you control. It\'s ' +
+        "also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\n" +
+        'Zombie tokens you control have hexproof and menace.',
+    });
+    assert.ok(rolesOf(signalsFor(gleamingOverseer, ['Zombie']), 'kindred', 'Zombie').includes('rewards'));
+
+    const eternalSkylord = makeCard({
+      name: 'Eternal Skylord',
+      type_line: 'Creature — Zombie Wizard',
+      creature_types: JSON.stringify(['Zombie', 'Wizard']),
+      oracle_text:
+        'When this creature enters, amass Zombies 2. (Put two +1/+1 counters on an Army you control. It\'s ' +
+        "also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\n" +
+        'Zombie tokens you control have flying.',
+    });
+    assert.ok(rolesOf(signalsFor(eternalSkylord, ['Zombie']), 'kindred', 'Zombie').includes('rewards'));
+
+    const dreadhordeInvasion = makeCard({
+      name: 'Dreadhorde Invasion',
+      type_line: 'Enchantment',
+      oracle_text:
+        'At the beginning of your upkeep, you lose 1 life and amass Zombies 1. (Put a +1/+1 counter on an ' +
+        "Army you control. It's also a Zombie. If you don't control an Army, create a 0/0 black Zombie " +
+        'Army creature token first.)\n' +
+        'Whenever a Zombie token you control with power 6 or greater attacks, it gains lifelink until end ' +
+        'of turn.',
+    });
+    assert.ok(
+      rolesOf(signalsFor(dreadhordeInvasion, ['Zombie']), 'kindred', 'Zombie').includes('rewards'),
+    );
+  });
+
+  it('"create a token that\'s a copy of" is recognised as token production', () => {
+    const copyMaker = makeCard({
+      name: 'Test Copier',
+      oracle_text: "{7}: Create a token that's a copy of target artifact.",
+    });
+    assert.ok(rolesOf(signalsFor(copyMaker), 'goWide').includes('produces'));
+    assert.ok(rolesOf(signalsFor(copyMaker), 'aristocrats').includes('produces'));
+  });
+});
+
+describe('keyword-care plurals', () => {
+  it('a payoff mentioning only the plural form ("Foods") still registers as caring', () => {
+    // Peregrin Took and The Cabbage Merchant are real Food payoffs whose
+    // reward text uses "Foods" — the bare, unpluralised pattern this
+    // replaces would have missed a card whose *only* reward mention is
+    // plural, exactly like this one.
+    const foodPayoff = makeCard({
+      name: 'Test Food Payoff',
+      keywords: JSON.stringify(['Food']),
+      oracle_text: 'Whenever one or more Foods enter the battlefield under your control, draw a card.',
+    });
+    assert.ok(rolesOf(signalsFor(foodPayoff, [], ['Food']), 'keywordCare', 'Food').includes('rewards'));
+  });
+});
+
+describe('Voltron: a genuine reward beyond the deliberately-excluded shape', () => {
+  it('"if it was enchanted or equipped" is a reward, not the equipment describing itself', () => {
+    // Koll, the Forgemaster — real oracle text.
+    const koll = makeCard({
+      name: 'Koll, the Forgemaster',
+      type_line: 'Legendary Creature — Dwarf Warrior',
+      creature_types: JSON.stringify(['Dwarf', 'Warrior']),
+      oracle_text:
+        "Whenever another nontoken creature you control dies, if it was enchanted or equipped, return it " +
+        "to its owner's hand.\n" +
+        'Creature tokens you control that are enchanted or equipped get +1/+1.',
+    });
+    assert.ok(rolesOf(signalsFor(koll), 'voltron').includes('rewards'));
+  });
+});
+
+describe('amass produces the named type and Army, though its own text is reminder-only', () => {
+  it('a typed amass card is kindred for the named type and for Army, and counts as +1/+1 Counters production', () => {
+    // Gothmog, Morgul Lieutenant — real oracle text, from the Sauron corpus
+    // deck (~18 Orc-amass cards).
+    const gothmog = makeCard({
+      name: 'Gothmog, Morgul Lieutenant',
+      type_line: 'Legendary Creature — Human Soldier',
+      creature_types: JSON.stringify(['Human', 'Soldier']),
+      oracle_text:
+        'When Gothmog enters, amass Orcs 1. (Put a +1/+1 counter on an Army you control. It\'s also an Orc. ' +
+        "If you don't control an Army, create a 0/0 black Orc Army creature token first.)\n" +
+        'Creature tokens you control have deathtouch.',
+    });
+    const signals = signalsFor(gothmog, ['Orc', 'Army']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', 'Orc'), ['produces']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', 'Army'), ['produces']);
+    assert.ok(rolesOf(signals, 'counters').includes('produces'));
+    assert.ok(rolesOf(signals, 'goWide').includes('produces'));
+  });
+});

@@ -3,9 +3,13 @@
 The companion to [`archetypes.md`](./archetypes.md). That document says what the vocabulary **means**
 and why; this one says what to **change**, in what order, and how to know it worked.
 
-**Phase A has landed** (see its section below and the `[Unreleased]` entry in
-`apps/commander-recommender/CHANGELOG.md`). Phases A2 onward have not. The corpus it is derived from
-is committed at `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
+**Phases A and A2 have landed** (see their sections below and the `[Unreleased]` entries in
+`apps/commander-recommender/CHANGELOG.md`). Phase B onward has not. A few individual items inside A2
+stayed deferred on purpose because they need a not-yet-built piece of a later phase — equip-cost
+reduction/free-equip (`voltron`), Dualcast's cost reduction (`spellslinger`), and Cascade (`freeSpells`)
+all need Phase B's `enables` role or a Phase C archetype that doesn't exist yet; each is called out
+in its own commit/changelog entry. The corpus it is derived from is committed at
+`apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.

@@ -149,9 +149,11 @@ export interface CardFacts {
   rawText: string;
   creatureTypes: string[];
   keywords: string[];
-  /** Creature types this card creates tokens of. "Create two 1/1 red Goblin
-   * creature tokens" makes Krenko's Command a Goblin card despite a Sorcery
-   * having no creature types of its own. */
+  /** Creature types this card creates tokens of, or grows via `amass`
+   * (always including 'Army'). "Create two 1/1 red Goblin creature tokens"
+   * makes Krenko's Command a Goblin card despite a Sorcery having no
+   * creature types of its own; "amass Orcs 1" makes a card an Orc *and* an
+   * Army card the same way. */
   producedTokenTypes: string[];
   /** The card sacrifices *itself* — a fetch land, a Blood Crypt-style cost.
    * Distinct from sacrificing an indefinite object, which is the Aristocrats
@@ -222,6 +224,23 @@ function findProducedTokenTypes(text: string, vocab: Vocabulary): string[] {
 }
 
 /**
+ * Creature types this card creates or grows via `amass` — "amass Orcs 1"
+ * both grows (or creates) an Army token and turns it into the named type, so
+ * it counts as producing both. The reminder explaining the mechanic is
+ * stripped like any other, but the keyword's own printed name and type
+ * argument survive.
+ */
+function findAmassedTypes(text: string, vocab: Vocabulary): string[] {
+  const found = new Set<string>();
+  for (const match of text.matchAll(/\bamass (\w+)/gi)) {
+    found.add('Army');
+    const type = vocab.typeByWord.get(match[1]!.toLowerCase());
+    if (type) found.add(type);
+  }
+  return [...found];
+}
+
+/**
  * Lookup tables for the vocabulary signal detection recognises.
  *
  * Built once and reused across every card. The point is direction: with a
@@ -281,19 +300,38 @@ const tokenDescriptorCache = new Map<string, RegExp>();
 
 /**
  * A token's printed type line inside a "create" clause — "Goblin creature
- * tokens", "Elf Warrior creature tokens". One optional intervening word so a
- * token with two creature types still matches.
+ * tokens", "Necron Warrior artifact creature tokens". Any number of
+ * intervening words, since a token's full type line can carry several
+ * subtypes and permanent types before "tokens" — one intervening word was
+ * not enough to strip "Necron Warrior artifact creature tokens", and Their
+ * Number Is Legion falsely read as a Necron payoff as a result.
  */
 function tokenDescriptorPattern(type: string): RegExp {
   let pattern = tokenDescriptorCache.get(type);
   if (!pattern) {
     const forms = `(?:${escapeRegExp(type)}|${escapeRegExp(pluralOfType(type))})`;
-    pattern = new RegExp(`\\b${forms}(?:\\s+\\w+)?\\s+(?:creature\\s+)?tokens?\\b`, 'gi');
+    pattern = new RegExp(`\\b${forms}(?:\\s+\\w+)*\\s+(?:creature\\s+)?tokens?\\b`, 'gi');
     tokenDescriptorCache.set(type, pattern);
   }
   // Shared cached regex with /g — reset before each use.
   pattern.lastIndex = 0;
   return pattern;
+}
+
+/**
+ * The card's own text with token-descriptor phrases ("Goblin creature
+ * tokens") erased, but only *inside* a "create ... token" clause — the
+ * Krenko's Command case the stripping exists for, mirroring
+ * `findProducedTokenTypes`'s own clause-scoping. Stripping the same phrase
+ * everywhere else is wrong: it erased Gleaming Overseer's "Zombie tokens you
+ * control have hexproof and menace", Eternal Skylord's flying grant, and
+ * Dreadhorde Invasion's attack trigger, none of which are inside a
+ * token-creation clause.
+ */
+function withoutTokenDescriptors(text: string, type: string): string {
+  return text.replace(/create[^.;]*token[^.;]*/gi, (clause) =>
+    clause.replace(tokenDescriptorPattern(type), ' '),
+  );
 }
 
 /** Matches a word or its plural, on a word boundary. Cached: this runs against
@@ -348,6 +386,68 @@ function detectsSelfGrowth(rawText: string, names: string[]): boolean {
   });
 }
 
+/** Quantifiers a sacrifice cost is phrased with, beyond the small set the
+ * catalog used to test for — "one or more", "up to N", and "any number of"
+ * all pay a real cost, and Plumb the Forbidden ("you may sacrifice one or
+ * more creatures") matched none of the old set at all. */
+const SACRIFICE_QUANTIFIER =
+  'a|an|another|one or more|up to (?:one|two|three|four|five|six|seven|eight|nine|ten|\\d+)|' +
+  'any number of|two|three|four|five|\\d+|x';
+
+const sacrificeKindCache = new Map<string, RegExp>();
+
+/** Everything before a clause's own `:`, or the whole clause if it has none
+ * (a spell's additional cost, which is never an activated ability). */
+function costSideOf(clause: string): string {
+  const colon = clause.indexOf(':');
+  return colon === -1 ? clause : clause.slice(0, colon);
+}
+
+/**
+ * Whether a clause's COST sacrifices an object of the given kind — "a
+ * creature", "a Zombie", "an artifact", "a token" — not merely mentions it
+ * somewhere else in the same ability.
+ *
+ * Shared by `aristocrats.consumes` and `detectKindred`'s own consumes test,
+ * which used to disagree about the same sentence in both directions:
+ * Wilhelt's "you may sacrifice a Zombie" is a Zombie consumer but wasn't
+ * recognised as a sacrifice outlet at all, because the old aristocrats
+ * regex required the literal word "creature"; Sophia's "{1}, Sacrifice an
+ * artifact token: Put a +1/+1 counter on each Dog you control" registered
+ * as *consuming Dogs*, which she does not, because the old check read the
+ * whole clause instead of just the cost.
+ *
+ * Deliberately excludes "sacrifices" (third person) — "Each player
+ * sacrifices a creature" is an edict, not an outlet, and must keep failing.
+ */
+function sacrificesKind(clause: string, kind: string): boolean {
+  let pattern = sacrificeKindCache.get(kind);
+  if (!pattern) {
+    const forms = `(?:${escapeRegExp(kind)}|${escapeRegExp(pluralOfType(kind))})`;
+    pattern = new RegExp(`\\bsacrifice (?:${SACRIFICE_QUANTIFIER})\\b.*\\b${forms}\\b`, 'i');
+    sacrificeKindCache.set(kind, pattern);
+  }
+  return pattern.test(costSideOf(clause));
+}
+
+const SACRIFICE_OBJECT_PATTERN = new RegExp(
+  `\\bsacrifice (?:${SACRIFICE_QUANTIFIER})\\s+([a-z][a-z'-]*)`,
+  'i',
+);
+
+/**
+ * Whether a clause's cost sacrifices a creature — either the bare word
+ * "creature[s]", or a named creature type the card never spells out
+ * generically. Krenko's own sacrifice outlets (Goblin Bombardment,
+ * Siege-Gang Commander, Arms Dealer, Goblin Grenade) all say "Sacrifice a
+ * Goblin", never the word "creature".
+ */
+function sacrificesACreature(clause: string, vocab: Vocabulary): boolean {
+  if (sacrificesKind(clause, 'creature')) return true;
+  const match = SACRIFICE_OBJECT_PATTERN.exec(costSideOf(clause));
+  return !!match && vocab.typeByWord.has(match[1]!.toLowerCase());
+}
+
 /**
  * The individual face names inside a Scryfall-joined card name
  * ("Front // Back" -> ["Front", "Back"]). A single-faced card's name has no
@@ -378,11 +478,35 @@ function stripReminderText(text: string): string {
   return text.replace(/\([^)]*\)/g, ' ');
 }
 
+/**
+ * Normalises two "lord" templating variants onto the one shape the rest of
+ * the catalog expects — "<Type> creatures you control get/gain/have" —
+ * rather than adding a third regex for each archetype that cares.
+ *
+ * Older wording omits "you control" ("All Sliver creatures get +1/+1", Muscle
+ * Sliver); other cards omit "creatures" ("Zombies you control get +1/+1",
+ * Tomb Tyrant). Functionally identical lords, sorted by which decade the card
+ * was printed in. Scoped to known creature-type words specifically, so it
+ * can't misfire on "for each land you control" or similar unrelated phrasing.
+ */
+function normalizeLordWording(text: string, vocab: Vocabulary): string {
+  let out = text.replace(/\ball ([a-z][a-z'-]*) creatures\b/gi, (whole, word: string) =>
+    vocab.typeByWord.has(word.toLowerCase()) ? `${word} creatures you control` : whole,
+  );
+  out = out.replace(
+    /\b([a-z][a-z'-]*) you control (get|gain|have|gets|gains)\b/gi,
+    (whole, word: string, verb: string) =>
+      vocab.typeByWord.has(word.toLowerCase()) ? `${word} creatures you control ${verb}` : whole,
+  );
+  return out;
+}
+
 export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
   const rawText = row.oracle_text ?? '';
   const faceNames = faceNamesIn(row.name);
-  const text = stripReminderText(
-    stripSelfReferences(rawText, ...faceNames, row.back_name ?? null),
+  const text = normalizeLordWording(
+    stripReminderText(stripSelfReferences(rawText, ...faceNames, row.back_name ?? null)),
+    vocab,
   );
   const typeLine = row.type_line ?? '';
   return {
@@ -392,7 +516,9 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     rawText,
     creatureTypes: parseJsonArray(row.creature_types),
     keywords: parseJsonArray(row.keywords),
-    producedTokenTypes: findProducedTokenTypes(text, vocab),
+    producedTokenTypes: [
+      ...new Set([...findProducedTokenTypes(text, vocab), ...findAmassedTypes(text, vocab)]),
+    ],
     sacrificesItself: detectsSelfSacrifice(rawText, faceNames),
     growsItself: detectsSelfGrowth(rawText, faceNames),
     isLand: /\bLand\b/.test(typeLine),
@@ -405,7 +531,7 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
 // The archetype catalog
 // ---------------------------------------------------------------------------
 
-type Matcher = RegExp | ((f: CardFacts) => boolean);
+type Matcher = RegExp | ((f: CardFacts, vocab: Vocabulary) => boolean);
 
 export interface ArchetypeDef {
   key: string;
@@ -430,8 +556,8 @@ export interface ArchetypeDef {
   definingMinimum?: number;
 }
 
-function matches(matcher: Matcher, facts: CardFacts): boolean {
-  return typeof matcher === 'function' ? matcher(facts) : matcher.test(facts.text);
+function matches(matcher: Matcher, facts: CardFacts, vocab: Vocabulary): boolean {
+  return typeof matcher === 'function' ? matcher(facts, vocab) : matcher.test(facts.text);
 }
 
 /**
@@ -452,14 +578,40 @@ export const ARCHETYPES: ArchetypeDef[] = [
       'different deck.',
     weight: 20,
     roles: {
-      // "Sacrifice a creature:" — an indefinite creature, not itself. A fetch
-      // land sacrificing itself for mana is not this synergy even though the
-      // word appears.
-      consumes: [/\bsacrifice (?:a|an|another|two|three|four|\d+|x)\b[^.;]*\bcreature/i],
+      // "Sacrifice a creature:" or "Sacrifice a Goblin:" — an indefinite
+      // creature (by name or by type), not itself. A fetch land sacrificing
+      // itself for mana is not this synergy even though the word appears.
+      consumes: [
+        (f: CardFacts, vocab: Vocabulary) =>
+          clauses(f.text).some((clause) => sacrificesACreature(clause, vocab)),
+        // Exploit's own operative text ("you may sacrifice a creature") is
+        // reminder-only; the keyword's printed name survives stripping.
+        /\bexploit\b/i,
+      ],
       // "dying" as well as "dies": Teysa Karlov reads "If a creature dying
-      // causes a triggered ability ... to trigger".
-      rewards: [/(?:whenever|if)[^.;]*\b(?:dies|dying)\b/i],
-      produces: [/create[^.;]*\bcreature token/i],
+      // causes a triggered ability ... to trigger". CR 700.4 defines "dies"
+      // as put into a graveyard from the battlefield — Psychomancer spells
+      // that definition out instead of using the word, and exile-from-the-
+      // battlefield is the same shape (Skullclamp-adjacent "sacrifice or
+      // exile" outlets included).
+      rewards: [
+        /(?:whenever|if)[^.;]*\b(?:dies|dying)\b/i,
+        /(?:whenever|if)[^.;]*is put into (?:a|your) graveyard from the battlefield/i,
+        /(?:whenever|if)[^.;]*is put into exile from the battlefield/i,
+      ],
+      produces: [
+        /create[^.;]*\bcreature token/i,
+        // "Create a token that's a copy of ..." never says "creature token".
+        /create a token that'?s a copy of/i,
+        // Decayed and Evoke/Blitz creatures are guaranteed to sacrifice
+        // themselves — fodder, the same shape as a fetch land feeding Lands
+        // Matter. "For Mirrodin!"'s own token-creation text is
+        // reminder-only.
+        /\bdecayed\b/i,
+        /\bevoke\b/i,
+        /\bblitz\b/i,
+        /\bfor mirrodin!/i,
+      ],
       amplifies: [/\b(?:dies|dying)\b[^.]*triggers? an additional time/i],
     },
   },
@@ -475,7 +627,15 @@ export const ARCHETYPES: ArchetypeDef[] = [
     // Slivers instead of forming a phantom unqualified theme.
     qualifiable: 'creatureType',
     roles: {
-      produces: [/create[^.;]*\bcreature token/i],
+      produces: [
+        /create[^.;]*\bcreature token/i,
+        // "Create a token that's a copy of ..." never says "creature token".
+        /create a token that'?s a copy of/i,
+        // Amass and Myriad's own token-making text is reminder-only.
+        /\bamass\b/i,
+        /\bmyriad\b/i,
+        /\bfor mirrodin!/i,
+      ],
       rewards: [
         /where x is the number of creatures you control/i,
         /creatures you control (?:get|gain|have)/i,
@@ -500,7 +660,8 @@ export const ARCHETYPES: ArchetypeDef[] = [
     weight: 20,
     roles: {
       is: [(f) => f.isEquipment || f.isAura],
-      produces: [/\battach\b/i, /\benchant creature\b/i],
+      // "For Mirrodin!"'s own attach text is reminder-only.
+      produces: [/\battach\b/i, /\benchant creature\b/i, /\bfor mirrodin!/i],
       consumes: [/\bequip \{/i],
       // Deliberately NOT "equipped creature gets/has/gains": that is every
       // Equipment describing its own effect, so it made each suit its own
@@ -508,6 +669,12 @@ export const ARCHETYPES: ArchetypeDef[] = [
       // complete Voltron chain, when what it actually lacked was any reason
       // to be stacking Equipment at all. A payoff is a card that rewards you
       // for suiting up and is not itself the suit.
+      // Danitha (Equipment spells cost less), Puresteel Paladin (equip
+      // {0}), and Bruenor (free equip) are real Voltron payoffs that stay
+      // unresolved here on purpose — they're cost reduction and free-equip,
+      // which is `enables`, not `rewards` (see docs/signals-rework.md Phase
+      // B). Koll's "if it was enchanted or equipped" is a genuine reward
+      // and fixable today.
       rewards: [
         /whenever you (?:cast|play) an? (?:equipment|aura)/i,
         /whenever an? (?:equipment|aura)[^.;]*enters/i,
@@ -516,6 +683,7 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /equip abilities you activate cost/i,
         /equipped creatures you control/i,
         /enchanted creatures you control/i,
+        /if it was (?:enchanted|equipped)/i,
       ],
     },
   },
@@ -560,14 +728,20 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /whenever you cast an? (?:instant|sorcery)/i,
         /whenever you cast a noncreature spell/i,
         /instant and sorcery spells? (?:you cast )?costs? \{?\d/i,
-        // "Whenever you cast your first instant spell each turn" — Kalamax,
-        // Double Vision, Arcane Bombardment.
-        /cast your first instant(?: or sorcery)? spell each turn/i,
+        // "Whenever you cast your Nth [instant [or sorcery]] spell each
+        // turn" — Kalamax, Double Vision, Arcane Bombardment ("first
+        // instant [or sorcery] spell"), Alphinaud Leveilleur's Eukrasia
+        // ("second spell", no instant/sorcery restriction at all). Dualcast
+        // ("The second spell you cast each turn costs {2} less") is cost
+        // reduction, not a trigger, and stays unresolved until `enables`
+        // exists (Phase B).
+        /cast your (?:first|second|third) (?:instant(?: or sorcery)? )?spell each turn/i,
         // Magecraft's own templating — Dragonsguard Elite, Storm-Kiln Artist,
         // Ral, Storm Conduit.
         /cast or copy an? instant or sorcery spell/i,
       ],
-      amplifies: [/copy (?:it\.|that spell|the (?:target|next) instant or sorcery)/i],
+      // Demonstrate's own copy text ("you may copy it") is reminder-only.
+      amplifies: [/copy (?:it\.|that spell|the (?:target|next) instant or sorcery)/i, /\bdemonstrate\b/i],
     },
   },
   {
@@ -582,11 +756,35 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // clause targets itself is bookkeeping for another ability (a copy
         // trigger, Magecraft), not production for a +1/+1 Counters deck.
         (f) => !f.growsItself && /put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i.test(f.text),
+        // "Enters with N +1/+1 counters" never says "put" — Faithful
+        // Watchdog, Wildwood Scourge, District Mascot, Giada.
+        (f) => !f.growsItself && /enters with[^.;]*\+1\/\+1 counters?/i.test(f.text),
         /\b(?:adapt|evolve|bolster|outlast)\b/i,
+        // Amass's own counter-placing text is reminder-only.
+        /\bamass\b/i,
+        // Distribute (Ajani, Mentor of Heroes). Proliferate cares about any
+        // counter kind already present, which this (still +1/+1-only)
+        // archetype treats as production until qualified counter types
+        // exist (Phase B).
+        /distribute[^.;]*\+1\/\+1 counters?/i,
+        /\bproliferate\b/i,
       ],
-      rewards: [/whenever[^.;]*\+1\/\+1 counter/i, /for each \+1\/\+1 counter/i],
+      rewards: [
+        /whenever[^.;]*\+1\/\+1 counter/i,
+        /for each \+1\/\+1 counter/i,
+        // The dominant payoff templating — Herald of Secret Streams, Ainok
+        // Bond-Kin, Inspiring Call.
+        /with (?:a |one or more )?\+1\/\+1 counters? on (?:it|them|this creature)/i,
+        // The Ozolith never says "+1/+1" — it moves whatever counters are
+        // already there.
+        /\bcounters on (?:it|them|this (?:creature|permanent|card))\b/i,
+      ],
       amplifies: [
         /would (?:put|distribute) one or more[^.]*counters[^.]*instead/i,
+        // Hardened Scales' own passive-voice templating — the format's most
+        // iconic counters amplifier used the active-voice-only version of
+        // this regex and never matched it.
+        /one or more[^.]*counters[^.]*would be (?:put|distributed)[^.]*instead/i,
         /twice that many[^.]*counters/i,
       ],
     },
@@ -603,8 +801,13 @@ export const ARCHETYPES: ArchetypeDef[] = [
     qualifiable: 'creatureType',
     roles: {
       rewards: [
-        /return[^.;]*creature[^.;]*from (?:your|a) graveyard to the battlefield/i,
-        /put[^.;]*creature card[^.;]*from (?:your|a) graveyard onto the battlefield/i,
+        // "Creature" widened to accept "permanent" — Sun Titan's own
+        // wording ("return target permanent card with mana value 3 or
+        // less") missed entirely on the old, creature-only wording. Also
+        // widened past "your"/"a" graveyard to "an opponent's" — Gruesome
+        // Encore, Puppeteer Clique.
+        /return[^.;]*(?:creature|permanent)[^.;]*from (?:your|a|an opponent's) graveyard to the battlefield/i,
+        /put[^.;]*(?:creature|permanent) card[^.;]*from (?:your|a|an opponent's) graveyard onto the battlefield/i,
         /\bencore\b/i,
         /\bunearth\b/i,
         /\beternalize\b/i,
@@ -623,10 +826,23 @@ export const ARCHETYPES: ArchetypeDef[] = [
     roles: {
       produces: [
         /you mill \w+/i,
-        /mill \w+ cards?\./i,
+        // Accepts a comma as well as a period after "cards" — "Mill five
+        // cards, then return a creature card..." otherwise matches nothing.
+        /mill \w+ cards?[.,]/i,
         /put the top \w+ cards? of your library into your graveyard/i,
         /\bsurveil\b/i,
         /\bdredge\b/i,
+        // Search-and-bin (Buried Alive, Unmarked Grave, Disciples of Gix)
+        // and reveal-and-split (Fact or Fiction) both end with this phrase
+        // without necessarily saying "mill" or "put the top N cards".
+        /into your graveyard\b/i,
+        // Discarding is filling your own graveyard by another name —
+        // Faithless Looting, Thrill of Possibility, Windfall, Fact or
+        // Fiction, Ideas Unbound. Excludes making an OPPONENT discard,
+        // which is an attack, not a resource — opponentMill's territory.
+        (f: CardFacts) =>
+          /\bdiscards?\b/i.test(f.text) &&
+          !/(?:opponent|target player|defending player)s? discards?/i.test(f.text),
       ],
       rewards: [/for each creature card in your graveyard/i, /cards? in your graveyard/i],
     },
@@ -680,11 +896,11 @@ function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): 
   return undefined;
 }
 
-function rolesFor(def: ArchetypeDef, facts: CardFacts): Role[] {
+function rolesFor(def: ArchetypeDef, facts: CardFacts, vocab: Vocabulary): Role[] {
   const found: Role[] = [];
   for (const role of ROLES) {
     const matchers = def.roles[role];
-    if (matchers?.some((m) => matches(m, facts))) found.push(role);
+    if (matchers?.some((m) => matches(m, facts, vocab))) found.push(role);
   }
   return found;
 }
@@ -731,11 +947,16 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
     // once, in the token's name, and is a producer only; Krenko, Mob Boss
     // says it twice — once naming the token, once counting "the number of
     // Goblins you control" — and that second mention is the payoff.
-    const caringText = facts.text.replace(tokenDescriptorPattern(type), ' ');
+    const caringText = withoutTokenDescriptors(facts.text, type);
 
     for (const clause of clauses(caringText)) {
       if (!wordPattern(type).test(clause)) continue;
-      const consumesType = /\bsacrifice\b|\btap\b|\bdiscard\b|\bexile\b/i.test(clause);
+      // Sacrifice reads the COST side only — Sophia's "Sacrifice an
+      // artifact token: Put a +1/+1 counter on each Dog you control" must
+      // not register as consuming Dogs merely because "Dog" appears in the
+      // effect. Tap/discard/exile aren't restricted the same way; nothing
+      // in the corpus needed it and widening them isn't this fix's job.
+      const consumesType = sacrificesKind(clause, type) || /\btap\b|\bdiscard\b|\bexile\b/i.test(clause);
       if (consumesType) {
         roles.push('consumes');
         // An activated ability is "cost: effect", so a clause that spends the
@@ -781,7 +1002,9 @@ function detectKeywordCare(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
     if (EXCLUDED_KEYWORDS.has(keyword.toLowerCase())) continue;
     const roles: Role[] = [];
     if (facts.keywords.includes(keyword)) roles.push('is');
-    const pattern = new RegExp(`\\b${escapeRegExp(keyword)}\\b`, 'i');
+    // Reuses detectKindred's own word-or-plural matcher — "Foods", "Clues"
+    // and "Treasures" never matched a bare, unpluralised keyword before.
+    const pattern = wordPattern(keyword);
     for (const clause of clauses(facts.text)) {
       if (!pattern.test(clause)) continue;
       // "Creatures you control gain trample" / "have flying" — granting it to
@@ -866,7 +1089,7 @@ export function detectSignals(facts: CardFacts, vocab: Vocabulary): SignalMatch[
   const out: SignalMatch[] = [];
 
   for (const def of ARCHETYPES) {
-    const roles = rolesFor(def, facts);
+    const roles = rolesFor(def, facts, vocab);
     if (roles.length === 0) continue;
     const qualifier = def.qualifiable ? findQualifier(facts, def, vocab) : undefined;
     out.push({
