@@ -1223,3 +1223,185 @@ describe('cardTypes and permanentSubtypes read off the type line', () => {
     assert.deepStrictEqual(buildCardFacts(vanilla, buildVocabulary([], [])).permanentSubtypes, []);
   });
 });
+
+describe('card properties: alternativeCost, modified, alternateWin', () => {
+  it('reads Phyrexian mana as an alternative cost', () => {
+    // Dismember — real oracle text and mana cost.
+    const dismember = makeCard({
+      name: 'Dismember',
+      mana_cost: '{1}{B/P}{B/P}',
+      cmc: 3,
+      type_line: 'Instant',
+      oracle_text:
+        "({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.",
+    });
+    assert.strictEqual(buildCardFacts(dismember, buildVocabulary([], [])).alternativeCost, true);
+  });
+
+  it('reads the commander free-cast template', () => {
+    // Fierce Guardianship — real oracle text.
+    const fierceGuardianship = makeCard({
+      name: 'Fierce Guardianship',
+      mana_cost: '{2}{U}',
+      cmc: 3,
+      type_line: 'Instant',
+      oracle_text:
+        'If you control a commander, you may cast this spell without paying its mana cost.\n' +
+        'Counter target noncreature spell.',
+    });
+    assert.strictEqual(
+      buildCardFacts(fierceGuardianship, buildVocabulary([], [])).alternativeCost,
+      true,
+    );
+  });
+
+  it('reads the "rather than pay this spell\'s mana cost" template', () => {
+    // Snuff Out — real oracle text.
+    const snuffOut = makeCard({
+      name: 'Snuff Out',
+      mana_cost: '{3}{B}',
+      cmc: 4,
+      type_line: 'Instant',
+      oracle_text:
+        "If you control a Swamp, you may pay 4 life rather than pay this spell's mana cost.\n" +
+        "Destroy target nonblack creature. It can't be regenerated.",
+    });
+    assert.strictEqual(buildCardFacts(snuffOut, buildVocabulary([], [])).alternativeCost, true);
+  });
+
+  it('reads Evoke/Cleave/Delve/Convoke as an alternative cost', () => {
+    // Walker of the Grove — real oracle text, has Evoke.
+    const walkerOfTheGrove = makeCard({
+      name: 'Walker of the Grove',
+      mana_cost: '{6}{G}{G}',
+      cmc: 8,
+      type_line: 'Creature — Elemental',
+      keywords: '["Evoke"]',
+      oracle_text:
+        'When this creature leaves the battlefield, create a 4/4 green Elemental creature token.\n' +
+        "Evoke {4}{G} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+    });
+    assert.strictEqual(
+      buildCardFacts(walkerOfTheGrove, buildVocabulary([], [])).alternativeCost,
+      true,
+    );
+  });
+
+  it('does not read cost reduction granted to other spells as its own alternative cost', () => {
+    // Nissa, Worldsoul Speaker — real oracle text: reduces the cost of
+    // *other* permanent spells, not her own. That is `enables`
+    // (`reducesCostOf`), not this card's own alternativeCost.
+    const nissa = makeCard({
+      name: 'Nissa, Worldsoul Speaker',
+      mana_cost: '{2}{G}',
+      cmc: 3,
+      type_line: 'Legendary Planeswalker — Nissa',
+      oracle_text:
+        'Landfall — Whenever a land you control enters, you get {E}{E} (two energy counters).\n' +
+        'You may pay eight {E} rather than pay the mana cost for permanent spells you cast.',
+    });
+    assert.strictEqual(buildCardFacts(nissa, buildVocabulary([], [])).alternativeCost, false);
+  });
+
+  it('reads "modified creature(s)/permanent(s)" and "is modified"', () => {
+    // Kodama of the West Tree — real oracle text, the CR-umbrella card the
+    // property is named for.
+    const kodama = makeCard({
+      name: 'Kodama of the West Tree',
+      type_line: 'Legendary Creature — Fox Spirit',
+      oracle_text:
+        'Reach\nModified creatures you control have trample. ' +
+        '(Equipment, Auras you control, and counters are modifications.)\n' +
+        'Whenever a modified creature you control deals combat damage to a player, search your ' +
+        'library for a basic land card, put it onto the battlefield tapped, then shuffle.',
+    });
+    assert.strictEqual(buildCardFacts(kodama, buildVocabulary([], [])).modified, true);
+
+    // Orochi Merge-Keeper — real oracle text, "is modified" rather than
+    // "modified creature".
+    const orochiMergeKeeper = makeCard({
+      name: 'Orochi Merge-Keeper',
+      type_line: 'Creature — Snake Warrior',
+      oracle_text: 'As long as this creature is modified, it has "{T}: Add {G}{G}."',
+    });
+    assert.strictEqual(buildCardFacts(orochiMergeKeeper, buildVocabulary([], [])).modified, true);
+  });
+
+  it('does not mistake "these modified rules" for the Modified mechanic', () => {
+    // Booster Blitz — real oracle text: "modified" describing house rules
+    // for a game variant, nothing to do with counters/Equipment/Auras.
+    const boosterBlitz = makeCard({
+      name: 'Booster Blitz',
+      type_line: 'Sorcery',
+      oracle_text: 'Start a series of Magic games with these modified rules: Players start at 5 life.',
+    });
+    assert.strictEqual(buildCardFacts(boosterBlitz, buildVocabulary([], [])).modified, false);
+  });
+
+  it('reads an actual "you win the game" outcome', () => {
+    // Knuckles the Echidna and Approach of the Second Sun — real oracle text.
+    const knuckles = makeCard({
+      name: 'Knuckles the Echidna',
+      type_line: 'Legendary Creature — Echidna',
+      oracle_text:
+        'Double strike, trample, haste\n' +
+        'Whenever one or more creatures you control deal combat damage to a player, create a Treasure token.\n' +
+        'Treasure Hunter — At the beginning of your upkeep, if you control thirty or more artifacts, you win the game.',
+    });
+    assert.strictEqual(buildCardFacts(knuckles, buildVocabulary([], [])).alternateWin, true);
+
+    const approach = makeCard({
+      name: 'Approach of the Second Sun',
+      type_line: 'Sorcery',
+      oracle_text:
+        "If this spell was cast from your hand and you've cast another spell named Approach of " +
+        'the Second Sun this game, you win the game. Otherwise, put Approach of the Second Sun ' +
+        "into its owner's library seventh from the top and you gain 7 life.",
+    });
+    assert.strictEqual(buildCardFacts(approach, buildVocabulary([], [])).alternateWin, true);
+  });
+
+  it('does not read a "can\'t lose/win" prevention effect as an alternate win condition', () => {
+    // The Book of Exalted Deeds — real oracle text. archetypes.md names this
+    // card as an alternateWin example, but it only ever GRANTS "you can't
+    // lose the game and your opponents can't win the game" to an Angel — a
+    // symmetric protection clause, not a win condition of its own. Verified
+    // against the seeded database rather than trusting the doc's memory.
+    const bookOfExaltedDeeds = makeCard({
+      name: 'The Book of Exalted Deeds',
+      type_line: 'Legendary Artifact',
+      oracle_text:
+        'At the beginning of your end step, if you gained 3 or more life this turn, create a 3/3 ' +
+        'white Angel creature token with flying.\n' +
+        '{W}{W}{W}, {T}, Exile The Book of Exalted Deeds: Put an enlightened counter on target ' +
+        'Angel. It gains "You can\'t lose the game and your opponents can\'t win the game." ' +
+        'Activate only as a sorcery.',
+    });
+    assert.strictEqual(
+      buildCardFacts(bookOfExaltedDeeds, buildVocabulary([], [])).alternateWin,
+      false,
+    );
+
+    // Herald of Eternal Dawn — real oracle text, same "can't lose/win" shape.
+    const heraldOfEternalDawn = makeCard({
+      name: 'Herald of Eternal Dawn',
+      type_line: 'Creature — Angel',
+      keywords: '["Flash"]',
+      oracle_text:
+        'Flash (You may cast this spell any time you could cast an instant.)\n' +
+        "Flying\nYou can't lose the game and your opponents can't win the game.",
+    });
+    assert.strictEqual(
+      buildCardFacts(heraldOfEternalDawn, buildVocabulary([], [])).alternateWin,
+      false,
+    );
+  });
+
+  it('exposes cmc for archetypes to read alongside alternativeCost', () => {
+    const card = makeCard({ name: 'Test Card', cmc: 5 });
+    assert.strictEqual(buildCardFacts(card, buildVocabulary([], [])).cmc, 5);
+
+    const noCost = makeCard({ name: 'Test Land', cmc: null, type_line: 'Land' });
+    assert.strictEqual(buildCardFacts(noCost, buildVocabulary([], [])).cmc, 0);
+  });
+});
