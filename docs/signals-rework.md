@@ -19,29 +19,30 @@ then return all Human creature cards...") mis-qualified as `reanimator:Zombie` i
 `reanimator:Human`. Only `gameState` remains outstanding from Phase B (needs its own archetype,
 arguably Phase C2's job).
 
-**Phase C1 is in progress** (see "Phase C" below and archetypes.md's archetype catalog).
-`copyEffects` has landed: `qualifiable: cardType` (Kalamax copies instants only), covering spells
-("copy that spell"/"copy target ... spell"), abilities ("copy target activated or triggered
-ability"), and permanents (token copies, clone/shapeshift effects) as one archetype. Verified
-against the real seeded database, including three real cards whose ability-copy clause has a card
-type nearby that names something other than a restriction on what's copied — Echo, Perceptive
-Prodigy and Weaver of Harmony's ability *source* ("... ability you control from a
-creature/enchantment source"), and Agrus Kos, Eternal Soldier's copies' *target* ("copy that ability
-for each other creature you control") — all three correctly stay unqualified rather than becoming
-`copyEffects:Creature`/`copyEffects:Enchantment`; recorded in archetypes.md.
+**Phase C1 is complete** (see "Phase C" below and archetypes.md's archetype catalog — re-measure
+before starting C2). All three archetypes landed:
 
-`freeSpells` has also landed: `definingRole: produces` (no separate payoff role — granting a
-free/reduced cast is the identity itself, same shape as `selfMill`/`opponentMill`), reading
-`alternativeCost` plus Cascade/Discover/Suspend/Plot/Rebound from the bare keyword alone (their own
-reminder text is the only place any of them says "without paying its mana cost", and reminder text
-is stripped) plus a broader, non-self-referential "without paying its mana cost" pattern for cards
-that grant a free cast to something else (Rashmi, Gandalf, Mindclaw Shaman). Verified against the
-real seeded database and the full 20-deck corpus: Y'shtola's deck — `alternativeCost`'s own
-motivating example (Fierce Guardianship, Dismember, Snuff Out) — finally reports `Free Spells` as a
-theme, closing the loop from Phase B part 4.
+- **`copyEffects`** — `qualifiable: cardType` (Kalamax copies instants only), covering spells ("copy
+  that spell"/"copy target ... spell"), abilities ("copy target activated or triggered ability"), and
+  permanents (token copies, clone/shapeshift effects) as one archetype.
+- **`freeSpells`** — `definingRole: produces` (no separate payoff role — granting a free/reduced cast
+  is the identity itself, same shape as `selfMill`/`opponentMill`). Reads `alternativeCost` plus
+  Cascade/Discover/Suspend/Plot/Rebound from the bare keyword alone (their own reminder text is the
+  only place any of them says "without paying its mana cost", and reminder text is stripped), plus a
+  broader, non-self-referential pattern for cards that grant a free cast to *something else* (Rashmi,
+  Mindclaw Shaman). Verified against the full 20-deck corpus: Y'shtola's deck —
+  `alternativeCost`'s own motivating example (Fierce Guardianship, Dismember, Snuff Out) — finally
+  reports `Free Spells` as a theme, closing the loop from Phase B part 4.
+- **`artifacts`** — `qualifiable: permanentSubtype`, scoped to `Vehicle`/`Food`/`Clue`/`Treasure`
+  (not `Equipment`/`Saga`, which are voltron's and counters' territory). Verified against the full
+  corpus: Miles's deck reports `Artifacts (Vehicle)` as its top theme, and Sophia's reports both
+  `Artifacts (Clue)` and `Artifacts (Food)`, matching archetypes.md's own motivating examples exactly.
 
-Still to come in C1: `artifacts` (+ `Vehicle`/`Food`/`Clue`/`Treasure`). The corpus this is derived
-from is committed at `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
+Building `copyEffects` and `artifacts` found and fixed three real `findQualifier` mis-qualifications
+against real cards (Echo/Weaver/Agrus Kos for ability-copying; Xorn and Academy Manufactor for
+token-doubling amplifiers; Cranial Plating for a structural-subtype false positive) — all recorded in
+archetypes.md's "Behaviours verified as correct" rather than repeated here. The corpus this is
+derived from is committed at `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.

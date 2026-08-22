@@ -694,6 +694,11 @@ function findPermanentSubtypes(typeLine: string): string[] {
   return PERMANENT_SUBTYPES.filter((subtype) => new RegExp(`\\b${subtype}\\b`, 'i').test(typeLine));
 }
 
+/** The subtypes the `artifacts` archetype's `is` role recognizes — Equipment
+ * and Saga are `PERMANENT_SUBTYPES` too, but they're voltron's and counters'
+ * territory respectively, not artifacts'. */
+const ARTIFACT_ARCHETYPE_SUBTYPES = ['Vehicle', 'Food', 'Clue', 'Treasure'];
+
 /** Word lookups for `findQualifier`, mirroring `Vocabulary.typeByWord` for the
  * two qualifier kinds that narrow to a curated constant instead of a
  * creature-type vocabulary — Kalamax copies *instants*, not creatures. */
@@ -1051,6 +1056,41 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'artifacts',
+    label: 'Artifacts',
+    description:
+      'Building around artifacts as a category — the Vehicle, Food, Clue, and Treasure subtypes ' +
+      'specifically — token production, payoffs that scale with artifact count, and effects that ' +
+      'multiply the tokens themselves.',
+    weight: 20,
+    qualifiable: 'permanentSubtype',
+    roles: {
+      is: [(f: CardFacts) => f.permanentSubtypes.some((s) => ARTIFACT_ARCHETYPE_SUBTYPES.includes(s))],
+      produces: [
+        /create[^.;]*(?:clue|food|treasure) tokens?/i,
+        // Investigate's own "create a Clue token" is reminder-only.
+        /\binvestigate\b/i,
+      ],
+      rewards: [
+        /\bfor each artifact you control\b/i,
+        /number of artifacts (?:you|your opponents) control/i,
+        /\bother artifact creatures you control\b/i,
+        // "Sacrifice a Food/Clue/Treasure: <effect>" — the effect is the
+        // payoff for having made one, not itself production.
+        /\bsacrifice an? (?:food|clue|treasure)\b/i,
+        /vehicles? you control (?:get|gain|have|gets|gains)\b/i,
+        /whenever[^.;]*vehicles?[^.;]*(?:attacks?|enters?|becomes? crewed)/i,
+      ],
+      // Academy Manufactor (all three at once, so unqualified) and Xorn
+      // (Treasure-specific) both replace token creation with more of it,
+      // rather than rewarding you for having made one.
+      amplifies: [
+        /instead create one of each\b/i,
+        /instead create[^.;]*additional[^.;]*tokens?\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
@@ -1209,6 +1249,23 @@ function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): 
     return undefined;
   }
 
+  // A permanentSubtype archetype's own structural type is its qualifier
+  // when the card itself is one of the subtypes *that archetype's `is`
+  // role recognizes* — Smuggler's Copter's own text never needs to say
+  // "Vehicle" for it to be a Vehicle. Scoped to `ARTIFACT_ARCHETYPE_SUBTYPES`
+  // specifically, not every `PERMANENT_SUBTYPES` entry: Cranial Plating is
+  // structurally an Equipment, but "gets +1/+0 for each artifact you
+  // control" doesn't restrict to Equipment at all — it was voltron's
+  // territory before `artifacts` existed and must not become
+  // `artifacts:Equipment` just because it happens to be one. Falls through
+  // to the text-based scan below for a card that isn't itself a qualifying
+  // subtype but restricts its payoff to one (Xorn: "If you would create
+  // one or more Treasure tokens...").
+  if (def.qualifiable === 'permanentSubtype') {
+    const structural = facts.permanentSubtypes.find((s) => ARTIFACT_ARCHETYPE_SUBTYPES.includes(s));
+    if (structural) return structural;
+  }
+
   // cardType/permanentSubtype narrow to a curated constant rather than the
   // creature-type vocabulary — Kalamax copies *instants*, not creatures.
   const typeByWord =
@@ -1218,8 +1275,26 @@ function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): 
         ? PERMANENT_SUBTYPE_BY_WORD
         : vocab.typeByWord;
 
-  const payoffMatchers = [...(def.roles.rewards ?? []), ...(def.roles.consumes ?? [])];
+  // rewards/consumes checked first, same order as always — Angel of Glory's
+  // Rise depends on rewards being tried before a broader-matching consumes
+  // clause could swallow the wrong type first. amplifies is appended for
+  // Xorn's sake: its Treasure restriction lives in "If you would create one
+  // or more Treasure tokens, instead create..." (amplifies), not a
+  // rewards/consumes clause. produces is deliberately excluded — Gothmog's
+  // "amass Orcs 1" is genuine go-wide production regardless of the type it
+  // happens to create, not a restriction to it.
+  const payoffMatchers = [
+    ...(def.roles.rewards ?? []),
+    ...(def.roles.consumes ?? []),
+    ...(def.roles.amplifies ?? []),
+  ];
   for (const clause of clauses(facts.text)) {
+    // "One of each" means every option equally, not a single restriction —
+    // Academy Manufactor replaces creating a Clue, Food, *or* Treasure
+    // token with creating all three, so this clause must not qualify as
+    // whichever type word it happens to mention first (which the type
+    // list before "instead" would do even from a matcher's own match text).
+    if (/\bone of each\b/i.test(clause)) continue;
     let hit = false;
     for (const matcher of payoffMatchers) {
       if (typeof matcher === 'function') continue;
