@@ -39,3 +39,21 @@ export function usesTimeCounters(mechanic: CounterMechanic): boolean {
 export function turnStepForMechanic(mechanic: CounterMechanic): TurnStep {
   return mechanic === 'saga' ? 'precombatMain' : 'upkeep';
 }
+
+/**
+ * Keywords whose own reminder text — stripped by any caller that reads
+ * printed rules text rather than the keyword's mechanical effect — is the
+ * *only* place they ever say what counter they use. Both put -1/-1
+ * counters on a creature without printing "-1/-1" anywhere else: Blight (a
+ * keyword action, rule 701.68) chooses a creature and puts N on it;
+ * Persist (rule 702.79) returns the permanent with one on death.
+ */
+export const MINUS_ONE_MINUS_ONE_KEYWORDS: readonly string[] = ['blight', 'persist'];
+
+/**
+ * Words that mean *time counter* (rule 702.62) beyond the bare phrase
+ * itself: Suspend (702.62) and Vanishing (702.63) both use time counters
+ * without either keyword naming them outside reminder text, and Time
+ * Travel (a keyword action, rule 701.56) directly adds or removes them.
+ */
+export const TIME_COUNTER_KEYWORDS: readonly string[] = [...TIME_COUNTER_MECHANICS, 'time travel'];

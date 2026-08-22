@@ -243,6 +243,9 @@ function supporterMatches(signal: SignalMatch, facts: CardFacts | undefined): bo
   if (signal.qualifierKind === 'permanentSubtype') {
     return facts.permanentSubtypes.includes(signal.qualifier);
   }
+  if (signal.qualifierKind === 'counterType') {
+    return facts.counterKinds.includes(signal.qualifier);
+  }
   return true;
 }
 

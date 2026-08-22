@@ -813,7 +813,11 @@ describe('"Nth spell each turn" is one family, not just "first"', () => {
   });
 });
 
-describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
+describe('Counters matcher rewrite (the Sophia corpus deck)', () => {
+  // Counters are qualified by kind now (like Kindred is qualified by
+  // creature type), so a card whose only counter mention is "+1/+1" is
+  // Counters (+1/+1) specifically, not bare "Counters" — see
+  // findCounterKind.
   it("Hardened Scales' own passive-voice amplifier registers", () => {
     const hardenedScales = makeCard({
       name: 'Hardened Scales',
@@ -822,7 +826,7 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
         'If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 ' +
         'counters are put on it instead.',
     });
-    assert.ok(rolesOf(signalsFor(hardenedScales), 'counters').includes('amplifies'));
+    assert.ok(rolesOf(signalsFor(hardenedScales), 'counters', '+1/+1').includes('amplifies'));
   });
 
   it('"creature with a +1/+1 counter on it" is the dominant payoff templating', () => {
@@ -834,7 +838,7 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
       creature_types: JSON.stringify(['Merfolk', 'Warrior']),
       oracle_text: "Creatures you control with +1/+1 counters on them can't be blocked.",
     });
-    assert.ok(rolesOf(signalsFor(herald), 'counters').includes('rewards'));
+    assert.ok(rolesOf(signalsFor(herald), 'counters', '+1/+1').includes('rewards'));
 
     const ainok = makeCard({
       name: 'Ainok Bond-Kin',
@@ -844,7 +848,7 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
         'Outlast {1}{W} ({1}{W}, {T}: Put a +1/+1 counter on this creature. Outlast only as a sorcery.)\n' +
         'Each creature you control with a +1/+1 counter on it has first strike.',
     });
-    assert.ok(rolesOf(signalsFor(ainok), 'counters').includes('rewards'));
+    assert.ok(rolesOf(signalsFor(ainok), 'counters', '+1/+1').includes('rewards'));
 
     const inspiringCall = makeCard({
       name: 'Inspiring Call',
@@ -853,10 +857,10 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
         'Draw a card for each creature you control with a +1/+1 counter on it. Those creatures gain ' +
         'indestructible until end of turn.',
     });
-    assert.ok(rolesOf(signalsFor(inspiringCall), 'counters').includes('rewards'));
+    assert.ok(rolesOf(signalsFor(inspiringCall), 'counters', '+1/+1').includes('rewards'));
   });
 
-  it('The Ozolith is a payoff even though it never says "+1/+1"', () => {
+  it('The Ozolith is a payoff even though it never says "+1/+1" — and stays unqualified', () => {
     const ozolith = makeCard({
       name: 'The Ozolith',
       type_line: 'Legendary Artifact',
@@ -866,7 +870,11 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
         'At the beginning of combat on your turn, if The Ozolith has counters on it, you may move all ' +
         'counters from The Ozolith onto target creature.',
     });
-    assert.ok(rolesOf(signalsFor(ozolith), 'counters').includes('rewards'));
+    const signals = signalsFor(ozolith);
+    // Bare "counters", no specific kind named — findCounterKind must not
+    // invent one (e.g. extracting "had" from "if it had counters on it").
+    assert.strictEqual(find(signals, 'counters', '+1/+1'), undefined);
+    assert.ok(rolesOf(signals, 'counters', undefined).includes('rewards'));
   });
 
   it('"enters with N +1/+1 counters" is production, not just "put"', () => {
@@ -878,7 +886,7 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
       creature_types: JSON.stringify(['Dog']),
       oracle_text: 'Vigilance\nThis creature enters with three +1/+1 counters on it.',
     });
-    assert.ok(rolesOf(signalsFor(watchdog), 'counters').includes('produces'));
+    assert.ok(rolesOf(signalsFor(watchdog), 'counters', '+1/+1').includes('produces'));
 
     const giada = makeCard({
       name: 'Giada, Font of Hope',
@@ -890,7 +898,7 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
         'already control.\n' +
         '{T}: Add {W}. Spend this mana only to cast an Angel spell.',
     });
-    assert.ok(rolesOf(signalsFor(giada), 'counters').includes('produces'));
+    assert.ok(rolesOf(signalsFor(giada), 'counters', '+1/+1').includes('produces'));
   });
 
   it('Distribute and Proliferate are also production', () => {
@@ -904,14 +912,64 @@ describe('+1/+1 Counters matcher rewrite (the Sophia corpus deck)', () => {
         'order.\n' +
         '−8: You gain 100 life.',
     });
-    assert.ok(rolesOf(signalsFor(ajani), 'counters').includes('produces'));
+    assert.ok(rolesOf(signalsFor(ajani), 'counters', '+1/+1').includes('produces'));
 
+    // Proliferate alone names no specific counter kind, so this stays
+    // unqualified — it cares about whatever counters are already out.
     const proliferator = makeCard({
       name: 'Test Proliferator',
       oracle_text: 'Proliferate.',
       keywords: JSON.stringify(['Proliferate']),
     });
-    assert.ok(rolesOf(signalsFor(proliferator), 'counters').includes('produces'));
+    assert.ok(rolesOf(signalsFor(proliferator), 'counters', undefined).includes('produces'));
+  });
+});
+
+describe('Counters: -1/-1, time, and stun are the same family as +1/+1', () => {
+  it('Blight and Persist both register as -1/-1 counter production', () => {
+    // High Perfect Morcant — real oracle text. "Blights" is the only
+    // visible word; the -1/-1 explanation is reminder-only.
+    const morcant = makeCard({
+      name: 'High Perfect Morcant',
+      type_line: 'Legendary Creature — Elf Cleric',
+      creature_types: JSON.stringify(['Elf', 'Cleric']),
+      keywords: JSON.stringify(['Blight', 'Proliferate']),
+      oracle_text:
+        'Whenever High Perfect Morcant or another Elf you control enters, each opponent blights 1.\n' +
+        'Tap three untapped Elves you control: Proliferate. Activate only as a sorcery.',
+    });
+    assert.ok(rolesOf(signalsFor(morcant, ['Elf']), 'counters', '-1/-1').includes('produces'));
+
+    // Puppeteer Clique — real oracle text. Persist's own reminder text is
+    // the only place "-1/-1" is ever printed.
+    const puppeteerClique = makeCard({
+      name: 'Puppeteer Clique',
+      type_line: 'Creature — Faerie Wizard',
+      creature_types: JSON.stringify(['Faerie', 'Wizard']),
+      keywords: JSON.stringify(['Flying', 'Persist']),
+      oracle_text:
+        'Flying\n' +
+        'When this creature enters, put target creature card from an opponent\'s graveyard onto the ' +
+        'battlefield under your control. It gains haste. At the beginning of your next end step, exile it.\n' +
+        'Persist (When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield ' +
+        "under its owner's control with a -1/-1 counter on it.)",
+    });
+    assert.ok(rolesOf(signalsFor(puppeteerClique), 'counters', '-1/-1').includes('produces'));
+  });
+
+  it('stun counters register under their own kind', () => {
+    // The Watcher in the Water — real oracle text.
+    const watcher = makeCard({
+      name: 'The Watcher in the Water',
+      type_line: 'Legendary Creature — Kraken',
+      creature_types: JSON.stringify(['Kraken']),
+      oracle_text:
+        'The Watcher in the Water enters tapped with nine stun counters on it.\n' +
+        'Whenever you draw a card during an opponent\'s turn, create a 1/1 blue Tentacle creature token.\n' +
+        'Whenever a Tentacle you control dies, untap up to one target Kraken and put a stun counter on up ' +
+        'to one target nonland permanent.',
+    });
+    assert.ok(rolesOf(signalsFor(watcher), 'counters', 'stun').includes('produces'));
   });
 });
 

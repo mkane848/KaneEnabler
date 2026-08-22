@@ -33,6 +33,7 @@
  * with per-role matchers. `Role`, `QualifierKind` and the catalog are all
  * meant to grow; nothing here is closed.
  */
+import { MINUS_ONE_MINUS_ONE_KEYWORDS, TIME_COUNTER_KEYWORDS } from '@mtg/rules';
 import { parseJsonArray, type CardRow } from '../types';
 
 /**
@@ -129,10 +130,16 @@ export function hasActiveRole(roles: Role[]): boolean {
  * `supporterMatches` (synergy.ts) exactly like `creatureType`/`keyword` —
  * neither has a consuming archetype yet (that's Phase C1's `copyEffects`
  * and `artifacts`), so the plumbing here is exercised directly rather than
- * through `detectSignals`. `counterType` and `gameState` are further out —
- * see docs/signals-rework.md's Phase B status note.
+ * through `detectSignals`. `counterType` qualifies `counters` — see
+ * `findCounterKind`. `gameState` is further out — see
+ * docs/signals-rework.md's Phase B status note.
  */
-export type QualifierKind = 'creatureType' | 'keyword' | 'cardType' | 'permanentSubtype';
+export type QualifierKind =
+  | 'creatureType'
+  | 'keyword'
+  | 'cardType'
+  | 'permanentSubtype'
+  | 'counterType';
 
 /** One archetype a card participates in, with the capacities it does so in. */
 export interface SignalMatch {
@@ -213,6 +220,10 @@ export interface CardFacts {
    * Scryfall subtype catalog fetch — see `PERMANENT_SUBTYPES`. Miles's
    * fifteen Vehicles and Sophia's Food engine both ride this qualifier. */
   permanentSubtypes: string[];
+  /** Every counter kind ("+1/+1", "-1/-1", "time", "stun", ...) this card's
+   * own text cares about — see `findCounterKind`. Feeds
+   * `qualifierKind: 'counterType'`. */
+  counterKinds: string[];
 }
 
 /**
@@ -495,6 +506,70 @@ function sacrificesACreature(clause: string, vocab: Vocabulary): boolean {
   return !!match && vocab.typeByWord.has(match[1]!.toLowerCase());
 }
 
+const TIME_COUNTER_PATTERN = new RegExp(`\\b(?:${TIME_COUNTER_KEYWORDS.join('|')})\\b`, 'i');
+const MINUS_ONE_MINUS_ONE_PATTERN = new RegExp(
+  `\\b(?:${MINUS_ONE_MINUS_ONE_KEYWORDS.map((k) => `${k}(?:s|ed|ing)?`).join('|')})\\b`,
+  'i',
+);
+
+/**
+ * Counter kinds named in the corpus beyond +1/+1 and -1/-1: stun (rule
+ * 122.1d), lore (Sagas, rule 714), and the LOTR-set kinds — burden, oil,
+ * corpse, supply, foreshadow, stash, eon, enlightened, loyalty. Each is
+ * just a name from CR 122.1's glossary of counter types, recognised
+ * generically ("<name> counter(s)") rather than as its own keyword ability.
+ */
+const NAMED_COUNTER_KINDS = [
+  'stun',
+  'lore',
+  'burden',
+  'oil',
+  'corpse',
+  'supply',
+  'foreshadow',
+  'stash',
+  'eon',
+  'enlightened',
+  'loyalty',
+];
+
+/**
+ * The specific kind of counter a clause cares about — "+1/+1", "-1/-1",
+ * "time" (Suspend/Vanishing/Time Travel), "stun", "loyalty", or whatever
+ * named counter the card itself prints. Counters are a family, not a
+ * keyword — the corpus alone needs at least a dozen kinds beyond the
+ * literal string "+1/+1", and most of them (Blight, Persist, Suspend,
+ * Vanishing) only ever name their counter inside reminder text that's
+ * already stripped by the time this runs.
+ *
+ * Deliberately does NOT fall back to "whatever word precedes 'counter(s)'"
+ * generically — The Ozolith's "if it had counters on it" would wrongly
+ * extract "had" as a counter kind. A card that only ever says bare
+ * "counters" stays unqualified on purpose.
+ */
+function findCounterKind(clause: string): string | undefined {
+  const plusMinus = clause.match(/([+-]\d*\/[+-]\d*)\s+counters?/i);
+  if (plusMinus) return plusMinus[1];
+  if (MINUS_ONE_MINUS_ONE_PATTERN.test(clause)) return '-1/-1';
+  if (TIME_COUNTER_PATTERN.test(clause) || /\btime counters?\b/i.test(clause)) return 'time';
+  for (const kind of NAMED_COUNTER_KINDS) {
+    if (new RegExp(`\\b${kind} counters?\\b`, 'i').test(clause)) return kind;
+  }
+  return undefined;
+}
+
+/** Every counter kind a card's own text cares about, for `supporterMatches`
+ * (synergy.ts) to narrow a `counterType`-qualified signal's citable
+ * supporters the same way it narrows `creatureType`/`keyword`. */
+function findAllCounterKinds(text: string): string[] {
+  const found = new Set<string>();
+  for (const clause of clauses(text)) {
+    const kind = findCounterKind(clause);
+    if (kind) found.add(kind);
+  }
+  return [...found];
+}
+
 /**
  * Whether a clause makes `subject` cheaper or free — "Equipment spells you
  * cast cost {1} less", "equip {0}", "pay {0} rather than pay the equip
@@ -623,6 +698,7 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     isAura: /\bAura\b/.test(typeLine),
     cardTypes: findCardTypes(typeLine),
     permanentSubtypes: findPermanentSubtypes(typeLine),
+    counterKinds: findAllCounterKinds(text),
   };
 }
 
@@ -845,15 +921,18 @@ export const ARCHETYPES: ArchetypeDef[] = [
   },
   {
     key: 'counters',
-    label: '+1/+1 Counters',
+    label: 'Counters',
     description:
-      'Growing creatures with +1/+1 counters, and the payoffs that read how many are out there.',
+      'Growing permanents with counters — +1/+1, -1/-1, time, stun, and other kinds — and the payoffs ' +
+      'that read how many are out there. Counters are a family, not a keyword: qualified by the specific ' +
+      'kind, the same way Kindred is qualified by creature type.',
     weight: 20,
+    qualifiable: 'counterType',
     roles: {
       produces: [
         // Excludes Kalamax and Dragonsguard Elite: a card whose only +1/+1
         // clause targets itself is bookkeeping for another ability (a copy
-        // trigger, Magecraft), not production for a +1/+1 Counters deck.
+        // trigger, Magecraft), not production for a Counters deck.
         (f) => !f.growsItself && /put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i.test(f.text),
         // "Enters with N +1/+1 counters" never says "put" — Faithful
         // Watchdog, Wildwood Scourge, District Mascot, Giada.
@@ -862,11 +941,14 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // Amass's own counter-placing text is reminder-only.
         /\bamass\b/i,
         // Distribute (Ajani, Mentor of Heroes). Proliferate cares about any
-        // counter kind already present, which this (still +1/+1-only)
-        // archetype treats as production until qualified counter types
-        // exist (Phase B).
+        // counter kind already present.
         /distribute[^.;]*\+1\/\+1 counters?/i,
         /\bproliferate\b/i,
+        // Blight and Persist put -1/-1 counters; both only ever name the
+        // counter inside reminder text, which is already stripped.
+        (f) => MINUS_ONE_MINUS_ONE_PATTERN.test(f.text),
+        // The Watcher in the Water enters with nine stun counters.
+        /\bstun counters?\b/i,
       ],
       rewards: [
         /whenever[^.;]*\+1\/\+1 counter/i,
@@ -983,6 +1065,19 @@ function clauses(text: string): string[] {
  * Goblin-restricted reanimator.
  */
 function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): string | undefined {
+  // Counters' qualifying evidence usually lives in the PRODUCES clause
+  // itself ("enters with three +1/+1 counters" has no separate payoff
+  // clause to restrict from), not just rewards/consumes — so every clause
+  // is a candidate, and findCounterKind is precise enough on its own not to
+  // need pre-filtering by which role matched.
+  if (def.qualifiable === 'counterType') {
+    for (const clause of clauses(facts.text)) {
+      const kind = findCounterKind(clause);
+      if (kind) return kind;
+    }
+    return undefined;
+  }
+
   const payoffMatchers = [...(def.roles.rewards ?? []), ...(def.roles.consumes ?? [])];
   for (const clause of clauses(facts.text)) {
     const hit = payoffMatchers.some((m) => (typeof m === 'function' ? false : m.test(clause)));

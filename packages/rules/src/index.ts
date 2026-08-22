@@ -28,6 +28,8 @@ export {
   type PartnerCardLike,
 } from './partners.js';
 export {
+  MINUS_ONE_MINUS_ONE_KEYWORDS,
+  TIME_COUNTER_KEYWORDS,
   TIME_COUNTER_MECHANICS,
   turnStepForMechanic,
   usesTimeCounters,
