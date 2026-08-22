@@ -217,16 +217,47 @@ function unitSignals(
 }
 
 /**
+ * Whether a card's own detected signals contain `archetype`, either
+ * unqualified or under the same qualifier — the containment relation Phase B
+ * calls "unqualified supports qualified, never the reverse"
+ * (docs/signals-rework.md). Wilhelt's generic reanimation spells never name
+ * Zombies, but they back "Reanimator (Zombie)" all the same, because a card
+ * that names no restriction of its own supports every restricted variant; a
+ * card restricted to a *different* qualifier (a Dwarf lord backstopping an
+ * Elf kindred signal) does not. Shared by `supporterMatches` (which cards can
+ * be cited at all) and `playsDefiningRole` (which of those cards care about
+ * it) — the same relation, used twice.
+ */
+function ownSignalContains(
+  ownSignals: SignalMatch[],
+  archetype: string,
+  qualifier: string | undefined,
+): SignalMatch | undefined {
+  return ownSignals.find(
+    (s) => s.archetype === archetype && (s.qualifier === undefined || s.qualifier === qualifier),
+  );
+}
+
+/**
  * Whether a card from the list can be cited in support of a commander's
  * signal.
  *
  * An unqualified signal accepts any card that participates in the archetype.
- * A *qualified* one additionally requires the card to be of that subtype —
- * Sliver Gravemother's reanimation only pays off Slivers, so a non-Sliver
- * creature in your graveyard supports nothing.
+ * A *qualified* one additionally accepts a card whose own signal for the same
+ * archetype is unqualified or matches (`ownSignalContains`) — Wilhelt's own
+ * generic reanimation spells support "Reanimator (Zombie)" this way — or,
+ * failing that, a card that's simply *of* that subtype itself: Sliver
+ * Gravemother's reanimation only pays off Slivers, so an ordinary Sliver
+ * creature supports "Reanimator (Sliver)" just by existing, with no
+ * reanimator signal of its own at all. A card with neither supports nothing.
  */
-function supporterMatches(signal: SignalMatch, facts: CardFacts | undefined): boolean {
+function supporterMatches(
+  signal: SignalMatch,
+  facts: CardFacts | undefined,
+  ownSignals: SignalMatch[],
+): boolean {
   if (!signal.qualifier) return true;
+  if (ownSignalContains(ownSignals, signal.archetype, signal.qualifier)) return true;
   if (!facts) return false;
   if (signal.qualifierKind === 'creatureType') {
     return (
@@ -254,14 +285,6 @@ function supporterMatches(signal: SignalMatch, facts: CardFacts | undefined): bo
  * than merely belonging to it — the "cares, not shares" rule applied to how
  * many *supporting* cards a signal can point to, not just whether it can
  * point to any.
- *
- * Reads the card's own detected signals rather than the signal being scored:
- * an owned card can support a *qualified* commander signal — Wilhelt's
- * unqualified reanimation spells backing "Reanimator (Zombie)" — without its
- * own text ever naming that qualifier, so an unqualified per-card signal
- * counts toward any qualifier of the same archetype; a qualified one only
- * counts toward its own, so a Dwarf lord's caring can't backstop an Elf
- * kindred signal it has nothing to do with.
  */
 function playsDefiningRole(
   entry: OwnedCard,
@@ -270,12 +293,7 @@ function playsDefiningRole(
   signalsByCard: Map<string, SignalMatch[]>,
 ): boolean {
   const own = signalsByCard.get(entry.row.oracle_id) ?? [];
-  return own.some(
-    (s) =>
-      s.archetype === signal.archetype &&
-      (s.qualifier === undefined || s.qualifier === signal.qualifier) &&
-      s.roles.includes(definingRole),
-  );
+  return ownSignalContains(own, signal.archetype, signal.qualifier)?.roles.includes(definingRole) ?? false;
 }
 
 // Require at least this many *citable* cards — i.e. after narrowing to this
@@ -357,7 +375,11 @@ export function scoreCommanders(
       const supporters = bucket.filter(
         (entry) =>
           fitsIdentity(entry) &&
-          supporterMatches(signal, profile.factsByCard.get(entry.row.oracle_id)),
+          supporterMatches(
+            signal,
+            profile.factsByCard.get(entry.row.oracle_id),
+            profile.signalsByCard.get(entry.row.oracle_id) ?? [],
+          ),
       );
       if (supporters.length < MIN_SIGNAL_COUNT) continue;
 

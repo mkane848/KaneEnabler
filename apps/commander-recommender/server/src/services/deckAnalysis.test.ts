@@ -137,6 +137,82 @@ describe('analyzeDeck', () => {
     );
   });
 
+  // --- signal containment: unqualified supports qualified --------------------
+
+  it('an unqualified signal folds into a qualified group of the same archetype', () => {
+    // Wilhelt's deck, in miniature: one unqualified reanimation effect and
+    // two Zombie-restricted ones. Grouped separately, both fall under
+    // MIN_THEME_CARDS and the deck's entire reanimation axis vanishes —
+    // despite three reanimation spells that all plainly work together
+    // (docs/archetypes.md's "Two relations between qualified signals").
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    const add = (name: string, qualifier: string | undefined) => {
+      const row = makeCard(name);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('reanimator', ['rewards'], qualifier)]);
+    };
+    add('Generic Reanimation', undefined);
+    add('Zombie Reanimation 1', 'Zombie');
+    add('Zombie Reanimation 2', 'Zombie');
+
+    const themes = analyzeDeck(owned, signals).themes;
+    assert.strictEqual(themes.length, 1);
+    assert.strictEqual(themes[0]!.label, 'reanimator (Zombie)');
+    assert.strictEqual(themes[0]!.cardCount, 3);
+    assert.deepStrictEqual(
+      themes[0]!.cards.map((c) => c.name).sort(),
+      ['Generic Reanimation', 'Zombie Reanimation 1', 'Zombie Reanimation 2'],
+    );
+  });
+
+  it('folds into every qualified group of the same archetype, not just one', () => {
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    const add = (name: string, qualifier: string | undefined) => {
+      const row = makeCard(name);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('reanimator', ['rewards'], qualifier)]);
+    };
+    add('Generic Reanimation', undefined);
+    add('Zombie 1', 'Zombie');
+    add('Zombie 2', 'Zombie');
+    add('Elf 1', 'Elf');
+    add('Elf 2', 'Elf');
+
+    const themes = analyzeDeck(owned, signals).themes;
+    const byLabel = new Map(themes.map((t) => [t.label, t]));
+    assert.strictEqual(byLabel.get('reanimator (Zombie)')?.cardCount, 3);
+    assert.strictEqual(byLabel.get('reanimator (Elf)')?.cardCount, 3);
+  });
+
+  it('a qualified signal never folds back into the unqualified group', () => {
+    // The relation runs one way only: two Zombie-restricted effects must not
+    // rescue a bare "Reanimator" theme that has nothing of its own.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    const add = (name: string, qualifier: string | undefined) => {
+      const row = makeCard(name);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('reanimator', ['rewards'], qualifier)]);
+    };
+    add('Generic Reanimation', undefined);
+    add('Zombie 1', 'Zombie');
+    add('Zombie 2', 'Zombie');
+
+    const themes = analyzeDeck(owned, signals).themes;
+    assert.strictEqual(themes.length, 1);
+    assert.strictEqual(themes[0]!.label, 'reanimator (Zombie)');
+  });
+
+  it('does not fold across different archetypes', () => {
+    const { owned, signals } = deckOf([
+      ...themed('reanimator', 1, ['rewards'], 'r'),
+      ...themed('spellslinger', 2, ['rewards'], 's'),
+    ]);
+    assert.deepStrictEqual(analyzeDeck(owned, signals).themes, []);
+  });
+
   it('cards within a theme are listed in curve order', () => {
     const { owned, signals } = deckOf(
       [
