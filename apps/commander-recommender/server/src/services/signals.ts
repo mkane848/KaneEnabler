@@ -38,24 +38,28 @@ import { parseJsonArray, type CardRow } from '../types';
 /**
  * The capacity in which a card participates in an archetype.
  *
- * KNOWN LIMITATION — this vocabulary is provisional and wants review. It
- * replaces an earlier "Outlet / Payoff" split that was reported as "not quite
- * right", and these five are an inference from worked examples rather than a
- * model anyone has signed off on. The specific problem with Outlet/Payoff was
- * that the two are almost never separable on a real card: Lathril's activated
- * ability *consumes* ten Elves and *rewards* you in the same breath, and
- * Viscera Seer is a sacrifice outlet whose whole point is the scry it gives
- * back. Splitting "consumes" from "rewards" lets one ability be both, which
- * Outlet/Payoff could not express.
+ * This vocabulary replaced an earlier "Outlet / Payoff" split that was
+ * reported as "not quite right" — the two are almost never separable on a
+ * real card: Lathril's activated ability *consumes* ten Elves and *rewards*
+ * you in the same breath, and Viscera Seer is a sacrifice outlet whose whole
+ * point is the scry it gives back. Splitting "consumes" from "rewards" lets
+ * one ability be both, which Outlet/Payoff could not express.
  *
- * Cases known to still sit awkwardly:
- *  - Goblin Sharpshooter reads as `rewards` on creature-death here (it untaps
- *    when a creature dies), but it's often *described* as a sacrifice outlet,
- *    because with any outlet it becomes a machine gun. The card enables a
- *    loop it does not itself contain, and no role below captures "enables".
- *  - `is` on a vanilla creature is deliberately not wired into Aristocrats,
- *    even though a vanilla creature genuinely is sacrifice fodder — counting
- *    it would make every creature deck read as Aristocrats.
+ * `enables` and `protects` were added once three decks made a real gap
+ * expensive to leave unnamed: Obeka's whole deck is three cards that erase a
+ * delayed sacrifice trigger 25 other cards carry; Kalamax runs six cards that
+ * tap a creature for mana purely to turn him on at instant speed; and Bre's
+ * Puresteel Paladin/Bruenor/Danitha (equip-cost reduction, free equip) read
+ * as payoffs in every practical sense but fail every `rewards` matcher, and
+ * correctly so — they don't reward you for anything, they make the engine
+ * easier to run. Goblin Sharpshooter (`rewards` on creature-death here, since
+ * it untaps when a creature dies) is the same shape read backwards: it's
+ * often *described* as a sacrifice outlet, because it becomes a machine gun
+ * with any real outlet, but it enables a loop it does not itself contain.
+ *
+ * `is` on a vanilla creature is deliberately not wired into Aristocrats, even
+ * though a vanilla creature genuinely is sacrifice fodder — counting it
+ * would make every creature deck read as Aristocrats.
  */
 export type Role =
   /** The card *is* the resource: a Goblin, an Equipment, a land. Structured
@@ -73,9 +77,27 @@ export type Role =
   /** The card *doubles or repeats* the resource or event: Doubling Season,
    * Teysa making death triggers fire twice. A card that only amplifies needs
    * something else to amplify — it generates no value alone. */
-  | 'amplifies';
+  | 'amplifies'
+  /** The card *turns the engine on* without being it: cost reduction, free
+   * casts/activations, erasing a delayed trigger. Obeka is a whole deck whose
+   * thesis is three enablers; Puresteel Paladin's `equip {0}` is a Voltron
+   * payoff in every practical sense but rewards nothing. */
+  | 'enables'
+  /** The card *keeps the engine running*. Must be archetype-scoped — Sliver
+   * Hivelord protects Slivers specifically ("Sliver creatures you control
+   * have indestructible"), never generic hexproof/protection, or every
+   * Lightning Greaves becomes a candidate for everything. */
+  | 'protects';
 
-export const ROLES: Role[] = ['is', 'produces', 'consumes', 'rewards', 'amplifies'];
+export const ROLES: Role[] = [
+  'is',
+  'produces',
+  'consumes',
+  'rewards',
+  'amplifies',
+  'enables',
+  'protects',
+];
 
 /**
  * Roles that mean the card actually engages with the plan, as opposed to
@@ -88,7 +110,14 @@ export const ROLES: Role[] = ['is', 'produces', 'consumes', 'rewards', 'amplifie
  * is. The same test now covers keywords for free — having Trample is `is`,
  * granting it to your team is `produces`.
  */
-export const ACTIVE_ROLES: Role[] = ['produces', 'consumes', 'rewards', 'amplifies'];
+export const ACTIVE_ROLES: Role[] = [
+  'produces',
+  'consumes',
+  'rewards',
+  'amplifies',
+  'enables',
+  'protects',
+];
 
 export function hasActiveRole(roles: Role[]): boolean {
   return roles.some((r) => ACTIVE_ROLES.includes(r));
@@ -449,6 +478,24 @@ function sacrificesACreature(clause: string, vocab: Vocabulary): boolean {
 }
 
 /**
+ * Whether a clause makes `subject` cheaper or free — "Equipment spells you
+ * cast cost {1} less", "equip {0}", "pay {0} rather than pay the equip
+ * cost", "the second spell you cast each turn costs {2} less". Modelled once
+ * and parameterised by what it reduces, rather than a bespoke regex per
+ * archetype: Danitha (Aura and Equipment spells), Puresteel Paladin (equip
+ * {0}), Bruenor Battlehammer (free equip), Bladehold War-Whip (other
+ * Equipment's own equip cost), and Alisaie Leveilleur's Dualcast (the second
+ * spell each turn) are all this same shape. Cost reduction is `enables`, not
+ * `rewards` — it turns the engine on faster, it doesn't reward you for
+ * having engaged with it.
+ */
+function reducesCostOf(text: string, subject: RegExp): boolean {
+  return clauses(text).some(
+    (clause) => subject.test(clause) && /costs? \{?\d|pay \{0\}|equip \{0\}/i.test(clause),
+  );
+}
+
+/**
  * The individual face names inside a Scryfall-joined card name
  * ("Front // Back" -> ["Front", "Back"]). A single-faced card's name has no
  * " // " and splits into just itself.
@@ -669,22 +716,21 @@ export const ARCHETYPES: ArchetypeDef[] = [
       // complete Voltron chain, when what it actually lacked was any reason
       // to be stacking Equipment at all. A payoff is a card that rewards you
       // for suiting up and is not itself the suit.
-      // Danitha (Equipment spells cost less), Puresteel Paladin (equip
-      // {0}), and Bruenor (free equip) are real Voltron payoffs that stay
-      // unresolved here on purpose — they're cost reduction and free-equip,
-      // which is `enables`, not `rewards` (see docs/signals-rework.md Phase
-      // B). Koll's "if it was enchanted or equipped" is a genuine reward
-      // and fixable today.
       rewards: [
         /whenever you (?:cast|play) an? (?:equipment|aura)/i,
         /whenever an? (?:equipment|aura)[^.;]*enters/i,
         /whenever[^.;]*becomes (?:attached|equipped|enchanted)/i,
         /for each (?:equipment|aura)/i,
-        /equip abilities you activate cost/i,
         /equipped creatures you control/i,
         /enchanted creatures you control/i,
         /if it was (?:enchanted|equipped)/i,
       ],
+      // Danitha (Aura/Equipment spells cost less), Puresteel Paladin (equip
+      // {0}), Bruenor (free equip), and Bladehold War-Whip (other
+      // Equipment's own equip cost) are real Voltron payoffs that fail every
+      // `rewards` matcher, and correctly so — they don't reward suiting up,
+      // they make it cheaper. That's `enables`.
+      enables: [(f: CardFacts) => reducesCostOf(f.text, /\b(?:equip|equipment|aura)\b/i)],
     },
   },
   {
@@ -727,14 +773,10 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /instant or sorcery spell/i,
         /whenever you cast an? (?:instant|sorcery)/i,
         /whenever you cast a noncreature spell/i,
-        /instant and sorcery spells? (?:you cast )?costs? \{?\d/i,
         // "Whenever you cast your Nth [instant [or sorcery]] spell each
         // turn" — Kalamax, Double Vision, Arcane Bombardment ("first
         // instant [or sorcery] spell"), Alphinaud Leveilleur's Eukrasia
-        // ("second spell", no instant/sorcery restriction at all). Dualcast
-        // ("The second spell you cast each turn costs {2} less") is cost
-        // reduction, not a trigger, and stays unresolved until `enables`
-        // exists (Phase B).
+        // ("second spell", no instant/sorcery restriction at all).
         /cast your (?:first|second|third) (?:instant(?: or sorcery)? )?spell each turn/i,
         // Magecraft's own templating — Dragonsguard Elite, Storm-Kiln Artist,
         // Ral, Storm Conduit.
@@ -742,6 +784,11 @@ export const ARCHETYPES: ArchetypeDef[] = [
       ],
       // Demonstrate's own copy text ("you may copy it") is reminder-only.
       amplifies: [/copy (?:it\.|that spell|the (?:target|next) instant or sorcery)/i, /\bdemonstrate\b/i],
+      // Cost reduction turns the engine on faster; it doesn't reward you for
+      // having engaged with it. Alisaie Leveilleur's Dualcast ("the second
+      // spell you cast each turn costs {2} less") and any "instant and
+      // sorcery spells you cast cost {N} less" effect are both this shape.
+      enables: [(f: CardFacts) => reducesCostOf(f.text, /\b(?:instant|sorcery|spell)s?\b/i)],
     },
   },
   {
@@ -971,6 +1018,14 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
         )
       ) {
         roles.push('rewards');
+      }
+      // Archetype-scoped, not generic hexproof: this clause already had to
+      // name the type to reach this point (the `wordPattern(type)` guard
+      // above), so "Sliver creatures you control have indestructible" earns
+      // `protects` for kindred:Sliver specifically — a card that just grants
+      // hexproof to "target creature" never reaches this branch at all.
+      if (/\b(?:indestructible|hexproof|protection from|shroud|ward)\b/i.test(clause)) {
+        roles.push('protects');
       }
     }
 

@@ -9,6 +9,30 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Added
+
+- **Signal engine, Phase B (part 1) — `enables` and `protects` roles.** See
+  `docs/signals-rework.md` Phase B. `Role` gains two new capacities,
+  joining `ROLES` and `ACTIVE_ROLES`:
+  - **`enables`** — turns the engine on without being it. A new shared
+    `reducesCostOf` helper (parameterised by what it reduces, rather than a
+    bespoke regex per archetype) recognizes cost reduction and free
+    activation/casting as Voltron and Spellslinger enablers: Danitha
+    Capashen, Paragon (Aura/Equipment spells cost less), Puresteel Paladin
+    (`equip {0}`), Bruenor Battlehammer (free equip), Bladehold War-Whip
+    (other Equipment's own equip cost), and Alisaie Leveilleur's Dualcast
+    (the second spell each turn) were all previously unresolved because
+    they don't reward anything — they make the engine cheaper to run.
+  - **`protects`** — keeps the engine running, and must be
+    archetype-scoped or every generic hexproof/indestructible effect
+    becomes a candidate for everything. Kindred detection now recognizes a
+    lord that grants indestructible/hexproof/protection/ward/shroud
+    *to its own type by name* (Sliver Hivelord: "Sliver creatures you
+    control have indestructible") as a protector for that kindred
+    specifically; a spell that merely grants hexproof to "target creature"
+    (Snakeskin Veil) is deliberately left unmatched — it names no type, so
+    there's nothing safe to scope it to yet.
+
 ### Fixed
 
 - **Signal engine, Phase A ("stop the false positives"):** see

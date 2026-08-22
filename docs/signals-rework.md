@@ -3,12 +3,15 @@
 The companion to [`archetypes.md`](./archetypes.md). That document says what the vocabulary **means**
 and why; this one says what to **change**, in what order, and how to know it worked.
 
-**Phases A and A2 have landed** (see their sections below and the `[Unreleased]` entries in
-`apps/commander-recommender/CHANGELOG.md`). Phase B onward has not. A few individual items inside A2
-stayed deferred on purpose because they need a not-yet-built piece of a later phase — equip-cost
-reduction/free-equip (`voltron`), Dualcast's cost reduction (`spellslinger`), and Cascade (`freeSpells`)
-all need Phase B's `enables` role or a Phase C archetype that doesn't exist yet; each is called out
-in its own commit/changelog entry. The corpus it is derived from is committed at
+**Phases A and A2 have landed**, and Phase B is in progress (see their sections below and the
+`[Unreleased]` entries in `apps/commander-recommender/CHANGELOG.md`). Phase B's first landed slice is
+the `Role` addition (`enables`/`protects`) — this also resolved A2's `voltron`/`spellslinger`
+deferrals (equip-cost reduction, free-equip, Dualcast). Still outstanding within Phase B: the
+`QualifierKind` additions (`cardType`, `permanentSubtype`, `counterType`, `gameState`) and their
+`CardFacts`/`supporterMatches` plumbing, widening `@mtg/rules`' counters taxonomy, the card-property
+layer (`alternativeCost`, `modified`, `alternateWin`), and the unqualified-supports-qualified signal
+containment merge. Cascade (`freeSpells`) still needs a Phase C archetype that doesn't exist yet. The
+corpus this is derived from is committed at
 `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
