@@ -44,6 +44,74 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     phantom unqualified Go-Wide theme.
   - Raised `MAX_THEMES` from 6 to 8 (Kalamax and Wilhelt both legitimately
     fill more than 6 axes).
+- **Signal engine, Phase A2 ("matcher precision"):** the separable follow-up
+  to Phase A — real cards the matchers missed or misread, not new false
+  positives to gate.
+  - **One shared `sacrificeCost` primitive**, reading only a clause's cost
+    side and accepting a named creature type as well as the bare word
+    "creature". Fixes two opposite misreadings of the same shape: Wilhelt's
+    "you may sacrifice a Zombie" is now recognised as both a Zombie consumer
+    *and* an Aristocrats outlet (it required the literal word "creature"
+    before); Sophia's "Sacrifice an artifact token: Put a +1/+1 counter on
+    each Dog you control" no longer reads as consuming Dogs, because the
+    fix stops reading past the ':' into the effect. Krenko's own outlets
+    (Goblin Bombardment, Siege-Gang Commander, Arms Dealer, Goblin Grenade)
+    and Plumb the Forbidden's "sacrifice one or more creatures" all register
+    now.
+  - **Explicit matchers for reminder-only keywords** — Exploit, Amass,
+    Decayed, Evoke, Blitz, "For Mirrodin!", Demonstrate, and Myriad all
+    explain their operative text only in a parenthetical that's already
+    stripped by the time matchers run; each now has a matcher on its own
+    printed name, in the archetype its mechanic actually belongs to. Amass
+    also produces the named creature type *and* Army through the existing
+    kindred/token-production machinery, matching real templating ("amass
+    Orcs 1" makes a card both an Orc and an Army).
+  - **Lord-wording normalisation.** "All Sliver creatures get +1/+1" and
+    "Zombies you control get +1/+1" are two decades of the same lord
+    templating; a normalisation pass onto one shape replaces what would
+    otherwise be a third bespoke regex.
+  - **A spelled-out death definition counts as a death trigger.** Aristocrats
+    rewards now recognises "is put into a graveyard from the battlefield"
+    and "is put into exile from the battlefield" (CR 700.4's own wording for
+    "dies"), not just the words "dies"/"dying" — Psychomancer's Harbinger of
+    Despair never says either.
+  - **Graveyard-filling gaps closed**: "search your library for ... put them
+    into your graveyard" (Buried Alive, Unmarked Grave, Disciples of Gix),
+    "mill N cards, then ..." with a comma rather than a period (Incarnation
+    Technique), and discarding your own cards (Faithless Looting, Thrill of
+    Possibility, Windfall, Fact or Fiction, Ideas Unbound) — excluding
+    making an *opponent* discard, which stays Mill (Opponents)' territory.
+  - **Reanimator widened** past "from your/a graveyard" to "from an
+    opponent's graveyard" (Gruesome Encore, Puppeteer Clique), and past the
+    literal word "creature" to "permanent" (Sun Titan's own "return target
+    permanent card").
+  - **"Nth spell each turn" is one family, not just "first".** Alphinaud
+    Leveilleur's Eukrasia ("cast your second spell each turn") now matches;
+    Dualcast's own cost reduction stays unresolved until the `enables` role
+    exists (Phase B).
+  - **+1/+1 Counters rewritten against the Sophia corpus deck**: Hardened
+    Scales' passive-voice amplifier ("would be put ... instead"); "creature
+    with a +1/+1 counter on it" as the dominant payoff templating (Herald of
+    Secret Streams, Ainok Bond-Kin, Inspiring Call); The Ozolith's bare
+    "counters" (it never says "+1/+1"); "enters with N +1/+1 counters" as
+    production, not just "put" (Faithful Watchdog, Wildwood Scourge,
+    District Mascot, Giada); Distribute (Ajani, Mentor of Heroes) and
+    Proliferate as production.
+  - **Two token-descriptor bugs fixed together**: under-reached at one
+    intervening word, so "Necron Warrior artifact creature tokens" wasn't
+    fully stripped and Their Number Is Legion read as a Necron *payoff*
+    rather than just a producer; over-reached by stripping everywhere
+    instead of only inside a "create ... token" clause, erasing Gleaming
+    Overseer's, Eternal Skylord's, and Dreadhorde Invasion's real
+    Zombie-token payoffs. Also recognises "create a token that's a copy of"
+    as token production, which never mentioned the words "creature token".
+  - **`detectKeywordCare` now matches plurals** — "Foods", "Clues", and
+    "Treasures" never matched a bare keyword before (Peregrin Took, The
+    Cabbage Merchant).
+  - **`voltron.rewards`**: Koll, the Forgemaster's "if it was enchanted or
+    equipped" is a genuine reward. Danitha, Puresteel Paladin, Bruenor, and
+    Bladehold War-Whip's own equip-cost-reduction/free-equip effects stay
+    unresolved on purpose — they're `enables`, not `rewards` (Phase B).
 - **A double-faced commander's back face could leak into signal detection
   through the stored `type_line`.** `import-scryfall.ts` stored Scryfall's
   *joined* `type_line` ("Legendary Creature — God // Legendary Artifact —
