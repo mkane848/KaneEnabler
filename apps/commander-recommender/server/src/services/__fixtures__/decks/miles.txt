@@ -1,0 +1,92 @@
+# Commander: Miles "Tails" Prower
+# Confirmed axes: Vehicles, artifacts, wrath-proof threats, draw engine
+# Source: original CSV upload.
+1 Air Response Unit
+1 Amonkhet Raceway
+1 Angel's Grace
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Archetype of Imagination
+1 Automated Artificer
+1 Azorius Chancery
+1 Azorius Signet
+1 Clown Car
+1 Command Tower
+1 Counterspell
+1 Country Roads
+1 Crystal Barricade
+1 Cultivator's Caravan
+1 Decanter of Endless Water
+1 Deluxe Dragster
+1 Deserted Beach
+1 Dispatch
+1 Dovin's Veto
+1 Fabricate
+1 Fabrication Foundry
+1 Fell the Mighty
+1 Flooded Strand
+1 Floodfarm Verge
+1 Foundry Inspector
+1 Fractured Identity
+1 From Father to Son
+1 Ghostway
+1 Glacial Fortress
+1 Guidelight Pathmaker
+1 Hallowed Fountain
+1 High-Speed Hoverbike
+1 Hotshot Mechanic
+1 Imperial Recovery Unit
+1 Irrigated Farmland
+7 Island
+1 Kotori, Pilot Prodigy
+1 Lifecraft Engine
+1 Lórien Revealed
+1 Mech Hangar
+1 Mechtitan Core
+1 Mendicant Core, Guidelight
+1 Meticulous Archive
+1 Mighty Servant of Leuk-o
+1 Miles "Tails" Prower
+1 Mobilizer Mech
+1 Mu Yanling, Wind Rider
+1 Negate
+1 Nimbus Maze
+1 No More Lies
+1 Otawara, Soaring City
+1 Padeem, Consul of Innovation
+1 Path to Exile
+1 Pearl Medallion
+1 Perilous Snare
+6 Plains
+1 Polluted Delta
+1 Port Town
+1 Prairie Stream
+1 Prodigy's Prototype
+1 Reef Roads
+1 Reliquary Tower
+1 Return to Dust
+1 Scavenger Grounds
+1 Sea of Clouds
+1 Seat of the Synod
+1 Shimmer Myr
+1 Shorikai, Genesis Engine
+1 Skycloud Expanse
+1 Slaughter the Strong
+1 Smuggler's Copter
+1 Sol Ring
+1 Sram, Senior Edificer
+1 Supreme Verdict
+1 Swords to Plowshares
+1 Temple of Enlightenment
+1 The Reality Chip
+1 Thopter Fabricator
+1 Thought Vessel
+1 Thoughtcast
+1 Thundersteel Colossus
+1 Time Wipe
+1 Triumphant Reckoning
+1 Vnwxt, Verbose Host
+1 Voyager Quickwelder
+1 Weatherlight
+1 Whir of Invention
+1 Windswept Heath

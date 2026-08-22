@@ -1,0 +1,102 @@
+# Commander: Y'shtola, Night's Blessed
+# Confirmed axes: Drain / life loss, pillowfort, spellslinger value, politics.
+# Also, explicitly: cards that TECHNICALLY trigger Y'shtola's mana-value-3+ trigger but can be
+# paid with alternative costs (Fierce Guardianship, Dismember, Snuff Out). This is the
+# "expensive on paper, cheap in practice" card property in docs/archetypes.md.
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Anguished Unmaking
+1 Arcane Sanctum
+1 Arcane Signet
+1 Archmage Emeritus
+1 Arid Mesa
+1 Authority of the Consuls
+1 Black Market Connections
+1 Bleachbone Verge
+1 Bloodthirsty Conqueror
+1 Circle of Power
+1 Command Tower
+1 Crown of Doom
+1 Cunning Rhetoric
+1 Curiosity
+1 Dark Confidant
+1 Dark Ritual
+1 Delney, Streetwise Lookout
+1 Demolition Field
+1 Deserted Beach
+1 Dismember
+1 Drowned Catacomb
+1 Emet-Selch of the Third Seat
+1 Esper Charm
+1 Exchange of Words
+1 Exotic Orchard
+1 Exsanguinate
+1 Eye of Nidhogg
+1 Fandaniel, Telophoroi Ascian
+1 Farewell
+1 Fierce Guardianship
+1 Flooded Strand
+1 Floodfarm Verge
+1 G'raha Tia, Scion Reborn
+1 Ghostly Prison
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+1 Helm of the Ghastlord
+1 Idyllic Tutor
+1 Irenicus's Vile Duplication
+2 Island
+1 Isolated Chapel
+1 Keen Duelist
+1 Lyse Hext
+1 Mana Confluence
+1 Marsh Flats
+1 Meticulous Archive
+1 Morphic Pool
+1 Multiversal Passage
+1 Norn's Annex
+1 Ophidian Eye
+1 Papalymo Totolymo
+1 Parker Luck
+2 Plains
+1 Polluted Delta
+1 Press the Enemy
+1 Propaganda
+1 Protection Racket
+1 Raffine's Tower
+1 Read the Bones
+1 Reflecting Pool
+1 Relic of Legends
+1 Replication Technique
+1 Rewind
+1 Rite of Replication
+1 Sanguine Bond
+1 Sea of Clouds
+1 Secret Rendezvous
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Snuff Out
+1 Sol Ring
+1 Stock Up
+1 Swamp
+1 Swords to Plowshares
+1 Syphon Mind
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Teferi's Protection
+1 Thought Vessel
+1 Toxic Deluge
+1 Transpose
+1 Undercity Sewers
+1 Underground River
+1 Unwind
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Verdant Catacombs
+1 Vindicate
+1 Vito, Thorn of the Dusk Rose
+1 Void Rend
+1 Watery Grave
+1 Windswept Heath
+1 Y'shtola, Night's Blessed

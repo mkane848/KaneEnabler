@@ -6,7 +6,12 @@ property_ — and, for each rule, the real deck that forced it.
 This document is the arguable artefact. `server/src/services/signals.ts` is its encoding; if the two
 ever disagree, that is a bug in one of them, and this file says which behaviour was intended and why.
 Read [`commander-recommender.md`](./commander-recommender.md) first for how the scorer consumes any
-of this.
+of this, and [`signals-rework.md`](./signals-rework.md) for the implementation plan that turns the
+proposals below into code.
+
+The corpus itself is committed at
+`apps/commander-recommender/server/src/services/__fixtures__/decks/` — every "backed by N decks"
+claim here is checkable against real lists.
 
 ## How this was built
 
@@ -20,28 +25,28 @@ here — there is no play-rate or win-rate data behind any of it.
 
 ### The corpus
 
-| Deck              | Commander                     | Identity   | Confirmed axes                                                     |
-| ----------------- | ----------------------------- | ---------- | ------------------------------------------------------------------ |
-| dino_thunder      | Kalamax, the Stormsire        | Temur      | Copy, burn, power-into-damage, go-wide                             |
-| miles             | Miles "Tails" Prower          | Azorius    | Vehicles, artifacts, wrath-proof threats, draw                     |
-| sliver_me_timbers | The First Sliver              | 5-colour   | Cascade, lords, toolbox, resilience                                |
-| —                 | Wilhelt, the Rotcleaver       | Dimir      | Sac loops, drain, alpha strike, reanimation                        |
-| —                 | Trazyn the Infinite           | Mono-black | **Main:** graveyard toolbox, big mana · **Fallback:** aggro, drain |
-| —                 | Obeka, Brute Chronologist     | Grixis     | Temporary effects + turn denial                                    |
-| —                 | Sophia, Dogged Detective      | Bant       | Dogs, +1/+1 counters, Food/Clue/Treasure, go-wide                  |
-| —                 | Bre of Clan Stoutarm          | Boros      | Lifegain→free spells, Equipment, damage doubling, impulse          |
-| —                 | Y'shtola, Night's Blessed     | Esper      | Drain, pillowfort, spellslinger, politics, **MV-vs-cost**          |
-| —                 | Krenko, Mob Boss              | Mono-red   | Goblins                                                            |
-| —                 | Eirdu // Isilu                | Orzhov     | Aristocrats, lifegain, persist                                     |
-| —                 | Sauron, the Dark Lord         | Grixis     | The Ring, amass, discard                                           |
-| —                 | High Perfect Morcant          | Golgari    | Elves, −1/−1 counters, proliferate                                 |
-| —                 | Brigid, Clachan's Heart       | Selesnya   | Kithkin, creatures-entering payoffs                                |
-| —                 | Giada, Font of Hope           | Mono-white | Angels, lifegain, counters                                         |
-| —                 | Shadow the Hedgehog           | Rakdos     | Treasure aristocrats                                               |
-| —                 | Radagast the Brown            | Mono-green | Power matters, stompy                                              |
-| —                 | The Tenth Doctor + Rose Tyler | Jeskai     | Time counters, suspend                                             |
-| —                 | The Watcher in the Water      | Mono-blue  | Draw matters                                                       |
-| —                 | Captain Howler, Sea Scourge   | Izzet      | Cycling, discard                                                   |
+| Fixture                       | Commander                     | Identity   | Confirmed axes                                                     |
+| ----------------------------- | ----------------------------- | ---------- | ------------------------------------------------------------------ |
+| `kalamax.txt`                 | Kalamax, the Stormsire        | Temur      | Copy, burn, power-into-damage, go-wide                             |
+| `miles.txt`                   | Miles "Tails" Prower          | Azorius    | Vehicles, artifacts, wrath-proof threats, draw                     |
+| `first-sliver.txt`            | The First Sliver              | 5-colour   | Cascade, lords, toolbox, resilience                                |
+| `wilhelt.txt`                 | Wilhelt, the Rotcleaver       | Dimir      | Sac loops, drain, alpha strike, reanimation                        |
+| `trazyn.txt`                  | Trazyn the Infinite           | Mono-black | **Main:** graveyard toolbox, big mana · **Fallback:** aggro, drain |
+| `obeka.txt`                   | Obeka, Brute Chronologist     | Grixis     | Temporary effects + turn denial                                    |
+| `sophia.txt`                  | Sophia, Dogged Detective      | Bant       | Dogs, +1/+1 counters, Food/Clue/Treasure, go-wide                  |
+| `bre.txt`                     | Bre of Clan Stoutarm          | Boros      | Lifegain→free spells, Equipment, damage doubling, impulse          |
+| `yshtola.txt`                 | Y'shtola, Night's Blessed     | Esper      | Drain, pillowfort, spellslinger, politics, **MV-vs-cost**          |
+| `krenko.txt`                  | Krenko, Mob Boss              | Mono-red   | Goblins                                                            |
+| `eirdu.txt`                   | Eirdu // Isilu                | Orzhov     | Aristocrats, lifegain, persist                                     |
+| `sauron.txt`                  | Sauron, the Dark Lord         | Grixis     | The Ring, amass, discard                                           |
+| `morcant.txt`                 | High Perfect Morcant          | Golgari    | Elves, −1/−1 counters, proliferate                                 |
+| `brigid.txt`                  | Brigid, Clachan's Heart       | Selesnya   | Kithkin, creatures-entering payoffs                                |
+| `giada.txt`                   | Giada, Font of Hope           | Mono-white | Angels, lifegain, counters                                         |
+| `shadow.txt`                  | Shadow the Hedgehog           | Rakdos     | Treasure aristocrats                                               |
+| `radagast.txt`                | Radagast the Brown            | Mono-green | Power matters, stompy                                              |
+| `tenth-doctor-rose-tyler.txt` | The Tenth Doctor + Rose Tyler | Jeskai     | Time counters, suspend                                             |
+| `watcher-in-the-water.txt`    | The Watcher in the Water      | Mono-blue  | Draw matters                                                       |
+| `captain-howler.txt`          | Captain Howler, Sea Scourge   | Izzet      | Cycling, discard                                                   |
 
 **Twenty for twenty are multi-axis.** Every owner selected every offered axis. Only Trazyn ranked
 them (main plan versus fallback). That is the single most consistent finding in the corpus, and it is

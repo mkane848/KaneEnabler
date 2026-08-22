@@ -565,6 +565,33 @@ carries everything a list item renders (names, produces text, description, perma
 
 ---
 
+## Phase 9 — Signal engine rework
+
+**Not started.** Planned in detail in [`signals-rework.md`](./signals-rework.md), with the vocabulary
+it implements in [`archetypes.md`](./archetypes.md).
+
+Twenty of the owner's real Commander decks were traced by hand against `signals.ts` and committed as
+a corpus (`apps/commander-recommender/server/src/services/__fixtures__/decks/`). The traces found
+that the engine misreads most of them — phantom themes from fetchlands, keyword "shadows" that name a
+deck after the mechanism of a missing archetype, and a commander (Obeka) that produces zero signals
+and therefore cannot be returned for any input at all.
+
+Two items land inside `@mtg/rules` rather than the app, per hard rule 2:
+
+- **Counters.** `packages/rules/src/counters.ts` already owns the CR 702.62 suspend/vanishing
+  taxonomy, built for `time-counters` and never imported by the recommender. The rework consumes and
+  widens it instead of adding a local regex — the corpus needs at least a dozen counter kinds where
+  the engine models only `+1/+1`.
+- **Changeling** (CR 702.73a), alongside the existing `parseCreatureTypes`.
+
+**Deferred out of that work, and recorded here so it is not lost:** commander-aware deck grading — an
+optional `commander` field on `POST /api/recommend` that scopes `analyzeDeck` to that commander's own
+signals and colour identity, so the answer becomes _"Kalamax copies instants; twelve of your spells
+are sorceries"_ rather than a commander-blind read of the pile. `analyzeDeck` is deliberately
+commander-blind today, and every corpus deck includes its commander in the list, so nothing depends
+on the split yet. The owner chose "yes, but later": build it once the classification vocabulary is
+trustworthy, not before.
+
 ## Verification
 
 Each phase must leave the tree green.
