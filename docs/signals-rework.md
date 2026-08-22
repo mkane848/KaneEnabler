@@ -44,6 +44,11 @@ token-doubling amplifiers; Cranial Plating for a structural-subtype false positi
 archetypes.md's "Behaviours verified as correct" rather than repeated here. The corpus this is
 derived from is committed at `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
+**Phase F's import-time coverage report has also landed**, as the re-measurement checkpoint between
+C1 and C2 (see its own section below): **898 of 4,049 commander-eligible cards produce zero active
+signals** — closer to "extend the catalog" than "build a fallback" on the doc's own scale, so Phase C
+continues rather than that fallback getting built yet.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 
@@ -277,18 +282,25 @@ type"` cards and teach the three consumers — `supporterMatches`, `groupByTheme
 
 ### Import-time coverage report
 
+**Landed**, as a checkpoint between Phase C1 and C2 rather than waiting for the rest of Phase F —
+the sequencing note above calls for re-measuring between C tiers, and this is what that number is.
+
 `signals.ts` concedes that its weights "were set before any measurement was possible". **Obeka makes
 that concrete: a real, legal, played commander that no input can ever return**, because
 `scoreCommanders` skips any unit with no active signal.
 
-Have `import-scryfall.ts` print, alongside its existing signal count, **how many commander-eligible
-cards produced zero signals**, with a sample. It re-runs free on every `prepare-data` and turns
-catalog coverage from an opinion into a number.
+`import-scryfall.ts` now prints, alongside its existing signal count, **how many commander-eligible
+cards produced zero *active* signals**, with a sample — not merely zero rows in `card_signals`.
+Obeka herself has two: `kindred:Ogre[is]` and `kindred:Wizard[is]`, both structural and neither in
+`ACTIVE_ROLES`, so she'd have looked covered under a naive "any row exists" check while
+`scoreCommanders` still skips her exactly as before. Tracked via `hasActiveRole` during the same pass
+that inserts `card_signals`, not a second query afterward. It re-runs free on every `prepare-data`
+and turns catalog coverage from an opinion into a number.
 
-**Decided: measure first, then decide.** No fallback for zero-signal commanders is being built yet.
-Making them returnable on colour identity alone — flagged "no synergy detected" — trades meaningless
-results for completeness, and that trade should be made against a real number. ~20 cards means extend
-the catalog; ~2,000 means build the fallback.
+**Measured: 898 commander-eligible cards produce zero active signals**, out of 4,049 total (as of
+this measurement). Between the doc's own two reference points — ~20 meaning extend the catalog, ~2,000
+meaning build a colour-identity-only fallback — closer to the "extend the catalog" end. **Decided:
+keep extending via Phase C rather than building the fallback yet**; re-measure again after C2/C3.
 
 ### Docs
 

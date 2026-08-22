@@ -10,7 +10,7 @@ import {
 import { frontFaceCharacteristics, isCommanderEligible, parseCreatureTypes } from '@mtg/rules';
 import { readSidecar } from '@mtg/scryfall';
 import { faceNameEntries } from '../src/services/cardNames';
-import { buildCardFacts, buildVocabulary, detectSignals } from '../src/services/signals';
+import { buildCardFacts, buildVocabulary, detectSignals, hasActiveRole } from '../src/services/signals';
 import type { CardRow } from '../src/types';
 import { IMPORT_VERSION } from '../src/services/dataSnapshot';
 import { readImportedSnapshot, writeImportedSnapshot } from '../src/services/importedSnapshot';
@@ -436,6 +436,14 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
      VALUES (?, ?, ?, ?, ?)`,
   );
   let signalCount = 0;
+  // Phase F's coverage report (docs/signals-rework.md) needs which cards have
+  // an *active* signal, not merely any row in card_signals — Obeka is the
+  // concrete case it's named for: two structural `kindred:Ogre[is]`/
+  // `kindred:Wizard[is]` rows exist for her, but `is` isn't in ACTIVE_ROLES,
+  // so scoreCommanders still skips her, the same as a card with no rows at
+  // all. Tracked here, during the same pass, rather than re-querying
+  // card_signals afterward and getting this distinction wrong.
+  const activeSignalOracleIds = new Set<string>();
   db.transaction(() => {
     for (const row of cardRows) {
       for (const signal of detectSignals(buildCardFacts(row, vocabulary), vocabulary)) {
@@ -447,6 +455,7 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
           JSON.stringify(signal.roles),
         );
         signalCount++;
+        if (hasActiveRole(signal.roles)) activeSignalOracleIds.add(row.oracle_id);
       }
     }
   })();
@@ -457,6 +466,29 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
     `${signalCount} card signals precomputed across ${withSignals.c} cards ` +
       `(vocabulary: ${creatureTypes.size} creature types, ${keywords.size} keywords).`,
   );
+
+  // signals.ts concedes its weights "were set before any measurement was
+  // possible", and Obeka makes that concrete: a real, legal, played commander
+  // that no input can ever return, because scoreCommanders skips any unit
+  // with no active signal. This turns that from an opinion into a number,
+  // re-measured free on every prepare-data. Same population scoreCommanders
+  // itself draws from — see db.ts's getCommanderCandidates.
+  const zeroSignalCommanders = cardRows
+    .filter(
+      (row) =>
+        row.is_commander_eligible &&
+        row.legality_commander === 'legal' &&
+        !activeSignalOracleIds.has(row.oracle_id),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
+  console.log(
+    `${zeroSignalCommanders.length} commander-eligible cards produced zero active signals ` +
+      `(scoreCommanders skips these entirely).`,
+  );
+  if (zeroSignalCommanders.length > 0) {
+    const sample = zeroSignalCommanders.slice(0, 10).map((row) => row.name);
+    console.log(`  Sample: ${sample.join(', ')}`);
+  }
 }
 
 // Re-skinned names, from the companion file fetch-scryfall.ts writes. Absent
