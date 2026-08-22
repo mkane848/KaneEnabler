@@ -204,12 +204,12 @@ export const LIFECYCLES: LifecycleSpec[] = [
   },
   {
     archetype: 'counters',
-    label: '+1/+1 Counters',
+    label: 'Counters',
     slots: [
       {
         key: 'place',
         label: 'Counter placement',
-        description: 'Cards that put +1/+1 counters onto creatures.',
+        description: 'Cards that put counters onto permanents.',
         roles: ['produces'],
         minimum: 4,
       },

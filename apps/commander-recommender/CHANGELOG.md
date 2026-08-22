@@ -44,6 +44,30 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   (Kalamax copies *instants*, not sorceries) and `artifacts` (Miles's
   Vehicles, Sophia's Food) — so this is plumbing ahead of its first user,
   exercised directly in tests rather than through a real signal.
+- **Signal engine, Phase B (part 3) — `counterType` qualifier, and
+  `+1/+1 Counters` becomes `Counters`.** Counters are a family, not a
+  keyword (docs/archetypes.md) — the archetype is now qualified by the
+  specific counter kind exactly like Kindred is qualified by creature
+  type, rather than being permanently scoped to the literal string
+  "+1/+1".
+  - `packages/rules/src/counters.ts` (`@mtg/rules`) gains
+    `MINUS_ONE_MINUS_ONE_KEYWORDS` (Blight, rule 701.68; Persist, rule
+    702.79 — both only ever name "-1/-1" inside their own reminder text)
+    and `TIME_COUNTER_KEYWORDS` (`TIME_COUNTER_MECHANICS` plus Time
+    Travel, rule 701.56) — consumed rather than re-derived locally, per
+    root CLAUDE.md hard rule 2.
+  - `counters.produces` now recognizes -1/-1 (via those keywords) and stun
+    counters (rule 122.1d — The Watcher in the Water's own nine), not just
+    "+1/+1"; `findCounterKind` also recognizes a curated list of named
+    kinds (lore, burden, oil, corpse, supply, foreshadow, stash, eon,
+    enlightened, loyalty) generically, as "<name> counter(s)", without
+    inventing a kind for a card that only ever says bare "counters" (The
+    Ozolith stays unqualified, on purpose).
+  - Every existing +1/+1-specific signal is now `Counters (+1/+1)`
+    rather than bare `Counters` — verified against the real seeded
+    database: Morcant's deck detects -1/-1 production via Blight, The
+    Watcher in the Water gets `Counters (stun)`, and the Tenth Doctor deck
+    gets `Counters (time)` for its ~25 Suspend/Vanishing cards.
 
 ### Fixed
 
