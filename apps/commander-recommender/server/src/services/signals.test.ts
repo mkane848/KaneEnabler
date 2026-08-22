@@ -1524,3 +1524,135 @@ describe('Copy Effects: spells, abilities, and permanents', () => {
     assert.ok(find(signals, 'copyEffects', undefined));
   });
 });
+
+describe('Free Spells: casting for less than the printed cost', () => {
+  it('recognizes alternativeCost cards', () => {
+    // Fierce Guardianship and Dismember — real oracle text.
+    const fierceGuardianship = makeCard({
+      name: 'Fierce Guardianship',
+      mana_cost: '{2}{U}',
+      cmc: 3,
+      type_line: 'Instant',
+      oracle_text:
+        'If you control a commander, you may cast this spell without paying its mana cost.\n' +
+        'Counter target noncreature spell.',
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(fierceGuardianship), 'freeSpells')));
+
+    const dismember = makeCard({
+      name: 'Dismember',
+      mana_cost: '{1}{B/P}{B/P}',
+      cmc: 3,
+      type_line: 'Instant',
+      oracle_text:
+        "({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.",
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(dismember), 'freeSpells')));
+  });
+
+  it('recognizes Cascade, Suspend, Plot, Discover, and Rebound from the bare keyword alone', () => {
+    // Maelstrom Colossus (Cascade), Lotus Bloom (Suspend), Unscrupulous
+    // Contractor (Plot), Hurl into History (Discover), and Staggershock
+    // (Rebound) — real oracle text. Each keyword's own reminder text is the
+    // only place it says "without paying its mana cost", and reminder text
+    // is stripped, so only the bare keyword itself survives.
+    const maelstromColossus = makeCard({
+      name: 'Maelstrom Colossus',
+      type_line: 'Creature — Eldrazi',
+      keywords: '["Cascade"]',
+      oracle_text:
+        'Cascade (When you cast this spell, exile cards from the top of your library until you ' +
+        'exile a nonland card that costs less. You may cast it without paying its mana cost. Put ' +
+        'the exiled cards on the bottom in a random order.)',
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(maelstromColossus), 'freeSpells')));
+
+    const lotusBloom = makeCard({
+      name: 'Lotus Bloom',
+      type_line: 'Artifact',
+      keywords: '["Suspend"]',
+      oracle_text:
+        'Suspend 3—{0} (Rather than cast this card from your hand, pay {0} and exile it with ' +
+        'three time counters on it. At the beginning of your upkeep, remove a time counter. When ' +
+        "the last is removed, cast it without paying its mana cost.)\nWhen Lotus Bloom enters, sacrifice it.\n{T}, Sacrifice Lotus Bloom: Add three mana of any one color.",
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(lotusBloom), 'freeSpells')));
+
+    const unscrupulousContractor = makeCard({
+      name: 'Unscrupulous Contractor',
+      type_line: 'Creature — Human Rogue',
+      keywords: '["Plot"]',
+      oracle_text:
+        'When this creature enters, you may sacrifice a creature. When you do, target player ' +
+        'draws two cards and loses 2 life.\n' +
+        'Plot {2}{B} (You may pay {2}{B} and exile this card from your hand. Cast it as a ' +
+        'sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)',
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(unscrupulousContractor), 'freeSpells')));
+
+    const hurlIntoHistory = makeCard({
+      name: 'Hurl into History',
+      type_line: 'Instant',
+      keywords: '["Discover"]',
+      oracle_text:
+        "Counter target artifact or creature spell. Discover X, where X is that spell's mana " +
+        'value. (Exile cards from the top of your library until you exile a nonland card with ' +
+        'that mana value or less. Cast it without paying its mana cost or put it into your hand. ' +
+        'Put the rest on the bottom in a random order.)',
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(hurlIntoHistory), 'freeSpells')));
+
+    const staggershock = makeCard({
+      name: 'Staggershock',
+      type_line: 'Instant',
+      keywords: '["Rebound"]',
+      oracle_text:
+        'Staggershock deals 2 damage to any target.\n' +
+        'Rebound (If you cast this spell from your hand, exile it as it resolves. At the ' +
+        'beginning of your next upkeep, you may cast this card from exile without paying its ' +
+        'mana cost.)',
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(staggershock), 'freeSpells')));
+  });
+
+  it('recognizes a card granting a free cast to something else, not just itself', () => {
+    // Rashmi, Eternities Crafter and Mindclaw Shaman — real oracle text, no
+    // Cascade/Suspend/etc. keyword and no alternativeCost of their own.
+    const rashmi = makeCard({
+      name: 'Rashmi, Eternities Crafter',
+      type_line: 'Legendary Creature — Elemental Wizard',
+      oracle_text:
+        'Whenever you cast your first spell each turn, reveal the top card of your library. You ' +
+        "may cast it without paying its mana cost if it's a spell with lesser mana value. If you " +
+        "don't cast it, put it into your hand.",
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(rashmi), 'freeSpells')));
+
+    const mindclawShaman = makeCard({
+      name: 'Mindclaw Shaman',
+      type_line: 'Creature — Human Shaman',
+      oracle_text:
+        'When this creature enters, target opponent reveals their hand. You may cast an instant ' +
+        'or sorcery spell from among those cards without paying its mana cost.',
+    });
+    assert.ok(hasActiveRole(rolesOf(signalsFor(mindclawShaman), 'freeSpells')));
+  });
+
+  it('does not fire on an ordinary card with no free or alternative cost', () => {
+    // Sol Ring and Lightning Bolt — real oracle text, neither has anything
+    // to do with alternative costs.
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
+    assert.strictEqual(find(signalsFor(solRing), 'freeSpells', undefined), undefined);
+
+    const lightningBolt = makeCard({
+      name: 'Lightning Bolt',
+      type_line: 'Instant',
+      oracle_text: 'Lightning Bolt deals 3 damage to any target.',
+    });
+    assert.strictEqual(find(signalsFor(lightningBolt), 'freeSpells', undefined), undefined);
+  });
+});
