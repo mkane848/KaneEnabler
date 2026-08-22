@@ -11,6 +11,39 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Fixed
 
+- **Signal engine, Phase A ("stop the false positives"):** see
+  `docs/signals-rework.md` for the full plan this lands the first phase of.
+  - **A theme needs at least one card that cares, not just cards that belong
+    to it.** `signals.ts` archetypes now declare a `definingRole` (default
+    `rewards`) and a minimum count of cards that must show it — enforced
+    beside `deckAnalysis.ts`'s `MIN_THEME_CARDS` and `synergy.ts`'s
+    `MIN_SIGNAL_COUNT`. This supersedes kindred's old blanket exemption from
+    "cares, not shares": ten Wizards plus one incidental pump is no longer a
+    Wizard theme (kindred and Lands Matter require 2 caring cards; a
+    fetchland sacrificing itself is still real evidence for Lands Matter,
+    but can no longer constitute the theme alone). `keywordCare` is gated on
+    `rewards` specifically rather than any active role — granting a keyword
+    to the team is not caring about it, which is what made a Vehicles deck
+    read as "Flying" and a Lifegain deck read as "Lifelink".
+  - **A single-card "keyword" is not a mechanic.** `import-scryfall.ts` now
+    counts keyword frequency across the legal card pool at import and drops
+    anything appearing on fewer than 5 cards from the signal vocabulary —
+    Universes Beyond flavour ability words (`Prismatic Gallery`, `Bad Wolf`,
+    `Chaos Control`, ...) no longer generate a `keywordCare` signal at all.
+  - **Kalamax and Dragonsguard Elite no longer read as +1/+1 Counters
+    decks.** A new `growsItself` fact (read off raw text, alongside
+    `sacrificesItself`) excludes a card whose only `+1/+1` clause targets
+    itself from `counters.produces` — that is bookkeeping for a copy
+    trigger or Magecraft, not counters production.
+  - **Widened `spellslinger.rewards`** to match "cast your first instant
+    (or sorcery) spell each turn" and "cast or copy an instant or sorcery
+    spell" — Kalamax, Double Vision, Storm-Kiln Artist, Ral Storm Conduit,
+    and Arcane Bombardment all register now.
+  - **`goWide` is qualifiable by creature type**, so "Sliver creatures you
+    control get +1/+1" cites and suggests Slivers instead of forming a
+    phantom unqualified Go-Wide theme.
+  - Raised `MAX_THEMES` from 6 to 8 (Kalamax and Wilhelt both legitimately
+    fill more than 6 axes).
 - **A double-faced commander's back face could leak into signal detection
   through the stored `type_line`.** `import-scryfall.ts` stored Scryfall's
   *joined* `type_line` ("Legendary Creature — God // Legendary Artifact —

@@ -404,7 +404,7 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
 {
   const cardRows = db.prepare('SELECT * FROM cards').all() as CardRow[];
   const creatureTypes = new Set<string>();
-  const keywords = new Set<string>();
+  const keywordCounts = new Map<string, number>();
   for (const row of cardRows) {
     // Legal cards only. The joke sets carry type lines the real game does not
     // — "Creature — Lady of Proper Etiquette" made *of* a creature type, and
@@ -413,8 +413,22 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
     // are matched against that has to describe the playable format.
     if (row.legality_commander !== 'legal') continue;
     for (const type of JSON.parse(row.creature_types || '[]') as string[]) creatureTypes.add(type);
-    for (const keyword of JSON.parse(row.keywords || '[]') as string[]) keywords.add(keyword);
+    for (const keyword of JSON.parse(row.keywords || '[]') as string[]) {
+      keywordCounts.set(keyword, (keywordCounts.get(keyword) ?? 0) + 1);
+    }
   }
+  // A single-card "keyword" is not a mechanic. Scryfall's `keywords` array
+  // carries flavour ability words from Universes Beyond sets — Prismatic
+  // Gallery, Bad Wolf, Chaos Control, Allons-y!, Eukrasia... 25+ of them in
+  // the corpus alone, and `keywordCare: Prismatic Gallery` was Trazyn's
+  // strongest active signal. Data-driven so there is no allowlist to curate
+  // as sets release.
+  const MIN_KEYWORD_CARDS = 5;
+  const keywords = new Set(
+    [...keywordCounts.entries()]
+      .filter(([, count]) => count >= MIN_KEYWORD_CARDS)
+      .map(([keyword]) => keyword),
+  );
   const vocabulary = buildVocabulary([...creatureTypes], [...keywords]);
 
   const insertSignal = db.prepare(

@@ -86,17 +86,24 @@ function solo(card: CardRow): CommanderUnit {
   return { cards: [card] };
 }
 
+/** Both an outlet and a payoff, so the archetype clears `definingRequirement`
+ * (Aristocrats' identity is `rewards`) as well as MIN_SIGNAL_COUNT — a pile of
+ * fodder-sacrificing cards with nothing rewarding the death is not an
+ * Aristocrats deck (see archetypes.md). */
+const SACRIFICE_TEXT =
+  'Sacrifice a creature: Draw a card.\nWhenever a creature you control dies, you gain 1 life.';
+
 /** N distinct sacrifice outlets. The signal threshold counts distinct citable
  * cards, so "enough signal" means enough different cards, not enough copies. */
 function sacrificeCards(n: number, overrides: Partial<CardRow> = {}): CardRow[] {
   return Array.from({ length: n }, (_, i) =>
-    makeCard({ name: `Sac ${i}`, oracle_text: 'Sacrifice a creature: Draw a card.', ...overrides }),
+    makeCard({ name: `Sac ${i}`, oracle_text: SACRIFICE_TEXT, ...overrides }),
   );
 }
 
 /** A commander that sacrifices creatures — an active Aristocrats role. */
 function sacrificeCommander(name = 'Candidate', overrides: Partial<CardRow> = {}): CardRow {
-  return makeCard({ name, oracle_text: 'Sacrifice a creature: Draw a card.', ...overrides });
+  return makeCard({ name, oracle_text: SACRIFICE_TEXT, ...overrides });
 }
 
 describe('buildCollectionProfile', () => {
@@ -336,6 +343,10 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
         name: `Goblin ${i}`,
         color_identity: JSON.stringify(['B']),
         creature_types: JSON.stringify(['Goblin']),
+        // Two lords among the plain bodies clear kindred's own two-card
+        // minimum on cares-not-shares — membership alone (the other six) is
+        // not enough to call this a tribal deck.
+        oracle_text: i < 2 ? 'Other Goblins you control get +1/+1.' : '',
       }),
     );
     const krenko = makeCard({
@@ -398,7 +409,13 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
         name: `Command ${i}`,
         type_line: 'Sorcery',
         color_identity: JSON.stringify(['R']),
-        oracle_text: 'Create two 1/1 red Goblin creature tokens.',
+        // Two of the five also reward, clearing kindred's own two-card
+        // minimum on cares-not-shares — production alone is membership, not
+        // caring.
+        oracle_text:
+          i < 2
+            ? 'Create two 1/1 red Goblin creature tokens. Goblins you control get +1/+0.'
+            : 'Create two 1/1 red Goblin creature tokens.',
       }),
     );
     // A real Goblin too, so it's not just the five Sorceries citable as
@@ -602,6 +619,10 @@ describe('scoring measures focus, not color reach', () => {
         name: `Vampire ${i}`,
         color_identity: JSON.stringify(['B']),
         creature_types: JSON.stringify(['Vampire']),
+        // Two of the three also reward, clearing kindred's own two-card
+        // minimum — otherwise three plain bodies can never back a kindred
+        // theme regardless of what the commander says.
+        oracle_text: i < 2 ? 'Other Vampires you control get +1/+1.' : '',
       }),
     );
     const weak = sacrificeCommander('Weak', { color_identity: JSON.stringify(['B']) });
@@ -668,6 +689,8 @@ describe('Partner-pair union semantics (702.124e)', () => {
         name: `Sliver ${i}`,
         color_identity: JSON.stringify(['B']),
         creature_types: JSON.stringify(['Sliver']),
+        // Two lords clear kindred's own two-card minimum on cares-not-shares.
+        oracle_text: i < 2 ? 'Other Slivers you control get +1/+1.' : '',
       }),
     );
     const silent = makeCard({

@@ -126,7 +126,9 @@ describe('requiredSignalKeys', () => {
     for (let i = 0; i < 4; i++) {
       const row = makeCard(`Goblin ${i}`);
       owned.push({ row, quantity: 1 });
-      signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
+      // Two lords clear kindred's own two-card minimum on cares-not-shares.
+      const roles: Role[] = i < 2 ? ['is', 'rewards'] : ['is'];
+      signals.set(row.oracle_id, [signal('kindred', roles, 'Goblin')]);
     }
     const keys = requiredSignalKeys(analyzeDeck(owned, signals)).map(signalKey);
     assert.deepStrictEqual(keys, ['kindred:Goblin']);
@@ -364,7 +366,9 @@ describe('attachSuggestions restraint', () => {
     for (let i = 0; i < 4; i++) {
       const row = makeCard(`Goblin ${i}`);
       owned.push({ row, quantity: 1 });
-      signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
+      // Two lords clear kindred's own two-card minimum on cares-not-shares.
+      const roles: Role[] = i < 2 ? ['is', 'rewards'] : ['is'];
+      signals.set(row.oracle_id, [signal('kindred', roles, 'Goblin')]);
     }
     const analysis = analyzeDeck(owned, signals);
     const suggested = attachSuggestions(analysis, {

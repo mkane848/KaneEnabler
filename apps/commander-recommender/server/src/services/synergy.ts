@@ -12,6 +12,7 @@ import type { CommanderUnit } from './partners';
 import {
   buildCardFacts,
   buildVocabulary,
+  definingRequirement,
   detectSignals,
   hasActiveRole,
   signalKey,
@@ -42,6 +43,11 @@ export interface CollectionProfile {
   archetypeCards: Record<string, OwnedCard[]>;
   /** Per-card facts, kept for qualifier checks during scoring. */
   factsByCard: Map<string, CardFacts>;
+  /** Every signal each owned card produces on its own — the full list, not
+   * deduped by archetype like `archetypeCards`. Kept so scoring can check
+   * whether a citing card actually plays the archetype's defining role,
+   * without re-running detection per commander per card. */
+  signalsByCard: Map<string, SignalMatch[]>;
   totalCards: number;
 }
 
@@ -135,14 +141,17 @@ export function buildCollectionProfile(owned: OwnedCard[]): CollectionProfile {
   // Second pass: what does each card actually do?
   const archetypeCards: Record<string, OwnedCard[]> = {};
   const factsByCard = new Map<string, CardFacts>();
+  const signalsByCard = new Map<string, SignalMatch[]>();
 
   const vocabulary = buildVocabulary(creatureTypes, keywords);
 
   for (const entry of owned) {
     const facts = buildCardFacts(entry.row, vocabulary);
     factsByCard.set(entry.row.oracle_id, facts);
+    const signals = detectSignals(facts, vocabulary);
+    signalsByCard.set(entry.row.oracle_id, signals);
     const seen = new Set<string>();
-    for (const signal of detectSignals(facts, vocabulary)) {
+    for (const signal of signals) {
       // One bucket entry per archetype, even if a card matches it at several
       // qualifiers — the bucket is a candidate set, not a count.
       if (seen.has(signal.archetype)) continue;
@@ -158,6 +167,7 @@ export function buildCollectionProfile(owned: OwnedCard[]): CollectionProfile {
     vocabulary,
     archetypeCards,
     factsByCard,
+    signalsByCard,
     totalCards,
   };
 }
@@ -228,6 +238,35 @@ function supporterMatches(signal: SignalMatch, facts: CardFacts | undefined): bo
     return facts.keywords.includes(signal.qualifier);
   }
   return true;
+}
+
+/**
+ * Whether a citing card actually plays an archetype's defining role, rather
+ * than merely belonging to it — the "cares, not shares" rule applied to how
+ * many *supporting* cards a signal can point to, not just whether it can
+ * point to any.
+ *
+ * Reads the card's own detected signals rather than the signal being scored:
+ * an owned card can support a *qualified* commander signal — Wilhelt's
+ * unqualified reanimation spells backing "Reanimator (Zombie)" — without its
+ * own text ever naming that qualifier, so an unqualified per-card signal
+ * counts toward any qualifier of the same archetype; a qualified one only
+ * counts toward its own, so a Dwarf lord's caring can't backstop an Elf
+ * kindred signal it has nothing to do with.
+ */
+function playsDefiningRole(
+  entry: OwnedCard,
+  signal: SignalMatch,
+  definingRole: Role,
+  signalsByCard: Map<string, SignalMatch[]>,
+): boolean {
+  const own = signalsByCard.get(entry.row.oracle_id) ?? [];
+  return own.some(
+    (s) =>
+      s.archetype === signal.archetype &&
+      (s.qualifier === undefined || s.qualifier === signal.qualifier) &&
+      s.roles.includes(definingRole),
+  );
 }
 
 // Require at least this many *citable* cards — i.e. after narrowing to this
@@ -306,14 +345,23 @@ export function scoreCommanders(
     const matched: { signal: SignalMatch; cards: SupportingCard[] }[] = [];
     for (const signal of active) {
       const bucket = profile.archetypeCards[signal.archetype] ?? [];
-      const cards = bucket
-        .filter(
-          (entry) =>
-            fitsIdentity(entry) &&
-            supporterMatches(signal, profile.factsByCard.get(entry.row.oracle_id)),
-        )
-        .map(toSupportingCard);
-      if (cards.length >= MIN_SIGNAL_COUNT) matched.push({ signal, cards });
+      const supporters = bucket.filter(
+        (entry) =>
+          fitsIdentity(entry) &&
+          supporterMatches(signal, profile.factsByCard.get(entry.row.oracle_id)),
+      );
+      if (supporters.length < MIN_SIGNAL_COUNT) continue;
+
+      // Membership counts cards; caring makes a theme. A signal citing
+      // MIN_SIGNAL_COUNT cards that all merely belong (fetchlands, but no
+      // landfall payoff) is not real evidence — see definingRequirement.
+      const { role: definingRole, minimum } = definingRequirement(signal.archetype);
+      const caringCount = supporters.filter((entry) =>
+        playsDefiningRole(entry, signal, definingRole, profile.signalsByCard),
+      ).length;
+      if (caringCount < minimum) continue;
+
+      matched.push({ signal, cards: supporters.map(toSupportingCard) });
     }
 
     if (matched.length === 0) continue;

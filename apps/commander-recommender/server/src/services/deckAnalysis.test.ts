@@ -124,7 +124,9 @@ describe('analyzeDeck', () => {
       for (let i = 0; i < n; i++) {
         const row = makeCard(`${type} ${i}`);
         owned.push({ row, quantity: 1 });
-        signals.set(row.oracle_id, [signal('kindred', ['is'], type)]);
+        // 'rewards' clears kindred's own two-card minimum for both groups —
+        // this test is about grouping by qualifier, not that minimum.
+        signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], type)]);
       }
     }
     const themes = analyzeDeck(owned, signals).themes;
@@ -184,7 +186,12 @@ describe('analyzeDeck', () => {
   });
 
   it('the commonly-missing hint is carried through, flagged as a hint', () => {
-    const { owned, signals } = deckOf(themed('aristocrats', 4, ['produces']));
+    const { owned, signals } = deckOf([
+      ...themed('aristocrats', 4, ['produces']),
+      // At least one payoff, so the theme clears definingRequirement — this
+      // test is about the missing outlet slot, not about payoff detection.
+      ...themed('aristocrats', 1, ['rewards'], 'payoff'),
+    ]);
     const theme = analyzeDeck(owned, signals).themes[0]!;
     const outlet = theme.slots.find((s) => s.key === 'outlet');
     assert.strictEqual(outlet?.commonlyMissing, true);
@@ -240,10 +247,16 @@ describe('analyzeDeck', () => {
     // missing slot, and inventing one would be a fabricated problem.
     const owned: OwnedCard[] = [];
     const signals = new Map<string, SignalMatch[]>();
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       const row = makeCard(`Goblin ${i}`);
       owned.push({ row, quantity: 1 });
       signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
+    }
+    // Two lords clear kindred's own two-card minimum on cares-not-shares.
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Goblin Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Goblin')]);
     }
     const theme = analyzeDeck(owned, signals).themes[0]!;
     assert.deepStrictEqual(theme.slots, []);
@@ -264,20 +277,41 @@ describe('analyzeDeck', () => {
   });
 
   it('cards that actively care about a keyword do make it a theme', () => {
+    // 'rewards' specifically, not merely an active role: granting a keyword
+    // to the team (produces) is not caring about it — see
+    // definingRequirement and the Flying/Haste/Lifelink keyword-shadow rule
+    // in archetypes.md.
     const owned: OwnedCard[] = [];
     const signals = new Map<string, SignalMatch[]>();
     for (let i = 0; i < 4; i++) {
       const row = makeCard(`Trample Payoff ${i}`);
       owned.push({ row, quantity: 1 });
-      signals.set(row.oracle_id, [signal('keywordCare', ['produces'], 'Trample')]);
+      signals.set(row.oracle_id, [signal('keywordCare', ['rewards'], 'Trample')]);
     }
     const themes = analyzeDeck(owned, signals).themes;
     assert.strictEqual(themes.length, 1);
     assert.strictEqual(themes[0]!.cardCount, 4);
   });
 
-  it('kindred membership is still a theme without an active role', () => {
-    // Being a Goblin is a plan in a way that having flying is not.
+  it('granting a keyword to the team is not the same as caring about it', () => {
+    // The Miles/Flying false positive: a commander (or the list) that merely
+    // hands out a keyword is not a theme for it, even though "grants it" is
+    // an active role in every other sense.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 5; i++) {
+      const row = makeCard(`Flier Granter ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('keywordCare', ['produces'], 'Flying')]);
+    }
+    assert.deepStrictEqual(analyzeDeck(owned, signals).themes, []);
+  });
+
+  it('kindred needs at least two cards that care, not just members', () => {
+    // Ten Wizards plus one incidental pump is not a Wizard deck — membership
+    // alone cannot clear kindred's own two-card minimum on its defining
+    // role. Once two lords clear it, every Goblin counts, including the
+    // passive ones: membership counts cards, caring makes a theme.
     const owned: OwnedCard[] = [];
     const signals = new Map<string, SignalMatch[]>();
     for (let i = 0; i < 4; i++) {
@@ -285,7 +319,14 @@ describe('analyzeDeck', () => {
       owned.push({ row, quantity: 1 });
       signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
     }
-    assert.strictEqual(analyzeDeck(owned, signals).themes[0]!.cardCount, 4);
+    assert.deepStrictEqual(analyzeDeck(owned, signals).themes, []);
+
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Goblin Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['rewards'], 'Goblin')]);
+    }
+    assert.strictEqual(analyzeDeck(owned, signals).themes[0]!.cardCount, 6);
   });
 
   it('an empty list produces no themes rather than throwing', () => {

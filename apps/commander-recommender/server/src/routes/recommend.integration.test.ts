@@ -29,14 +29,18 @@ describe.skipIf(!isSeeded)('POST /api/recommend — real seeded database', () =>
       '1 Elvish Visionary',
       '1 Beast Whisperer',
       '1 Elvish Champion',
+      // Two lords, not one — kindred needs at least two cards that actually
+      // care about the type, not just members of it (see signals.ts's
+      // definingRequirement and docs/archetypes.md).
+      '1 Elvish Archdruid',
     ].join('\n');
 
     const res = await request(app).post('/api/recommend').send({ list });
 
     expect(res.status).toBe(200);
     expect(res.body.notFound).toEqual([]);
-    expect(res.body.totalParsed).toBe(10);
-    expect(res.body.totalMatched).toBe(10);
+    expect(res.body.totalParsed).toBe(11);
+    expect(res.body.totalMatched).toBe(11);
     expect(Array.isArray(res.body.suggestions)).toBe(true);
     expect(res.body.suggestions.length).toBeGreaterThan(0);
 
