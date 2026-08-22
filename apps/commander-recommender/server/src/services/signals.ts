@@ -157,6 +157,10 @@ export interface CardFacts {
    * Distinct from sacrificing an indefinite object, which is the Aristocrats
    * pattern. */
   sacrificesItself: boolean;
+  /** Every +1/+1 counter clause on the card puts counters on itself — Kalamax
+   * growing off its own copy trigger, Dragonsguard Elite's Magecraft. That is
+   * bookkeeping for another ability, not evidence of a +1/+1 Counters deck. */
+  growsItself: boolean;
   isLand: boolean;
   isEquipment: boolean;
   isAura: boolean;
@@ -324,6 +328,27 @@ function detectsSelfSacrifice(rawText: string, names: string[]): boolean {
 }
 
 /**
+ * Whether every +1/+1 counter clause on the card targets only itself.
+ *
+ * Modeled on `detectsSelfSacrifice`: read off the RAW text, because
+ * name-stripping destroys the evidence — "put a +1/+1 counter on Kalamax"
+ * name-stripped is indistinguishable from a counter put on anything. A card
+ * whose only counter clause grows itself (Kalamax's copy trigger,
+ * Dragonsguard Elite's Magecraft) is not producing for a +1/+1 Counters
+ * deck; a card with no counter clause at all trivially does not "grow only
+ * itself" either.
+ */
+function detectsSelfGrowth(rawText: string, names: string[]): boolean {
+  const counterClauses = clauses(rawText).filter((c) => /\+1\/\+1 counters?/i.test(c));
+  if (counterClauses.length === 0) return false;
+  const shortNames = names.map((name) => name.split(',')[0]!.trim()).filter((n) => n !== '');
+  return counterClauses.every((clause) => {
+    if (/\bon this (?:creature|permanent)\b/i.test(clause)) return true;
+    return shortNames.some((short) => new RegExp(`\\bon ${escapeRegExp(short)}\\b`, 'i').test(clause));
+  });
+}
+
+/**
  * The individual face names inside a Scryfall-joined card name
  * ("Front // Back" -> ["Front", "Back"]). A single-faced card's name has no
  * " // " and splits into just itself.
@@ -369,6 +394,7 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     keywords: parseJsonArray(row.keywords),
     producedTokenTypes: findProducedTokenTypes(text, vocab),
     sacrificesItself: detectsSelfSacrifice(rawText, faceNames),
+    growsItself: detectsSelfGrowth(rawText, faceNames),
     isLand: /\bLand\b/.test(typeLine),
     isEquipment: /\bEquipment\b/.test(typeLine),
     isAura: /\bAura\b/.test(typeLine),
@@ -394,6 +420,14 @@ export interface ArchetypeDef {
    * counts supporters of that type, and separately implies kindred for it.
    */
   qualifiable?: QualifierKind;
+  /**
+   * Which role is this archetype's identity, and how many citable cards must
+   * show it for the archetype to be reported at all. Defaults to `rewards`
+   * x1 — see `definingRequirement`. Membership (any role) still counts
+   * *cards*, once this bar is cleared; it just cannot clear the bar alone.
+   */
+  definingRole?: Role;
+  definingMinimum?: number;
 }
 
 function matches(matcher: Matcher, facts: CardFacts): boolean {
@@ -436,6 +470,10 @@ export const ARCHETYPES: ArchetypeDef[] = [
       'Winning through a board full of creatures rather than a combo — mass pumps, evasion granted to the ' +
       'team, and payoffs that scale with how many creatures you control.',
     weight: 18,
+    // "Sliver creatures you control get +1/+1" is a Sliver lord, not evidence
+    // of a generic go-wide plan — qualifying it means it cites and suggests
+    // Slivers instead of forming a phantom unqualified theme.
+    qualifiable: 'creatureType',
     roles: {
       produces: [/create[^.;]*\bcreature token/i],
       rewards: [
@@ -506,6 +544,10 @@ export const ARCHETYPES: ArchetypeDef[] = [
       ],
       consumes: [/\bsacrifice (?:a|an|another)\b[^.;]*\bland/i],
     },
+    // Fetchlands sacrificing themselves are real evidence for a lands deck,
+    // but must never constitute one alone — two lets a single fetchland pass
+    // through without the deck having any actual landfall payoff.
+    definingMinimum: 2,
   },
   {
     key: 'spellslinger',
@@ -518,6 +560,12 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /whenever you cast an? (?:instant|sorcery)/i,
         /whenever you cast a noncreature spell/i,
         /instant and sorcery spells? (?:you cast )?costs? \{?\d/i,
+        // "Whenever you cast your first instant spell each turn" — Kalamax,
+        // Double Vision, Arcane Bombardment.
+        /cast your first instant(?: or sorcery)? spell each turn/i,
+        // Magecraft's own templating — Dragonsguard Elite, Storm-Kiln Artist,
+        // Ral, Storm Conduit.
+        /cast or copy an? instant or sorcery spell/i,
       ],
       amplifies: [/copy (?:it\.|that spell|the (?:target|next) instant or sorcery)/i],
     },
@@ -530,7 +578,10 @@ export const ARCHETYPES: ArchetypeDef[] = [
     weight: 20,
     roles: {
       produces: [
-        /put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i,
+        // Excludes Kalamax and Dragonsguard Elite: a card whose only +1/+1
+        // clause targets itself is bookkeeping for another ability (a copy
+        // trigger, Magecraft), not production for a +1/+1 Counters deck.
+        (f) => !f.growsItself && /put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i.test(f.text),
         /\b(?:adapt|evolve|bolster|outlast)\b/i,
       ],
       rewards: [/whenever[^.;]*\+1\/\+1 counter/i, /for each \+1\/\+1 counter/i],
@@ -784,6 +835,30 @@ function candidateKeywords(facts: CardFacts, vocab: Vocabulary): string[] {
     if (lowerText.includes(keyword.toLowerCase())) found.add(keyword);
   }
   return [...found];
+}
+
+/**
+ * Which role is an archetype's identity, and how many citable cards must
+ * show it before the archetype is reported at all.
+ *
+ * Membership (any role) still counts cards once this bar is cleared — a
+ * theme's card count is not limited to the defining-role cards — but
+ * membership alone cannot clear it. `kindred` is generated per creature type
+ * rather than listed in `ARCHETYPES`, so it is special-cased here rather than
+ * carrying its own `ArchetypeDef`. `keywordCare` is likewise absent from
+ * `ARCHETYPES` and so falls through to the default (`rewards` x1) — granting
+ * a keyword is `produces`, not `rewards`, so this is what stops a commander
+ * that merely hands out Flying from reading as a Flying deck.
+ */
+export function definingRequirement(archetype: string): { role: Role; minimum: number } {
+  if (archetype === 'kindred') {
+    // "Ten Wizards plus one incidental pump is not a Wizard deck" — see
+    // archetypes.md. Membership is structural and free to claim, so kindred
+    // needs more than one card that actually cares.
+    return { role: 'rewards', minimum: 2 };
+  }
+  const def = ARCHETYPES.find((a) => a.key === archetype);
+  return { role: def?.definingRole ?? 'rewards', minimum: def?.definingMinimum ?? 1 };
 }
 
 /** Every archetype this card participates in, and how. */

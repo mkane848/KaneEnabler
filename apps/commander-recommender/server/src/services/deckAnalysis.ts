@@ -15,7 +15,7 @@
  *     have nine death-trigger payoffs and one sacrifice outlet" is a
  *     diagnosis, where "you have 12 Aristocrats cards" is just a count.
  */
-import { hasActiveRole, type Role, type SignalMatch } from './signals';
+import { definingRequirement, type Role, type SignalMatch } from './signals';
 import { crossArchetypeSlot, lifecycleFor, type LifecycleSlot } from './lifecycle';
 import type { OwnedCard, SupportingCard } from './synergy';
 
@@ -76,8 +76,9 @@ export interface DeckAnalysis {
   themes: DeckTheme[];
 }
 
-/** How many themes to report. Beyond this it stops being a summary. */
-const MAX_THEMES = 6;
+/** How many themes to report. Beyond this it stops being a summary. Kalamax
+ * legitimately fills six once Phase C lands; Wilhelt has five axes. */
+const MAX_THEMES = 8;
 
 /** A theme needs at least this many distinct cards to be worth naming. Same
  * reasoning as the signal threshold in scoring: fewer than this is a
@@ -90,24 +91,12 @@ interface Participation {
 }
 
 /**
- * Whether a card counts toward its theme, or merely happens to touch it.
- *
- * Everywhere else, "cares, not shares" is applied to the commander. It has to
- * apply here too, for the same reason: a graveyard list with four fliers in it
- * reported a five-card *Flying* theme, which is not a theme, it's a
- * coincidence of evasion. A keyword is only a plan when something in the list
- * grants it or triggers off it.
- *
- * Kindred is deliberately exempt. Membership genuinely is a deck theme — "you
- * have five Zombies" is worth knowing and worth building toward, where "you
- * have five fliers" is not.
- */
-function countsTowardTheme(archetype: string, roles: Role[]): boolean {
-  return archetype !== 'keywordCare' || hasActiveRole(roles);
-}
-
-/**
  * Groups the list's cards by the archetype they participate in.
+ *
+ * Every card touching the archetype in any role is grouped — membership
+ * counts cards. Whether the group is worth reporting as a theme at all is a
+ * separate question, decided in `analyzeDeck` by `definingRequirement`: a
+ * theme needs at least one card that cares, not just cards that belong.
  *
  * Qualified signals (kindred, keyword-care, subtype-restricted payoffs) are
  * grouped by their full key, so "Goblin Kindred" and "Elf Kindred" are
@@ -122,7 +111,6 @@ function groupByTheme(
   for (const entry of owned) {
     const signals = signalsByCard.get(entry.row.oracle_id) ?? [];
     for (const signal of signals) {
-      if (!countsTowardTheme(signal.archetype, signal.roles)) continue;
       const key = signal.qualifier ? `${signal.archetype}:${signal.qualifier}` : signal.archetype;
       let group = groups.get(key);
       if (!group) {
@@ -220,6 +208,14 @@ export function analyzeDeck(
     // theme.
     const distinct = new Map(group.participants.map((p) => [p.entry.row.oracle_id, p]));
     if (distinct.size < MIN_THEME_CARDS) continue;
+
+    // Membership counts cards; caring makes a theme. Ten Wizards plus one
+    // incidental pump is not a Wizard deck, and a pile of sacrifice fodder
+    // with nothing rewarding a death is not Aristocrats — see
+    // definingRequirement and archetypes.md's "rules that are settled".
+    const { role: definingRole, minimum } = definingRequirement(group.signal.archetype);
+    const caringCount = [...distinct.values()].filter((p) => p.roles.includes(definingRole)).length;
+    if (caringCount < minimum) continue;
 
     const spec = lifecycleFor(group.signal.archetype);
     const participants = [...distinct.values()];

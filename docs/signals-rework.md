@@ -3,8 +3,9 @@
 The companion to [`archetypes.md`](./archetypes.md). That document says what the vocabulary **means**
 and why; this one says what to **change**, in what order, and how to know it worked.
 
-Nothing here has been implemented. The corpus it is derived from is committed at
-`apps/commander-recommender/server/src/services/__fixtures__/decks/`.
+**Phase A has landed** (see its section below and the `[Unreleased]` entry in
+`apps/commander-recommender/CHANGELOG.md`). Phases A2 onward have not. The corpus it is derived from
+is committed at `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
