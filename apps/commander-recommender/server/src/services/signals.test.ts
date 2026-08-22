@@ -1126,3 +1126,42 @@ describe('protects: archetype-scoped, never generic hexproof', () => {
     assert.ok(!signals.some((s) => s.roles.includes('protects')), JSON.stringify(signals));
   });
 });
+
+describe('cardTypes and permanentSubtypes read off the type line', () => {
+  it('reads the card types before the em dash, supertypes excluded', () => {
+    // Lightning Bolt, Kalamax, the Stormsire — real type lines.
+    const bolt = makeCard({ name: 'Lightning Bolt', type_line: 'Instant' });
+    assert.deepStrictEqual(buildCardFacts(bolt, buildVocabulary([], [])).cardTypes, ['Instant']);
+
+    const kalamax = makeCard({
+      name: 'Kalamax, the Stormsire',
+      type_line: 'Legendary Creature — Elder Dragon',
+    });
+    assert.deepStrictEqual(buildCardFacts(kalamax, buildVocabulary([], [])).cardTypes, ['Creature']);
+  });
+
+  it('recognises a card with more than one type', () => {
+    // Summon: Primal Odin — real type line (an Enchantment Creature Saga).
+    const odin = makeCard({
+      name: 'Summon: Primal Odin',
+      type_line: 'Enchantment Creature — Saga Knight',
+    });
+    const facts = buildCardFacts(odin, buildVocabulary([], []));
+    assert.deepStrictEqual([...facts.cardTypes].sort(), ['Creature', 'Enchantment']);
+  });
+
+  it('reads permanent subtypes from the curated list, after the em dash', () => {
+    // Smuggler's Copter, Long List of the Ents — real type lines.
+    const copter = makeCard({ name: "Smuggler's Copter", type_line: 'Artifact — Vehicle' });
+    assert.deepStrictEqual(
+      buildCardFacts(copter, buildVocabulary([], [])).permanentSubtypes,
+      ['Vehicle'],
+    );
+
+    const saga = makeCard({ name: 'Long List of the Ents', type_line: 'Enchantment — Saga' });
+    assert.deepStrictEqual(buildCardFacts(saga, buildVocabulary([], [])).permanentSubtypes, ['Saga']);
+
+    const vanilla = makeCard({ name: 'Test Bear', type_line: 'Creature — Bear' });
+    assert.deepStrictEqual(buildCardFacts(vanilla, buildVocabulary([], [])).permanentSubtypes, []);
+  });
+});

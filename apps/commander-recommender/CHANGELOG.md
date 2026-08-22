@@ -32,6 +32,18 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     specifically; a spell that merely grants hexproof to "target creature"
     (Snakeskin Veil) is deliberately left unmatched — it names no type, so
     there's nothing safe to scope it to yet.
+- **Signal engine, Phase B (part 2) — `cardType` and `permanentSubtype`
+  qualifiers.** `CardFacts` gains `cardTypes` (Creature, Instant, Sorcery,
+  Artifact, Enchantment, Land, Planeswalker, Battle, Kindred — read off the
+  type line before the em dash) and `permanentSubtypes` (a curated list —
+  Vehicle, Equipment, Saga, Clue, Treasure, Food — matched against the type
+  line; not a Scryfall subtype catalog fetch, which would be an
+  api-policy-gated change). `synergy.ts`'s `supporterMatches` narrows by
+  both the same way it already narrows by `creatureType`/`keyword`. Neither
+  has a consuming archetype yet — that's Phase C1's `copyEffects`
+  (Kalamax copies *instants*, not sorceries) and `artifacts` (Miles's
+  Vehicles, Sophia's Food) — so this is plumbing ahead of its first user,
+  exercised directly in tests rather than through a real signal.
 
 ### Fixed
 
