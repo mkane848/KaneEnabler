@@ -47,7 +47,11 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   "scoring measures focus" tests in `synergy.test.ts` before changing the weight formula.
 - **`server/src/services/signals.ts`** (879 lines, the largest file) is the signal/role model
   feeding `synergy.ts`: what a card contributes to a deck's plan (`is`/`produces`/`consumes`/
-  `rewards`/`amplifies`) and in what capacity. `deckAnalysis.ts` + `lifecycle.ts` + `packages.ts`
+  `rewards`/`amplifies`) and in what capacity. **Read
+  [`../../docs/archetypes.md`](../../docs/archetypes.md) before changing this file** — it is the
+  reviewable catalog of what those roles and archetypes are _meant_ to mean, derived from twenty real
+  decks, and it records which current behaviours are deliberate (so they don't get "fixed") and which
+  are known gaps. `deckAnalysis.ts` + `lifecycle.ts` + `packages.ts`
   build on it to answer "what is this list trying to do, and what's it missing" independent of any
   commander — see `docs/commander-recommender.md`'s file map for how those three fit together.
 - **`server/src/services/partners.ts`** builds every legal `CommanderUnit` (rule 702.124: one card
