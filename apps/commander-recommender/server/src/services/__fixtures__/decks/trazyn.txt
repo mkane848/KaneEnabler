@@ -1,0 +1,73 @@
+# Commander: Trazyn the Infinite
+# Confirmed axes: MAIN - graveyard toolbox, big mana into X. FALLBACK - artifact aggro, drain.
+1 Anrakyr the Traveller
+1 Arcane Signet
+1 Barren Moor
+1 Basalt Monolith
+1 Beacon of Unrest
+1 Buried Alive
+1 Caged Sun
+1 Canoptek Scarab Swarm
+1 Canoptek Spyder
+1 Chronomancer
+1 Codex Shredder
+1 Cranial Plating
+1 Cryptek
+1 Cryptothrall
+1 Dark Ritual
+1 Darkness
+1 Deadly Dispute
+1 Defile
+1 Desert of the Glorified
+1 Diabolic Tutor
+1 Diresight
+1 Disciples of Gix
+1 Dismember
+1 Endless Atlas
+1 Exsanguinate
+1 Farmstead Gleaner
+1 Fell the Profane // Fell Mire
+1 Flayed One
+1 Foundry Inspector
+1 Gilded Lotus
+1 Glasses of Urza
+1 Go for the Throat
+1 Golem Artisan
+1 Illuminor Szeras
+1 Karn, the Great Creator
+1 Lightning Greaves
+1 Mask of Memory
+1 Mind Stone
+1 Monumental Corruption
+1 Mutilate
+1 Myriad Landscape
+1 Mystic Forge
+1 Necron Deathmark
+1 Necron Overlord
+1 Out of the Tombs
+1 Patchwork Gnomes
+1 Pili-Pala
+1 Polluted Mire
+1 Psychomancer
+1 Rowan's Grim Search
+1 Sceptre of Eternal Glory
+1 Sculpting Steel
+1 Shimmer Myr
+1 Sol Ring
+1 Staff of Domination
+1 Stinkweed Imp
+30 Swamp
+1 Szarekh, the Silent King
+1 Takenuma, Abandoned Mire
+1 Their Name Is Death
+1 Their Number Is Legion
+1 Thought Vessel
+1 Thran Dynamo
+1 Tomb Fortress
+1 Toxic Deluge
+1 Trazyn the Infinite
+1 Triarch Praetorian
+1 Unmarked Grave
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Whispers
+1 Voltaic Construct

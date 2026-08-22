@@ -1,0 +1,100 @@
+# Commander: Obeka, Brute Chronologist
+# Confirmed axes: Temporary effects (end the turn to exile delayed sacrifice/exile triggers
+# off the stack, keeping the temporary permanents), plus turn denial - Obeka can end an
+# OPPONENT's turn, unlike Sundial of the Infinite.
+1 Alchemist's Gambit
+1 Amphin Mutineer
+1 An Offer You Can't Refuse
+1 Anger
+1 Anzrag's Rampage
+1 Apprentice Necromancer
+1 Araumi of the Dead Tide
+1 Arcane Denial
+1 Arcane Signet
+1 Arid Mesa
+1 Ayara, Widow of the Realm // Ayara, Furnace Queen
+1 Blade of Selves
+1 Blasphemous Act
+1 Blood Crypt
+1 Bloodstained Mire
+1 Buried Alive
+1 Come Back Wrong
+1 Command Tower
+1 Crumbling Necropolis
+1 Dark Ritual
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Elturel Survivors
+1 Exotic Orchard
+1 Fable of the Mirror-Breaker // Reflection of Kiki-Jiki
+1 Fact or Fiction
+1 Faithless Looting
+1 Feed the Swarm
+1 Feldon of the Third Path
+1 Fellwar Stone
+1 Firbolg Flutist
+1 Flooded Strand
+1 Genasi Enforcers
+1 Glorious End
+1 Gruesome Encore
+1 Hate Mirage
+1 Haunted Ridge
+1 Hide on the Ceiling
+1 Hive Mind
+1 Ideas Unbound
+1 Ilharg, the Raze-Boar
+2 Island
+1 Jaxis, the Troublemaker
+1 Lazav, the Multifarious
+1 Luxury Suite
+1 Mana Confluence
+1 Marsh Flats
+1 Mimic Vat
+1 Mirror Box
+1 Morphic Pool
+3 Mountain
+1 Mulldrifter
+1 Nightscape Familiar
+1 Obeka, Brute Chronologist
+1 Oliphaunt
+1 Orthion, Hero of Lavabrink
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Puppeteer Clique
+1 Rakdos Signet
+1 Reanimate
+1 Red Sun's Twilight
+1 Reflecting Pool
+1 Relic of Sauron
+1 Riverpyre Verge
+1 Rogue's Passage
+1 Saheeli, the Sun's Brilliance
+1 Sauron, the Necromancer
+1 Sedris, the Traitor King
+1 Shipwreck Marsh
+1 Shriekmaw
+1 Slaughter Pact
+1 Sneak Attack
+1 Sol Ring
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sundial of the Infinite
+2 Swamp
+1 Swiftfoot Boots
+1 Takenuma, Abandoned Mire
+1 Talisman of Creativity
+1 Terminate
+1 Thousand-Year Elixir
+1 Thrill of Possibility
+1 Training Center
+1 Troll of Khazad-dum
+1 Twinflame
+1 Undercity Sewers
+1 Urabrask's Forge
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Watery Grave
+1 Windfall
+1 Wooded Foothills
+1 Xander's Lounge

@@ -1,0 +1,94 @@
+# Commander: Wilhelt, the Rotcleaver
+# Confirmed axes: Sacrifice loops, drain the table, wide alpha strike, reanimation big turns
+# Note: decayed tokens are valued as versatile resources, not for one narrow use.
+1 Accursed Marauder
+1 Arcane Signet
+1 Army of the Damned
+1 Ashnod's Altar
+1 Bloodstained Mire
+1 Buried Alive
+1 Call to the Grave
+1 Carrion Feeder
+1 Cemetery Reaper
+1 Choked Estuary
+1 Clearwater Pathway // Murkwater Pathway
+1 Cleaver Skaab
+1 Command Tower
+1 Counterspell
+1 Crowded Crypt
+1 Curse of the Restless Dead
+1 Damnation
+1 Dark Salvation
+1 Darkwater Catacombs
+1 Deadly Dispute
+1 Death Baron
+1 Dimir Aqueduct
+1 Diregraf Captain
+1 Diregraf Colossus
+1 Distant Melody
+1 Dread Summons
+1 Dreadhorde Invasion
+1 Drown in Dreams
+1 Drowned Catacomb
+1 Empty the Laboratory
+1 Endless Ranks of the Dead
+1 Eternal Skylord
+1 Fleshbag Marauder
+1 Flooded Strand
+1 Forgotten Creation
+1 Foulmire Knight // Profane Insight
+1 Ghouls' Night Out
+1 Gisa and Geralf
+1 Gleaming Overseer
+1 Gravecrawler
+1 Gray Merchant of Asphodel
+1 Headless Rider
+1 Hordewing Skaab
+1 Hungry Ghoul
+2 Island
+1 Lich Lord of Unx
+1 Liliana, Death's Majesty
+1 Liliana, Dreadhorde General
+1 Liliana, the Last Hope
+1 Liliana's Mastery
+1 Lord of the Accursed
+1 Marsh Flats
+1 Midnight Reaper
+1 Morphic Pool
+1 Myriad Landscape
+1 Necroduality
+1 Otawara, Soaring City
+1 Overcharged Amalgam
+1 Path of Ancestry
+1 Phyrexian Altar
+1 Plumb the Forbidden
+1 Polluted Delta
+1 Prized Amalgam
+1 Ravenous Rotbelly
+1 Retrofitted Transmogrant
+1 Rogue's Passage
+1 Rooftop Storm
+1 Secluded Courtyard
+1 Selhoff Entomber
+1 Shipwreck Marsh
+1 Skullclamp
+1 Sol Ring
+1 Sunken Hollow
+1 Sunken Ruins
+9 Swamp
+1 Tainted Isle
+1 Takenuma, Abandoned Mire
+1 Talisman of Dominance
+1 Three Tree City
+1 Tomb Tyrant
+1 Undead Augur
+1 Undead Warchief
+1 Undercity Sewers
+1 Underground River
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Victimize
+1 Village Rites
+1 Watery Grave
+1 Wilhelt, the Rotcleaver
+1 Zombie Apocalypse
