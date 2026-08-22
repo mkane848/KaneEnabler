@@ -1036,3 +1036,93 @@ describe('amass produces the named type and Army, though its own text is reminde
     assert.ok(rolesOf(signals, 'goWide').includes('produces'));
   });
 });
+
+describe('enables: cost reduction and free-casting turn the engine on without rewarding it', () => {
+  it('Equipment/Aura cost reduction and free-equip are Voltron enablers, not payoffs', () => {
+    // Danitha Capashen, Paragon; Puresteel Paladin; Bruenor Battlehammer;
+    // Bladehold War-Whip — real oracle text, all four misses named in
+    // docs/signals-rework.md's voltron.rewards section.
+    const danitha = makeCard({
+      name: 'Danitha Capashen, Paragon',
+      type_line: 'Legendary Creature — Human Knight',
+      oracle_text: 'First strike, vigilance, lifelink\nAura and Equipment spells you cast cost {1} less to cast.',
+    });
+    const roles = rolesOf(signalsFor(danitha), 'voltron');
+    assert.ok(roles.includes('enables'), JSON.stringify(roles));
+    assert.ok(!roles.includes('rewards'));
+
+    const puresteel = makeCard({
+      name: 'Puresteel Paladin',
+      type_line: 'Creature — Human Soldier',
+      oracle_text:
+        'Whenever an Equipment you control enters, you may draw a card.\n' +
+        'Metalcraft — Equipment you control have equip {0} as long as you control three or more artifacts.',
+    });
+    assert.ok(rolesOf(signalsFor(puresteel), 'voltron').includes('enables'));
+
+    const bruenor = makeCard({
+      name: 'Bruenor Battlehammer',
+      type_line: 'Legendary Creature — Dwarf Warrior',
+      oracle_text:
+        'Each creature you control gets +2/+0 for each Equipment attached to it.\n' +
+        'You may pay {0} rather than pay the equip cost of the first equip ability you activate each turn.',
+    });
+    assert.ok(rolesOf(signalsFor(bruenor), 'voltron').includes('enables'));
+
+    const bladeholdWarWhip = makeCard({
+      name: 'Bladehold War-Whip',
+      type_line: 'Artifact — Equipment',
+      oracle_text:
+        'For Mirrodin! (When this Equipment enters, create a 2/2 red Rebel creature token, then attach ' +
+        'this to it.)\n' +
+        'Equip abilities you activate of other Equipment cost {1} less to activate.\n' +
+        'Equipped creature has double strike.\n' +
+        'Equip {3}{R}{W}',
+    });
+    assert.ok(rolesOf(signalsFor(bladeholdWarWhip), 'voltron').includes('enables'));
+  });
+
+  it("Dualcast's own cost reduction is a Spellslinger enabler", () => {
+    // Alisaie Leveilleur — real oracle text.
+    const alisaie = makeCard({
+      name: 'Alisaie Leveilleur',
+      type_line: 'Legendary Creature — Human Warrior',
+      oracle_text:
+        'Partner with Alphinaud Leveilleur (When this creature enters, target player may put Alphinaud ' +
+        'Leveilleur into their hand from their library, then shuffle.)\n' +
+        'First strike\n' +
+        'Dualcast — The second spell you cast each turn costs {2} less to cast.',
+    });
+    assert.ok(rolesOf(signalsFor(alisaie), 'spellslinger').includes('enables'));
+  });
+});
+
+describe('protects: archetype-scoped, never generic hexproof', () => {
+  it('a lord granting indestructible to its own tribe is a kindred protector', () => {
+    // Sliver Hivelord — real oracle text.
+    const hivelord = makeCard({
+      name: 'Sliver Hivelord',
+      type_line: 'Legendary Creature — Sliver',
+      creature_types: JSON.stringify(['Sliver']),
+      oracle_text:
+        'Sliver creatures you control have indestructible. (Damage and effects that say "destroy" don\'t ' +
+        'destroy them.)',
+    });
+    assert.ok(rolesOf(signalsFor(hivelord, ['Sliver']), 'kindred', 'Sliver').includes('protects'));
+  });
+
+  it('a generic hexproof spell with no named type protects nothing', () => {
+    // Snakeskin Veil — real oracle text. Genuinely a combat trick a tribal
+    // deck might run, but its own text never names a type, so it must not
+    // become a candidate for every archetype's `protects` slot.
+    const snakeskinVeil = makeCard({
+      name: 'Snakeskin Veil',
+      type_line: 'Instant',
+      oracle_text:
+        'Put a +1/+1 counter on target creature you control. It gains hexproof until end of turn. (It ' +
+        "can't be the target of spells or abilities your opponents control.)",
+    });
+    const signals = signalsFor(snakeskinVeil, ['Sliver']);
+    assert.ok(!signals.some((s) => s.roles.includes('protects')), JSON.stringify(signals));
+  });
+});
