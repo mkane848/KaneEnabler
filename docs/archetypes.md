@@ -199,6 +199,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `copyEffects`  | `rewards` ×1     | Becomes `qualifiable: cardType`. No lifecycle yet — one undifferentiated `rewards` role, same shape as `selfMill`/`opponentMill`. |
 | `freeSpells`   | `produces` ×1    | No separate payoff role — granting a free/reduced cast is the identity itself. Reads `alternativeCost`, plus Cascade/Discover/Suspend/Plot/Rebound from the bare keyword (their own reminder text is the only place they say "without paying its mana cost", and reminder text is stripped). |
 | `artifacts`    | `rewards` ×1     | Becomes `qualifiable: permanentSubtype`, scoped to `Vehicle`/`Food`/`Clue`/`Treasure` only — `Equipment`/`Saga` are `PERMANENT_SUBTYPES` too, but voltron's and counters' territory, not this archetype's `is` role. A card's own structural subtype qualifies it directly (Smuggler's Copter needs no text to be a Vehicle) *except* when its own reward reads artifacts generically (Cranial Plating is an Equipment but "for each artifact you control" doesn't restrict to Equipment — see below). |
+| `gameState`    | `produces` ×1    | Becomes `qualifiable: gameState`, one of five named states (`theRing`, `monarch`, `initiative`, `maxSpeed`, `dayNight`) computed once onto `CardFacts.gameStates` via a dedicated keyword-and-text detector, the same shape as `counterType` — not the payoff-matcher clause scan `cardType`/`permanentSubtype` use. Max speed and day/night lean on the literal Scryfall `keywords` array where reminder text is the only place the mechanic names itself (`Start your engines!`, `Daybound`, `Nightbound`); the Ring, the monarch, and the initiative are text-only, no matching keyword exists. |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -217,7 +218,7 @@ deck is a guess.
 |        | `temporaryEffects`                                                                                   | 3      | Delayed-cost cards and the enablers that erase the trigger                                                                                                                            |
 |        | `recursion`                                                                                          | 3      | The same body returning repeatedly — distinct from `reanimator`'s "cheat something big into play"                                                                                     |
 |        | `tapForValue`                                                                                        | 2      | Tapping and untapping your own permanents; also where combo _ingredients_ get classified                                                                                              |
-|        | `gameState`                                                                                          | 6      | The Ring, the monarch, Max speed, initiative, day/night                                                                                                                               |
+|        | ~~`gameState`~~ **Shipped** — see "Shipping today" above                                            | 6      | The Ring, the monarch, Max speed, initiative, day/night                                                                                                                               |
 | **C3** | `burn`, `bigMana`, `powerMatters`, `cardDraw`, `graveyardToolbox`, `monoColorDevotion`, `pillowfort` | 2 each |                                                                                                                                                                                       |
 | **C4** | `politics`, `storm`, `alternateWin`                                                                  | 1 each | Build only if C1–C3 hold up. `politics` is the fuzziest concept in the catalog — if it cannot be kept crisp (goad, donate, symmetric effects), drop it rather than ship a vague theme |
 
@@ -323,6 +324,11 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   Food, *and* Treasure at once) needed an explicit skip so the clause can't arbitrarily qualify as
   whichever type it mentions first — the same shape of bug as Angel of Glory's Rise above, just via a
   different matcher.
+- **`gameState`'s initiative reward matcher needed a real card to catch it.** The first draft matched
+  only `"if you've the initiative"`/`"if you have the initiative"`; Undercellar Sweep's actual wording
+  is third-person and doesn't even keep "you" as the sole subject — `"if you or a player you're
+  attacking has the initiative"` — so it produced only `produces`, never `rewards`, until the regex was
+  widened to `/\b(?:has|have|'ve) the initiative\b/i`.
 
 ---
 

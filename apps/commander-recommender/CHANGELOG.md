@@ -222,8 +222,38 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   (~20 meaning extend the catalog, ~2,000 meaning build a
   colour-identity-only fallback), closer to "extend the catalog." Decided:
   keep extending via Phase C rather than building that fallback yet.
+- **Signal engine, Phase C2 — `gameState` archetype.** See
+  `docs/signals-rework.md` Phase C. The item Phase B explicitly deferred:
+  persistent shared state that many cards read and write regardless of
+  who controls it — the Ring, the monarch, the initiative, Max speed, and
+  day/night. `qualifiable: gameState`, five named states (`theRing`,
+  `monarch`, `initiative`, `maxSpeed`, `dayNight`) computed once onto a
+  new `CardFacts.gameStates` by a dedicated detector scanning every
+  clause and the Scryfall `keywords` array, the same all-clauses,
+  order-independent shape `counterType` already uses rather than the
+  payoff-matcher clause scan `cardType`/`permanentSubtype` use — a card
+  can produce one game state and reward on a completely different one
+  within the same clause set. Max speed and day/night lean on the literal
+  `keywords` array (`Start your engines!`, `Daybound`, `Nightbound`)
+  because reminder text is the only place those mechanics name
+  themselves and reminder text is stripped; the Ring, the monarch, and
+  the initiative have no such keyword and stay text-only. Verified
+  against the real seeded database and the full 20-deck corpus:
+  `sauron.txt` reports `Game State (theRing)` (11 cards) and `miles.txt`
+  reports `Game State (maxSpeed)` (4 cards), matching archetypes.md's own
+  motivating decks exactly. Re-measured with Phase F's coverage report:
+  889 of 4,049 commander-eligible cards now produce zero active signals,
+  down from 898.
 
 ### Fixed
+
+- **Signal engine — `gameState`'s initiative reward matcher missed its own
+  motivating card.** Found verifying the `gameState` archetype above:
+  the first draft matched only `"if you've"`/`"if you have" the
+  initiative`, but Undercellar Sweep's real wording is third-person and
+  doesn't even keep "you" as the sole subject — `"if you or a player
+  you're attacking has the initiative"` — so it produced only `produces`,
+  never `rewards`. Widened to `/\b(?:has|have|'ve) the initiative\b/i`.
 
 - **Signal engine — `findQualifier` ties the candidate type word to the
   payoff matcher's own match text, not a clause-wide scan.** Follow-up to

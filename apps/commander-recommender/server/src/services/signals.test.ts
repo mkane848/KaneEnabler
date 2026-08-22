@@ -1760,3 +1760,124 @@ describe('Artifacts: Vehicle, Food, Clue, and Treasure', () => {
     assert.strictEqual(find(signals, 'artifacts', 'Clue'), undefined);
   });
 });
+
+describe('Game State: shared state read and written across control, not owned by a single card', () => {
+  it('theRing: produces on tempting, rewards on being the Ring-bearer', () => {
+    // Aragorn, Company Leader — real oracle text.
+    const aragorn = makeCard({
+      name: 'Aragorn, Company Leader',
+      type_line: 'Legendary Creature — Human Ranger',
+      keywords: '["Vigilance","Deathtouch"]',
+      oracle_text:
+        'Whenever the Ring tempts you, if you chose a creature other than Aragorn as your ' +
+        'Ring-bearer, put your choice of a counter from among first strike, vigilance, ' +
+        'deathtouch, and lifelink on Aragorn.\n' +
+        'Whenever you put one or more counters on Aragorn, put one of each of those kinds of ' +
+        'counters on up to one other target creature.',
+    });
+    const signals = signalsFor(aragorn);
+    assert.deepStrictEqual(rolesOf(signals, 'gameState', 'theRing'), ['produces', 'rewards']);
+  });
+
+  it('monarch: produces on becoming, rewards on staying', () => {
+    // Court of Ire — real oracle text.
+    const courtOfIre = makeCard({
+      name: 'Court of Ire',
+      type_line: 'Enchantment',
+      oracle_text:
+        'When this enchantment enters, you become the monarch.\n' +
+        "At the beginning of your upkeep, this enchantment deals 2 damage to any target. If you're " +
+        'the monarch, it deals 7 damage instead.',
+    });
+    const signals = signalsFor(courtOfIre);
+    assert.deepStrictEqual(rolesOf(signals, 'gameState', 'monarch'), ['produces', 'rewards']);
+  });
+
+  it('maxSpeed: keyword-detected, with a dash-separated reward clause', () => {
+    // Gastal Raider — real oracle text.
+    const gastalRaider = makeCard({
+      name: 'Gastal Raider',
+      type_line: 'Creature — Vampire Rogue',
+      keywords: '["Max speed","Start your engines!"]',
+      oracle_text:
+        'Start your engines!\n' +
+        'When this creature enters, target opponent reveals their hand. You choose an instant or ' +
+        'sorcery card from it. That player discards that card.\n' +
+        'Max speed — This creature gets +1/+1 and has menace.',
+    });
+    const signals = signalsFor(gastalRaider);
+    assert.deepStrictEqual(rolesOf(signals, 'gameState', 'maxSpeed'), ['produces', 'rewards']);
+  });
+
+  it('initiative: recognizes third-person "has the initiative", not just "you have"', () => {
+    // Undercellar Sweep — real oracle text. Regression test: the original
+    // rewards regex only matched "you've"/"you have", which missed this
+    // card's actual "if you or a player you're attacking has the
+    // initiative" phrasing entirely.
+    const undercellarSweep = makeCard({
+      name: 'Undercellar Sweep',
+      type_line: 'Enchantment',
+      oracle_text:
+        'When this enchantment enters, you take the initiative.\n' +
+        "Whenever you attack, if you or a player you're attacking has the initiative, you create " +
+        'two 1/1 white Soldier creature tokens that are tapped and attacking.',
+    });
+    const signals = signalsFor(undercellarSweep);
+    assert.deepStrictEqual(rolesOf(signals, 'gameState', 'initiative'), ['produces', 'rewards']);
+  });
+
+  it('dayNight: text-detected even with no keyword present', () => {
+    // Sunrise Cavalier — real oracle text. Daybound/Nightbound are absent —
+    // this card only ever reads day/night state, so detection must fall
+    // back to the clause text rather than requiring the keyword.
+    const sunriseCavalier = makeCard({
+      name: 'Sunrise Cavalier',
+      type_line: 'Creature — Human Knight',
+      keywords: '["Haste","Trample"]',
+      oracle_text:
+        'Trample, haste\n' +
+        "If it's neither day nor night, it becomes day as this creature enters.\n" +
+        'Whenever day becomes night or night becomes day, put a +1/+1 counter on target creature ' +
+        'you control.',
+    });
+    const signals = signalsFor(sunriseCavalier);
+    assert.deepStrictEqual(rolesOf(signals, 'gameState', 'dayNight'), ['produces', 'rewards']);
+  });
+
+  it('dayNight: keyword-detected from Daybound/Nightbound with no text mention', () => {
+    // Graveyard Trespasser // Graveyard Glutton — real oracle text.
+    const graveyardTrespasser = makeCard({
+      name: 'Graveyard Trespasser // Graveyard Glutton',
+      type_line: 'Creature — Human Werewolf',
+      keywords: '["Transform","Daybound","Ward","Nightbound"]',
+      oracle_text:
+        'Ward—Discard a card.\n' +
+        'Whenever this creature enters or attacks, exile up to one target card from a graveyard. ' +
+        'If a creature card was exiled this way, each opponent loses 1 life and you gain 1 life.\n' +
+        'Daybound (If a player casts no spells during their own turn, it becomes night next turn.)',
+    });
+    const signals = signalsFor(graveyardTrespasser);
+    assert.ok(find(signals, 'gameState', 'dayNight'));
+  });
+
+  it('does not false-positive on an unrelated "night counter" mechanic', () => {
+    // Replicating Ring — real oracle text: a literal counter type named
+    // "night", nothing to do with the day/night game state.
+    const replicatingRing = makeCard({
+      name: 'Replicating Ring',
+      type_line: 'Snow Artifact',
+      oracle_text:
+        '{T}: Add one mana of any color.\n' +
+        'At the beginning of your upkeep, put a night counter on this artifact. Then if it has ' +
+        'eight or more night counters on it, remove all of them and create eight colorless snow ' +
+        'artifact tokens named Replicated Ring with "{T}: Add one mana of any color."',
+    });
+    const signals = signalsFor(replicatingRing);
+    assert.strictEqual(find(signals, 'gameState'), undefined);
+  });
+
+  it('does not fire on a card with no game-state text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'gameState'), undefined);
+  });
+});

@@ -125,21 +125,21 @@ export function hasActiveRole(roles: Role[]): boolean {
 }
 
 /**
- * What a qualifier narrows a signal to. `cardType` and `permanentSubtype`
- * are read off `CardFacts.cardTypes`/`permanentSubtypes` by
- * `supporterMatches` (synergy.ts) exactly like `creatureType`/`keyword` —
- * neither has a consuming archetype yet (that's Phase C1's `copyEffects`
- * and `artifacts`), so the plumbing here is exercised directly rather than
- * through `detectSignals`. `counterType` qualifies `counters` — see
- * `findCounterKind`. `gameState` is further out — see
- * docs/signals-rework.md's Phase B status note.
+ * What a qualifier narrows a signal to. `cardType` qualifies `copyEffects`
+ * and `permanentSubtype` qualifies `artifacts`. `counterType` qualifies
+ * `counters` — see `findCounterKind`. `gameState` qualifies `gameState`
+ * itself — see `findGameState` — the Ring, the monarch, the initiative,
+ * Max speed, and day/night, five persistent shared states with nothing
+ * else in common, so each is its own named kind rather than a vocabulary
+ * lookup.
  */
 export type QualifierKind =
   | 'creatureType'
   | 'keyword'
   | 'cardType'
   | 'permanentSubtype'
-  | 'counterType';
+  | 'counterType'
+  | 'gameState';
 
 /** One archetype a card participates in, with the capacities it does so in. */
 export interface SignalMatch {
@@ -224,6 +224,10 @@ export interface CardFacts {
    * own text cares about — see `findCounterKind`. Feeds
    * `qualifierKind: 'counterType'`. */
   counterKinds: string[];
+  /** Every persistent shared game state ("theRing", "monarch", "initiative",
+   * "maxSpeed", "dayNight") this card's own text produces or reads — see
+   * `findGameState`. Feeds `qualifierKind: 'gameState'`. */
+  gameStates: string[];
   /** Mana value, straight off the printed cost — a property, not a role, but
    * archetypes read it alongside `alternativeCost`: Y'shtola triggers on "a
    * noncreature spell with mana value 3 or greater" regardless of what was
@@ -232,9 +236,7 @@ export interface CardFacts {
   /** The card can be cast for something other than its own mana cost:
    * Phyrexian mana pips, "rather than pay this spell's mana cost" (Snuff
    * Out), "without paying its mana cost" (Fierce Guardianship's commander
-   * clause), or Evoke/Cleave/Delve/Convoke. Not itself a role — nothing
-   * consumes this yet (`freeSpells` is Phase C1) — but designed alongside
-   * `CardFacts` rather than bolted into an archetype matcher later. */
+   * clause), or Evoke/Cleave/Delve/Convoke. Consumed by `freeSpells`. */
   alternativeCost: boolean;
   /** The card cares about a permanent being "modified" — CR's umbrella term
    * for having a counter on it, or an Equipment/Aura attached (Kodama of the
@@ -591,6 +593,58 @@ function findAllCounterKinds(text: string): string[] {
   return [...found];
 }
 
+/** Keywords whose card is itself Max speed's or day/night's own mechanic,
+ * rather than merely reading a state someone else produced — Momentum
+ * Breaker's "Start your engines!", Graveyard Trespasser's "Daybound". */
+const GAME_STATE_KEYWORDS: ReadonlyArray<readonly [string, string]> = [
+  ['maxSpeed', 'Max speed'],
+  ['maxSpeed', 'Start your engines!'],
+  ['dayNight', 'Daybound'],
+  ['dayNight', 'Nightbound'],
+];
+
+/**
+ * The persistent shared game state a clause produces or reads, if any — the
+ * Ring, the monarch, the initiative, Max speed, and day/night. Unlike
+ * `findCounterKind`'s vocabulary of counter kinds, these five have nothing
+ * in common structurally, so each gets its own real-card-verified pattern
+ * rather than one generic shape.
+ *
+ * Day/night is scoped to the actual templated phrases ("it's neither day
+ * nor night", "it becomes day/night", "day becomes night") rather than the
+ * bare words "day"/"night" — those appear in unrelated contexts too
+ * (Replicating Ring's own "night counter", "Night Out in Vegas"'s mode
+ * name), which the phrase-scoped pattern never matches.
+ */
+function findGameState(clause: string): string | undefined {
+  if (/\bthe ring tempts you\b|\bring-bearer\b/i.test(clause)) return 'theRing';
+  if (/\bthe monarch\b/i.test(clause)) return 'monarch';
+  if (/\bthe initiative\b/i.test(clause)) return 'initiative';
+  if (/\bmax speed\b|\byour engines\b/i.test(clause)) return 'maxSpeed';
+  if (
+    /\bit'?s (?:neither day nor night|day|night)\b|\bit becomes (?:day|night)\b|\bday becomes night\b|\bnight becomes day\b/i.test(
+      clause,
+    )
+  ) {
+    return 'dayNight';
+  }
+  return undefined;
+}
+
+/** Every game state a card's own keywords or text produce or read — see
+ * `findGameState`. Feeds `qualifierKind: 'gameState'`. */
+function findAllGameStates(text: string, keywords: string[]): string[] {
+  const found = new Set<string>();
+  for (const [state, keyword] of GAME_STATE_KEYWORDS) {
+    if (keywords.includes(keyword)) found.add(state);
+  }
+  for (const clause of clauses(text)) {
+    const state = findGameState(clause);
+    if (state) found.add(state);
+  }
+  return [...found];
+}
+
 /**
  * Whether a clause makes `subject` cheaper or free — "Equipment spells you
  * cast cost {1} less", "equip {0}", "pay {0} rather than pay the equip
@@ -780,6 +834,7 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     cardTypes: findCardTypes(typeLine),
     permanentSubtypes: findPermanentSubtypes(typeLine),
     counterKinds: findAllCounterKinds(text),
+    gameStates: findAllGameStates(text, parseJsonArray(row.keywords)),
     cmc: row.cmc ?? 0,
     alternativeCost: hasAlternativeCost(text, row.mana_cost, parseJsonArray(row.keywords)),
     modified: MODIFIED_PATTERN.test(text),
@@ -1091,6 +1146,31 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'gameState',
+    label: 'Game State',
+    description:
+      'Persistent shared state that many cards read and write, regardless of who controls them — ' +
+      'the Ring, the monarch, the initiative, Max speed, and day/night.',
+    weight: 20,
+    qualifiable: 'gameState',
+    roles: {
+      produces: [
+        /\bthe ring tempts you\b/i,
+        /\byou become the monarch\b/i,
+        /\byou take the initiative\b/i,
+        (f: CardFacts) => f.gameStates.includes('maxSpeed') || f.gameStates.includes('dayNight'),
+      ],
+      rewards: [
+        /\bring-bearer\b/i,
+        /\bif you('re| are) the monarch\b/i,
+        /\b(?:has|have|'ve) the initiative\b/i,
+        /\bmax speed\s*—/i,
+        /\bit'?s (?:neither day nor night|day|night)\b/i,
+        /\bday becomes night\b|\bnight becomes day\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
@@ -1247,6 +1327,12 @@ function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): 
       if (kind) return kind;
     }
     return undefined;
+  }
+
+  // gameState's five named states already come precomputed, keyword-aware,
+  // onto CardFacts — see findAllGameStates.
+  if (def.qualifiable === 'gameState') {
+    return facts.gameStates[0];
   }
 
   // A permanentSubtype archetype's own structural type is its qualifier

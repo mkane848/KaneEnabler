@@ -277,6 +277,9 @@ function supporterMatches(
   if (signal.qualifierKind === 'counterType') {
     return facts.counterKinds.includes(signal.qualifier);
   }
+  if (signal.qualifierKind === 'gameState') {
+    return facts.gameStates.includes(signal.qualifier);
+  }
   return true;
 }
 
