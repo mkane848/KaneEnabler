@@ -3,38 +3,34 @@
 The companion to [`archetypes.md`](./archetypes.md). That document says what the vocabulary **means**
 and why; this one says what to **change**, in what order, and how to know it worked.
 
-**Phases A and A2 have landed**, and Phase B is in progress (see their sections below and the
-`[Unreleased]` entries in `apps/commander-recommender/CHANGELOG.md`). Landed so far within Phase B:
-the `Role` addition (`enables`/`protects` — this also resolved A2's `voltron`/`spellslinger`
-deferrals: equip-cost reduction, free-equip, Dualcast); the `cardType`/`permanentSubtype`
-`QualifierKind` additions with their `CardFacts`/`supporterMatches` plumbing (no consuming archetype
-yet — that's Phase C1's `copyEffects`/`artifacts` — so exercised directly in tests); and
-`counterType`, which turned the old `+1/+1`-only `counters` archetype into a real qualified family
-(`Counters (+1/+1)`, `Counters (-1/-1)`, `Counters (time)`, `Counters (stun)`, ...), importing and
-widening `@mtg/rules`' counters taxonomy along the way per hard rule 2; and the card-property layer
-(`cmc`, `alternativeCost`, `modified`, `alternateWin` on `CardFacts`), verified against Fierce
-Guardianship, Dismember, Snuff Out, Kodama of the West Tree, Knuckles the Echidna and Approach of the
-Second Sun in the seeded database — no consuming archetype yet (`alternativeCost` is `freeSpells`'s
-job, Phase C1; `modified`/`alternateWin` likewise exercised directly in tests), same as
-`cardType`/`permanentSubtype` before it. Checking Book of Exalted Deeds against the real database
-turned up an archetypes.md inaccuracy (corrected there): its own text doesn't win the game, it only
-grants a "can't lose/win" clause to an Angel. And the **signal containment merge** — unqualified
-supports qualified, never the reverse (`groupByTheme` in deckAnalysis.ts, `supporterMatches` in
-synergy.ts) — verified against the real Wilhelt corpus fixture: Liliana, Death's Majesty's
-unqualified reanimation spell now folds into `Reanimator (Zombie)` alongside Tomb Tyrant and Zombie
-Apocalypse, clearing `MIN_THEME_CARDS` where three sub-threshold fragments previously reported
-nothing (archetypes.md's own motivating example, confirmed exactly). Verifying this against the full
-20-deck corpus also surfaced a pre-existing, unrelated `findQualifier` imprecision, fixed as its own
-follow-up: Angel of Glory's Rise ("exile all Zombies, then return all Human creature cards from your
-graveyard to the battlefield") mis-qualified as `reanimator:Zombie` instead of `reanimator:Human`,
-because the old code scanned the whole clause for the first known type word rather than tying the
-candidate to the payoff matcher's own match text. Now qualified correctly, with Sliver Gravemother
-(whose restriction sits outside her matcher's match text entirely) verified still correct via the
-whole-clause fallback.
+**Phases A, A2, and B have landed** (see their sections below and the `[Unreleased]` entries in
+`apps/commander-recommender/CHANGELOG.md`). Phase B shipped: the `Role` addition (`enables`/
+`protects`); the `cardType`/`permanentSubtype`/`counterType` `QualifierKind` additions (the last
+turning `+1/+1`-only `counters` into a real qualified family, importing and widening `@mtg/rules`'
+counters taxonomy per hard rule 2); the card-property layer (`cmc`, `alternativeCost`, `modified`,
+`alternateWin` on `CardFacts`); and the **signal containment merge** — unqualified supports
+qualified, never the reverse (`groupByTheme` in deckAnalysis.ts, `supporterMatches` in synergy.ts) —
+verified against the real Wilhelt fixture, archetypes.md's own motivating example. Two documentation
+inaccuracies were found and corrected along the way (Book of Exalted Deeds doesn't win the game; it
+only grants a "can't lose/win" clause to an Angel), and one real `findQualifier` bug was found and
+fixed as its own follow-up: it scanned a whole clause for the first known type word rather than tying
+the candidate to the payoff matcher's own match text, so Angel of Glory's Rise ("exile all Zombies,
+then return all Human creature cards...") mis-qualified as `reanimator:Zombie` instead of
+`reanimator:Human`. Only `gameState` remains outstanding from Phase B (needs its own archetype,
+arguably Phase C2's job).
 
-**Phase B is otherwise complete.** Only `gameState` remains (needs its own archetype, arguably Phase
-C2's job). Cascade (`freeSpells`) still needs a Phase C archetype that doesn't exist yet. The corpus
-this is derived from is committed at
+**Phase C1 is in progress** (see "Phase C" below and archetypes.md's archetype catalog).
+`copyEffects` has landed: `qualifiable: cardType` (Kalamax copies instants only), covering spells
+("copy that spell"/"copy target ... spell"), abilities ("copy target activated or triggered
+ability"), and permanents (token copies, clone/shapeshift effects) as one archetype. Verified
+against the real seeded database, including three real cards whose ability-copy clause has a card
+type nearby that names something other than a restriction on what's copied — Echo, Perceptive
+Prodigy and Weaver of Harmony's ability *source* ("... ability you control from a
+creature/enchantment source"), and Agrus Kos, Eternal Soldier's copies' *target* ("copy that ability
+for each other creature you control") — all three correctly stay unqualified rather than becoming
+`copyEffects:Creature`/`copyEffects:Enchantment`; recorded in archetypes.md. Still to come:
+`freeSpells` (now that `alternativeCost` exists to back it) and `artifacts`. The corpus this is
+derived from is committed at
 `apps/commander-recommender/server/src/services/__fixtures__/decks/`.
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as

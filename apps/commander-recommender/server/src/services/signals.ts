@@ -694,6 +694,14 @@ function findPermanentSubtypes(typeLine: string): string[] {
   return PERMANENT_SUBTYPES.filter((subtype) => new RegExp(`\\b${subtype}\\b`, 'i').test(typeLine));
 }
 
+/** Word lookups for `findQualifier`, mirroring `Vocabulary.typeByWord` for the
+ * two qualifier kinds that narrow to a curated constant instead of a
+ * creature-type vocabulary — Kalamax copies *instants*, not creatures. */
+const CARD_TYPE_BY_WORD = new Map(CARD_TYPES.map((type) => [type.toLowerCase(), type]));
+const PERMANENT_SUBTYPE_BY_WORD = new Map(
+  PERMANENT_SUBTYPES.map((subtype) => [subtype.toLowerCase(), subtype]),
+);
+
 /** Keywords that are themselves an alternative cost, rather than text saying
  * so — Evoke (Walker of the Grove), Cleave (Lantern Flare), Delve (Empty the
  * Pits), Convoke (Vault Guardsman). */
@@ -983,6 +991,36 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'copyEffects',
+    label: 'Copy Effects',
+    description:
+      'Copying spells, abilities, and permanents for extra value out of a single card — token ' +
+      'copies, clones, and effects that copy a spell or ability as it resolves.',
+    weight: 20,
+    // Kalamax copies instants only; suggesting sorceries for him is wrong.
+    qualifiable: 'cardType',
+    roles: {
+      rewards: [
+        // Copying a spell — Kalamax's own trigger ("copy that spell"), and
+        // the common activated-ability copy template ("Copy target ...
+        // spell") shared by League Guildmage, Lithoform Engine, Geistblast.
+        /\bcopy that (?:spell|ability)\b/i,
+        /\bcopy target[^.;]*spell\b/i,
+        // Copying an activated or triggered ability — Kirol, Lithoform
+        // Engine, Abstruse Archaic, Agrus Kos, Eternal Soldier ("copy that
+        // ability", above).
+        /\bcopy target[^.;]*(?:activated|triggered) ability\b/i,
+        // Copying a permanent, via a token (Rite of Replication,
+        // Necroduality) or a clone/shapeshift effect — Sculpting Steel
+        // ("enter as a copy of"), Mirrorweave ("becomes a copy of": no "as",
+        // unlike "enter").
+        /\btoken that'?s a copy of\b/i,
+        /\benters? as a copy of\b/i,
+        /\bbecomes? a copy of\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
@@ -1141,6 +1179,15 @@ function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): 
     return undefined;
   }
 
+  // cardType/permanentSubtype narrow to a curated constant rather than the
+  // creature-type vocabulary — Kalamax copies *instants*, not creatures.
+  const typeByWord =
+    def.qualifiable === 'cardType'
+      ? CARD_TYPE_BY_WORD
+      : def.qualifiable === 'permanentSubtype'
+        ? PERMANENT_SUBTYPE_BY_WORD
+        : vocab.typeByWord;
+
   const payoffMatchers = [...(def.roles.rewards ?? []), ...(def.roles.consumes ?? [])];
   for (const clause of clauses(facts.text)) {
     let hit = false;
@@ -1155,17 +1202,25 @@ function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): 
       // the thing actually returned, not Zombies, which is merely exiled
       // earlier in the same clause and never part of this match.
       for (const word of wordsIn(match[0])) {
-        const type = vocab.typeByWord.get(word);
+        const type = typeByWord.get(word);
         if (type) return type;
       }
     }
     if (!hit) continue;
+    // An ability is never itself a card type, so any type word near an
+    // ability-copy clause describes something else entirely — Agrus Kos,
+    // Eternal Soldier's "copy that ability for each other creature you
+    // control" (the copies' targets) and Echo, Perceptive Prodigy's "...
+    // ability you control from a creature source" (what the ability's
+    // source is) are not restrictions on what's copied. Coherent only for
+    // cardType qualifying, so scoped to it.
+    if (def.qualifiable === 'cardType' && /\bability\b/i.test(clause)) continue;
     // No matcher's own match text named a type — Sliver Gravemother's
     // restriction ("Each Sliver creature card ... has encore") sits
     // structurally apart from the bare keyword its matcher hits, so fall
     // back to the whole clause.
     for (const word of wordsIn(clause)) {
-      const type = vocab.typeByWord.get(word);
+      const type = typeByWord.get(word);
       if (type) return type;
     }
   }

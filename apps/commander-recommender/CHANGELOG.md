@@ -125,6 +125,34 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     because the merge pushed that group over threshold, not caused by it.
     Recorded as a new "Known tension" in `docs/archetypes.md` rather than
     fixed here, since it's a different bug than this phase scopes.
+- **Signal engine, Phase C1 — `copyEffects` archetype.** See
+  `docs/signals-rework.md` Phase C. Copying spells, abilities, and
+  permanents for extra value out of a single card, `qualifiable: cardType`
+  (Kalamax copies *instants* only, so suggesting sorceries for him would be
+  wrong):
+  - Spells — Kalamax's own trigger ("copy that spell") and the common
+    activated-ability copy template ("copy target ... spell") shared by
+    League Guildmage, Lithoform Engine, Geistblast.
+  - Abilities — Kirol, Attentive First-Year and Agrus Kos, Eternal Soldier
+    ("copy target/that ... ability").
+  - Permanents — token copies (Rite of Replication, Necroduality) and
+    clone/shapeshift effects (Sculpting Steel's "enter as a copy of",
+    Mirrorweave's "becomes a copy of" — a different template, no "as").
+  - `findQualifier` gained the ability to narrow by `cardType`/
+    `permanentSubtype` (a curated constant, not the creature-type
+    vocabulary) alongside its existing `creatureType` narrowing, plus a
+    guard against a false positive specific to ability-copying: an ability
+    is never itself a card type, so a nearby type word describes something
+    else entirely. Verified against the real seeded database: Echo,
+    Perceptive Prodigy and Weaver of Harmony's ability-copy clauses name
+    their ability's *source* ("... from a creature/enchantment source"),
+    and Agrus Kos, Eternal Soldier's names the copies' *targets* ("for each
+    other creature you control") — all three correctly stay unqualified
+    rather than becoming `copyEffects:Creature`/`copyEffects:Enchantment`.
+  - Verified against the real seeded database and the full 20-deck corpus:
+    Kalamax's deck reports `Copy Effects (Instant)` with 11 cards (its
+    second-largest theme, after Spellslinger), and Obeka's, Y'shtola's, and
+    the Tenth Doctor's decks each report `Copy Effects (Creature)`.
 
 ### Fixed
 
