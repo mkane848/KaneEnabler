@@ -1892,6 +1892,58 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    // Inferred, not Vetted — see docs/archetypes.md's "Grounding: vetted
+    // vs inferred" section. No deck in the corpus is confirmed to build
+    // around this. Real Storm-keyword cards do appear incidentally
+    // (krenko.txt's Empty the Warrens and Haze of Rage; tenth-doctor-
+    // rose-tyler.txt's All of History, All at Once), but neither deck's
+    // own note claims Storm as an intentional plan — they're there for
+    // other reasons. Phase C4's third and final archetype, built from CR
+    // 702.39 (the Storm keyword itself) and the real, recurring
+    // "spells you've cast this turn" payoff template, and checked against
+    // the full legal card pool rather than a grounding deck's own cards.
+    key: 'storm',
+    label: 'Storm',
+    description:
+      'Casting many spells in a single turn as its own payoff — the Storm keyword itself, and ' +
+      "effects that scale directly with the number of spells you've cast this turn.",
+    weight: 18,
+    // definingRole stays produces (the Storm keyword) rather than
+    // rewards' own default: Storm is this archetype's namesake mechanic,
+    // the same way freeSpells/drain/bigMana treat their own defining
+    // action as identity. A deck with only spell-count payoffs and no
+    // real Storm-keyword card won't surface this theme by name — the
+    // same accepted scoping cardDraw's own engines-gate-the-theme design
+    // already lives with.
+    definingRole: 'produces',
+    roles: {
+      // Storm — a real Scryfall keyword (CR 702.39: copy this spell for
+      // each spell cast before it this turn), read directly off
+      // CardFacts.keywords rather than re-deriving the reminder text.
+      produces: [(f: CardFacts) => f.keywords.includes('Storm')],
+      // A payoff scaled directly by spell count this turn — Aetherflux
+      // Reservoir's own "gain 1 life for each spell you've cast this
+      // turn", Gnostro's "X is the number of spells you've cast this
+      // turn", Volcanic Torrent's damage, Rionya's token count. Excludes
+      // any clause mentioning "cost(s)" — Demilich and Urza's own cost
+      // reduction scaled by the same count is a different mechanism
+      // entirely (spellslinger's enables territory, not a storm payoff) —
+      // and "can't" — Domri's flat "can't be countered" protection for
+      // the turn doesn't scale by anything. Checked against the full card
+      // pool: 19 real cards matched after both exclusions, all genuine
+      // count-scaled payoffs, none of them cost reduction.
+      rewards: [
+        (f: CardFacts) =>
+          clauses(f.text).some(
+            (c) =>
+              /\bspells? you'?ve cast this turn\b/i.test(c) &&
+              !/\bcosts?\b/i.test(c) &&
+              !/\bcan'?t\b/i.test(c),
+          ),
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:

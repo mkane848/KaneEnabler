@@ -787,6 +787,33 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   - Re-measured with Phase F's coverage report: 560 of 4,049
     commander-eligible cards now produce zero active signals, down from
     563.
+- **Signal engine, Phase C4 — `storm` archetype, the last piece of the
+  entire signal-engine rework plan.** See `docs/signals-rework.md` Phase C
+  and `docs/archetypes.md`'s own entry. Phase C4's third and final
+  archetype. **Inferred** — no deck's own confirmed axes name it; real
+  Storm-keyword cards exist in the corpus (krenko.txt's Empty the Warrens
+  and Haze of Rage; tenth-doctor-rose-tyler.txt's All of History, All at
+  Once) but neither deck's own note claims Storm as an intentional plan.
+  Built from CR 702.39 (the Storm keyword itself) and the real, recurring
+  "spells you've cast this turn" payoff template.
+  - `definingRole: produces`, no separate payoff role for the keyword
+    itself — the same shape as `freeSpells`/`drain`/`bigMana`. `produces`
+    reads the Storm keyword directly off `CardFacts.keywords`; `rewards`
+    catches a payoff scaled directly by spells cast this turn (Aetherflux
+    Reservoir's life gain, Gnostro's X, Volcanic Torrent's damage,
+    Rionya's tokens), excluding cost reduction scaled by the same count
+    (Demilich, Urza — `spellslinger`'s `enables` territory, not a storm
+    payoff) and a flat effect for the turn that doesn't scale by anything
+    (Domri, Anarch of Bolas's "can't be countered").
+  - Checked against the full legal card pool before shipping: 19 real
+    cards matched after both exclusions, all genuine count-scaled
+    payoffs, none of them cost reduction. 1 previously zero-active-signal
+    commander rescued (Hurkyl, Master Wizard) — no false positive found.
+  - Re-measured with Phase F's coverage report: 559 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    560.
+  - **This completes Phase C4 — and the entire A → B → C1 → C2 → C3 → C4
+    → E → F signal-engine rework plan.**
 
 ### Fixed
 
@@ -1070,6 +1097,15 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   rejected `getSession()` call (a dropped connection, a CSP block) left
   `loading` `true` permanently, hiding the account menu instead of degrading
   to signed-out. Affects every app's `NavBar`.
+- **Signal engine — `storm`'s spell-count-payoff exclusion for cost
+  reduction didn't match a plural "costs".** Caught by the full-pool sweep
+  before shipping: the exclusion regex `\bcost\b` requires a word boundary
+  immediately after the literal word "cost", which the trailing "s" in
+  Demilich's own "This spell costs {U} less to cast for each instant and
+  sorcery spell you've cast this turn" defeats — letting a genuine
+  cost-reduction card slip through as a false `storm` payoff. Fixed by
+  widening the exclusion to `\bcosts?\b`; re-verified against the full
+  card pool with 19 clean matches remaining and no new false positives.
 
 ## [1.8.0] — 2026-08-18
 

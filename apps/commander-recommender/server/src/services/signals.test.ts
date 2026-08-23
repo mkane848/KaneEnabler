@@ -3618,3 +3618,78 @@ describe('Politics: multiplayer social tools that direct threat elsewhere', () =
     assert.strictEqual(find(signalsFor(solRing), 'politics'), undefined);
   });
 });
+
+describe("Storm: casting many spells in a single turn as its own payoff", () => {
+  it('produces from the Storm keyword', () => {
+    // Empty the Warrens — real oracle text.
+    const emptyTheWarrens = makeCard({
+      name: 'Empty the Warrens',
+      type_line: 'Sorcery',
+      oracle_text:
+        'Create two 1/1 red Goblin creature tokens.\n' +
+        'Storm (When you cast this spell, copy it for each spell cast before it this turn.)',
+      keywords: '["Storm"]',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(emptyTheWarrens), 'storm'), ['produces']);
+  });
+
+  it('rewards from a payoff scaled by spells cast this turn', () => {
+    // Aetherflux Reservoir and Gnostro, Voice of the Crags — real oracle text.
+    const aetherfluxReservoir = makeCard({
+      name: 'Aetherflux Reservoir',
+      type_line: 'Artifact',
+      oracle_text:
+        "Whenever you cast a spell, you gain 1 life for each spell you've cast this turn.\n" +
+        'Pay 50 life: This artifact deals 50 damage to any target.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(aetherfluxReservoir), 'storm'), ['rewards']);
+
+    const gnostro = makeCard({
+      name: 'Gnostro, Voice of the Crags',
+      type_line: 'Legendary Creature — Chimera',
+      oracle_text:
+        "{T}: Choose one. X is the number of spells you've cast this turn.\n" +
+        '• Scry X.\n• Gnostro deals X damage to target creature.\n• You gain X life.',
+      keywords: '["Scry"]',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(gnostro), 'storm'), ['rewards']);
+  });
+
+  it('does not reward cost reduction scaled by the same count, only a genuine scaled payoff', () => {
+    // Demilich — real oracle text. Regression guard: cost reduction is a
+    // different mechanism entirely (spellslinger's enables territory),
+    // not a storm payoff, even though it reads the identical "spells
+    // you've cast this turn" phrase.
+    const demilich = makeCard({
+      name: 'Demilich',
+      type_line: 'Creature — Skeleton Wizard',
+      oracle_text:
+        "This spell costs {U} less to cast for each instant and sorcery spell you've cast this " +
+        'turn.\nWhenever this creature attacks, exile up to one target instant or sorcery card ' +
+        'from your graveyard. Copy it. You may cast the copy.\nYou may cast this card from your ' +
+        'graveyard by exiling four instant and/or sorcery cards from your graveyard in addition ' +
+        'to paying its other costs.',
+    });
+    assert.strictEqual(find(signalsFor(demilich), 'storm'), undefined);
+  });
+
+  it('does not reward a flat effect for the turn that never scales by the count', () => {
+    // Domri, Anarch of Bolas — real oracle text. "Can't be countered" for
+    // the turn doesn't scale by anything, unlike a genuine storm payoff.
+    const domri = makeCard({
+      name: 'Domri, Anarch of Bolas',
+      type_line: 'Legendary Planeswalker — Domri',
+      oracle_text:
+        'Creatures you control get +1/+0.\n' +
+        "+1: Add {R} or {G}. Creature spells you cast this turn can't be countered.\n" +
+        '−2: Target creature you control fights target creature you don\'t control.',
+      keywords: '["Fight"]',
+    });
+    assert.strictEqual(find(signalsFor(domri), 'storm'), undefined);
+  });
+
+  it('does not fire on a card with no storm text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'storm'), undefined);
+  });
+});
