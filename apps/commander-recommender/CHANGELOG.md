@@ -679,6 +679,32 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   - Re-measured with Phase F's coverage report: 568 of 4,049
     commander-eligible cards now produce zero active signals, down from
     576.
+- **Signal engine, Phase C3 — `pillowfort` archetype.** See
+  `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
+  One deck, yshtola.txt, whose own confirmed axes name it directly, and
+  the deck plays Ghostly Prison and Propaganda outright.
+  `definingRole: produces`, no separate payoff role — the same shape as
+  `bigMana`/`graveyardToolbox`.
+  - `produces` is the classic tax shape ("Creatures can't attack you
+    unless their controller pays {2} for each creature they control
+    that's attacking you" — Ghostly Prison, Propaganda's identical
+    wording; Norn's Annex extends it to planeswalkers with an
+    alternative-cost payment). Deliberately excludes the common Vow cycle
+    and Assault Suit's shape ("Enchanted/Equipped creature ... can't
+    attack you") — those neutralize one specific creature, not a
+    board-wide deterrent.
+  - Checked against the full legal card pool before shipping: 2 previously
+    zero-active-signal commanders rescued (Dáin, Lord of the Iron Hills;
+    Baird, Steward of Argive), both genuine board-wide tax effects — see
+    the Fixed section below for a real bug the sweep caught before
+    shipping.
+  - Verified against the real seeded database: yshtola.txt's own three
+    `pillowfort` cards (Ghostly Prison, Norn's Annex, Propaganda) all tag
+    `produces`.
+  - Re-measured with Phase F's coverage report: 566 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    568. This completes Phase C3's grounded archetypes — only
+    `monoColorDevotion`, the tier's one genuinely Inferred entry, remains.
 
 ### Fixed
 
@@ -750,6 +776,17 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   opponents' blockers, not a payoff for the controller's own big
   creatures. Found checking the full card pool before shipping. Fixed by
   excluding "blocked by creatures with power N or greater" explicitly.
+- **Signal engine — `pillowfort`'s "can't attack you" pattern also matched
+  a single-creature lockdown Aura or Equipment with no board-wide
+  effect.** "Creatures can't attack you unless their controller pays"
+  (Ghostly Prison) and "Enchanted creature ... can't attack you or
+  planeswalkers you control" (Vow of Duty, one of a common six-card cycle;
+  Assault Suit's identical Equipment shape) share the tail end of the same
+  phrase for entirely different plans — the second neutralizes one
+  specific creature, usually a Threaten-effect target, not a defensive
+  shell around the controller's whole board. Found checking the full card
+  pool before shipping. Fixed with an explicit "enchanted/equipped
+  creature" exclusion.
 - **Signal engine — a wildcard kindred card backed every kindred-caring
   commander in the pool, not just the deck's own themes.** Found verifying
   wildcard kindred above, before merging, by running the real First Sliver
