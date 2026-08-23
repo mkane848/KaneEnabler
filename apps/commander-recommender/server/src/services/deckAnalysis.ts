@@ -66,7 +66,7 @@ export interface DeckTheme {
   cardCount: number;
   /** Cards, most-involved first. */
   cards: SlotCard[];
-  /** Present only for archetypes with a lifecycle — kindred has no chain. */
+  /** Present only for archetypes with a lifecycle — keyword-care has none. */
   slots: SlotStatus[];
   /** True when every non-optional slot is filled. */
   complete: boolean;

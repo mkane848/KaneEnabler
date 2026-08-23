@@ -409,12 +409,36 @@ present in live data).
 
 ## Phase E — Kindred as an engine
 
-- **A `kindred` lifecycle.** `lifecycleFor` keys on archetype only and `groupByTheme` already scopes
-  participants by qualifier, so one spec serves every creature type with no mechanism change. Slots:
-  bodies (`is`), lords and anthems (`rewards`), tribal mana and cost reduction (`enables`), tutors
-  and selection (`produces`), evasion and haste (`enables`), resilience (`protects`,
-  `commonlyMissing`). Retire the "membership groups rather than engines" carve-out in
-  `lifecycle.ts`'s header — the Sliver deck is its counterexample.
+- **A `kindred` lifecycle — shipped, completing Phase E.** `lifecycleFor` already keyed on archetype
+  alone and `groupByTheme` already scoped participants by qualifier, so one spec serves every
+  creature type with no mechanism change, exactly as planned. Five slots, not the six originally
+  named — see `archetypes.md`'s "Lifecycles" section for the full table and for why "evasion and
+  haste" folds into the existing `rewards` payoff slot rather than becoming a second, redundant
+  `enables` slot next to it, and why the tutor slot is honestly named "Toolbox" (`produces` already
+  meant "makes a token of the type" before this landed, so a tutor scoped to the type is the same
+  role, not a new one — Krenko's Command and Sliver Overlord fill the same slot for different
+  reasons). Retires the "membership groups rather than engines" carve-out in `lifecycle.ts`'s
+  header — the Sliver deck was always its counterexample.
+
+  Three new `detectKindred` checks feed the two slots the pre-existing roles didn't already cover,
+  each scoped by the same `wordPattern(type)` clause gate every other per-type check already uses: a
+  mana ability granted to the type or mana restricted to spending on it is `enables` (Gemhide Sliver,
+  Manaweft Sliver, Sliver Hive); `"Affinity for [Type]"` is cost reduction and `enables`, needing its
+  own check since it's a keyword ability rather than the wildcard branch's `"cost {N} less to cast"`
+  text pattern (Thrumming Hivepool); `"search your library for a [Type] card"` is `produces`
+  (Sliver Overlord). Card selection scoped to a *named* type — the per-type counterpart of the
+  wildcard's own "look at the top card" — wasn't found anywhere in the corpus, so it's left
+  uncovered rather than invented.
+
+  Verified against the real seeded database and confirmed through the actual browser UI, not just
+  the API: `first-sliver.txt`'s Sliver Kindred theme (56 cards) reports complete, all five slots
+  filled (47/46/9/6/3 cards respectively). `brigid.txt`'s Kithkin Kindred theme (26 cards) also
+  reports complete. A sweep of every other fixture deck's kindred themes shows realistic partial
+  completion with no anomalies — see `archetypes.md`'s "Known tensions" for the accepted
+  imprecisions this surfaced (a tutor and a token-maker sharing one role; a tutor's pre-existing,
+  untouched `rewards` role also counting it toward "Lords & anthems"). Re-measured with Phase F's
+  coverage report: **761 of 4,049** commander-eligible cards now produce zero active signals, down
+  from 763 — the new `enables`/`produces` checks are active roles, unlike kindred's own `is`.
 - **Wildcard kindred (`*`) — shipped.** Emits `{ archetype: 'kindred', qualifier: '*' }` for
   `"choose a creature type"` cards (Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree
   City, Secluded Courtyard, Unclaimed Territory, Realmwalker) and for Path of Ancestry's dynamic
@@ -483,6 +507,11 @@ present in live data).
   three); see `archetypes.md`'s "Known tensions" for what that thin sample doesn't cover. Re-measured
   after shipping: still **763 of 4,049** — unchanged, since `is` is a passive role and this signal
   never carries an active one on its own.
+
+**Phase E is now complete** — all three sub-items (wildcard kindred, Changeling, and the kindred
+lifecycle) shipped and merged. Per the Sequencing section above, Phase F's own remaining items are
+next; there is no Phase after F in the original plan, so re-measuring and reconciling `archetypes.md`
+against what actually shipped is what's left.
 
 ---
 

@@ -1781,6 +1781,31 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
       if (/\b(?:indestructible|hexproof|protection from|shroud|ward)\b/i.test(clause)) {
         roles.push('protects');
       }
+      // Tribal mana and cost reduction (docs/signals-rework.md Phase E,
+      // kindred's own lifecycle) — the named-type counterpart of the
+      // wildcard branch's own tribal-mana patterns above, plus the one
+      // cost-reduction shape the corpus actually has: Gemhide Sliver and
+      // Manaweft Sliver grant a mana ability to the type ("Sliver creatures
+      // you control have '{T}: Add one mana of any color.'"), Sliver Hive
+      // restricts spending to it, and Thrumming Hivepool's Affinity for
+      // Slivers is a keyword ability, not a "costs less to cast" text
+      // pattern — so it needs its own check rather than reusing the
+      // wildcard's, which never fires on a named type.
+      if (
+        /\bhave\s*["“]?\{T\}:\s*Add\b/i.test(clause) ||
+        /\bspend this mana only to (?:cast|activate)\b/i.test(clause) ||
+        /\baffinity for\b/i.test(clause)
+      ) {
+        roles.push('enables');
+      }
+      // Tutors (kindred's own lifecycle): "search your library for a
+      // Sliver card" — Sliver Overlord. Card-selection scoped to a *named*
+      // type (rather than the wildcard's own "chosen type") wasn't found
+      // anywhere in the corpus, so it's left uncovered here rather than
+      // invented — see docs/archetypes.md's "Known tensions".
+      if (/\bsearch your library\b/i.test(clause)) {
+        roles.push('produces');
+      }
     }
 
     if (roles.length === 0) continue;
