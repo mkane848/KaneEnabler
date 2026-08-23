@@ -1789,6 +1789,62 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
       roles: [...new Set(roles)],
     });
   }
+
+  // Wildcard kindred: "choose a creature type" (Herald's Horn, Vanquisher's
+  // Banner, Realmwalker) supports EVERY kindred theme in the deck, not one
+  // of its own — docs/archetypes.md and docs/signals-rework.md Phase E.
+  // Path of Ancestry reads its commander's type dynamically rather than
+  // asking the player to choose one, but is the same shape: it helps
+  // whichever kindred theme the deck actually has.
+  const isWildcardKindred =
+    /\bchoose a creature type\b/i.test(facts.text) ||
+    /\bshares? a creature type with your commander\b/i.test(facts.text);
+  if (isWildcardKindred) {
+    const wildcardRoles: Role[] = [];
+    // Cost reduction and mana restricted to the chosen type turns the
+    // tribal engine on, the same shape `enables` already covers elsewhere
+    // — Herald's Horn, Gathering Stone, Secluded Courtyard, Unclaimed
+    // Territory, Three Tree City.
+    if (
+      /of the chosen type cost \{?\d+\}? less to cast\b/i.test(facts.text) ||
+      /spend this mana only to (?:cast|activate)\b/i.test(facts.text) ||
+      /equal to the number of creatures you control of the chosen type\b/i.test(facts.text)
+    ) {
+      wildcardRoles.push('enables');
+    }
+    // Card selection scoped to the chosen type — Herald's Horn, Gathering
+    // Stone, Realmwalker.
+    if (
+      /\blook at the top card of your library\b/i.test(facts.text) ||
+      /cast creature spells of the chosen type from\b/i.test(facts.text)
+    ) {
+      wildcardRoles.push('produces');
+    }
+    // Lords/anthems and cast-triggered payoffs scoped to the chosen type —
+    // Vanquisher's Banner; Path of Ancestry's scry on casting a creature
+    // that shares its type with the commander.
+    if (
+      /of the chosen type get \+\d+\/\+\d+\b/i.test(facts.text) ||
+      /whenever you cast a creature spell of the chosen type\b/i.test(facts.text) ||
+      /shares? a creature type with your commander\b/i.test(facts.text)
+    ) {
+      wildcardRoles.push('rewards');
+    }
+    if (wildcardRoles.length > 0) {
+      out.push({
+        archetype: 'kindred',
+        label: 'Kindred (any type)',
+        description:
+          'Reads whichever creature type you choose — supports every tribal theme in the deck at ' +
+          'once, rather than forming one of its own.',
+        weight: 15,
+        qualifier: '*',
+        qualifierKind: 'creatureType',
+        roles: [...new Set(wildcardRoles)],
+      });
+    }
+  }
+
   return out;
 }
 

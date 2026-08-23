@@ -137,6 +137,41 @@ function groupByTheme(
     }
   }
 
+  // Kindred's own wildcard (docs/signals-rework.md Phase E): a card reading
+  // "choose a creature type" supports every kindred theme, the same
+  // relation as the unqualified fold above — just keyed on the literal
+  // qualifier value '*' rather than undefined, since a kindred signal is
+  // never actually unqualified (every match names a type). It forms no
+  // theme of its own, so its group is dropped once its participants have
+  // been folded elsewhere.
+  //
+  // Unlike the unconditional fold above, this one is gated: only fold into
+  // a qualifier that already has real structural depth (MIN_THEME_CARDS
+  // worth of actual bodies — the `is` role), not into a single incidental
+  // sighting. Found against the real First Sliver corpus deck: Realmwalker
+  // is a printed Shapeshifter, Sliver Overlord a printed Mutant, and
+  // Forbidden Orchard hands an opponent a Spirit token, so without this
+  // gate Herald's Horn, Vanquisher's Banner, and the rest of the wildcard
+  // cards manufactured phantom "Shapeshifter Kindred (8)"/"Mutant Kindred
+  // (9)"/"Spirit Kindred (9)" themes out of one real card apiece — Deck
+  // owner would never actually set a wildcard card's chosen type to any of
+  // those in a Sliver deck, so their `rewards` role has no business
+  // satisfying kindred's own definingRequirement for a type this thin. An
+  // unqualified reanimation spell (the fold above) has no such condition —
+  // it reanimates a Zombie unconditionally — which is why that fold stays
+  // ungated.
+  const wildcardKindred = groups.get('kindred:*');
+  if (wildcardKindred) {
+    for (const other of groups.values()) {
+      if (other === wildcardKindred || other.signal.archetype !== 'kindred') continue;
+      if (other.signal.qualifier === '*') continue;
+      const bodies = other.participants.filter((p) => p.roles.includes('is')).length;
+      if (bodies < MIN_THEME_CARDS) continue;
+      other.participants.push(...wildcardKindred.participants);
+    }
+    groups.delete('kindred:*');
+  }
+
   return groups;
 }
 

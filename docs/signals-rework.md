@@ -415,9 +415,45 @@ present in live data).
   and selection (`produces`), evasion and haste (`enables`), resilience (`protects`,
   `commonlyMissing`). Retire the "membership groups rather than engines" carve-out in
   `lifecycle.ts`'s header — the Sliver deck is its counterexample.
-- **Wildcard kindred (`*`).** Emit `{ archetype: 'kindred', qualifier: '*' }` for `"choose a creature
-type"` cards and teach the three consumers — `supporterMatches`, `groupByTheme`,
-  `findCardsBySignals` — that `*` joins every kindred qualifier and forms no theme of its own.
+- **Wildcard kindred (`*`) — shipped.** Emits `{ archetype: 'kindred', qualifier: '*' }` for
+  `"choose a creature type"` cards (Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree
+  City, Secluded Courtyard, Unclaimed Territory, Realmwalker) and for Path of Ancestry's dynamic
+  variant (`"shares a creature type with your commander"`), which never says "choose" at all but is
+  the same shape. `ownSignalContains` (synergy.ts) now accepts `qualifier === '*'` alongside the
+  existing unqualified case, which fixes both `supporterMatches` and `playsDefiningRole` for free —
+  they share that one helper. `groupByTheme` (deckAnalysis.ts) folds `kindred:*`'s participants into
+  every other kindred group the same way it already folds unqualified groups, then drops the `kindred:
+  *` group itself. `findCardsBySignals` (db.ts) does the equivalent join in SQL, since it's the
+  candidate-lookup path rather than the in-memory analysis path.
+
+  All three needed to accept the wildcard; two of the three also needed a depth gate the plan above
+  didn't anticipate, found by running the real First Sliver corpus deck through both the deck-summary
+  and the scoring path before merging, not just the detection unit tests. `groupByTheme`'s ungated
+  first draft read three of the deck's own cards' incidental type mentions (Realmwalker's printed
+  Shapeshifter type, Sliver Overlord's printed Mutant type, Forbidden Orchard's opponent-facing Spirit
+  token) as real membership and let the 8 wildcard cards inflate each into a full phantom theme.
+  Worse, `ownSignalContains`'s wildcard acceptance alone — with no bucket-level view of how deep any
+  given qualifier actually is — let those same 8 cards back *every* kindred-caring commander in the
+  whole candidate pool at the scoring layer, not just this deck's real themes: commanders for types
+  the list owned zero real cards of (Kithkin, Ooze, Mercenary, Archer, dozens more) each scored "8
+  supporting cards", drowning out the deck's one genuine 56-card Sliver signal. Both fixed with the
+  same rule, applied at each layer separately: a wildcard card only counts toward a qualifier once
+  that qualifier already has real (non-wildcard) structural depth of its own —
+  `groupByTheme`'s fold gates on `MIN_THEME_CARDS` worth of `is`-role bodies before it runs;
+  `gateWildcardKindredSupporters` (synergy.ts, new) gates `scoreCommanders`'s supporter bucket the
+  same way, exempting only the rare commander whose own signal genuinely *is* the wildcard (Kolvori,
+  God of Kinship; Morophon, the Boundless). `findCardsBySignals`'s SQL join needed no equivalent gate:
+  its only kindred caller (`packages.ts`'s `requiredSignalKeys`) only ever asks for a qualifier that
+  is already a reported `DeckTheme`, i.e. one that already cleared `groupByTheme`'s gate — see the
+  `includeWildcard` comment in `db.ts`. Verified against the real seeded database:
+  `first-sliver.txt` reports `Sliver Kindred (56)` (was 48 before this landed) with all 8 wildcard
+  cards present and no phantom theme for any other type, and a full sweep of every fixture deck's
+  scoring output shows kindred support confined to real themes plus the two genuinely wildcard-native
+  commanders. This catalog's original claim was ten wildcard cards; only eight were confirmed by
+  direct database search — see `archetypes.md`'s "Known tensions" for that gap, and for the further
+  gap that Realmwalker's Changeling keyword (Phase E's next sub-item) is not yet honoured, so it is
+  currently read only as a printed Shapeshifter. Re-measured after shipping: **763 of 4,049**
+  commander-eligible cards now produce zero active signals, down from 764.
 - **Changeling → `@mtg/rules`** (hard rule 2). New primitive citing **CR 702.73a** alongside
   `parseCreatureTypes`. Store an `is_changeling` column rather than expanding ~300 creature types per
   card; honour it in `detectKindred` and `supporterMatches`. Realmwalker is the corpus case, with
