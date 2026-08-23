@@ -550,7 +550,7 @@ groups.
 
 ---
 
-## Phase D — Keyword split _(deferred — see Sequencing)_
+## Phase D — Keyword split _(deferred — see Sequencing; now shipped)_
 
 Replace the single `EXCLUDED_KEYWORDS` set with three buckets and teach `countsTowardTheme` about
 them: `MECHANIC_KEYWORDS` (count on membership), `COMBAT_KEYWORDS` (keep the active-role
@@ -559,6 +559,53 @@ words — `Treasure`, `Double`, `Heal`, `Regenerate`, `Scry`, `Fateseal`, `Typec
 present in live data).
 
 **Re-measure before building this.** It may reduce to little more than `IGNORED_KEYWORDS`.
+
+**Shipped, after the rest of the plan (A through C4, E, F) closed out — the repo owner's own
+follow-up call once the mandatory backbone finished.** `countsTowardTheme` no longer exists by that
+name (Phase A's own kindred-exemption removal superseded it); the equivalent integration point is
+`definingRequirement`, which now takes an optional `qualifier` alongside the archetype key, read only
+for `keywordCare` — both call sites (`deckAnalysis.ts`'s theme loop, `synergy.ts`'s supporter-counting
+loop) now pass `signal.qualifier` through. `COMBAT_KEYWORDS` needed no enumerated set of its own: it
+is simply every keyword in neither of the other two, so the unchanged default (`role: 'rewards'`) is
+what "keep the active-role requirement" already meant before this phase.
+
+The re-measurement this phase's own text calls for caught something the original design sketch
+didn't anticipate. The sketch assumed that once a dedicated archetype reads a keyword by name
+(`f.keywords.includes(...)`), a parallel `keywordCare` theme for the same keyword is pure
+duplication — but `f.keywords` only ever reflects a card's *own* printed keyword, never a keyword it
+*grants* to something else, and most of the archetypes shipped in Phase C only check the former.
+Building the full three-bucket split on that assumption and then re-measuring against the real card
+pool with the same before/after "zero active signals" coverage-report methodology every archetype in
+this catalog uses caught 14 real commanders dropping to zero active signals: Jhoira of the Ghitu and
+Kang Prime grant Suspend without having it themselves; Prismari, the Inspiration grants Storm; Peri
+Brown grants Convoke; Wildsear, Yidris, and Zhulodok grant Cascade; Glorfindel, Kenessos, and Alrund
+care about Scry, which turned out to be covered by no dedicated archetype at all; Okaun, Tanazir
+Quandrix, The Thing, and Vorel of the Hull Clade all key off the generic, cross-resource "Double"
+ability-word tag, likewise uncovered elsewhere. Two keywords survived the corrected, line-by-line
+check for a *separate* granting-shaped matcher rather than just a structural one: Lifelink
+(`lifegain`'s own granting regex) and Persist/Undying (`recursion`'s own grant pattern, verified
+against Isilu, Carrier of Twilight and Mikaeus, the Unhallowed) — plus Crew and Treasure, safe for a
+different reason: `artifacts`'s `is` role reads the type line's own printed subtype directly, a
+structural fact with no "granted" shape to miss in the first place. `IGNORED_KEYWORDS` shipped at
+five entries beyond the unchanged Partner family, not the dozens the original sketch (and this
+section's own example list above) anticipated — see `archetypes.md`'s own "Behaviours verified as
+correct" entry for the full account, including why Scry and Double specifically, both named in this
+section's own original `IGNORED_KEYWORDS` example list, turned out to be wrong calls.
+
+`MECHANIC_KEYWORDS` shipped at two entries: Flashback and Escape, both genuine "cast from the
+graveyard as a resource, without returning it to hand" mechanics deliberately excluded from
+`recursion`'s own pattern as "a different plan" that was never actually built. Membership-counting
+only relaxes the *supporter*-counting gate (a submitted list's own cards), not the gate a candidate
+commander's own signal must clear to be suggested at all (`hasActiveRole`, unconditional and
+archetype-agnostic by design, per `synergy.ts`'s own "cares, not shares" comment) — so unlike a Phase
+C archetype, this phase was never expected to rescue a zero-signal commander, only to redistribute
+and deduplicate which label a submitted list's own theme reports under.
+
+Re-measured with the corrected set: 559 of 4,049 commander-eligible cards produce zero active
+signals, identical to the pre-Phase-D baseline (Phase C4's own final number) — no regression, and no
+rescue, exactly as expected for a phase that changes labels and supporter-counting rather than adding
+detection. **This completes Phase D — the last item in the entire signal-engine rework plan, mandatory
+sequence and every conditional phase alike.**
 
 ---
 

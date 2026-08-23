@@ -65,7 +65,7 @@ Most decks contribute evidence for several rules. These five each pin something 
   payoffs, and `keywordCare: Prismatic Gallery` — a Scryfall "keyword" on exactly one card in Magic
   — as the commander's strongest signal.
 - **`tenth-doctor-rose-tyler.txt`** — the only two-card commander. Exercises `partners.ts`'s
-  Doctor's-companion pairing and the `EXCLUDED_KEYWORDS` entry, both of which are **correct today**.
+  Doctor's-companion pairing and the `IGNORED_KEYWORDS` entry, both of which are **correct today**.
 - **`eirdu.txt`**, **`brigid.txt`**, **`morcant.txt`** — transforming commanders, which is how
   two-face import was verified as correct (both faces reach detection; they cannot bleed together).
 - **`sophia.txt`** — the +1/+1 counters theme reports "complete" while missing Hardened Scales, The

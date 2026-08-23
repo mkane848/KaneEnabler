@@ -2427,7 +2427,7 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
 function detectKeywordCare(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
   const out: SignalMatch[] = [];
   for (const keyword of candidateKeywords(facts, vocab)) {
-    if (EXCLUDED_KEYWORDS.has(keyword.toLowerCase())) continue;
+    if (IGNORED_KEYWORDS.has(keyword.toLowerCase())) continue;
     const roles: Role[] = [];
     if (facts.keywords.includes(keyword)) roles.push('is');
     // Reuses detectKindred's own word-or-plural matcher — "Foods", "Clues"
@@ -2455,20 +2455,81 @@ function detectKeywordCare(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
 }
 
 /**
- * Keywords that are structural rather than thematic.
+ * Keywords kept out of `keywordCare` entirely — Phase D
+ * (docs/signals-rework.md), replacing the original single `EXCLUDED_KEYWORDS`
+ * set once C1-C4 shipped.
  *
- * The Partner family says who can be your commander, not what your deck
- * wants to do. Surfacing "Partner" as a shared keyword would be a confusing
- * echo of the dedicated partner/background handling rather than a second,
- * unrelated signal.
+ * Deliberately short. The original design sketch for this phase assumed that
+ * once a dedicated archetype reads a keyword by name (`f.keywords.includes`),
+ * a parallel `keywordCare` theme for the same keyword is pure duplication —
+ * but `f.keywords` only ever reflects a card's *own* printed keyword, and
+ * most of those checks are function matchers that read exactly that array,
+ * never `keywordCare`'s own text-scanning "grants this to something else"
+ * pattern (`/\b(?:has|have|gains?|gets?)\b[^.\n]*\bKEYWORD\b/i`-shaped). A
+ * card that *grants* Cascade/Storm/Suspend/Convoke to spells it casts, or
+ * that grants Persist/Undying to creatures it doesn't itself have, never
+ * shows up in the "owns the keyword" check at all. Building the full
+ * three-bucket split and then re-measuring against the real card pool (not
+ * just spot checks) caught this directly: an early version of this set
+ * included every keyword `freeSpells`/`storm`/`cyclingDiscard`/`politics`
+ * read by name, and re-importing against the real Scryfall snapshot dropped
+ * 14 real commanders (Jhoira of the Ghitu, Kang Prime — grant Suspend;
+ * Prismari, the Inspiration — grants Storm; Peri Brown — grants Convoke;
+ * Wildsear/Yidris/Zhulodok — grant Cascade; Glorfindel/Kenessos/Alrund —
+ * care about Scry, never covered by any dedicated archetype at all; Okaun/
+ * Tanazir Quandrix/The Thing/Vorel — the generic cross-resource "Double" tag,
+ * likewise never covered elsewhere) to zero active signals, a real
+ * regression the "zero commanders" coverage report (Phase F) exists
+ * specifically to catch. Only two kinds of keyword survive that check:
+ *  - **The Partner family**, unchanged from before this phase — it says who
+ *    can be your commander, not what your deck wants to do, and it isn't a
+ *    grantable ability at all.
+ *  - **A keyword whose "grants this to something else" shape is positively,
+ *    separately covered**, checked line by line rather than assumed:
+ *    Lifelink (`lifegain`'s own granting regex, not just its
+ *    `f.keywords.includes` check), Persist/Undying (`recursion`'s own
+ *    `/\bhas (?:persist|undying)\b|\bhave (?:persist|undying)\b/i` grant
+ *    pattern, verified against Isilu, Carrier of Twilight and Mikaeus, the
+ *    Unhallowed), and Crew/Treasure (`artifacts`'s `is` role reads the type
+ *    line's own printed subtype directly — a structural fact, not a
+ *    "granted" one, so there is no missing shape to begin with).
+ * Everything else stays in `keywordCare` under its own name, same as before
+ * this phase — including every keyword this phase's own original plan named
+ * as an "ability word" candidate for this set (Double, Scry among them):
+ * re-measurement found real, uncovered commanders behind both.
  */
-const EXCLUDED_KEYWORDS = new Set([
+const IGNORED_KEYWORDS = new Set([
   'partner',
   'partner with',
   'friends forever',
   'choose a background',
   "doctor's companion",
+  'lifelink',
+  'persist',
+  'undying',
+  'crew',
+  'treasure',
 ]);
+
+/**
+ * Keywords real enough to build a deck around that mere possession — no
+ * separate card that explicitly "cares" — is itself real evidence, the same
+ * way Kindred's own "bodies" lifecycle slot counts membership rather than
+ * requiring a lord. `definingRequirement` reads this to relax `keywordCare`'s
+ * usual "needs a card that actively cares" bar to "needs a card that has it"
+ * for exactly these keywords.
+ *
+ * Flashback and Escape are genuine "cast from the graveyard as a resource,
+ * without returning it to hand" mechanics, deliberately excluded from
+ * `recursion`'s own pattern as "a different plan" (docs/archetypes.md) that
+ * was never actually built — real, well-known, uncovered mechanics rather
+ * than an ability word. `IGNORED_KEYWORDS`'s own doc comment covers why this
+ * set stayed short rather than absorbing more of the catalog: most keywords
+ * that looked redundant with a dedicated archetype turned out not to be,
+ * once the "grants this to something else" shape was checked and not just
+ * the "has this itself" shape.
+ */
+const MECHANIC_KEYWORDS = new Set(['flashback', 'escape']);
 
 /** The keywords a card could possibly relate to. Same inversion as
  * `candidateTypes` — look up the card's own words instead of testing all 884
@@ -2499,14 +2560,20 @@ function candidateKeywords(facts: CardFacts, vocab: Vocabulary): string[] {
  * carrying its own `ArchetypeDef`. `keywordCare` is likewise absent from
  * `ARCHETYPES` and so falls through to the default (`rewards` x1) — granting
  * a keyword is `produces`, not `rewards`, so this is what stops a commander
- * that merely hands out Flying from reading as a Flying deck.
+ * that merely hands out Flying from reading as a Flying deck — *except* for
+ * `MECHANIC_KEYWORDS` (Phase D, docs/signals-rework.md), where mere
+ * possession is real evidence on its own; `qualifier` is only ever read for
+ * that one carve-out, and only `keywordCare` signals set it to a keyword name.
  */
-export function definingRequirement(archetype: string): { role: Role; minimum: number } {
+export function definingRequirement(archetype: string, qualifier?: string): { role: Role; minimum: number } {
   if (archetype === 'kindred') {
     // "Ten Wizards plus one incidental pump is not a Wizard deck" — see
     // archetypes.md. Membership is structural and free to claim, so kindred
     // needs more than one card that actually cares.
     return { role: 'rewards', minimum: 2 };
+  }
+  if (archetype === 'keywordCare' && qualifier && MECHANIC_KEYWORDS.has(qualifier.toLowerCase())) {
+    return { role: 'is', minimum: 1 };
   }
   const def = ARCHETYPES.find((a) => a.key === archetype);
   return { role: def?.definingRole ?? 'rewards', minimum: def?.definingMinimum ?? 1 };

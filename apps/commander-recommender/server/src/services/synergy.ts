@@ -447,7 +447,7 @@ export function scoreCommanders(
       // Membership counts cards; caring makes a theme. A signal citing
       // MIN_SIGNAL_COUNT cards that all merely belong (fetchlands, but no
       // landfall payoff) is not real evidence — see definingRequirement.
-      const { role: definingRole, minimum } = definingRequirement(signal.archetype);
+      const { role: definingRole, minimum } = definingRequirement(signal.archetype, signal.qualifier);
       const caringCount = supporters.filter((entry) =>
         playsDefiningRole(entry, signal, definingRole, profile.signalsByCard),
       ).length;

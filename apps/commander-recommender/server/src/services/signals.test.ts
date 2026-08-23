@@ -14,6 +14,7 @@ import type { CardRow } from '../types';
 import {
   buildCardFacts,
   buildVocabulary,
+  definingRequirement,
   detectSignals,
   hasActiveRole,
   stripSelfReferences,
@@ -564,6 +565,63 @@ describe('keywords are not synergies on their own', () => {
     assert.strictEqual(hasActiveRole(rolesOf(signals, 'keywordCare', 'Trample')), true);
     // And it is a go-wide payoff, which is the real reason it's in the deck.
     assert.ok(rolesOf(signals, 'goWide').includes('rewards'));
+  });
+});
+
+describe('Phase D: keyword buckets replace the single EXCLUDED_KEYWORDS set', () => {
+  it('Flashback is a mechanic keyword — membership alone satisfies its own definingRequirement', () => {
+    // Think Twice — real oracle text. Nothing here explicitly "cares" about
+    // Flashback (no grants/rewards clause), so this stays keywordCare: is
+    // only, same as any other bare keyword — MECHANIC_KEYWORDS relaxes the
+    // gate that reads this role, not what role a bare Flashback card earns.
+    const thinkTwice = makeCard({
+      name: 'Think Twice',
+      type_line: 'Instant',
+      oracle_text:
+        'Draw a card.\n' +
+        'Flashback {2}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)',
+      keywords: JSON.stringify(['Flashback']),
+    });
+    const signals = signalsFor(thinkTwice, [], ['Flashback']);
+    assert.deepStrictEqual(rolesOf(signals, 'keywordCare', 'Flashback'), ['is']);
+    assert.deepStrictEqual(definingRequirement('keywordCare', 'Flashback'), { role: 'is', minimum: 1 });
+  });
+
+  it('Escape is a mechanic keyword too, for the same reason', () => {
+    // Glimpse of Freedom — real oracle text.
+    const glimpseOfFreedom = makeCard({
+      name: 'Glimpse of Freedom',
+      type_line: 'Instant',
+      oracle_text:
+        'Draw a card.\n' +
+        'Escape—{2}{U}, Exile five other cards from your graveyard. (You may cast this card from your ' +
+        'graveyard for its escape cost.)',
+      keywords: JSON.stringify(['Escape']),
+    });
+    const signals = signalsFor(glimpseOfFreedom, [], ['Escape']);
+    assert.deepStrictEqual(rolesOf(signals, 'keywordCare', 'Escape'), ['is']);
+    assert.deepStrictEqual(definingRequirement('keywordCare', 'Escape'), { role: 'is', minimum: 1 });
+  });
+
+  it('a combat keyword keeps requiring an active caring role, unchanged', () => {
+    assert.deepStrictEqual(definingRequirement('keywordCare', 'Flying'), { role: 'rewards', minimum: 1 });
+  });
+
+  it('a keyword already covered by its own dedicated archetype produces no keywordCare signal at all', () => {
+    // Unicycle — real oracle text. Crew is redundant with artifacts:Vehicle,
+    // this phase's own paradigm example ("Crew stops mattering as a keyword
+    // once artifacts:Vehicle carries the theme").
+    const unicycle = makeCard({
+      name: 'Unicycle',
+      type_line: 'Artifact — Equipment Vehicle',
+      mana_cost: '{2}',
+      oracle_text: 'First strike, haste\nEquipped creature has first strike and haste.\nEquip {1}\nCrew 1',
+      keywords: JSON.stringify(['First strike', 'Haste', 'Equip', 'Crew']),
+    });
+    const signals = signalsFor(unicycle, [], ['Crew', 'First strike', 'Haste']);
+    assert.strictEqual(find(signals, 'keywordCare', 'Crew'), undefined);
+    // The Vehicle subtype still carries the theme under its real name.
+    assert.ok(rolesOf(signals, 'artifacts', 'Vehicle').includes('is'));
   });
 });
 

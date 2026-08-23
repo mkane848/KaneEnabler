@@ -565,6 +565,25 @@ describe('analyzeDeck', () => {
     assert.strictEqual(themes[0]!.cardCount, 4);
   });
 
+  it('a mechanic keyword (Phase D) makes a theme on membership alone, unlike a combat keyword', () => {
+    // Flashback is real enough to build a deck around that having several
+    // cards with it is itself evidence, the same way Kindred's own "bodies"
+    // slot counts membership — see MECHANIC_KEYWORDS's own doc comment in
+    // signals.ts. Contrast with the Flying case above: three cards that
+    // merely *have* Flying report no theme, but three that merely *have*
+    // Flashback do.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 3; i++) {
+      const row = makeCard(`Flashback Spell ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('keywordCare', ['is'], 'Flashback')]);
+    }
+    const themes = analyzeDeck(owned, signals).themes;
+    assert.strictEqual(themes.length, 1);
+    assert.strictEqual(themes[0]!.cardCount, 3);
+  });
+
   it('granting a keyword to the team is not the same as caring about it', () => {
     // The Miles/Flying false positive: a commander (or the list) that merely
     // hands out a keyword is not a theme for it, even though "grants it" is

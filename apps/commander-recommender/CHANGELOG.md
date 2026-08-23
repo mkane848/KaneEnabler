@@ -787,10 +787,11 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   - Re-measured with Phase F's coverage report: 560 of 4,049
     commander-eligible cards now produce zero active signals, down from
     563.
-- **Signal engine, Phase C4 — `storm` archetype, the last piece of the
-  entire signal-engine rework plan.** See `docs/signals-rework.md` Phase C
-  and `docs/archetypes.md`'s own entry. Phase C4's third and final
-  archetype. **Inferred** — no deck's own confirmed axes name it; real
+- **Signal engine, Phase C4 — `storm` archetype, completing the mandatory
+  and conditional sequence (A through C4, E, F).** See
+  `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
+  Phase C4's third and final archetype. **Inferred** — no deck's own
+  confirmed axes name it; real
   Storm-keyword cards exist in the corpus (krenko.txt's Empty the Warrens
   and Haze of Rage; tenth-doctor-rose-tyler.txt's All of History, All at
   Once) but neither deck's own note claims Storm as an intentional plan.
@@ -814,6 +815,34 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     560.
   - **This completes Phase C4 — and the entire A → B → C1 → C2 → C3 → C4
     → E → F signal-engine rework plan.**
+- **Signal engine, Phase D — keyword buckets, the deferred, conditional
+  final item in the whole rework plan.** See `docs/signals-rework.md`
+  Phase D and `docs/archetypes.md`'s own entry. Replaces the single
+  `EXCLUDED_KEYWORDS` set (renamed `IGNORED_KEYWORDS`) with two named
+  buckets read by `definingRequirement`, which now takes an optional
+  keyword qualifier: `IGNORED_KEYWORDS` (kept out of `keywordCare`
+  entirely) and `MECHANIC_KEYWORDS` (Flashback, Escape — real,
+  uncovered "cast from the graveyard as a resource" mechanics where mere
+  possession, not an explicit caring card, is real evidence, the same way
+  Kindred's own "bodies" slot counts membership). `COMBAT_KEYWORDS` needed
+  no enumerated set: it's simply every keyword in neither bucket, so the
+  unchanged default (`role: 'rewards'`) already means "keep the
+  active-role requirement."
+  - `IGNORED_KEYWORDS` shipped short: the Partner family, unchanged, plus
+    only Lifelink, Persist, Undying, Crew, and Treasure — each checked
+    line-by-line to have a keyword-granting shape genuinely covered
+    elsewhere (`lifegain`'s own granting regex for Lifelink;
+    `recursion`'s own grant pattern for Persist/Undying; `artifacts`'s
+    `is` role reading the type line's own printed subtype directly for
+    Crew/Treasure, a structural fact with no "granted" shape to miss).
+  - Re-measured with Phase F's coverage report: 559 of 4,049
+    commander-eligible cards produce zero active signals, unchanged from
+    Phase C4's own final number — no rescue expected or found, since
+    neither bucket can add an active role to a candidate commander's own
+    signal, only change how a submitted list's supporting cards are
+    counted and labeled.
+  - **This completes Phase D — the last item in the entire signal-engine
+    rework plan, mandatory sequence and every conditional phase alike.**
 
 ### Fixed
 
@@ -1106,6 +1135,27 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   cost-reduction card slip through as a false `storm` payoff. Fixed by
   widening the exclusion to `\bcosts?\b`; re-verified against the full
   card pool with 19 clean matches remaining and no new false positives.
+- **Signal engine, Phase D — an early `IGNORED_KEYWORDS` design dropped 14
+  real commanders to zero active signals.** Caught by the same before/after
+  full-pool coverage-report methodology every archetype in this rework
+  uses, before this phase ever shipped. The original design assumed that
+  once an archetype reads a keyword by name (`f.keywords.includes(...)`),
+  a parallel `keywordCare` theme for it is pure duplication — but
+  `f.keywords` only reflects a card's *own* printed keyword, never one it
+  *grants* to something else, and most archetypes only check the former.
+  An early version of `IGNORED_KEYWORDS` moved every keyword any archetype
+  read by name into it and re-importing against the real Scryfall snapshot
+  dropped Jhoira of the Ghitu and Kang Prime (grant Suspend), Prismari,
+  the Inspiration (grants Storm), Peri Brown (grants Convoke), Wildsear/
+  Yidris/Zhulodok (grant Cascade), Glorfindel/Kenessos/Alrund (care about
+  Scry, covered by no dedicated archetype at all), and Okaun/Tanazir
+  Quandrix/The Thing/Vorel (the generic "Double" ability-word tag,
+  likewise uncovered elsewhere) to zero active signals. Fixed by shrinking
+  `IGNORED_KEYWORDS` to only the keywords checked, line by line, to have a
+  *separate* granting-shaped matcher — not just a structural one — leaving
+  it five entries beyond the Partner family rather than the dozens first
+  assumed safe; re-verified with the coverage report back to 559 of 4,049,
+  identical to the pre-Phase-D baseline.
 
 ## [1.8.0] — 2026-08-18
 

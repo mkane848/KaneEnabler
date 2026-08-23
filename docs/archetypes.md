@@ -423,8 +423,34 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   face boundary. Cases: Eirdu // Isilu, Brigid, Trystan.
 - **Doctor's companion pairing** (`packages/rules/src/partners.ts`) pairs only with legends whose
   creature types are _exactly_ Time Lord and Doctor. Case: The Tenth Doctor + Rose Tyler.
-- **`EXCLUDED_KEYWORDS` covers `doctor's companion`**, so Rose Tyler generates no structural keyword
+- **`IGNORED_KEYWORDS` covers `doctor's companion`**, so Rose Tyler generates no structural keyword
   theme.
+- **A keyword already read by a dedicated archetype is not automatically redundant with
+  `keywordCare` — only a keyword whose "grants this to something else" shape is *separately*
+  covered is.** Phase D's own design sketch (docs/signals-rework.md) assumed the opposite: that once
+  an archetype reads a keyword via `f.keywords.includes(...)`, a parallel `keywordCare` theme for the
+  same keyword just echoes it. `f.keywords` only ever reflects a card's *own* printed keyword, though
+  — it says nothing about a card that *grants* the keyword to something else (Jhoira of the Ghitu and
+  Kang Prime grant Suspend to an exiled card; Prismari, the Inspiration grants Storm to the spells it
+  casts; Peri Brown grants Convoke to the first historic spell each turn; Wildsear, Yidris, and
+  Zhulodok all grant Cascade). None of those commanders themselves have the keyword structurally, so
+  `freeSpells`/`storm`'s own `f.keywords.includes` checks never see them — only `keywordCare`'s own
+  text-scanning "has/have/gains/gets ... KEYWORD" granting pattern does. An early version of this
+  phase's `IGNORED_KEYWORDS` set moved every keyword any archetype read by name into it, checked
+  against the full legal card pool (not just the fixture corpus) via the same before/after "zero
+  active signals" coverage-report methodology every archetype in this catalog uses, and the
+  re-measurement caught 14 real commanders dropping to zero active signals — the six above, plus
+  Glorfindel/Kenessos/Alrund (care about Scry, never covered by any dedicated archetype at all) and
+  Okaun/Tanazir Quandrix/The Thing/Vorel (the generic, cross-resource "Double" ability-word tag,
+  likewise uncovered elsewhere). Fixed by shrinking `IGNORED_KEYWORDS` back down to only the Partner
+  family plus the handful of keywords checked line-by-line to have a *separate* granting-shaped
+  matcher, not just a structural one — see `IGNORED_KEYWORDS`'s own doc comment in `signals.ts` for
+  the full account, including which two keywords (Lifelink; Persist/Undying) actually clear that bar.
+  Re-verified after the fix: 559 of 4,049 commander-eligible cards produce zero active signals,
+  identical to the pre-Phase-D baseline — no regression, no new rescue (Phase D redistributes and
+  deduplicates theme labels; it was never expected to rescue a commander the way a Phase C archetype
+  does, since neither `IGNORED_KEYWORDS` nor `MECHANIC_KEYWORDS` can add an active role to a
+  commander's own signal, only change how *supporting* cards in a submitted list are counted).
 - **Krenko** detects as `kindred:Goblin[produces, rewards]`, exactly as `signals.ts`'s own doc comment
   claims.
 - **Names are never evidence.** `stripSelfReferences` exists because Goblin Sharpshooter matched
