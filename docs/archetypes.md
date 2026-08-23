@@ -52,6 +52,36 @@ here — there is no play-rate or win-rate data behind any of it.
 them (main plan versus fallback). That is the single most consistent finding in the corpus, and it is
 why `DIMINISHING_FACTOR` (`synergy.ts:254`) is flagged for review rather than treated as settled.
 
+### Grounding: vetted vs inferred
+
+Every archetype through Phase E was traced against a named deck above before it shipped — that is
+what "backed by N decks" means everywhere in this document. Starting with Phase C3, the repo owner
+asked to build ahead of that rather than wait on a named deck for every remaining archetype:
+**inferring from established Magic patterns and this catalog's own conventions is now an accepted
+way to ship, not just a stopgap.** The corpus-first discipline underneath this document does not
+relax — real oracle text, pulled from the seeded database, is still the only thing any matcher is
+ever written against (root CLAUDE.md hard rule 4 stays absolute), and a new archetype is still
+checked against the full legal card pool for false positives before it ships, the same rigor every
+Vetted entry already got. What changes is only whether a real deck in the corpus is confirmed to
+build around it.
+
+Every archetype below carries one of two tags, so the difference stays legible at a glance rather
+than requiring a re-derivation each time:
+
+- **Vetted** — a named deck in the corpus above confirms this axis. The deck is cited by name.
+- **Inferred** — built from established Magic patterns and checked against the full legal card pool
+  for false positives, but no deck in the corpus is confirmed to build around it yet.
+
+**Flip the tag in place when a real deck later confirms or corrects an Inferred entry — the
+archetype's own shape (qualifier, roles, lifecycle) is not expected to change to accommodate that.**
+An Inferred archetype is built with the exact same `ArchetypeDef`/`LifecycleSpec` machinery as a
+Vetted one, using real card text throughout; the only thing a later deck example adds is the
+citation and, if it turns up a pattern the inference missed, a new matcher alongside the existing
+ones — not a redesign. This is also why "Inferred" is not a synonym for "guessed": the corpus tier
+table below (`docs/signals-rework.md`'s own Phase C3 note) turned out to already name a real deck
+for six of Phase C3's seven archetypes once the corpus table above was checked archetype-by-archetype
+rather than assumed absent — only `monoColorDevotion` is genuinely ungrounded so far.
+
 ---
 
 ## Roles
@@ -191,6 +221,9 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 
 ### Shipping today
 
+Every entry below is **Vetted** (see "Grounding: vetted vs inferred" above) except where its own
+Notes cell says otherwise — Phases A through E all shipped against a named deck.
+
 | Key            | `definingRole`   | Notes                                                                                |
 | -------------- | ---------------- | ------------------------------------------------------------------------------------ |
 | `aristocrats`  | `rewards` ×1     | Deliberately creature-specific. Sacrificing an artifact or land is a different deck. |
@@ -214,6 +247,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `temporaryEffects` | `enables` ×1 | No qualifier. `definingRole: enables`, not `produces` — the ~25 delayed-cost cards (Sneak Attack, Puppeteer Clique) are common, often-incidental staples across many decks, but the enablers that erase their cleanup trigger (Obeka, Sundial of the Infinite, Glorious End: `"end the turn"`) are the actual, rare identity — "those three are the deck" per the `enables` role's own motivating section above. Unearth/Encore/Dash/Blitz/Mobilize/Warp's entire cleanup template lives inside their own reminder text (the same problem Cascade/Suspend forced on `freeSpells`), so `produces` reads `CardFacts.keywords` for a card that has one of them and a granting-clause text pattern for a card that grants one to others. |
 | `recursion`    | `produces` ×1    | No qualifier. Persist/Undying (own keyword or granted via text — Isilu, Carrier of Twilight: "has persist"; Mikaeus, the Unhallowed: "have undying"), Gravecrawler's repeatable self-cast template, and Prized Amalgam's repeatable self-return trigger — all scoped, via the full card pool, to exclude Flashback/Escape/Unearth's *one-shot* "cast/return this card ... then exile it" shape, which is a different plan (graveyard value or `temporaryEffects`), not this. `amplifies`: the deck's own combo piece per the repo owner — a card that puts a +1/+1 counter on an *entering* creature (Cathars' Crusade: `"on each creature you control"`, not a card that only buffs itself) cancels Persist's own -1/-1 counter under CR 704.5q, letting the loop repeat instead of firing once. |
 | `tapForValue`  | `produces` ×1    | No qualifier. Like `recursion`, only one of the tier table's two decks has confirmed textual backing — kalamax.txt, via the six mana-tap enablers `docs/archetypes.md`'s own `enables` section already names by card (Springleaf Drum, Holdout Settlement, Survivors' Encampment, Gene Pollinator, Relic of Legends, Honor-Worn Shaku); shipped on that grounding alone rather than inventing a second deck. Two `produces` shapes, both combo *ingredients* per the "flag ingredients, do not detect loops" rule above, not loop detection itself: tapping a *different* permanent you control as a cost for something else (never a card's own bare `{T}:` ability, which is ubiquitous and not itself evidence of anything), and untapping your own permanents for free (Seedborn Muse). Kalamax herself doesn't qualify — her text only reads "if Kalamax is tapped" as a condition; she's the beneficiary of this archetype, not its identity. |
+| `cardDraw`     | `produces` ×1    | No qualifier. **Phase C3's first archetype** — see below for the tier and its own grounding correction. Two decks: watcher-in-the-water.txt (primary — its own corpus note names the amplifies role and all three doubler cards by hand) and miles.txt (secondary, "draw engine" as one of four confirmed axes). Repeatable engines are `produces` (Rhystic Study, Mystic Remora, Archmage Emeritus, Sram), a trigger reading you drawing is `rewards` (Chasm Skulker, Homunculus Horde), and a pure doubling replacement effect is `amplifies` (Teferi's Ageless Insight, Thought Reflection, Alhammarret's Archive — the last also amplifies `lifegain`, one card correctly earning both). Checked against the full legal card pool before shipping, not just the two grounding decks: an initial ungated `produces` pattern rescued 124 previously zero-active-signal commanders at once — plausible on its own, since drawing a card is one of the most common templated effects in Magic, but the sweep still turned up two real false-positive shapes (a third-person "draws" naming only an opponent as its subject — Vendilion Clique, Mathas, Fiend Seeker — and a replacement effect that redirects a draw into something else entirely — Eruth, Tormented Prophet, Urabrask, Heretic Praetor) before the final version shipped; see "Behaviours verified as correct" below for the full account. |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -233,7 +267,13 @@ deck is a guess.
 |        | ~~`recursion`~~ **Shipped** — see "Shipping today" above                                            | 2      | The same body returning repeatedly — distinct from `reanimator`'s "cheat something big into play". Unlike this catalog's other entries, no corpus fixture comment named the motivating decks or the original "3" count's third deck; confirmed with the repo owner as `wilhelt.txt` and `eirdu.txt` before implementation — see "Behaviours verified as correct" below for the real interaction (Isilu's granted Persist + Cathars' Crusade's counter-cancel) that grounds it. |
 |        | ~~`tapForValue`~~ **Shipped** — see "Shipping today" above                                          | 2      | Tapping and untapping your own permanents; also where combo _ingredients_ get classified. **Phase C2 is complete.**                                                                    |
 |        | ~~`gameState`~~ **Shipped** — see "Shipping today" above                                            | 6      | The Ring, the monarch, Max speed, initiative, day/night                                                                                                                               |
-| **C3** | `burn`, `bigMana`, `powerMatters`, `cardDraw`, `graveyardToolbox`, `monoColorDevotion`, `pillowfort` | 2 each |                                                                                                                                                                                       |
+| **C3** | ~~`cardDraw`~~ **Shipped** — see "Shipping today" above                                             | 2      | Repeatable draw engines, the payoffs that read a draw, and the effects that double every draw outright — watcher-in-the-water.txt (primary) and miles.txt (secondary) |
+|        | `burn`                                                                                                | 1      | Damage dealt directly, not through combat, as its own plan — kalamax.txt names it explicitly ("Copy, burn, power-into-damage, go-wide"). Corrected from this table's own original "zero grounding" note: the deck was named all along, just not cross-referenced against this table's own corpus list before that note was written. |
+|        | `bigMana`                                                                                             | 1      | Ramping toward an X spell or another huge-cost payoff, not land count for its own sake (that's `landsMatter`'s territory) — trazyn.txt's own corpus note says "big mana into X" by name, with a real X spell (Exsanguinate) sitting in the list. |
+|        | `powerMatters`                                                                                        | 1      | Payoffs that scale with how big a creature is, not how many there are (that's `goWide`'s territory) — radagast.txt's corpus note names Ghalta, Goreclaw, Outcaster Trailblazer, and Return of the Wildspeaker by hand. |
+|        | `graveyardToolbox`                                                                                    | 1      | Same source deck as `bigMana` (trazyn.txt), a distinct plan: flexible retrieval from the graveyard as a resource, not one big reanimation target (`reanimator`'s territory). |
+|        | `pillowfort`                                                                                          | 1      | Taxing or deterring attacks aimed at you — yshtola.txt names it explicitly, and the deck plays Ghostly Prison and Propaganda outright. |
+|        | `monoColorDevotion`                                                                                   | 0      | The one archetype in this tier with no deck in the corpus confirmed to build around it — checked directly (`grep -il devotion` across every fixture's comments and body), not assumed absent. **Inferred**, when built: CR 700.6 is a precise, well-defined mechanic, so the risk here is lower than a fuzzier concept like `politics` below. |
 | **C4** | `politics`, `storm`, `alternateWin`                                                                  | 1 each | Build only if C1–C3 hold up. `politics` is the fuzziest concept in the catalog — if it cannot be kept crisp (goad, donate, symmetric effects), drop it rather than ship a vague theme |
 
 ### Lifecycles
@@ -292,6 +332,23 @@ every fixture deck's other kindred themes shows realistic, sensible partial comp
 Goblin Kindred (42 cards) is missing only resilience; Sauron's Army Kindred (18 cards, built more
 around amass than a starting Army body count) is genuinely missing bodies as well as engine — not a
 bug, an accurate read of a deck that produces the type rather than starting with much of it.
+
+**`cardDraw` gets one too — shipped**, the same three-slot shape as `goWide`/`spellslinger`
+(engines, payoff, multiplier):
+
+| Slot | Key | Role | Minimum | What it is |
+| --- | --- | --- | --- | --- |
+| Draw engines | `engines` | `produces` | 3 | Repeatable ways to draw extra cards, not just one big spell. |
+| Payoffs | `payoff` | `rewards` | 2 | Cards that reward drawing extra cards, not just having them. |
+| Multipliers | `multiplier` | `amplifies` | 1 | Effects that double every draw outright. |
+
+Verified against the real seeded database: `watcher-in-the-water.txt`'s Card Draw theme (37 cards)
+reports complete, and its multiplier slot names exactly the three cards its own corpus note already
+called out by hand — Teferi's Ageless Insight, Alhammarret's Archive, Thought Reflection. This is a
+genuine independent confirmation, not circular: the note was written when the deck was added to the
+corpus, before this archetype existed to detect anything. `miles.txt` reports Card Draw (11 cards)
+incomplete, missing only the payoff slot — consistent with its own corpus note naming "draw engine"
+specifically, not payoffs.
 
 ---
 
@@ -519,12 +576,52 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   scoring output for the deck. `qualifierKind` is left `undefined` to match the convention every
   other unqualified signal in this catalog already uses, rather than `'creatureType'` — nothing
   reads it for a signal with no qualifier to narrow.
+- **`cardDraw`'s `produces` split on a real grammatical distinction, found only by checking the full
+  legal card pool rather than the two grounding decks.** The bare imperative/infinitive "draw" (no
+  `-s`) always benefits the controller — standard MTG templating leaves the subject of a "yours"
+  effect implicit (Rhystic Study's "you may draw a card", Behold the Multiverse's imperative "draw
+  two cards", Nezahal's "whenever an opponent casts a noncreature spell, draw a card" — the *trigger*
+  names an opponent, the effect doesn't). Third-person "draws" (WITH the `-s`) grammatically needs an
+  explicit subject, and that subject decides who benefits: "each player draws a card" (Scrawling
+  Crawler) includes you, but "that player... draws a card" (Vendilion Clique, replacing a card it
+  just made a player discard) or "each opponent draws a card" (Mathas, Fiend Seeker's own bounty
+  handing opponents a card as a downside) never do. An initial version that matched `draws?`
+  unconditionally rescued 124 previously zero-active-signal commanders in one pass — plausible on its
+  own, since drawing a card is one of the most common templated effects in the game — but a spot
+  check of that rescued set turned up both of those false-positive commanders directly, which is what
+  forced the grammatical split rather than a distance-based or player-name-based heuristic (neither
+  survives contact with "that player reveals the chosen card, puts it on the bottom of their library,
+  then draws a card" — the subject and the verb are far apart, with two other verbs in between).
+  A second, distinct false-positive shape survived that first fix: a *replacement* effect
+  (`"if/when [someone] would draw a card, [something else happens] instead"`) never causes a draw at
+  all, whoever its subject is — Eruth, Tormented Prophet turns your own draws into a different kind
+  of card access entirely, and Urabrask, Heretic Praetor taxes an *opponent's* draw into something
+  else. `CARD_DRAW_REPLACEMENT` excludes the whole family from `produces`; the narrower
+  `CARD_DRAW_REPLACEMENT_AMPLIFIES` (specifically "draw two/three/N cards instead") is what still
+  earns `amplifies` for the three real doublers. After both fixes, a full re-check of every rescued
+  commander (108 after the second fix) found no further false positives — including several
+  legitimately ambiguous shapes that were checked and kept rather than excluded: Edric, Spymaster of
+  Trest's "its controller may draw a card" is a genuinely symmetric attacks-matter effect (you *are* a
+  valid beneficiary whenever your own creatures attack), and Ludevic, Necro-Alchemist's "that player
+  may draw a card" is keyed to *each* player's own end step in turn, meaning "that player" is you on
+  your own turn.
 
 ---
 
 ## Known tensions
 
 Recorded rather than resolved, because each is a real trade.
+
+**A new archetype can collide with an existing test's shared fixture text, silently.** Adding
+`cardDraw` broke three exact-score assertions in `synergy.test.ts`'s "scoring measures focus" suite —
+not because the new archetype was wrong, but because `SACRIFICE_TEXT` (a shared constant used only to
+give aristocrats tests a valid outlet+payoff shape) happened to read `"Sacrifice a creature: Draw a
+card."`, which is now also, correctly, a `cardDraw` signal. The fix was changing the incidental word
+("Draw a card" → "Scry 1"), not narrowing `cardDraw`. **Every future archetype addition should re-run
+the full server test suite and treat an exact-score assertion failure as a signal to check for this
+specific collision before assuming the new archetype is wrong** — a fixture built to isolate one
+archetype's scoring math can accidentally start exercising a second one once that second archetype's
+vocabulary grows to cover common English phrasing ("draw a card" being about as common as it gets).
 
 **Wildcard kindred's role detection is grounded on 8 cards, and a 9th (Path of Ancestry) that
 matches a different phrasing entirely.** Every regex in `detectKindred`'s wildcard branch was

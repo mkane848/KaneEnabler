@@ -92,7 +92,7 @@ function solo(card: CardRow): CommanderUnit {
  * fodder-sacrificing cards with nothing rewarding the death is not an
  * Aristocrats deck (see archetypes.md). */
 const SACRIFICE_TEXT =
-  'Sacrifice a creature: Draw a card.\nWhenever a creature you control dies, you gain 1 life.';
+  'Sacrifice a creature: Scry 1.\nWhenever a creature you control dies, you gain 1 life.';
 
 /** N distinct sacrifice outlets. The signal threshold counts distinct citable
  * cards, so "enough signal" means enough different cards, not enough copies. */

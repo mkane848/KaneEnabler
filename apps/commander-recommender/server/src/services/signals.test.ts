@@ -2715,3 +2715,213 @@ describe('Tap for Value: tapping and untapping your own permanents as a resource
     assert.strictEqual(find(signalsFor(solRing), 'tapForValue'), undefined);
   });
 });
+
+describe('Card Draw: repeatable engines, the payoffs that read a draw, and the doublers', () => {
+  it('produces from a repeatable engine triggered on something other than drawing', () => {
+    // Rhystic Study — real oracle text.
+    const rhysticStudy = makeCard({
+      name: 'Rhystic Study',
+      type_line: 'Enchantment',
+      oracle_text: 'Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(rhysticStudy), 'cardDraw'), ['produces']);
+  });
+
+  it('produces from a one-shot draw spell', () => {
+    // Behold the Multiverse — real oracle text.
+    const beholdTheMultiverse = makeCard({
+      name: 'Behold the Multiverse',
+      type_line: 'Instant',
+      oracle_text:
+        'Scry 2, then draw two cards.\n' +
+        'Foretell {1}{U} (During your turn, you may pay {2} and exile this card from your hand ' +
+        'face down. Cast it on a later turn for its foretell cost.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(beholdTheMultiverse), 'cardDraw'), ['produces']);
+  });
+
+  it("produces even when the trigger reads someone else's draw, since it still causes its own", () => {
+    // Consecrated Sphinx — real oracle text.
+    const consecratedSphinx = makeCard({
+      name: 'Consecrated Sphinx',
+      type_line: 'Creature — Sphinx',
+      oracle_text: 'Flying\nWhenever an opponent draws a card, you may draw two cards.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(consecratedSphinx), 'cardDraw'), ['produces']);
+  });
+
+  it('rewards, not produces, when the trigger IS you drawing a card', () => {
+    // Chasm Skulker — real oracle text. The trigger contains "draw a card"
+    // itself, which must not also read as producing one.
+    const chasmSkulker = makeCard({
+      name: 'Chasm Skulker',
+      type_line: 'Creature — Squid Horror',
+      oracle_text:
+        'Whenever you draw a card, put a +1/+1 counter on this creature.\n' +
+        "When this creature dies, create X 1/1 blue Squid creature tokens with islandwalk, where " +
+        'X is the number of +1/+1 counters on this creature.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(chasmSkulker), 'cardDraw'), ['rewards']);
+  });
+
+  it('rewards from "your second card each turn", not just a bare draw trigger', () => {
+    // Homunculus Horde — real oracle text.
+    const homunculusHorde = makeCard({
+      name: 'Homunculus Horde',
+      type_line: 'Creature — Homunculus',
+      oracle_text: 'Whenever you draw your second card each turn, create a token that\'s a copy of this creature.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(homunculusHorde), 'cardDraw'), ['rewards']);
+  });
+
+  it('a card can independently earn produces from one clause and rewards from another', () => {
+    // Toothy, Imaginary Friend — real oracle text. The counter-growing
+    // clause reads a draw (rewards); the death trigger causes real draws of
+    // its own (produces) — two different abilities, two different roles,
+    // the same shape as Krenko, Mob Boss producing and rewarding at once.
+    const toothy = makeCard({
+      name: 'Toothy, Imaginary Friend',
+      type_line: 'Legendary Creature — Illusion',
+      oracle_text:
+        'Partner with Pir, Imaginative Rascal (When this creature enters, target player may put ' +
+        'Pir into their hand from their library, then shuffle.)\n' +
+        'Whenever you draw a card, put a +1/+1 counter on Toothy.\n' +
+        'When Toothy leaves the battlefield, draw a card for each +1/+1 counter on it.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(toothy), 'cardDraw'), ['produces', 'rewards']);
+  });
+
+  it('amplifies, not produces, for a pure replacement effect that never causes a draw itself', () => {
+    // Teferi's Ageless Insight — real oracle text. It never draws you a
+    // card on its own — it only modifies a draw already happening from
+    // another source — the same reasoning artifacts' own replacement
+    // effects (Academy Manufactor, Xorn) are amplifies only.
+    const teferisAgelessInsight = makeCard({
+      name: "Teferi's Ageless Insight",
+      type_line: 'Legendary Enchantment',
+      oracle_text:
+        'If you would draw a card except the first one you draw in each of your draw steps, draw ' +
+        'two cards instead.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(teferisAgelessInsight), 'cardDraw'), ['amplifies']);
+  });
+
+  it('a doubler that also doubles life gain earns both archetypes\' amplifies independently', () => {
+    // Alhammarret's Archive — real oracle text. docs/archetypes.md's own
+    // corpus note calls this out by name: one card, two archetypes.
+    const alhammarretsArchive = makeCard({
+      name: "Alhammarret's Archive",
+      type_line: 'Legendary Artifact',
+      oracle_text:
+        'If you would gain life, you gain twice that much life instead.\n' +
+        'If you would draw a card except the first one you draw in each of your draw steps, draw ' +
+        'two cards instead.',
+    });
+    const signals = signalsFor(alhammarretsArchive);
+    assert.deepStrictEqual(rolesOf(signals, 'cardDraw'), ['amplifies']);
+    assert.ok(rolesOf(signals, 'lifegain').includes('amplifies'));
+  });
+
+  it('does not fire on a card with no drawing text at all', () => {
+    // Ioreth of the Healing House — real oracle text, from the same
+    // watcher-in-the-water.txt corpus deck. Untap effects only.
+    const ioreth = makeCard({
+      name: 'Ioreth of the Healing House',
+      type_line: 'Legendary Creature — Human Cleric',
+      oracle_text: '{T}: Untap another target permanent.\n{T}: Untap two other target legendary creatures.',
+    });
+    assert.strictEqual(find(signalsFor(ioreth), 'cardDraw'), undefined);
+  });
+
+  it("an opponent drawing a card as your trigger condition doesn't stop the effect drawing you cards", () => {
+    // Consecrated Sphinx and Nezahal, Primal Tide — real oracle text. Both
+    // name an opponent in the trigger, but the actual draw is unconditionally
+    // yours (imperative "draw", no explicit subject) — checked against the
+    // full card pool, not assumed, after finding both of the false
+    // positives below in the same sweep.
+    const nezahal = makeCard({
+      name: 'Nezahal, Primal Tide',
+      type_line: 'Legendary Creature — Elder Dinosaur',
+      oracle_text:
+        "This spell can't be countered.\n" +
+        'You have no maximum hand size.\n' +
+        'Whenever an opponent casts a noncreature spell, draw a card.\n' +
+        "Discard three cards: Exile Nezahal. Return it to the battlefield tapped under its " +
+        "owner's control at the beginning of the next end step.",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(nezahal), 'cardDraw'), ['produces']);
+  });
+
+  it('a third-person "draws" that names only an opponent as its subject never counts, even off a real draw-related trigger', () => {
+    // Vendilion Clique and Mathas, Fiend Seeker — real oracle text. Found
+    // checking the full card pool: an ungated `draws?` pattern rescued 124
+    // previously zero-active-signal commanders, and both of these were in
+    // the sample. Vendilion Clique replaces a card it just made a player
+    // discard — that player draws, not you. Mathas' bounty hands the
+    // opponent a card as a downside when the bountied creature finally
+    // dies — again, not you. Third-person "draws" (grammatically, a
+    // singular subject) needs an explicit subject that includes you (`each
+    // player`, `all players`) to count — see the archetype's own comment
+    // in signals.ts for the full reasoning.
+    const vendilionClique = makeCard({
+      name: 'Vendilion Clique',
+      type_line: 'Legendary Creature — Faerie Wizard',
+      oracle_text:
+        "Flash\nFlying\nWhen Vendilion Clique enters, look at target player's hand. You may choose " +
+        'a nonland card from it. If you do, that player reveals the chosen card, puts it on the ' +
+        'bottom of their library, then draws a card.',
+    });
+    assert.strictEqual(find(signalsFor(vendilionClique), 'cardDraw'), undefined);
+
+    const mathas = makeCard({
+      name: 'Mathas, Fiend Seeker',
+      type_line: 'Legendary Creature — Vampire',
+      oracle_text:
+        'Menace\nAt the beginning of your end step, put a bounty counter on target creature an ' +
+        'opponent controls. For as long as that creature has a bounty counter on it, it has ' +
+        '"When this creature dies, each opponent draws a card and gains 2 life."',
+    });
+    assert.strictEqual(find(signalsFor(mathas), 'cardDraw'), undefined);
+  });
+
+  it('"each player draws" is produces too, since that includes you', () => {
+    // Scrawling Crawler — real oracle text. A symmetric wheel-style effect
+    // still genuinely draws you a card, unlike the opponent-only shapes
+    // above.
+    const scrawlingCrawler = makeCard({
+      name: 'Scrawling Crawler',
+      type_line: 'Artifact Creature — Phyrexian Construct',
+      oracle_text:
+        'At the beginning of your upkeep, each player draws a card.\n' +
+        'Whenever an opponent draws a card, that player loses 1 life.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(scrawlingCrawler), 'cardDraw'), ['produces']);
+  });
+
+  it('a replacement effect never counts as produces, whatever it replaces a draw with or whose draw it redirects', () => {
+    // Eruth, Tormented Prophet and Urabrask, Heretic Praetor — real oracle
+    // text. Neither draws anyone a card at all: Eruth turns your own draws
+    // into a different kind of card access, and Urabrask taxes an
+    // opponent's draw into something else entirely. Found in the same full
+    // card pool check as the Vendilion Clique/Mathas cases above.
+    const eruth = makeCard({
+      name: 'Eruth, Tormented Prophet',
+      type_line: 'Legendary Creature — Human Wizard',
+      oracle_text:
+        'If you would draw a card, exile the top two cards of your library instead. You may play ' +
+        'those cards this turn.',
+    });
+    assert.strictEqual(find(signalsFor(eruth), 'cardDraw'), undefined);
+
+    const urabrask = makeCard({
+      name: 'Urabrask, Heretic Praetor',
+      type_line: 'Legendary Creature — Phyrexian Praetor',
+      oracle_text:
+        'Haste\n' +
+        'At the beginning of your upkeep, exile the top card of your library. You may play it this turn.\n' +
+        "At the beginning of each opponent's upkeep, the next time they would draw a card this " +
+        'turn, instead they exile the top card of their library. They may play it this turn.',
+    });
+    assert.strictEqual(find(signalsFor(urabrask), 'cardDraw'), undefined);
+  });
+});

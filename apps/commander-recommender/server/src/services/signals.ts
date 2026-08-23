@@ -770,6 +770,36 @@ const DRAIN_TRIGGER_READS_LOSS = /\bwhenever (?:an? )?(?:opponent|player)s? (?:l
  * causes-vs-reads split as `DRAIN_TRIGGER_READS_LOSS`. */
 const CYCLING_DISCARD_TRIGGER_READS_DISCARD = /\bwhenever you (?:cycle|discard)\b/i;
 
+/** A `cardDraw` clause whose *trigger* is you drawing a card itself (Chasm
+ * Skulker, Psychosis Crawler, Toothy, Ominous Seas, Homunculus Horde's own
+ * "your second card each turn") — `rewards` only, the same causes-vs-reads
+ * split as `DRAIN_TRIGGER_READS_LOSS`. Deliberately scoped to "you draw":
+ * Consecrated Sphinx's "whenever an opponent draws a card, you may draw two
+ * cards" reads someone *else's* draw and still causes its own — that stays
+ * `produces`, not excluded by this. */
+const CARD_DRAW_TRIGGER_READS_DRAW = /\bwhenever you draws? (?:a|an|your \w+) cards?\b/i;
+
+/** Any `cardDraw` replacement effect — "if/when [someone] would draw a
+ * card, [something else happens] instead". None of these cause a draw;
+ * they redirect or modify one already happening from another source, so
+ * none is `produces`. Broader than it needs to be for the three amplifies
+ * cards below on purpose: found checking the full card pool, not assumed,
+ * after the ungated `produces` pattern this excludes from also caught
+ * Eruth, Tormented Prophet ("exile the top two cards ... instead" — no
+ * draw at all, just a different form of card access) and Urabrask, Heretic
+ * Praetor ("the next time *they* would draw a card this turn, instead they
+ * exile..." — a tax on opponents, not a benefit to you either way). */
+const CARD_DRAW_REPLACEMENT = /\bwould draws? an? cards?\b[^.]*\binstead\b/i;
+
+/** The narrower "draw two/three/N cards instead" shape specifically
+ * (Teferi's Ageless Insight, Thought Reflection, Alhammarret's Archive) —
+ * this doubles a draw rather than merely redirecting or denying one, so
+ * it's `amplifies`, the same reasoning `artifacts`' own replacement
+ * effects (Academy Manufactor, Xorn) are `amplifies` only and never also
+ * `produces`. */
+const CARD_DRAW_REPLACEMENT_AMPLIFIES =
+  /\bif you would draw a card\b[^.]*\bdraw (?:two|three|four|\d+) cards? instead\b/i;
+
 /** Keyword abilities whose entire "at the beginning of the next end step"
  * cleanup lives inside their own reminder text (Unearth, Encore, Dash,
  * Blitz, Mobilize, Warp), which stripReminderText deletes — the same shape
@@ -1446,6 +1476,71 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // named ingredient (Seedborn Muse-style repeated untappers, extra-
         // combat enablers like Aurelia's own trigger).
         /\buntap (?:target |all |each )?(?:permanents?|creatures?|artifacts?|lands?)\b[^.\n]*you control\b/i,
+      ],
+    },
+  },
+  {
+    key: 'cardDraw',
+    label: 'Card Draw',
+    description:
+      'Repeatable card-advantage engines — not one big draw spell, but a card that keeps drawing you ' +
+      'extra cards over time — plus the payoffs that trigger off any draw and the rare effects that ' +
+      'double every draw outright.',
+    weight: 20,
+    // No separate payoff role required to register at all, the same shape as
+    // drain/cyclingDiscard/tapForValue: a deck built entirely around draw
+    // engines (Rhystic Study, Mystic Remora, Archmage Emeritus) is already a
+    // Card Draw deck with zero Chasm-Skulker-style payoffs.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // Two shapes, split on a real grammatical distinction. The bare
+        // imperative/infinitive "draw" (no -s) always benefits the
+        // controller — standard MTG templating leaves the subject implicit
+        // for an effect that's yours (Rhystic Study's "you may draw a
+        // card", Behold the Multiverse's imperative "draw two cards",
+        // Nezahal's "whenever an opponent casts a noncreature spell, draw a
+        // card" — the *trigger* names an opponent, the effect doesn't).
+        // Third-person "draws" (WITH the -s) grammatically needs an
+        // explicit subject, and that subject decides who benefits: "each
+        // player draws a card" (Scrawling Crawler) includes you, but "that
+        // player... draws a card" (Vendilion Clique, replacing a card it
+        // just made you discard) or "each opponent draws a card" (Mathas,
+        // a downside its own bounty hands opponents) never do — caught
+        // once, checking the full pool rather than assumed, after an
+        // ungated `draws?` pattern rescued 124 previously zero-signal
+        // commanders and both of those false positives were in the sample.
+        // Excludes any clause CARD_DRAW_TRIGGER_READS_DRAW already claims —
+        // a card whose trigger IS you drawing doesn't cause the draw, it
+        // reads one already happening (Chasm Skulker) — and any clause
+        // CARD_DRAW_REPLACEMENT already claims — a replacement effect never
+        // causes a draw either, it redirects or doubles one already
+        // happening (Teferi's Ageless Insight, Eruth, Urabrask).
+        (f: CardFacts) =>
+          clauses(f.text).some((c) => {
+            if (CARD_DRAW_TRIGGER_READS_DRAW.test(c) || CARD_DRAW_REPLACEMENT.test(c)) {
+              return false;
+            }
+            if (/\bdraw (?:a|an|\d+|x|that many|two|three|four|five|six|additional|extra) cards?\b/i.test(c)) {
+              return true;
+            }
+            return /\b(?:each|all|every) players? draws? (?:a|an|\d+|x|that many|two|three|four|five|six|additional|extra) cards?\b/i.test(
+              c,
+            );
+          }),
+      ],
+      rewards: [
+        // Reads you drawing a card — this archetype's own resource — as the
+        // trigger for a *different* payoff (Chasm Skulker's counter,
+        // Psychosis Crawler's drain, Toothy's counter, Ominous Seas'
+        // foreshadow counter, Homunculus Horde's token copy).
+        CARD_DRAW_TRIGGER_READS_DRAW,
+      ],
+      amplifies: [
+        // Teferi's Ageless Insight, Thought Reflection, Alhammarret's
+        // Archive — the last one is also lifegain's own amplifier (it
+        // doubles both), one card correctly earning both signals.
+        CARD_DRAW_REPLACEMENT_AMPLIFIES,
       ],
     },
   },
