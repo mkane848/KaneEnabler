@@ -308,6 +308,20 @@ false positive — a small number by design, since an outright win condition is 
 most heavily-costed effects in the game. Re-measured with Phase F's coverage report: **563 of 4,049**
 commander-eligible cards now produce zero active signals, down from 564.
 
+**`politics` is shipped, Phase C4's second archetype — the catalog's own flagged-fuzziest concept,
+kept crisp rather than dropped.** One deck, yshtola.txt, whose own confirmed axes name it directly.
+`definingRole: produces`, no separate payoff role — the same shape as `pillowfort`/`alternateWin`.
+Unifies three textually different but real, well-defined social tools: Goad (a real Scryfall
+keyword, read directly off `CardFacts.keywords`), giving away a permanent ("target player \[...\]
+gains control of", scoped to exclude self-sacrifice-for-value engines that always say "target
+opponent" instead), and the symmetric reveal-and-exchange shape Parker Luck and Keen Duelist share
+verbatim. See `archetypes.md`'s own entry for the full account. Checked against the full legal card
+pool before shipping: the donate pattern found exactly its four real cards and no others; the
+symmetric pattern found exactly its two grounding cards and nothing else in the entire pool — the
+deliberately narrow design paying off exactly as intended. Re-measured with Phase F's coverage
+report: **560 of 4,049** commander-eligible cards now produce zero active signals, down from 563 —
+3 rescued by `politics` alone, all real goad commanders, no false positive found.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

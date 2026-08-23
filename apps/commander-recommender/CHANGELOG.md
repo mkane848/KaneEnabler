@@ -759,6 +759,34 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   - Re-measured with Phase F's coverage report: 563 of 4,049
     commander-eligible cards now produce zero active signals, down from
     564.
+- **Signal engine, Phase C4 — `politics` archetype, the catalog's own
+  flagged-fuzziest concept, kept crisp rather than dropped.** See
+  `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
+  Phase C4's second archetype, one deck: yshtola.txt's own confirmed axes
+  name it directly ("Drain, pillowfort, spellslinger, politics,
+  MV-vs-cost"). `definingRole: produces`, no separate payoff role — the
+  same shape as `pillowfort`/`alternateWin`.
+  - Unifies three textually different but real, well-defined social tools
+    rather than one broad "affects other players" scan: Goad (a real
+    Scryfall keyword, read directly off `CardFacts.keywords`); giving away
+    a permanent ("target player \[...\] gains control of" — Donate, Crown
+    of Doom, Bazaar Trader, Domineering Will — scoped to exclude
+    self-sacrifice-for-value engines that always say "target opponent"
+    instead); and the symmetric reveal-and-exchange shape Parker Luck and
+    Keen Duelist share verbatim ("lose life equal to the mana value of the
+    card revealed by the other player").
+  - Checked against the full legal card pool before shipping: the donate
+    pattern found exactly its four real cards and no others; the
+    symmetric pattern found exactly its two grounding cards and nothing
+    else in the entire pool. 3 previously zero-active-signal commanders
+    rescued (Red Death, Shipwrecker; Kaima, the Fractured Calm; Grenzo,
+    Havoc Raiser — all real goad commanders) — no false positive found.
+  - Verified against the real seeded database: yshtola.txt's own four
+    `politics` cards (Crown of Doom, Eye of Nidhogg, Keen Duelist, Parker
+    Luck) all tag `produces`.
+  - Re-measured with Phase F's coverage report: 560 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    563.
 
 ### Fixed
 

@@ -3536,3 +3536,85 @@ describe('Alternate Win Condition: a genuine "you win the game" outcome', () => 
     assert.strictEqual(find(signalsFor(solRing), 'alternateWin'), undefined);
   });
 });
+
+describe('Politics: multiplayer social tools that direct threat elsewhere', () => {
+  it('produces from the Goad keyword', () => {
+    // Eye of Nidhogg — real oracle text.
+    const eyeOfNidhogg = makeCard(
+      {
+        name: 'Eye of Nidhogg',
+        type_line: 'Legendary Enchantment — Aura',
+        oracle_text:
+          'Enchant creature\n' +
+          'Enchanted creature is a black Dragon with base power and toughness 4/2, has flying and ' +
+          "deathtouch, and is goaded. (It attacks each combat if able and attacks a player other " +
+          "than you if able.)\n" +
+          "When Eye of Nidhogg is put into a graveyard from the battlefield, return it to its " +
+          "owner's hand.",
+        keywords: '["Goad"]',
+      },
+    );
+    assert.deepStrictEqual(rolesOf(signalsFor(eyeOfNidhogg), 'politics'), ['produces']);
+  });
+
+  it('produces from giving away a permanent to a chosen player', () => {
+    // Crown of Doom and Donate — real oracle text.
+    const crownOfDoom = makeCard({
+      name: 'Crown of Doom',
+      type_line: 'Artifact',
+      oracle_text:
+        'Whenever a creature attacks you or a planeswalker you control, it gets +2/+0 until end of ' +
+        "turn.\n{2}: Target player other than this artifact's owner gains control of it. Activate " +
+        'only during your turn.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(crownOfDoom), 'politics'), ['produces']);
+
+    const donate = makeCard({
+      name: 'Donate',
+      type_line: 'Sorcery',
+      oracle_text: 'Target player gains control of target permanent you control.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(donate), 'politics'), ['produces']);
+  });
+
+  it('produces from the symmetric reveal-and-exchange shape', () => {
+    // Parker Luck and Keen Duelist — real oracle text.
+    const parkerLuck = makeCard({
+      name: 'Parker Luck',
+      type_line: 'Enchantment',
+      oracle_text:
+        'At the beginning of your end step, two target players each reveal the top card of their ' +
+        'library. They each lose life equal to the mana value of the card revealed by the other ' +
+        'player. Then they each put the card they revealed into their hand.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(parkerLuck), 'politics'), ['produces']);
+
+    const keenDuelist = makeCard({
+      name: 'Keen Duelist',
+      type_line: 'Creature — Human Wizard',
+      oracle_text:
+        'At the beginning of your upkeep, you and target opponent each reveal the top card of your ' +
+        'library. You each lose life equal to the mana value of the card revealed by the other ' +
+        'player. You each put the card you revealed into your hand.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(keenDuelist), 'politics'), ['produces']);
+  });
+
+  it('does not produce from giving yourself away for value, only a genuine choice among players', () => {
+    // Humble Defector — real oracle text. Regression guard: "target
+    // opponent" self-sacrifice-for-value engines are a different plan
+    // from a political choice among several players, which always says
+    // "target player" in this catalog's own grounding.
+    const humbleDefector = makeCard({
+      name: 'Humble Defector',
+      type_line: 'Creature — Human Rogue',
+      oracle_text: '{T}: Draw two cards. Target opponent gains control of this creature. Activate only during your turn.',
+    });
+    assert.strictEqual(find(signalsFor(humbleDefector), 'politics'), undefined);
+  });
+
+  it('does not fire on a card with no political text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'politics'), undefined);
+  });
+});
