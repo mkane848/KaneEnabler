@@ -1821,6 +1821,29 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    // Vetted — shadow.txt's own corpus note names Knuckles the Echidna's
+    // "thirty or more artifacts, you win the game" directly as an alternate
+    // win condition. Phase C4's first archetype.
+    key: 'alternateWin',
+    label: 'Alternate Win Condition',
+    description:
+      'A genuine "you win the game" outcome from the card\'s own text, not merely a symmetric ' +
+      "prevention effect (\"can't lose\"/\"can't win\") granted to something else.",
+    weight: 20,
+    // No separate payoff role — the win condition itself is the identity,
+    // the same shape as freeSpells/drain: there is no separate "reward"
+    // for a card that already just wins the game outright.
+    definingRole: 'produces',
+    roles: {
+      // Reads the precomputed CardFacts.alternateWin fact (Phase B)
+      // rather than re-deriving the pattern here — already verified
+      // against The Book of Exalted Deeds, which only ever *grants* an
+      // Angel a symmetric "can't lose/win" clause and correctly reads
+      // false; see archetypes.md's "Behaviours verified as correct".
+      produces: [(f: CardFacts) => f.alternateWin],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:

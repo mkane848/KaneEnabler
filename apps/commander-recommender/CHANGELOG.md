@@ -736,6 +736,29 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   - Re-measured with Phase F's coverage report: 564 of 4,049
     commander-eligible cards now produce zero active signals, down from
     566. **This completes Phase C3.**
+- **Signal engine, Phase C4 — `alternateWin` archetype.** See
+  `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
+  Phase C4's first archetype, one deck: shadow.txt's own corpus note names
+  it directly by card ("Knuckles is an alternate win condition").
+  Re-checking C4's own tier row found the same correction Phase C3's own
+  tier row needed: `alternateWin` and `politics` were both already named
+  in the corpus table, only `storm` has no deck's own confirmed axes
+  naming it.
+  - `definingRole: produces`, no separate payoff role — the same shape as
+    `freeSpells`/`drain`. Reads the precomputed `CardFacts.alternateWin`
+    fact (Phase B) directly rather than re-deriving the pattern, since
+    that fact was already built and verified against The Book of Exalted
+    Deeds' symmetric "can't lose/win" grant.
+  - Checked against the full legal card pool: only 4 commander-eligible
+    cards in the entire game carry a genuine "you win the game" clause
+    (Knuckles the Echidna, Doctor Doom, Unrivaled, Ramses, Assassin Lord,
+    Zenos yae Galvus // Shinryu, Transcendent Rival) — all four correctly
+    matched, no false positive, and no surprise the count is this small:
+    an outright win condition is one of the rarest, most heavily-costed
+    effects in the game by design.
+  - Re-measured with Phase F's coverage report: 563 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    564.
 
 ### Fixed
 
