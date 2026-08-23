@@ -225,6 +225,17 @@ movement this coverage number has ever seen, consistent with "draw a card" being
 common templated effects in the game rather than a sign of over-matching (the false-positive sweep
 above is what actually rules out over-matching, not the size of the number alone).
 
+**`burn` is shipped, the second of Phase C3's archetypes.** One deck, kalamax.txt, whose own
+confirmed axes name it directly ("Copy, burn, power-into-damage, go-wide" — `copyEffects` and
+`goWide` already cover the other two). See `archetypes.md`'s own entry for the full account,
+including a real bug a full-card-pool sweep caught before shipping: an early version of the
+`amplifies` doubler's exclusion from `produces` keyed on the literal phrase "that much damage" rather
+than the doubler's actual replacement-effect shape, which wrongly stripped `produces` from Donna
+Noble — a genuine reflect-effect commander with no doubler structure at all. Re-measured with Phase
+F's coverage report: **591 of 4,049** commander-eligible cards now produce zero active signals, down
+from 653 — 62 commanders rescued, cleanly split across the power-into-damage template, fixed/X-damage
+payoffs, and doublers, with no false positive surviving manual review.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

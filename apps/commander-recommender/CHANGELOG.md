@@ -593,6 +593,36 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     761 — by far the largest single movement this number has ever seen,
     consistent with "draw a card" being one of the most common templated
     effects in the game.
+- **Signal engine, Phase C3 — `burn` archetype.** See `docs/signals-rework.md`
+  Phase C and `docs/archetypes.md`'s own entry. One deck, kalamax.txt, whose
+  own confirmed axes name it directly ("Copy, burn, power-into-damage,
+  go-wide" — `copyEffects` and `goWide` already cover the other two). No
+  separate payoff role, the same shape as `drain`/`cyclingDiscard` — dealing
+  the damage *is* the identity.
+  - `produces` requires a quantifier right after "deals" — a fixed number
+    (Guttersnipe), X (Comet Storm), "that much damage" (a reflect effect
+    reading an unrelated damage event, Donna Noble), or "damage equal to"
+    (Fling, Soul's Fire, Chandra's Ignition's power-into-damage template) —
+    excludes any clause naming combat damage ("not through combat" is this
+    archetype's own boundary), and excludes a clause whose only target is
+    the controller (a pain land's cost) unless a real target rides along in
+    the same breath (Char).
+  - `amplifies` is a damage doubler — "if a source \[you control\] would
+    deal damage ..., it deals double/triple/that much plus N ... instead"
+    (Torbran, Thane of Red Fell; Furnace of Rath) — requiring an actual
+    increase word so a same-amount redirect is never mistaken for one, and
+    excluding the shape redirected onto the controller or the source itself.
+  - Checked against the full legal card pool before shipping, not just the
+    grounding deck: 62 previously zero-active-signal commanders rescued,
+    cleanly split across the power-into-damage template, fixed/X-damage
+    payoffs, and doublers — see the Fixed section below for a real bug the
+    sweep caught before shipping.
+  - Verified against the real seeded database: kalamax.txt's own eight burn
+    cards (Comet Storm, Electrodominance, Expansion // Explosion, Fling,
+    Guttersnipe, Ral, Storm Conduit, Soul's Fire, Chandra's Ignition) all
+    tag `produces`.
+  - Re-measured with Phase F's coverage report: 591 of 4,049
+    commander-eligible cards now produce zero active signals, down from 653.
 
 ### Fixed
 
@@ -631,6 +661,20 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     symmetric attacks-matter effect, and Ludevic, Necro-Alchemist's "that
     player may draw a card" is keyed to each player's own end step in
     turn.
+- **Signal engine — `burn`'s doubler exclusion wrongly stripped `produces`
+  from a real reflect-effect commander.** "It deals that much damage"
+  appears in two different constructions: a damage doubler's redirect
+  ("if a source *would* deal damage ..., it deals that much damage plus N
+  ... *instead*" — Torbran, Thane of Red Fell), which produces nothing of
+  its own, and a reflect effect's brand-new instance of damage to a
+  brand-new target ("whenever Donna Noble ... is dealt damage, Donna Noble
+  deals that much damage to target opponent" — no replacement structure at
+  all). An early version excluded any clause containing the bare phrase
+  "that much damage" from `produces`, which correctly handled the first
+  shape and incorrectly stripped the second — Donna Noble, a real,
+  playable commander, among them. Fixed by keying the exclusion to the
+  doubler's actual "would deal damage ... instead" replacement shape
+  instead of the ambiguous phrase alone.
 - **Signal engine — a wildcard kindred card backed every kindred-caring
   commander in the pool, not just the deck's own themes.** Found verifying
   wildcard kindred above, before merging, by running the real First Sliver
