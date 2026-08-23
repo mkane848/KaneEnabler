@@ -258,6 +258,18 @@ early version wrongly counted as the same payoff shape. Re-measured with Phase F
 **568 of 4,049** commander-eligible cards now produce zero active signals, down from 576 — 8 rescued
 by `powerMatters` alone, no false positive surviving manual review.
 
+**`pillowfort` is shipped, Phase C3's sixth archetype.** One deck, yshtola.txt, whose own confirmed
+axes name it directly — the deck plays Ghostly Prison and Propaganda outright. `definingRole:
+produces`, the same no-separate-payoff-role shape as `bigMana`/`graveyardToolbox`. See
+`archetypes.md`'s own entry for the full account, including a real bug the full-card-pool sweep
+caught: an early version of the "can't attack you" pattern didn't distinguish Ghostly Prison's
+board-wide tax from the common Vow-Aura/Assault Suit cycle's single-creature lockdown ("Enchanted/
+Equipped creature ... can't attack you"), which wrongly counted any deck running one of that cycle as
+pillowfort. Re-measured with Phase F's coverage report: **566 of 4,049** commander-eligible cards now
+produce zero active signals, down from 568 — 2 rescued by `pillowfort` alone, no false positive
+surviving manual review. **This completes Phase C3's grounded archetypes** — only `monoColorDevotion`,
+the tier's one genuinely Inferred entry, remains.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

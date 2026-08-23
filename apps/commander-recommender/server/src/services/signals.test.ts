@@ -3336,3 +3336,73 @@ describe('Power Matters: payoffs that scale with how big a creature is', () => {
     assert.strictEqual(find(signalsFor(solRing), 'powerMatters'), undefined);
   });
 });
+
+describe('Pillowfort: taxing or deterring attacks aimed at you', () => {
+  it('produces from the classic tax shape', () => {
+    // Ghostly Prison and Propaganda — real oracle text, identical wording.
+    const ghostlyPrison = makeCard({
+      name: 'Ghostly Prison',
+      type_line: 'Enchantment',
+      oracle_text:
+        "Creatures can't attack you unless their controller pays {2} for each creature they control " +
+        "that's attacking you.",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(ghostlyPrison), 'pillowfort'), ['produces']);
+
+    const propaganda = makeCard({
+      name: 'Propaganda',
+      type_line: 'Enchantment',
+      oracle_text:
+        "Creatures can't attack you unless their controller pays {2} for each creature they control " +
+        "that's attacking you.",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(propaganda), 'pillowfort'), ['produces']);
+  });
+
+  it('produces from the planeswalker-extended, alternative-cost variant', () => {
+    // Norn's Annex — real oracle text.
+    const nornsAnnex = makeCard({
+      name: "Norn's Annex",
+      type_line: 'Artifact',
+      oracle_text:
+        '({W/P} can be paid with either {W} or 2 life.)\n' +
+        "Creatures can't attack you or planeswalkers you control unless their controller pays {W/P} " +
+        'for each of those creatures.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(nornsAnnex), 'pillowfort'), ['produces']);
+  });
+
+  it('does not produce from a single-creature lockdown Aura or Equipment, only a board-wide deterrent', () => {
+    // Vow of Duty and Assault Suit — real oracle text. Regression guard:
+    // both neutralize one specific creature (usually stolen with a
+    // Threaten effect), not a board-wide deterrent — a deck running any
+    // one of the common Vow cycle isn't thereby a pillowfort deck. Found
+    // checking the full card pool before shipping.
+    const vowOfDuty = makeCard({
+      name: 'Vow of Duty',
+      type_line: 'Enchantment — Aura',
+      oracle_text:
+        'Enchant creature\n' +
+        "Enchanted creature gets +2/+2, has vigilance, and can't attack you or planeswalkers you " +
+        'control.',
+    });
+    assert.strictEqual(find(signalsFor(vowOfDuty), 'pillowfort'), undefined);
+
+    const assaultSuit = makeCard({
+      name: 'Assault Suit',
+      type_line: 'Artifact — Equipment',
+      oracle_text:
+        "Equipped creature gets +2/+2, has haste, can't attack you or planeswalkers you control, and " +
+        "can't be sacrificed.\n" +
+        "At the beginning of each opponent's upkeep, you may have that player gain control of " +
+        'equipped creature until end of turn. If you do, untap it.\n' +
+        'Equip {3}',
+    });
+    assert.strictEqual(find(signalsFor(assaultSuit), 'pillowfort'), undefined);
+  });
+
+  it('does not fire on a card with no pillowfort text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'pillowfort'), undefined);
+  });
+});

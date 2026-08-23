@@ -1743,6 +1743,40 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'pillowfort',
+    label: 'Pillowfort',
+    description:
+      'Taxing or deterring attacks aimed at you — the classic "creatures can\'t attack you unless ' +
+      'their controller pays" shape, and the outright "creatures can\'t attack you" it sometimes ' +
+      'narrows down to.',
+    weight: 18,
+    // No separate payoff role, the same shape as bigMana/graveyardToolbox:
+    // deterring the attack *is* the identity. yshtola.txt's own confirmed
+    // axes name this plan directly, and the deck plays Ghostly Prison and
+    // Propaganda outright.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // Ghostly Prison, Propaganda ("Creatures can't attack you unless
+        // their controller pays {2} for each creature they control that's
+        // attacking you") and Norn's Annex ("...or planeswalkers you
+        // control unless their controller pays {W/P}..."). Excludes the
+        // Vow-cycle/Assault Suit shape ("Enchanted/Equipped creature ...
+        // can't attack you") — those neutralize one specific creature,
+        // usually stolen with a Threaten effect, not a board-wide
+        // deterrent; a deck running any one of that common cycle isn't
+        // thereby a pillowfort deck. Found checking the full card pool,
+        // not just the grounding deck.
+        (f: CardFacts) =>
+          clauses(f.text).some(
+            (c) =>
+              /\bcan'?t attack you\b/i.test(c) &&
+              !/\b(?:enchanted|equipped) creature\b[^.;]*\bcan'?t attack you\b/i.test(c),
+          ),
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
