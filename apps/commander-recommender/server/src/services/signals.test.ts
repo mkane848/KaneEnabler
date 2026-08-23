@@ -2925,3 +2925,163 @@ describe('Card Draw: repeatable engines, the payoffs that read a draw, and the d
     assert.strictEqual(find(signalsFor(urabrask), 'cardDraw'), undefined);
   });
 });
+
+describe('Burn: damage dealt directly, not through combat', () => {
+  it('produces from a fixed-amount direct-damage spell', () => {
+    // Guttersnipe — real oracle text.
+    const guttersnipe = makeCard({
+      name: 'Guttersnipe',
+      type_line: 'Creature — Goblin Shaman',
+      oracle_text: 'Whenever you cast an instant or sorcery spell, this creature deals 2 damage to each opponent.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(guttersnipe), 'burn'), ['produces']);
+  });
+
+  it('produces from an X-damage spell', () => {
+    // Comet Storm — real oracle text.
+    const cometStorm = makeCard({
+      name: 'Comet Storm',
+      type_line: 'Instant',
+      oracle_text:
+        'Multikicker {1} (You may pay an additional {1} any number of times as you cast this spell.)\n' +
+        'Choose any target, then choose another target for each time this spell was kicked. Comet Storm ' +
+        'deals X damage to each of them.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(cometStorm), 'burn'), ['produces']);
+  });
+
+  it("produces from the power-into-damage template", () => {
+    // Fling and Soul's Fire — real oracle text.
+    const fling = makeCard({
+      name: 'Fling',
+      type_line: 'Instant',
+      oracle_text:
+        'As an additional cost to cast this spell, sacrifice a creature.\n' +
+        "Fling deals damage equal to the sacrificed creature's power to any target.",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(fling), 'burn'), ['produces']);
+
+    const soulsFire = makeCard({
+      name: "Soul's Fire",
+      type_line: 'Instant',
+      oracle_text: 'Target creature you control deals damage equal to its power to any target.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(soulsFire), 'burn'), ['produces']);
+  });
+
+  it('does not produce from a card whose only damage is a self-only cost, like a pain land', () => {
+    // Adarkar Wastes — real oracle text. Paying 1 life-as-damage to use a
+    // land is a cost, not a damage plan.
+    const adarkarWastes = makeCard({
+      name: 'Adarkar Wastes',
+      type_line: 'Land',
+      oracle_text: '{T}: Add {C}.\n{T}: Add {W} or {U}. This land deals 1 damage to you.',
+    });
+    assert.strictEqual(find(signalsFor(adarkarWastes), 'burn'), undefined);
+  });
+
+  it('still produces when a real target rides alongside a self-only clause', () => {
+    // Char — real oracle text. Unlike a pain land, this clause also names
+    // a real target in the same breath, so the self-inflicted half of it
+    // doesn't disqualify the card.
+    const char = makeCard({
+      name: 'Char',
+      type_line: 'Instant',
+      oracle_text: 'Char deals 4 damage to any target and 2 damage to you.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(char), 'burn'), ['produces']);
+  });
+
+  it('does not produce from a combat-damage trigger alone', () => {
+    // Rustmouth Ogre — real oracle text. "Not through combat" is this
+    // archetype's own boundary.
+    const rustmouthOgre = makeCard({
+      name: 'Rustmouth Ogre',
+      type_line: 'Creature — Ogre',
+      oracle_text:
+        'Whenever this creature deals combat damage to a player, you may destroy target artifact that ' +
+        'player controls.',
+    });
+    assert.strictEqual(find(signalsFor(rustmouthOgre), 'burn'), undefined);
+  });
+
+  it('amplifies from a damage doubler', () => {
+    // Torbran, Thane of Red Fell and Furnace of Rath — real oracle text.
+    const torbran = makeCard({
+      name: 'Torbran, Thane of Red Fell',
+      type_line: 'Legendary Creature — Dwarf Noble',
+      oracle_text:
+        'If a red source you control would deal damage to an opponent or a permanent an opponent ' +
+        'controls, it deals that much damage plus 2 instead.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(torbran), 'burn'), ['amplifies']);
+
+    const furnaceOfRath = makeCard({
+      name: 'Furnace of Rath',
+      type_line: 'Enchantment',
+      oracle_text:
+        'If a source would deal damage to a permanent or player, it deals double that damage to that ' +
+        'permanent or player instead.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(furnaceOfRath), 'burn'), ['amplifies']);
+  });
+
+  it('still produces from a reflect effect that deals a new instance of "that much" damage', () => {
+    // Donna Noble — real oracle text. Regression guard: this is not a
+    // doubler (no "would deal damage ... instead" replacement structure),
+    // it creates a genuine new instance of damage to a new target sized off
+    // an unrelated damage event. An early version of BURN_DAMAGE_DOUBLER's
+    // exclusion was too broad and wrongly stripped every "that much damage"
+    // clause of its produces role, this real commander included.
+    const donnaNoble = makeCard({
+      name: 'Donna Noble',
+      type_line: 'Legendary Creature — Human',
+      oracle_text:
+        "Soulbond (You may pair this creature with another unpaired creature when either enters. " +
+        "They remain paired for as long as you control both of them.)\n" +
+        "Whenever Donna Noble or a creature it's paired with is dealt damage, Donna Noble deals that " +
+        'much damage to target opponent.\n' +
+        'Doctor\'s companion (You can have two commanders if the other is the Doctor.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(donnaNoble), 'burn'), ['produces']);
+  });
+
+  it('does not amplify a doubler redirected onto its own controller', () => {
+    // Goldnight Castigator — real oracle text. A real downside some
+    // risk-reward creatures carry (doubling damage against you or itself),
+    // not a burn payoff — found checking the full card pool, since a bare
+    // "would deal damage ... it deals double ... instead" pattern would
+    // have false-positived it.
+    const goldnightCastigator = makeCard({
+      name: 'Goldnight Castigator',
+      type_line: 'Creature — Angel',
+      oracle_text:
+        'Flying, haste\n' +
+        'If a source would deal damage to you, it deals double that damage to you instead.\n' +
+        'If a source would deal damage to this creature, it deals double that damage to this creature ' +
+        'instead.',
+    });
+    assert.strictEqual(find(signalsFor(goldnightCastigator), 'burn'), undefined);
+  });
+
+  it('does not amplify a same-amount redirect, only a real increase', () => {
+    // Harsh Judgment — real oracle text. Redirects a spell's damage onto
+    // its own caster instead of you; the amount never changes, so this
+    // isn't a burn amplifier despite matching a bare "would deal damage ...
+    // it deals ... instead" shape.
+    const harshJudgment = makeCard({
+      name: 'Harsh Judgment',
+      type_line: 'Enchantment',
+      oracle_text:
+        'As this enchantment enters, choose a color.\n' +
+        'If an instant or sorcery spell of the chosen color would deal damage to you, it deals that ' +
+        'damage to its controller instead.',
+    });
+    assert.strictEqual(find(signalsFor(harshJudgment), 'burn'), undefined);
+  });
+
+  it('does not fire on a card with no burn text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'burn'), undefined);
+  });
+});

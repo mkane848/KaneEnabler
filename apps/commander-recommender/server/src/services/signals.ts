@@ -800,6 +800,34 @@ const CARD_DRAW_REPLACEMENT = /\bwould draws? an? cards?\b[^.]*\binstead\b/i;
 const CARD_DRAW_REPLACEMENT_AMPLIFIES =
   /\bif you would draw a card\b[^.]*\bdraw (?:two|three|four|\d+) cards? instead\b/i;
 
+/** A `burn` clause whose target is *only* its own controller — pain lands
+ * (Adarkar Wastes, Karplusan Forest, Sulfurous Springs: "This land deals 1
+ * damage to you.") pay a cost, they don't advance a damage plan. Checked
+ * against the full clause, not just the "to you" phrase, so a spell that
+ * also hits a real target in the same breath (Char: "deals 3 damage to any
+ * target and 3 damage to you") is never excluded by its own downside. */
+const BURN_SELF_ONLY_DAMAGE = /\bdeals? (?:\d+|that much) damage to (?:you|yourself)\b/i;
+
+/** "If a source [you control] would deal damage ..., it deals
+ * double/triple/that much plus N ... instead" — Furnace of Rath, Fiery
+ * Emancipation, Gratuitous Violence, Torbran, Thane of Red Fell. Requires an
+ * actual increase word after "it deals" rather than matching any
+ * would-deal-damage replacement, so a same-amount *redirect* (Harsh
+ * Judgment: "it deals that damage to its controller instead" — no increase,
+ * just a new target) is never mistaken for an amplifier. */
+const BURN_DAMAGE_DOUBLER =
+  /\bwould deal damage\b[^.;]*\bit deals (?:double|triple|that much(?: damage)? plus|an amount of damage equal to|the result of)[^.;]*\binstead\b/i;
+
+/** The doubler shape above, but redirected onto the controller or the
+ * source itself (Goldnight Castigator: "if a source would deal damage to
+ * you/this creature, it deals double that damage to you/this creature
+ * instead") — a real downside some risk-reward creatures carry, not a burn
+ * payoff. Checked against the same clause `BURN_DAMAGE_DOUBLER` matched, to
+ * exclude exactly this shape rather than every doubler that happens to
+ * mention "you". */
+const BURN_DAMAGE_DOUBLER_SELF_ONLY =
+  /\bit deals (?:double|triple|that much(?: damage)? plus)[^.;]*\bto (?:you|yourself|this (?:creature|permanent)|itself)\b/i;
+
 /** Keyword abilities whose entire "at the beginning of the next end step"
  * cleanup lives inside their own reminder text (Unearth, Encore, Dash,
  * Blitz, Mobilize, Warp), which stripReminderText deletes — the same shape
@@ -1541,6 +1569,63 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // Archive — the last one is also lifegain's own amplifier (it
         // doubles both), one card correctly earning both signals.
         CARD_DRAW_REPLACEMENT_AMPLIFIES,
+      ],
+    },
+  },
+  {
+    key: 'burn',
+    label: 'Burn',
+    description:
+      "Damage dealt directly rather than through combat — a fixed or variable amount, or a creature's " +
+      "power converted straight into damage (Fling, Soul's Fire) — plus the rare effect that doubles " +
+      'or increases every instance of it outright.',
+    weight: 20,
+    // No separate payoff role required to register at all, the same shape as
+    // drain/cyclingDiscard: dealing the damage *is* the identity here, not a
+    // means to some other reward. kalamax.txt's own confirmed axes name this
+    // plan explicitly ("Copy, burn, power-into-damage, go-wide").
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        (f: CardFacts) =>
+          clauses(f.text).some((c) => {
+            // A doubler clause (Torbran, Furnace of Rath) never produces
+            // damage of its own — it modifies an amount some *other* source
+            // is already dealing, which is what makes it amplifies-only.
+            // Checked first because its own "it deals that much damage
+            // plus 2" wording would otherwise satisfy the "that much
+            // damage" branch below.
+            if (BURN_DAMAGE_DOUBLER.test(c)) return false;
+            // Requires a quantifier right after "deals" — a fixed number
+            // (Guttersnipe's "deals 2 damage"), X (Comet Storm), "that much
+            // damage" (Donna Noble, Justice: a genuine new instance of
+            // damage to a new target, sized off an unrelated damage event —
+            // distinct from a doubler's redirect, already excluded above),
+            // or "damage equal to" (Fling, Soul's Fire, Chandra's Ignition's
+            // power-into-damage template) — so a bare "deals damage" trigger
+            // with no amount of its own (a *read* of damage, not a cause of
+            // it) never matches.
+            if (!/\bdeals? (?:\d+ damage|x damage|that much damage|damage equal to)\b/i.test(c)) {
+              return false;
+            }
+            // "Not through combat" is this archetype's own boundary —
+            // combat-damage triggers are voltron/aggro's territory, not
+            // this one's, even when they go on to deal more damage besides.
+            if (/\bcombat damage\b/i.test(c)) return false;
+            // A clause whose only target is the controller (a pain land)
+            // isn't a damage plan; one that also names a real target in the
+            // same breath (Char) still is.
+            if (BURN_SELF_ONLY_DAMAGE.test(c) && !/\b(?:target|opponent)\b/i.test(c)) {
+              return false;
+            }
+            return true;
+          }),
+      ],
+      amplifies: [
+        (f: CardFacts) =>
+          clauses(f.text).some(
+            (c) => BURN_DAMAGE_DOUBLER.test(c) && !BURN_DAMAGE_DOUBLER_SELF_ONLY.test(c),
+          ),
       ],
     },
   },
