@@ -761,6 +761,11 @@ const ARTIFACT_ARCHETYPE_SUBTYPES = ['Vehicle', 'Food', 'Clue', 'Treasure'];
  * cause the loss themselves (Sanguine Bond's "whenever you gain life"). */
 const DRAIN_TRIGGER_READS_LOSS = /\bwhenever (?:an? )?(?:opponent|player)s? (?:loses?|lose) life\b/i;
 
+/** A `cyclingDiscard` clause whose *trigger* is discarding/cycling itself
+ * (Curator of Mysteries, Ivora, Rielle) — `rewards` only, the same
+ * causes-vs-reads split as `DRAIN_TRIGGER_READS_LOSS`. */
+const CYCLING_DISCARD_TRIGGER_READS_DISCARD = /\bwhenever you (?:cycle|discard)\b/i;
+
 /** Word lookups for `findQualifier`, mirroring `Vocabulary.typeByWord` for the
  * two qualifier kinds that narrow to a curated constant instead of a
  * creature-type vocabulary — Kalamax copies *instants*, not creatures. */
@@ -1257,6 +1262,51 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // (Vilis, Vampire Scrivener) — that's a life-as-a-resource theme
         // of its own, not this one.
         DRAIN_TRIGGER_READS_LOSS,
+      ],
+    },
+  },
+  {
+    key: 'cyclingDiscard',
+    label: 'Cycling / Discard',
+    description:
+      'Discarding cards on purpose as a resource — Cycling, "draw N then discard N" loot effects, and ' +
+      'discard as an additional cost — plus the payoffs that trigger off cycling or discarding. A ' +
+      "discarded card also fills the graveyard, but that overlap is Self-Mill's to make; this " +
+      'archetype is about the card selection, not what lands in the yard.',
+    weight: 20,
+    // No separate payoff role, the same shape as freeSpells/drain: choosing
+    // to discard for value *is* the identity here.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // The keyword itself IS "discard this card for value" — Curator of
+        // Mysteries, Tectonic Reformation, Hieroglyphic Illumination,
+        // Yidaro, Marauding Mako.
+        (f: CardFacts) => f.keywords.includes('Cycling'),
+        // "Draw N, then discard N" loot templates (Faithless Looting,
+        // Sorcerer Class), discard-as-additional-cost (Thrill of
+        // Possibility, Cathartic Reunion, Demand Answers), activated
+        // discard-to-draw (Glint-Horn Buccaneer), and "each player
+        // discards their hand" (Windfall) — all a card choosing to
+        // discard for its own benefit, not an opponent forced to.
+        // Excludes any clause CYCLING_DISCARD_TRIGGER_READS_DISCARD
+        // already claims — a card whose trigger IS discarding doesn't
+        // itself cause a discard, it reads one already happening
+        // (Ivora, Rielle).
+        (f: CardFacts) =>
+          clauses(f.text).some(
+            (c) =>
+              /\bdiscards? (?:a|an|\d+|x|that many|two|three|your|their) (?:cards?|hand)\b/i.test(c) &&
+              !CYCLING_DISCARD_TRIGGER_READS_DISCARD.test(c) &&
+              !/(?:opponent|target player|defending player)s? discards?/i.test(c),
+          ),
+      ],
+      rewards: [
+        // Reads cycling/discarding — this archetype's own resource — as
+        // the trigger for a payoff (Curator's scry, Drake Haven's token,
+        // Ivora's counter, Rielle's card draw, Marauding Mako's counters,
+        // Glint-Horn's damage).
+        CYCLING_DISCARD_TRIGGER_READS_DISCARD,
       ],
     },
   },

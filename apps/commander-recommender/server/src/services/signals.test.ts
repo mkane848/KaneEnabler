@@ -2079,3 +2079,93 @@ describe('Drain: life loss as a trigger, not damage', () => {
     assert.strictEqual(find(signalsFor(solRing), 'drain'), undefined);
   });
 });
+
+describe('Cycling / Discard: discarding cards on purpose as a resource', () => {
+  it('produces from the Cycling keyword alone', () => {
+    // Tectonic Reformation — real oracle text.
+    const tectonicReformation = makeCard({
+      name: 'Tectonic Reformation',
+      type_line: 'Enchantment',
+      keywords: '["Cycling"]',
+      oracle_text: 'Each land card in your hand has cycling {R}.\nCycling {2}',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(tectonicReformation), 'cyclingDiscard'), ['produces']);
+  });
+
+  it('produces from a "draw N, then discard N" loot template', () => {
+    // Faithless Looting — real oracle text.
+    const faithlessLooting = makeCard({
+      name: 'Faithless Looting',
+      type_line: 'Sorcery',
+      keywords: '["Flashback"]',
+      oracle_text:
+        'Draw two cards, then discard two cards.\nFlashback {2}{R} (You may cast this card from your ' +
+        'graveyard for its flashback cost. Then exile it.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(faithlessLooting), 'cyclingDiscard'), ['produces']);
+  });
+
+  it('produces from discard as an additional cost', () => {
+    // Thrill of Possibility — real oracle text.
+    const thrillOfPossibility = makeCard({
+      name: 'Thrill of Possibility',
+      type_line: 'Instant',
+      oracle_text: 'As an additional cost to cast this spell, discard a card.\nDraw two cards.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(thrillOfPossibility), 'cyclingDiscard'), ['produces']);
+  });
+
+  it('produces from a symmetric "each player discards their hand" effect', () => {
+    // Windfall — real oracle text.
+    const windfall = makeCard({
+      name: 'Windfall',
+      type_line: 'Sorcery',
+      oracle_text:
+        'Each player discards their hand, then draws cards equal to the greatest number of cards a ' +
+        'player discarded this way.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(windfall), 'cyclingDiscard'), ['produces']);
+  });
+
+  it('rewards, not produces, a card whose trigger IS discarding/cycling itself', () => {
+    // Ivora, Insatiable Heir — real oracle text, second ability only.
+    // Regression guard: this card doesn't discard anything itself, it
+    // reads a discard already happening — a bare "discards? a card"
+    // production matcher would have false-positived it as also producing.
+    const ivoraSecondAbility = makeCard({
+      name: 'Ivora, Insatiable Heir',
+      type_line: 'Legendary Creature — Vampire Warrior',
+      keywords: '["Trample"]',
+      oracle_text: 'Trample\nWhenever you discard a card, put a +1/+1 counter on Ivora.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(ivoraSecondAbility), 'cyclingDiscard'), ['rewards']);
+  });
+
+  it('produces and rewards together when a card both cycles and pays off cycling', () => {
+    // Curator of Mysteries — real oracle text.
+    const curatorOfMysteries = makeCard({
+      name: 'Curator of Mysteries',
+      type_line: 'Creature — Sphinx',
+      keywords: '["Scry","Flying","Cycling"]',
+      oracle_text:
+        'Flying\nWhenever you cycle or discard another card, scry 1.\nCycling {U} ({U}, Discard this ' +
+        'card: Draw a card.)',
+    });
+    const roles = rolesOf(signalsFor(curatorOfMysteries), 'cyclingDiscard');
+    assert.deepStrictEqual(roles, ['produces', 'rewards']);
+  });
+
+  it('does not produce from an opponent being forced to discard — that is an attack, not a resource', () => {
+    const edict = makeCard({
+      name: 'Test Discard Edict',
+      type_line: 'Sorcery',
+      oracle_text: 'Target opponent discards a card.',
+    });
+    assert.strictEqual(find(signalsFor(edict), 'cyclingDiscard'), undefined);
+  });
+
+  it('does not fire on a card with no cycling/discard text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'cyclingDiscard'), undefined);
+  });
+});

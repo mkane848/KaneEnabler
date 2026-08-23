@@ -106,6 +106,24 @@ archetypes.md's own motivating decks exactly, and `trazyn.txt` reports `Drain (4
 "fallback: aggro, drain" identity. Re-measured after shipping: **797 of 4,049 commander-eligible
 cards now produce zero active signals**, down from 814.
 
+**`cyclingDiscard` is shipped**, Phase C2's fourth archetype — discarding cards on purpose as a
+resource: Cycling, "draw N then discard N" loot effects, discard as an additional cost, and the
+payoffs that trigger off cycling or discarding. Also unqualified, `definingRole: produces`, the same
+shape as `drain`. Deliberately overlaps `selfMill` rather than replacing its existing discard-catching
+— a discarded card genuinely still fills the graveyard, that wasn't wrong; what was missing was the
+*other* identity these decks have that `selfMill` has no matchers for at all (Curator of Mysteries'
+scry, Ivora's counter, Rielle's extra draw). Same causes-vs-reads split as `drain`, with
+`CYCLING_DISCARD_TRIGGER_READS_DISCARD` playing `DRAIN_TRIGGER_READS_LOSS`'s role: Ivora and Rielle's
+own triggers ARE discarding itself, so `produces` excludes any clause that pattern already claims —
+see archetypes.md's "Behaviours verified as correct". Verified against the full corpus:
+`captain-howler.txt` reports `Cycling / Discard` as its top theme (48 cards, its own corpus comment's
+~25 estimate was a rough undercount), and `obeka.txt`/`sauron.txt` — the two decks that comment names
+as this pattern's earlier, unaddressed instances — now report it too (8 and 9 cards), both keeping
+their pre-existing `Self-Mill` signal alongside it. Re-measured after shipping: **793 of 4,049
+commander-eligible cards now produce zero active signals**, down from 797 — a small drop, since most
+of these cards already had a signal via `selfMill` or elsewhere; the real win here is the new
+identity, not new catalog coverage.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

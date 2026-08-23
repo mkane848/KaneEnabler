@@ -315,6 +315,40 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     own "fallback: aggro, drain" identity. Re-measured with Phase F's
     coverage report: 797 of 4,049 commander-eligible cards now produce
     zero active signals, down from 814.
+- **Signal engine, Phase C2 — `cyclingDiscard` archetype.** See
+  `docs/signals-rework.md` Phase C. Discarding cards on purpose as a
+  resource: Cycling, "draw N then discard N" loot effects, discard as
+  an additional cost, and the payoffs that trigger off cycling or
+  discarding. No qualifier, `definingRole: produces` — the same shape
+  as `drain`.
+  - `produces`: the Cycling keyword alone; "draw N, then discard N"
+    loot templates (Faithless Looting, Sorcerer Class); discard as an
+    additional cost (Thrill of Possibility, Cathartic Reunion, Demand
+    Answers); activated discard-to-draw (Glint-Horn Buccaneer); and
+    "each player discards their hand" (Windfall).
+  - `rewards`: a trigger that reads cycling/discarding — this
+    archetype's own resource — as the condition for a payoff (Curator
+    of Mysteries' scry, Drake Haven's token, Ivora's counter, Rielle's
+    extra draw, Marauding Mako's counters, Glint-Horn's damage).
+  - Deliberately overlaps `selfMill` rather than replacing its existing
+    discard-catching (`"Discarding is filling your own graveyard by
+    another name"`) — a discarded card genuinely still fills the
+    graveyard, that wasn't wrong; what was missing was the *other*
+    identity these decks have that `selfMill` has no matchers for at
+    all. Same causes-vs-reads split as `drain`: Ivora and Rielle's own
+    triggers ARE discarding itself, so `produces` excludes any clause a
+    shared `CYCLING_DISCARD_TRIGGER_READS_DISCARD` pattern already
+    claims (also `rewards`'s own matcher) — a regression test for this
+    is in `signals.test.ts`.
+  - Verified against the real seeded database and the full 20-deck
+    corpus: `captain-howler.txt` reports `Cycling / Discard` as its top
+    theme (48 cards), and `obeka.txt`/`sauron.txt` — the two decks
+    `docs/archetypes.md`'s own corpus fixture comments name as this
+    pattern's earlier, unaddressed instances — now report it too (8 and
+    9 cards), both keeping their pre-existing `Self-Mill` signal
+    alongside it. Re-measured with Phase F's coverage report: 793 of
+    4,049 commander-eligible cards now produce zero active signals,
+    down from 797.
 
 ### Fixed
 
