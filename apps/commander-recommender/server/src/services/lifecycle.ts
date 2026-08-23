@@ -55,12 +55,72 @@ export interface LifecycleSpec {
 /**
  * Lifecycle specs for the archetypes that have a clear chain.
  *
- * Not every archetype gets one. Kindred and keyword-care are membership
- * groups rather than engines — "more Goblins" is not a missing slot — so
- * they are deliberately absent, and a summary of them says how deep the
- * theme runs instead.
+ * Not every archetype gets one. Keyword-care stays a membership group —
+ * "more Flying" is not a missing slot, it has no jobs of its own the way a
+ * tribe does. Kindred used to be exempted the same way, on the reasoning
+ * that "more Goblins" isn't a missing slot either — but the Sliver deck
+ * disproves that: bodies, lords/anthems, tribal mana and cost reduction,
+ * tutors, and resilience are five real jobs a tribal deck can fail at
+ * independently of raw membership count, the same shape as every other
+ * lifecycle here. See kindred's own spec below for what "evasion and
+ * haste" (this catalog's original sixth named job) turned out to mean once
+ * grounded against real cards.
  */
 export const LIFECYCLES: LifecycleSpec[] = [
+  {
+    archetype: 'kindred',
+    label: 'Kindred',
+    slots: [
+      {
+        key: 'bodies',
+        label: 'Bodies',
+        description: 'Actual members of the tribe — the creatures a tribal payoff has to work with.',
+        roles: ['is'],
+        minimum: 8,
+      },
+      {
+        key: 'payoff',
+        label: 'Lords & anthems',
+        description:
+          'Cards that reward having the tribe: anthems, count-scaled effects, and abilities granted ' +
+          'to the whole type — evasion and haste included, the same bucket as any other granted ' +
+          'keyword.',
+        roles: ['rewards'],
+        minimum: 2,
+      },
+      {
+        key: 'engine',
+        label: 'Tribal engine',
+        description: 'Mana, cost reduction, or spending restricted to the tribe — what turns it on.',
+        roles: ['enables'],
+        minimum: 1,
+        commonlyMissing: true,
+      },
+      {
+        // `produces` already meant "makes a token of the type" before this
+        // lifecycle existed (Krenko's Command, Their Number Is Legion) — a
+        // tutor scoped to the type (Sliver Overlord) is the same role, not
+        // a new one, so this slot is honestly "toolbox", not narrowly
+        // "tutors": Brood Sliver ("create a 1/1 Sliver token" on combat
+        // damage) fills it exactly the same way Sliver Overlord's search
+        // does, and both answer the same question — can this deck get a
+        // specific member of the tribe when it needs one?
+        key: 'toolbox',
+        label: 'Toolbox',
+        description: 'Ways to get a specific member of the tribe when you need it — tutors, or tokens.',
+        roles: ['produces'],
+        minimum: 1,
+      },
+      {
+        key: 'resilience',
+        label: 'Resilience',
+        description: 'Protection granted to the whole tribe — indestructible, hexproof, ward.',
+        roles: ['protects'],
+        minimum: 1,
+        commonlyMissing: true,
+      },
+    ],
+  },
   {
     archetype: 'aristocrats',
     label: 'Aristocrats',

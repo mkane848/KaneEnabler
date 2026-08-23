@@ -504,6 +504,59 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     still 763 of 4,049 zero-active-signal commanders, unchanged, since
     `is` is a passive role and this signal never carries an active one on
     its own.
+- **Signal engine, Phase E (part 3) — the kindred lifecycle, completing
+  Phase E.** See `docs/signals-rework.md` Phase E and
+  `docs/archetypes.md`'s "Lifecycles" for the full slot table. Kindred
+  gets a lifecycle for the first time, retiring the "membership groups
+  rather than engines" carve-out — `lifecycleFor` already keyed on
+  archetype alone and `groupByTheme` already scoped participants by
+  qualifier, so one spec serves every creature type with no mechanism
+  change. Five slots, not the six originally planned:
+  - **Bodies** (`is`, minimum 8) — actual members of the tribe.
+  - **Lords & anthems** (`rewards`, minimum 2) — anthems, count-scaled
+    effects, and abilities granted to the whole type. "Evasion and
+    haste" is not a separate slot: granting a keyword to the tribe was
+    already `rewards` before this lifecycle existed (Gleaming
+    Overseer's hexproof grant, tested since Phase B), so a second,
+    redundant `enables` slot for the same clause shape would either
+    duplicate that or require a distinction the text can't ground.
+  - **Tribal engine** (`enables`, minimum 1, commonly missing) — mana,
+    cost reduction, or spending restricted to the tribe. Three new
+    `detectKindred` checks feed this and the next slot, scoped by the
+    same `wordPattern(type)` clause gate every other per-type check
+    uses: a mana ability granted to the type or mana restricted to
+    spending on it (Gemhide Sliver, Manaweft Sliver, Sliver Hive), and
+    `"Affinity for [Type]"` (Thrumming Hivepool) — a keyword ability
+    that needs its own check rather than the wildcard branch's
+    `"cost {N} less to cast"` text pattern, which never fires on a
+    named type.
+  - **Toolbox** (`produces`, minimum 1) — tutors or tokens of the type,
+    honestly labelled rather than narrowly "Tutors": `produces` already
+    meant "makes a token of the type" (Krenko's Command) before this
+    landed, and a tutor scoped to the type (`"search your library for a
+    Sliver card"` — Sliver Overlord, newly detected) is the same role,
+    not a new one. Card selection scoped to a *named* type — the
+    per-type counterpart of the wildcard's own "look at the top card" —
+    wasn't found anywhere in the corpus, so it's left uncovered rather
+    than invented.
+  - **Resilience** (`protects`, minimum 1, commonly missing) —
+    protection granted to the whole tribe: indestructible, hexproof,
+    ward. Reuses the existing `protects` detection unchanged.
+  - Verified against the real seeded database and confirmed through the
+    actual browser UI, not just the API: `first-sliver.txt`'s Sliver
+    Kindred theme (56 cards) reports complete, all five slots filled
+    (47/46/9/6/3 cards). `brigid.txt`'s Kithkin Kindred theme (26 cards)
+    also reports complete. A sweep of every other fixture deck's
+    kindred themes shows realistic partial completion with no
+    anomalies — see `docs/archetypes.md`'s "Known tensions" for the
+    accepted imprecisions this surfaced (a tutor and a token-maker
+    sharing one role; a tutor's pre-existing, untouched `rewards` role
+    also counting it toward "Lords & anthems").
+  - Re-measured with Phase F's coverage report: 761 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    763.
+  - **This completes Phase E** — all three sub-items (wildcard kindred,
+    Changeling, and this lifecycle) shipped and merged.
 
 ### Fixed
 

@@ -153,7 +153,7 @@ export interface DeckThemeDTO {
   description: string;
   cardCount: number;
   cards: SlotCardDTO[];
-  /** Empty for archetypes with no chain to break, like kindred. */
+  /** Empty for archetypes with no chain to break, like keyword-care. */
   slots: SlotStatusDTO[];
   complete: boolean;
 }

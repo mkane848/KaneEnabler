@@ -411,24 +411,108 @@ describe('analyzeDeck', () => {
   });
 
   it('an archetype with no lifecycle is never reported as incomplete', () => {
-    // Kindred is a membership group, not an engine. "More Goblins" is not a
-    // missing slot, and inventing one would be a fabricated problem.
+    // Keyword-care is a membership group, not an engine — "more Flying" is
+    // not a missing slot, and inventing one would be a fabricated problem.
+    // Kindred used to be the example here too, until the Sliver deck
+    // disproved that for kindred specifically — see the block below.
     const owned: OwnedCard[] = [];
     const signals = new Map<string, SignalMatch[]>();
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
+      const row = makeCard(`Trample Payoff ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('keywordCare', ['rewards'], 'Trample')]);
+    }
+    const theme = analyzeDeck(owned, signals).themes[0]!;
+    assert.deepStrictEqual(theme.slots, []);
+    assert.strictEqual(theme.complete, true);
+  });
+
+  // --- kindred's own lifecycle --------------------------------------------
+
+  it("kindred's lifecycle slots are scoped to the qualified theme, not every kindred card in the list", () => {
+    // Goblin Kindred's slots must never show an Elf tutor, even though both
+    // groups are the same bare 'kindred' archetype.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 8; i++) {
       const row = makeCard(`Goblin ${i}`);
       owned.push({ row, quantity: 1 });
       signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
     }
-    // Two lords clear kindred's own two-card minimum on cares-not-shares.
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Goblin Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Goblin')]);
+    }
+    const elfTutor = makeCard('Elf Tutor');
+    owned.push({ row: elfTutor, quantity: 1 });
+    signals.set(elfTutor.oracle_id, [signal('kindred', ['produces'], 'Elf')]);
+    // Two lords clear Elf's own two-card minimum too, so it reports as a
+    // theme in its own right and isn't just silently dropped.
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Elf Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Elf')]);
+    }
+
+    const goblinTheme = analyzeDeck(owned, signals).themes.find((t) => t.qualifier === 'Goblin')!;
+    const tutorSlot = goblinTheme.slots.find((s) => s.key === 'toolbox')!;
+    assert.deepStrictEqual(tutorSlot.cards, []);
+  });
+
+  it('a tribal deck with bodies and lords but no engine, tutors, or resilience reads as incomplete', () => {
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 8; i++) {
+      const row = makeCard(`Goblin ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
+    }
     for (let i = 0; i < 2; i++) {
       const row = makeCard(`Goblin Lord ${i}`);
       owned.push({ row, quantity: 1 });
       signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Goblin')]);
     }
     const theme = analyzeDeck(owned, signals).themes[0]!;
-    assert.deepStrictEqual(theme.slots, []);
+    assert.strictEqual(theme.complete, false);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'bodies')?.filled, true);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'payoff')?.filled, true);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'engine')?.filled, false);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'toolbox')?.filled, false);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'resilience')?.filled, false);
+    // Engine and resilience are the ones flagged as commonly forgotten —
+    // tutors is a nice-to-have, not the slot people typically skip.
+    assert.strictEqual(theme.slots.find((s) => s.key === 'engine')?.commonlyMissing, true);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'resilience')?.commonlyMissing, true);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'toolbox')?.commonlyMissing, false);
+  });
+
+  it('every kindred slot filled reads as complete', () => {
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 8; i++) {
+      const row = makeCard(`Sliver ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is'], 'Sliver')]);
+    }
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Sliver Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Sliver')]);
+    }
+    const engine = makeCard('Gemhide Sliver');
+    owned.push({ row: engine, quantity: 1 });
+    signals.set(engine.oracle_id, [signal('kindred', ['is', 'enables'], 'Sliver')]);
+    const tutor = makeCard('Sliver Overlord');
+    owned.push({ row: tutor, quantity: 1 });
+    signals.set(tutor.oracle_id, [signal('kindred', ['is', 'produces'], 'Sliver')]);
+    const resilience = makeCard('Sliver Hivelord');
+    owned.push({ row: resilience, quantity: 1 });
+    signals.set(resilience.oracle_id, [signal('kindred', ['is', 'protects'], 'Sliver')]);
+
+    const theme = analyzeDeck(owned, signals).themes[0]!;
     assert.strictEqual(theme.complete, true);
+    assert.ok(theme.slots.every((s) => s.filled));
   });
 
   it('cards that merely have a keyword do not make it a theme', () => {

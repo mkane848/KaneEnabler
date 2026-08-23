@@ -234,6 +234,40 @@ describe('attachSuggestions selection', () => {
       ['Entomb'],
     );
   });
+
+  it("a kindred slot is offered cards of the same qualifier, never a different tribe's", () => {
+    // Kindred's own lifecycle (docs/signals-rework.md Phase E) is the first
+    // one built on a *qualified* archetype — this is the case that would
+    // silently pass if requiredSignalKeys or attachSuggestions ever went
+    // back to querying kindred bare: a Goblin deck's missing tutor slot
+    // must never be offered an Elf tutor.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 8; i++) {
+      const row = makeCard(`Goblin ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
+    }
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Goblin Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Goblin')]);
+    }
+    const analysis = analyzeDeck(owned, signals);
+    const suggested = attachSuggestions(analysis, {
+      candidatesByKey: pool([
+        ['kindred:Goblin', [candidate(makeCard('Goblin Tutor'), ['produces'])]],
+        ['kindred:Elf', [candidate(makeCard('Elf Tutor'), ['produces'])]],
+      ]),
+      ownedOracleIds: NO_OWNED,
+      allowedColors: ANY_COLOR,
+    });
+    const tutors = suggested.themes[0]!.slots.find((s) => s.key === 'toolbox');
+    assert.deepStrictEqual(
+      tutors?.suggestions.map((s) => s.name),
+      ['Goblin Tutor'],
+    );
+  });
 });
 
 describe('attachSuggestions ranking', () => {
@@ -361,19 +395,20 @@ describe('attachSuggestions restraint', () => {
   });
 
   it('an archetype with no lifecycle is never given suggestions', () => {
-    // "More Goblins" is not a missing slot, so there is nothing to fill.
+    // "More Flying" is not a missing slot, so there is nothing to fill.
+    // Kindred used to be the example here too, until it grew a lifecycle of
+    // its own (docs/signals-rework.md Phase E) — see packages.test.ts's
+    // kindred-specific suggestion tests below for that behavior instead.
     const owned: OwnedCard[] = [];
     const signals = new Map<string, SignalMatch[]>();
     for (let i = 0; i < 4; i++) {
-      const row = makeCard(`Goblin ${i}`);
+      const row = makeCard(`Trample Payoff ${i}`);
       owned.push({ row, quantity: 1 });
-      // Two lords clear kindred's own two-card minimum on cares-not-shares.
-      const roles: Role[] = i < 2 ? ['is', 'rewards'] : ['is'];
-      signals.set(row.oracle_id, [signal('kindred', roles, 'Goblin')]);
+      signals.set(row.oracle_id, [signal('keywordCare', ['rewards'], 'Trample')]);
     }
     const analysis = analyzeDeck(owned, signals);
     const suggested = attachSuggestions(analysis, {
-      candidatesByKey: pool([['kindred:Goblin', [candidate(makeCard('Krenko'), ['produces'])]]]),
+      candidatesByKey: pool([]),
       ownedOracleIds: NO_OWNED,
       allowedColors: ANY_COLOR,
     });

@@ -417,6 +417,98 @@ describe('Changeling (CR 702.73a) is every creature type, unqualified', () => {
   });
 });
 
+describe("kindred's own lifecycle: tribal mana, cost reduction, and tutors", () => {
+  it('a mana ability granted to the type is enables', () => {
+    // Gemhide Sliver — real oracle text.
+    const gemhide = makeCard({
+      name: 'Gemhide Sliver',
+      type_line: 'Creature — Sliver',
+      creature_types: JSON.stringify(['Sliver']),
+      oracle_text: 'All Slivers have "{T}: Add one mana of any color."',
+    });
+    assert.ok(rolesOf(signalsFor(gemhide, ['Sliver']), 'kindred', 'Sliver').includes('enables'));
+
+    // Manaweft Sliver — real oracle text, the "you control" phrasing variant.
+    const manaweft = makeCard({
+      name: 'Manaweft Sliver',
+      type_line: 'Creature — Sliver',
+      creature_types: JSON.stringify(['Sliver']),
+      oracle_text: 'Sliver creatures you control have "{T}: Add one mana of any color."',
+    });
+    assert.ok(rolesOf(signalsFor(manaweft, ['Sliver']), 'kindred', 'Sliver').includes('enables'));
+  });
+
+  it('mana restricted to spending on the type is enables', () => {
+    // Sliver Hive — real oracle text. Also a token producer, in a separate
+    // clause and a separate role.
+    const sliverHive = makeCard({
+      name: 'Sliver Hive',
+      type_line: 'Land',
+      oracle_text:
+        '{T}: Add {C}.\n' +
+        '{T}: Add one mana of any color. Spend this mana only to cast a Sliver spell.\n' +
+        '{5}, {T}: Create a 1/1 colorless Sliver creature token. Activate only if you control a Sliver.',
+    });
+    const roles = rolesOf(signalsFor(sliverHive, ['Sliver']), 'kindred', 'Sliver');
+    assert.ok(roles.includes('enables'));
+    assert.ok(roles.includes('produces'));
+  });
+
+  it('Affinity for the named type is cost reduction, and enables', () => {
+    // Thrumming Hivepool — real oracle text. Affinity is a keyword ability
+    // ("costs less to cast") whose whole explanation sits in reminder text,
+    // so this needs its own check rather than the wildcard branch's "cost
+    // {N} less to cast" text pattern, which never fires on a named type.
+    const hivepool = makeCard({
+      name: 'Thrumming Hivepool',
+      type_line: 'Artifact',
+      oracle_text:
+        'Affinity for Slivers (This spell costs {1} less to cast for each Sliver you control.)\n' +
+        'Slivers you control have double strike and haste.\n' +
+        'At the beginning of your upkeep, create two 1/1 colorless Sliver creature tokens.',
+    });
+    const roles = rolesOf(signalsFor(hivepool, ['Sliver']), 'kindred', 'Sliver');
+    assert.ok(roles.includes('enables'));
+    // Granting double strike and haste is still `rewards`, the same
+    // already-established treatment as Gleaming Overseer's hexproof grant —
+    // not folded into `enables` as a separate "evasion and haste" slot; see
+    // docs/archetypes.md's kindred lifecycle note for why.
+    assert.ok(roles.includes('rewards'));
+    // And it makes Sliver tokens.
+    assert.ok(roles.includes('produces'));
+  });
+
+  it('searching the library for a card of the named type is a tutor, produces', () => {
+    // Sliver Overlord — real oracle text.
+    const overlord = makeCard({
+      name: 'Sliver Overlord',
+      type_line: 'Legendary Creature — Sliver Mutant',
+      creature_types: JSON.stringify(['Sliver', 'Mutant']),
+      oracle_text:
+        '{3}: Search your library for a Sliver card, reveal that card, put it into your hand, ' +
+        'then shuffle.\n' +
+        '{3}: Gain control of target Sliver. (This effect lasts indefinitely.)',
+    });
+    assert.ok(rolesOf(signalsFor(overlord, ['Sliver']), 'kindred', 'Sliver').includes('produces'));
+  });
+
+  it('a generic tutor with no type restriction earns no tutor role for an unrelated type', () => {
+    // Profane Tutor — real oracle text, from the same First Sliver decklist.
+    // Names no creature type at all, so it must not register as a Sliver
+    // tutor merely by coexisting with one in the same list.
+    const profaneTutor = makeCard({
+      name: 'Profane Tutor',
+      type_line: 'Sorcery',
+      oracle_text:
+        'Suspend 2—{1}{B} (Rather than cast this card from your hand, pay {1}{B} and exile it with ' +
+        'two time counters on it. At the beginning of your upkeep, remove a time counter. When the ' +
+        'last is removed, you may cast it without paying its mana cost.)\n' +
+        'Search your library for a card, put that card into your hand, then shuffle.',
+    });
+    assert.strictEqual(find(signalsFor(profaneTutor, ['Sliver']), 'kindred', 'Sliver'), undefined);
+  });
+});
+
 describe('a bare word mention is not caring about the type', () => {
   it('a card ruling a type out is not a kindred payoff for it', () => {
     // Artificial Evolution — real oracle text. It explicitly forbids the

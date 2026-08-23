@@ -239,10 +239,59 @@ deck is a guess.
 ### Lifecycles
 
 A lifecycle says what a working deck **needs**, so that _"you have nine death-trigger payoffs and one
-sacrifice outlet"_ is expressible. **Kindred gets one** — retiring the previous "membership groups
-rather than engines" carve-out, which the Sliver deck disproves: bodies, lords and anthems, tribal
-mana and cost reduction, tutors and selection, evasion and haste, resilience. Every one of those can
-be short.
+sacrifice outlet"_ is expressible. **Kindred gets one — shipped.** Retires the previous "membership
+groups rather than engines" carve-out, which the Sliver deck disproves: five slots, one spec serving
+every creature type since `lifecycleFor` already keys on archetype alone and `groupByTheme` already
+scopes participants by qualifier — no mechanism change needed.
+
+| Slot | Key | Role | Minimum | What it is |
+| --- | --- | --- | --- | --- |
+| Bodies | `bodies` | `is` | 8 | Actual members of the tribe. |
+| Lords & anthems | `payoff` | `rewards` | 2 (matches kindred's own `definingRequirement`) | Anthems, count-scaled effects, **and** abilities granted to the whole type. |
+| Tribal engine | `engine` | `enables` | 1, commonly missing | Mana, cost reduction, or spending restricted to the tribe. |
+| Toolbox | `toolbox` | `produces` | 1 | Tutors **or** tokens of the type — the same role Krenko's Command already used for the latter. |
+| Resilience | `resilience` | `protects` | 1, commonly missing | Protection granted to the whole tribe: indestructible, hexproof, ward. |
+
+This catalog's original plan named six jobs, not five — **"evasion and haste" is not a separate
+slot.** Granting a keyword to the tribe ("Sliver creatures you control have flying") was already
+`rewards` before this lifecycle existed (Gleaming Overseer's hexproof grant, tested since Phase B),
+on the reasoning that a card handing out flying to your tribe genuinely is a tribal payoff, not
+merely "having" the keyword the way `keywordCare`'s granting/caring split treats it. Splitting that
+same clause shape into a second, redundant `enables` slot next to "Lords & anthems" would either
+duplicate already-tested behavior or require a distinction the text can't ground — so evasion and
+haste live in the payoff slot they were already in.
+
+**"Toolbox," not "Tutors"** — `produces` for kindred already meant "makes a token of the type"
+before this lifecycle existed (Krenko's Command, Their Number Is Legion); a tutor scoped to the type
+(Sliver Overlord's "Search your library for a Sliver card") is the same role, not a new one. Brood
+Sliver ("create a 1/1 Sliver token" on combat damage) fills the slot exactly the way Sliver
+Overlord's search does, and both genuinely answer the same question — can this deck get a specific
+member of the tribe when it needs one? The label says so honestly rather than narrowly claiming
+"Tutors" for a slot that also catches token-makers.
+
+Three new `detectKindred` checks feed the two slots the pre-existing roles didn't already cover —
+`enables` (tribal engine) and `produces`-as-tutor (toolbox), scoped by the exact same
+`wordPattern(type)` clause gate every other per-type check already uses:
+
+- A mana ability granted to the type (`"Sliver creatures you control have '{T}: Add one mana of any
+  color.'"` — Gemhide Sliver, Manaweft Sliver) or mana restricted to spending on it (`"Spend this
+  mana only to cast a Sliver spell"` — Sliver Hive) is `enables`.
+- `"Affinity for Slivers"` (Thrumming Hivepool) is cost reduction, and `enables` — a keyword ability
+  whose whole explanation lives in reminder text, so it needs its own check rather than the wildcard
+  branch's `"cost {N} less to cast"` text pattern, which never fires on a named type.
+- `"Search your library for a Sliver card"` (Sliver Overlord) is `produces`. Card selection scoped
+  to a *named* type — the per-type counterpart of the wildcard's own "look at the top card" — wasn't
+  found anywhere in the corpus, so it's left uncovered rather than invented; see "Known tensions"
+  below.
+
+Verified against the real seeded database: `first-sliver.txt`'s Sliver Kindred theme (56 cards)
+reports complete, with 47/46/9/6/3 cards across the five slots respectively — confirmed end-to-end
+through the actual browser UI, not just the API. `brigid.txt`'s Kithkin Kindred theme (26 cards,
+including the three Changeling cards from the previous sub-item) also reports complete. A sweep of
+every fixture deck's other kindred themes shows realistic, sensible partial completion — Krenko's
+Goblin Kindred (42 cards) is missing only resilience; Sauron's Army Kindred (18 cards, built more
+around amass than a starting Army body count) is genuinely missing bodies as well as engine — not a
+bug, an accurate read of a deck that produces the type rather than starting with much of it.
 
 ---
 
@@ -494,6 +543,27 @@ Scryfall's `keywords` array, so there's little surface area for that thin sample
 but it means the corpus never exercised a Changeling creature that *also* has active kindred text
 of its own (a changeling lord, say), only ones whose only kindred contribution is passive
 membership.
+
+**Kindred's lifecycle has two slots with known imprecision, both accepted rather than fixed, for
+the same reason: multiple roles per card is an established pattern here (Krenko is simultaneously
+`is`, `produces`, and `rewards`), not a defect to design around.**
+
+- **A tutor and a token-maker are the same role (`produces`), so "Toolbox" shows both — by design,
+  not by accident.** See the lifecycle table above.
+- **A tutor can also count toward "Lords & anthems."** The per-type loop's generic `rewards`
+  catch-all already matched the bare word `"search"` before this lifecycle existed — Sliver
+  Overlord's tutor ability was `rewards` under that rule alone, with no anthem or scaling text
+  anywhere on the card. Left as-is rather than narrowed: no existing test pins a kindred `rewards`
+  role to the word `"search"` specifically, so narrowing it was low-risk, but doing so would touch
+  the same catch-all every other qualified archetype's `rewards` detection shares, for a fix whose
+  benefit is cosmetic (a tutor also listed under "Lords & anthems") rather than correctness-bearing
+  (it does not change whether a theme is reported, and `caringCount` already clears its own bar from
+  real lords in every corpus deck checked). Revisit if a future deck's kindred theme reports thanks
+  to a tutor's `search`-triggered `rewards` role alone, with no genuine anthem backing it.
+- **Card selection scoped to a *named* type (the per-type counterpart of the wildcard's "look at the
+  top card of your library") was not found anywhere in the corpus.** `produces` for kindred currently
+  covers token production and tutoring only; a real card that peeks/selects from the top of the
+  library for a *named* type, rather than a player-chosen one, would need its own check when found.
 
 **Reminder-stripping hides keyword-defined mechanics.** The fix above creates a false negative:
 Overcharged Amalgam's Exploit — a sacrifice outlet — mentions "sacrifice" _only_ in reminder text.
