@@ -9,6 +9,8 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-08-23
+
 ### Added
 
 - **Signal engine, Phase B (part 1) — `enables` and `protects` roles.** See
