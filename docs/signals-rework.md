@@ -86,6 +86,26 @@ matching their stated axes. Re-measured after shipping: **814 of 4,049 commander
 produce zero active signals**, down from 889 — confirming `lifegain` really was the largest single
 gap.
 
+**`drain` is shipped**, Phase C2's third archetype — life loss as a trigger, not damage. Also
+unqualified. `definingRole: produces`, the same shape as `freeSpells`: causing an opponent's life
+loss is the identity itself, not a means to some other reward. Covers the direct devotion/X-drain
+template (Gray Merchant of Asphodel, Exsanguinate, Debt to the Deathless), aristocrats-style death
+triggers (Zulaport Cutthroat, Blood Artist), and Sanguine Bond/Vito's own `"whenever you gain life,
+opponent loses that much life"` — their trigger reads a *different* resource (lifegain), so the loss
+they cause is still `produces`, not a reward for something drain itself already produced. One real
+precision issue found and fixed before shipping, checked against the full card pool rather than just
+the corpus: a first-draft `produces` matcher was a bare `"opponent/player/controller ... loses ...
+life"` scan, and Exquisite Blood (`"Whenever an opponent loses life, you gain that much life"`)
+matched it directly even though the card never causes a loss itself, it only reads one from any
+source. `produces` now excludes any clause a shared `DRAIN_TRIGGER_READS_LOSS` pattern already
+claims (a trigger of exactly `"whenever a(n) opponent/player loses life"`), which is also
+`rewards`'s own matcher — see archetypes.md's "Behaviours verified as correct" for the full
+Sanguine-Bond-vs-Exquisite-Blood distinction this resolves. Verified against the full corpus:
+`wilhelt.txt` reports `Drain (3)` and `yshtola.txt` reports `Drain (6)`, both matching
+archetypes.md's own motivating decks exactly, and `trazyn.txt` reports `Drain (4)`, matching its own
+"fallback: aggro, drain" identity. Re-measured after shipping: **797 of 4,049 commander-eligible
+cards now produce zero active signals**, down from 814.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 
