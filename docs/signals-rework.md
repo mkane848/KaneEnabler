@@ -247,6 +247,17 @@ actual identity), which wrongly counted both self-only commanders. Re-measured w
 report: **576 of 4,049** commander-eligible cards now produce zero active signals, down from 591 — 5
 rescued by `bigMana` alone, 9 by `graveyardToolbox` alone, no false positive surviving manual review.
 
+**`powerMatters` is shipped, Phase C3's fifth archetype.** One deck, radagast.txt, whose own corpus
+note names four cards by hand (Ghalta, Goreclaw, Outcaster Trailblazer, Return of the Wildspeaker).
+Two roles: `enables` for cost reduction scaled by power, `rewards` for a payoff gated by or scaled by
+power. See `archetypes.md`'s own entry for the full account, including a real bug the full-card-pool
+sweep caught: "power N or greater" also describes a blocker-size restriction ("can't be blocked by
+creatures with power N or greater" — Delney, Streetwise Lookout; April O'Neil, Kunoichi Trainee), a
+threat to opponents' blockers with no connection to the controller having big creatures, which an
+early version wrongly counted as the same payoff shape. Re-measured with Phase F's coverage report:
+**568 of 4,049** commander-eligible cards now produce zero active signals, down from 576 — 8 rescued
+by `powerMatters` alone, no false positive surviving manual review.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

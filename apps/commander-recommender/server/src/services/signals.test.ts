@@ -3223,3 +3223,116 @@ describe('Graveyard Toolbox: flexible retrieval from the graveyard as a resource
     assert.strictEqual(find(signalsFor(beaconOfUnrest), 'graveyardToolbox'), undefined);
   });
 });
+
+describe('Power Matters: payoffs that scale with how big a creature is', () => {
+  it('enables from cost reduction scaled by total power', () => {
+    // Ghalta, Primal Hunger — real oracle text.
+    const ghalta = makeCard({
+      name: 'Ghalta, Primal Hunger',
+      type_line: 'Legendary Creature — Elder Dinosaur',
+      oracle_text:
+        'This spell costs {X} less to cast, where X is the total power of creatures you control.\n' +
+        "Trample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(ghalta), 'powerMatters'), ['enables']);
+  });
+
+  it('enables from a power threshold gating cost reduction, and rewards from the same threshold gating a combat buff', () => {
+    // Goreclaw, Terror of Qal Sisma — real oracle text.
+    const goreclaw = makeCard({
+      name: 'Goreclaw, Terror of Qal Sisma',
+      type_line: 'Legendary Creature — Bear',
+      oracle_text:
+        'Creature spells you cast with power 4 or greater cost {2} less to cast.\n' +
+        'Whenever Goreclaw attacks, each creature you control with power 4 or greater gets +1/+1 and ' +
+        'gains trample until end of turn.',
+    });
+    const roles = rolesOf(signalsFor(goreclaw), 'powerMatters');
+    assert.ok(roles.includes('enables'));
+    assert.ok(roles.includes('rewards'));
+  });
+
+  it('rewards from a power threshold gating a draw trigger', () => {
+    // Outcaster Trailblazer — real oracle text.
+    const outcasterTrailblazer = makeCard({
+      name: 'Outcaster Trailblazer',
+      type_line: 'Creature — Human Druid',
+      oracle_text:
+        'When this creature enters, add one mana of any color.\n' +
+        'Whenever another creature you control with power 4 or greater enters, draw a card.\n' +
+        'Plot {2}{G} (You may pay {2}{G} and exile this card from your hand. Cast it as a sorcery on a ' +
+        'later turn without paying its mana cost. Plot only as a sorcery.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(outcasterTrailblazer), 'powerMatters'), ['rewards']);
+  });
+
+  it('rewards from reading the greatest power among your own creatures', () => {
+    // Return of the Wildspeaker and Tuya Bearclaw — real oracle text.
+    const returnOfTheWildspeaker = makeCard({
+      name: 'Return of the Wildspeaker',
+      type_line: 'Instant',
+      oracle_text:
+        'Choose one —\n' +
+        '• Draw cards equal to the greatest power among non-Human creatures you control.\n' +
+        '• Non-Human creatures you control get +3/+3 until end of turn.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(returnOfTheWildspeaker), 'powerMatters'), ['rewards']);
+
+    const tuyaBearclaw = makeCard({
+      name: 'Tuya Bearclaw',
+      type_line: 'Legendary Creature — Human Warrior',
+      oracle_text:
+        'Whenever Tuya Bearclaw attacks, it gets +X/+X until end of turn, where X is the greatest power ' +
+        'among other creatures you control.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(tuyaBearclaw), 'powerMatters'), ['rewards']);
+  });
+
+  it('rewards from a total-power threshold gating a free cast', () => {
+    // Mosswort Bridge — real oracle text.
+    const mosswortBridge = makeCard({
+      name: 'Mosswort Bridge',
+      type_line: 'Land',
+      oracle_text:
+        'Hideaway 4 (When this land enters, look at the top four cards of your library, exile one face ' +
+        'down, then put the rest on the bottom in a random order.)\n' +
+        'This land enters tapped.\n' +
+        '{T}: Add {G}.\n' +
+        '{G}, {T}: You may play the exiled card without paying its mana cost if creatures you control ' +
+        'have total power 10 or greater.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(mosswortBridge), 'powerMatters'), ['rewards']);
+  });
+
+  it('does not reward a power threshold describing a blocker restriction on opponents, not a payoff for your own creatures', () => {
+    // Delney, Streetwise Lookout and April O'Neil, Kunoichi Trainee — real
+    // oracle text. Regression guard: both use "power N or greater" to
+    // describe a threat to opponents' blockers, not a payoff for having
+    // big creatures of your own — found checking the full card pool.
+    const delney = makeCard({
+      name: 'Delney, Streetwise Lookout',
+      type_line: 'Legendary Creature — Human Scout',
+      oracle_text:
+        "Creatures you control with power 2 or less can't be blocked by creatures with power 3 or " +
+        'greater.\n' +
+        'If a triggered ability of a creature you control with power 2 or less triggers, that ability ' +
+        'triggers an additional time.',
+    });
+    assert.strictEqual(find(signalsFor(delney), 'powerMatters'), undefined);
+
+    const aprilOneil = makeCard({
+      name: "April O'Neil, Kunoichi Trainee",
+      type_line: 'Legendary Creature — Human Ninja',
+      oracle_text:
+        "When April O'Neil enters, scry 2. (Look at the top two cards of your library, then put any " +
+        'number of them on the bottom and the rest on top in any order.)\n' +
+        "April O'Neil can't be blocked by creatures with power 3 or greater.",
+    });
+    assert.strictEqual(find(signalsFor(aprilOneil), 'powerMatters'), undefined);
+  });
+
+  it('does not fire on a card with no power-matters text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'powerMatters'), undefined);
+  });
+});

@@ -653,6 +653,32 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   - Re-measured with Phase F's coverage report: 576 of 4,049
     commander-eligible cards now produce zero active signals, down from
     591.
+- **Signal engine, Phase C3 — `powerMatters` archetype.** See
+  `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
+  One deck, radagast.txt, whose own corpus note names four cards by hand
+  (Ghalta, Goreclaw, Outcaster Trailblazer, Return of the Wildspeaker).
+  - `enables` covers cost reduction scaled by power (Ghalta's own "costs
+    {X} less to cast, where X is the total power of creatures you
+    control"; Goreclaw's "creature spells you cast with power 4 or greater
+    cost {2} less to cast") — the same enables/rewards split
+    `spellslinger`'s own cost-reduction clause draws.
+  - `rewards` covers a payoff gated by or scaled by power: Goreclaw's
+    attack-trigger buff and Outcaster Trailblazer's draw trigger share the
+    exact phrase "with power 4 or greater"; Return of the Wildspeaker and
+    Tuya Bearclaw both read the "greatest power" among your own creatures;
+    Mosswort Bridge gates a free cast behind "total power 10 or greater".
+  - Checked against the full legal card pool before shipping: 8 previously
+    zero-active-signal commanders rescued, all genuine big-creature
+    payoffs (Mayael the Anima's power-5-or-greater cheat, Alena and
+    Giant-Man's power-scaled mana) — see the Fixed section below for a
+    real bug the sweep caught before shipping.
+  - Verified against the real seeded database: radagast.txt's own six
+    `powerMatters` cards (Entish Restoration, Ghalta, Goreclaw, Mosswort
+    Bridge, Outcaster Trailblazer, Return of the Wildspeaker) all tag
+    correctly.
+  - Re-measured with Phase F's coverage report: 568 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    576.
 
 ### Fixed
 
@@ -715,6 +741,15 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   many-cards resource this archetype means. Found checking the full card
   pool before shipping. Fixed with an explicit "return this card"
   exclusion.
+- **Signal engine — `powerMatters`'s "power N or greater" phrase also
+  matched a blocker-size restriction with no connection to the plan.**
+  "Each creature you control with power 4 or greater gets +1/+1" (Goreclaw)
+  and "can't be blocked by creatures with power 3 or greater" (Delney,
+  Streetwise Lookout; April O'Neil, Kunoichi Trainee) share the identical
+  phrase for opposite reasons — the second describes a threat to
+  opponents' blockers, not a payoff for the controller's own big
+  creatures. Found checking the full card pool before shipping. Fixed by
+  excluding "blocked by creatures with power N or greater" explicitly.
 - **Signal engine — a wildcard kindred card backed every kindred-caring
   commander in the pool, not just the deck's own themes.** Found verifying
   wildcard kindred above, before merging, by running the real First Sliver

@@ -1696,6 +1696,53 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'powerMatters',
+    label: 'Power Matters',
+    description:
+      'Payoffs that scale with how big a creature is, not how many there are — a threshold gate on ' +
+      "power, or reading a creature's own power as a resource (see Go-Wide Combat for the count plan).",
+    weight: 20,
+    // radagast.txt's own corpus note names four cards by hand: Ghalta,
+    // Goreclaw, Outcaster Trailblazer, Return of the Wildspeaker.
+    roles: {
+      // Cost reduction scaled by power turns the engine on rather than
+      // rewarding you for having already engaged with it — the same split
+      // spellslinger's own cost-reduction clause draws.
+      enables: [
+        // Ghalta, Primal Hunger: "This spell costs {X} less to cast, where
+        // X is the total power of creatures you control."
+        /\bcosts? [^.;]*less to cast[^.;]*\btotal power\b/i,
+        // Goreclaw, Terror of Qal Sisma's first ability: "Creature spells
+        // you cast with power 4 or greater cost {2} less to cast."
+        /\bwith power \d+ or greater cost\b[^.;]*less to cast\b/i,
+      ],
+      rewards: [
+        // Goreclaw's second ability ("each creature you control with power
+        // 4 or greater gets +1/+1 and gains trample") and Outcaster
+        // Trailblazer ("another creature you control with power 4 or
+        // greater enters, draw a card") share this exact phrase. Excludes
+        // "can't be blocked by creatures with power N or greater" — Delney,
+        // Streetwise Lookout and April O'Neil, Kunoichi Trainee both use
+        // the identical phrase to describe a threat to *opponents'*
+        // blockers, not a payoff for the controller's own big creatures —
+        // found checking the full card pool, not just the grounding deck.
+        (f: CardFacts) =>
+          clauses(f.text).some(
+            (c) =>
+              /\bwith power \d+ or greater\b/i.test(c) &&
+              !/\bblocked by creatures? with power \d+ or greater\b/i.test(c),
+          ),
+        // Return of the Wildspeaker: "Draw cards equal to the greatest
+        // power among non-Human creatures you control."
+        /\b(?:greatest|highest) power\b/i,
+        // Mosswort Bridge: "you may play the exiled card without paying
+        // its mana cost if creatures you control have total power 10 or
+        // greater."
+        /\btotal power \d+ or greater\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
