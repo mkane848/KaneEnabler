@@ -383,6 +383,47 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     it. Re-measured with Phase F's coverage report: 777 of 4,049
     commander-eligible cards now produce zero active signals, down from
     793.
+- **Signal engine, Phase C2 — `recursion` archetype.** See
+  `docs/signals-rework.md` Phase C. The same body coming back from the
+  graveyard, again and again — distinct from Reanimator's one-shot
+  cheat of something big into play. The one archetype in this catalog
+  grounded by the repo owner directly rather than a corpus fixture
+  comment (`wilhelt.txt` and `eirdu.txt`, confirmed before
+  implementation). No qualifier, `definingRole: produces` — the same
+  shape as `drain`/`cyclingDiscard`/`freeSpells`.
+  - `produces`: Persist/Undying (a card's own keyword, or granted to
+    others via text — Isilu, Carrier of Twilight: "has persist";
+    Mikaeus, the Unhallowed: "have undying"); Gravecrawler's repeatable
+    self-cast template; Prized Amalgam's repeatable self-return
+    trigger.
+  - `amplifies`: the loop's own combo enabler, per the repo owner's own
+    clarification — Isilu's granted Persist creature returns with a
+    -1/-1 counter, and a card that puts a +1/+1 counter on that same
+    entering creature (Cathars' Crusade: "on each creature you
+    control") cancels it under CR 704.5q, letting Persist trigger again
+    on the next death instead of only once. Deliberately excludes a
+    card that only buffs itself (Hulkling, Burgeoning Bruiser), which
+    never touches the counter on a different creature.
+  - One real precision issue found and fixed before shipping, checked
+    against the full card pool: Flashback, Escape, and Unearth's "cast/
+    return this card from your graveyard" phrasing is textually
+    identical to `recursion`'s own templates until reminder text is
+    stripped — the "then exile it" clause that distinguishes a one-shot
+    use from a repeatable loop lives in the same parenthetical
+    `stripReminderText` deletes. 354 raw matches for the
+    cast-from-graveyard phrase dropped to 35 real ones once checked
+    against `CardFacts.text` instead of raw `oracle_text`, none of them
+    Flashback/Escape/Unearth — regression tests for both this and the
+    Hulkling case are in `signals.test.ts`.
+  - Verified against the real seeded database: `eirdu.txt` reports
+    `Recursion (3)` directly; `wilhelt.txt` has the same 3 real
+    supporting cards (confirmed via direct signal inspection) but
+    doesn't surface in its displayed theme list — it ties `Drain` at
+    `cardCount: 3` and loses the alphabetical tie-break for the deck's
+    8th and last `MAX_THEMES` slot, a pre-existing cutoff mechanism
+    unrelated to this archetype's own correctness. Re-measured with
+    Phase F's coverage report: 770 of 4,049 commander-eligible cards
+    now produce zero active signals, down from 777.
 
 ### Fixed
 

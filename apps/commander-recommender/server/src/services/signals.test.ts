@@ -2281,3 +2281,97 @@ describe('Temporary Effects: delayed-cost cards and the enablers that erase the 
     assert.strictEqual(find(signalsFor(solRing), 'temporaryEffects'), undefined);
   });
 });
+
+describe('Recursion: the same body coming back from the graveyard, again and again', () => {
+  it('produces from a repeatable self-cast engine', () => {
+    // Gravecrawler — real oracle text.
+    const gravecrawler = makeCard({
+      name: 'Gravecrawler',
+      type_line: 'Creature — Zombie',
+      oracle_text:
+        "This creature can't block.\nYou may cast this card from your graveyard as long as you " +
+        'control a Zombie.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(gravecrawler), 'recursion'), ['produces']);
+  });
+
+  it('produces from a repeatable self-return trigger', () => {
+    // Prized Amalgam — real oracle text.
+    const prizedAmalgam = makeCard({
+      name: 'Prized Amalgam',
+      type_line: 'Creature — Zombie',
+      oracle_text:
+        'Whenever a creature enters, if it entered from your graveyard or you cast it from your ' +
+        'graveyard, return this card from your graveyard to the battlefield tapped at the beginning ' +
+        'of the next end step.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(prizedAmalgam), 'recursion'), ['produces']);
+  });
+
+  it('produces from granting Persist to other creatures, not just having it', () => {
+    // Isilu, Carrier of Twilight — real oracle text (Eirdu's back face, the
+    // corpus deck this archetype was built against per the repo owner).
+    const isilu = makeCard({
+      name: 'Isilu, Carrier of Twilight',
+      type_line: 'Legendary Creature — Elemental God',
+      keywords: '["Flying","Lifelink"]',
+      oracle_text:
+        'Flying, lifelink\nEach other nontoken creature you control has persist. (When it dies, if ' +
+        "it had no -1/-1 counters on it, return it to the battlefield under its owner's control " +
+        'with a -1/-1 counter on it.)\nAt the beginning of your first main phase, you may pay {W}. ' +
+        'If you do, transform Isilu.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(isilu), 'recursion'), ['produces']);
+  });
+
+  it('amplifies the Persist loop by cancelling its -1/-1 counter on re-entry', () => {
+    // Cathars' Crusade — real oracle text. Repo owner's own clarification:
+    // this is the deck's combo piece that lets an Isilu-granted Persist
+    // creature return more than once — the +1/+1 it puts on every
+    // entering creature (including the Persist creature's own re-entry)
+    // cancels the -1/-1 counter under CR 704.5q, so the next death
+    // triggers Persist again instead of failing its "no -1/-1 counters"
+    // check.
+    const cathartsCrusade = makeCard({
+      name: "Cathars' Crusade",
+      type_line: 'Enchantment',
+      oracle_text: 'Whenever a creature you control enters, put a +1/+1 counter on each creature you control.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(cathartsCrusade), 'recursion'), ['amplifies']);
+  });
+
+  it('does not amplify a card that only buffs itself, since that never touches a different Persist creature', () => {
+    // Hulkling, Burgeoning Bruiser — real oracle text. The counter goes on
+    // Hulkling itself, never on the creature that just entered, so it
+    // can't cancel that creature's own -1/-1 from Persist.
+    const hulkling = makeCard({
+      name: 'Hulkling, Burgeoning Bruiser',
+      type_line: 'Legendary Creature — Skrull Warrior',
+      oracle_text:
+        'Whenever another creature you control enters, if it has greater power or toughness than ' +
+        'Hulkling, put a +1/+1 counter on Hulkling.',
+    });
+    assert.strictEqual(find(signalsFor(hulkling), 'recursion'), undefined);
+  });
+
+  it('does not produce from Flashback, a one-shot cast rather than a repeatable loop', () => {
+    // Cabal Therapy — real oracle text. Flashback exiles the card after
+    // its one graveyard cast, so this is not "the same body returning
+    // again and again" — Reanimator/graveyard-value territory, not this.
+    const cabalTherapy = makeCard({
+      name: 'Cabal Therapy',
+      type_line: 'Sorcery',
+      keywords: '["Flashback"]',
+      oracle_text:
+        'Choose a nonland card name. Target player reveals their hand and discards all cards with ' +
+        'that name.\nFlashback—Sacrifice a creature. (You may cast this card from your graveyard ' +
+        'for its flashback cost. Then exile it.)',
+    });
+    assert.strictEqual(find(signalsFor(cabalTherapy), 'recursion'), undefined);
+  });
+
+  it('does not fire on a card with no recursion text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'recursion'), undefined);
+  });
+});

@@ -1366,6 +1366,55 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'recursion',
+    label: 'Recursion',
+    description:
+      'The same body coming back from the graveyard, again and again — Persist/Undying, "you may ' +
+      'cast this card from your graveyard" engines, and self-triggering "return this card to the ' +
+      "battlefield\" effects — distinct from Reanimator's one-shot cheat of something big into play. " +
+      "Also covers the loop's own enabler: a card that puts a +1/+1 counter on an entering creature " +
+      "cancels the -1/-1 counter Persist leaves behind (CR 704.5q), letting the loop repeat instead " +
+      'of ending after one return.',
+    weight: 20,
+    // No separate payoff role, the same shape as drain/cyclingDiscard/
+    // freeSpells — the body returning IS the identity.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // A creature that itself has Persist or Undying.
+        (f: CardFacts) => f.keywords.includes('Persist') || f.keywords.includes('Undying'),
+        // A card that grants Persist/Undying to others (Isilu, Carrier of
+        // Twilight: "Each other nontoken creature you control has
+        // persist"; Mikaeus, the Unhallowed: "have undying").
+        /\bhas (?:persist|undying)\b|\bhave (?:persist|undying)\b/i,
+        // Gravecrawler's own repeatable-engine template — distinct from
+        // Flashback/Escape's "cast from your graveyard ... then exile it",
+        // which is a one-shot use of the card, not a repeatable loop.
+        // Both live entirely inside their own reminder text and would
+        // otherwise be indistinguishable after stripReminderText removes
+        // the "then exile it" clause that's the only textual difference —
+        // checked against the full card pool: this exact phrase never
+        // appears on a real Flashback/Escape/Unearth card once reminder
+        // text is stripped, only on genuine repeatable engines.
+        /\byou may cast this card from your graveyard\b/i,
+        // Prized Amalgam's own repeatable self-return template — same
+        // reminder-text-survival reasoning excludes Unearth (which pairs
+        // this exact phrase with an exile clause, also reminder-only).
+        /\breturn this card from your graveyard to the battlefield\b/i,
+      ],
+      amplifies: [
+        // The Persist/Undying loop enabler: a creature entering triggers a
+        // +1/+1 counter onto the entering creature itself (Cathars'
+        // Crusade: "on each creature you control") or another target
+        // named by the trigger ("on that creature") — never a card that
+        // only buffs itself ("on this creature"/a card's own name), which
+        // doesn't touch the counter a *different* Persist creature just
+        // returned with.
+        /\bwhenever (?:a |another )?creature[^.\n]*enters\b[^.\n]*\+1\/\+1 counters? on (?:that creature|each creature you control)\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
