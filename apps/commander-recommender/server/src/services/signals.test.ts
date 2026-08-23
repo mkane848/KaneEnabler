@@ -3406,3 +3406,81 @@ describe('Pillowfort: taxing or deterring attacks aimed at you', () => {
     assert.strictEqual(find(signalsFor(solRing), 'pillowfort'), undefined);
   });
 });
+
+describe('Mono-Color Devotion: payoffs that read your devotion to a single color', () => {
+  it('rewards and qualifies by color from a payoff scaled by devotion', () => {
+    // Gray Merchant of Asphodel and Purphoros, God of the Forge — real
+    // oracle text.
+    const grayMerchant = makeCard({
+      name: 'Gray Merchant of Asphodel',
+      type_line: 'Creature — Zombie',
+      oracle_text:
+        'When this creature enters, each opponent loses X life, where X is your devotion to black. ' +
+        'You gain life equal to the life lost this way. (Each {B} in the mana costs of permanents ' +
+        'you control counts toward your devotion to black.)',
+    });
+    assert.deepStrictEqual(
+      rolesOf(signalsFor(grayMerchant), 'monoColorDevotion', 'Black'),
+      ['rewards'],
+    );
+
+    const purphoros = makeCard({
+      name: 'Purphoros, God of the Forge',
+      type_line: 'Legendary Enchantment Creature — God',
+      oracle_text:
+        "Indestructible\nAs long as your devotion to red is less than five, Purphoros isn't a " +
+        'creature.\nWhenever another creature you control enters, Purphoros deals 2 damage to each ' +
+        'opponent.\n{2}{R}: Creatures you control get +1/+0 until end of turn.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(purphoros), 'monoColorDevotion', 'Red'), ['rewards']);
+  });
+
+  it('rewards and qualifies by color from the animation-threshold shape', () => {
+    // Erebos, God of the Dead — real oracle text.
+    const erebos = makeCard({
+      name: 'Erebos, God of the Dead',
+      type_line: 'Legendary Enchantment Creature — God',
+      oracle_text:
+        "Indestructible\nAs long as your devotion to black is less than five, Erebos isn't a " +
+        'creature. (Each {B} in the mana costs of permanents you control counts toward your ' +
+        'devotion to black.)\nYour opponents can\'t gain life.\n{1}{B}, Pay 2 life: Draw a card.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(erebos), 'monoColorDevotion', 'Black'), ['rewards']);
+  });
+
+  it('does not fire on devotion to a color pair, a different payoff shape', () => {
+    // Phenax, God of Deception — real oracle text. Regression guard: this
+    // archetype is specifically mono-color; a two-color devotion threshold
+    // is a different, dual-color plan this pattern deliberately excludes.
+    const phenax = makeCard({
+      name: 'Phenax, God of Deception',
+      type_line: 'Legendary Enchantment Creature — God',
+      oracle_text:
+        "Indestructible\nAs long as your devotion to blue and black is less than seven, Phenax isn't " +
+        'a creature.\nCreatures you control have "{T}: Target player mills X cards, where X is this ' +
+        'creature\'s toughness."',
+    });
+    assert.strictEqual(find(signalsFor(phenax), 'monoColorDevotion'), undefined);
+  });
+
+  it('does not fire on a card whose devotion is to a chosen color rather than a named one', () => {
+    // Nykthos, Shrine to Nyx — real oracle text. A flexible devotion payoff
+    // that supports whichever color the deck actually commits to, rather
+    // than a payoff naming one fixed color of its own — nothing here for
+    // the qualifier to key on.
+    const nykthos = makeCard({
+      name: 'Nykthos, Shrine to Nyx',
+      type_line: 'Legendary Land',
+      oracle_text:
+        '{T}: Add {C}.\n{2}, {T}: Choose a color. Add an amount of mana of that color equal to your ' +
+        'devotion to that color. (Your devotion to a color is the number of mana symbols of that ' +
+        'color in the mana costs of permanents you control.)',
+    });
+    assert.strictEqual(find(signalsFor(nykthos), 'monoColorDevotion'), undefined);
+  });
+
+  it('does not fire on a card with no devotion text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'monoColorDevotion'), undefined);
+  });
+});
