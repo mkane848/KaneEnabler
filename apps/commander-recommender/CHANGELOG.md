@@ -557,9 +557,80 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     763.
   - **This completes Phase E** — all three sub-items (wildcard kindred,
     Changeling, and this lifecycle) shipped and merged.
+- **Signal engine, Phase C3 — `cardDraw` archetype, and a documentation
+  policy change.** See `docs/signals-rework.md` Phase C and
+  `docs/archetypes.md`'s new "Grounding: vetted vs inferred" section — the
+  repo owner asked to build ahead of named-deck confirmation for future
+  archetypes rather than wait on it for every one, while keeping the same
+  full-card-pool false-positive check every archetype has always gotten.
+  Re-checking Phase C3's tier row against the corpus table under that new
+  policy found six of its seven archetypes were never actually
+  ungrounded — `cardDraw` itself is named explicitly by two decks
+  (watcher-in-the-water.txt, primary; miles.txt, secondary).
+  - Repeatable engines are `produces` (Rhystic Study, Mystic Remora,
+    Archmage Emeritus, Sram, Senior Edificer), a trigger reading you
+    drawing a card is `rewards` (Chasm Skulker, Homunculus Horde), and a
+    pure doubling replacement effect is `amplifies` (Teferi's Ageless
+    Insight, Thought Reflection, Alhammarret's Archive — the last also
+    amplifies `lifegain`, one card correctly earning both signals, exactly
+    as `watcher-in-the-water.txt`'s own corpus note calls out by name).
+    Gets a three-slot lifecycle, the same shape as `goWide`/
+    `spellslinger`: draw engines (`produces`, minimum 3), payoffs
+    (`rewards`, minimum 2), multipliers (`amplifies`, minimum 1).
+  - Checked against the full legal card pool before shipping, not just the
+    two grounding decks: an initial version rescued 124 previously
+    zero-active-signal commanders in one pass, and a spot check of that
+    set found two real false-positive shapes before the final version
+    shipped — see the Fixed section below.
+  - Verified against the real seeded database:
+    `watcher-in-the-water.txt`'s Card Draw theme (37 cards) reports
+    complete, with its multiplier slot naming exactly the three cards its
+    own corpus note already called out by hand. `miles.txt`'s Card Draw
+    theme (11 cards) reports incomplete, missing only payoffs — consistent
+    with its own corpus note naming "draw engine" specifically.
+  - Re-measured with Phase F's coverage report: 653 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    761 — by far the largest single movement this number has ever seen,
+    consistent with "draw a card" being one of the most common templated
+    effects in the game.
 
 ### Fixed
 
+- **Signal engine — `cardDraw`'s `produces` matched a third-person "draws"
+  naming only an opponent as its subject, and separately matched a
+  replacement effect that never causes a draw at all.** Both found
+  checking the full legal card pool before shipping, not just the two
+  grounding decks — an initial version that matched `draws?`
+  unconditionally rescued 124 previously zero-active-signal commanders in
+  one pass, and a spot check of that set found both shapes directly.
+  - Third-person "draws" (with the `-s`) grammatically needs an explicit
+    subject, and that subject decides who benefits — "that player...
+    draws a card" (Vendilion Clique, replacing a card it just made a
+    player discard) or "each opponent draws a card" (Mathas, Fiend
+    Seeker's own bounty handing opponents a card as a downside) never
+    benefit you, unlike the bare imperative "draw" (no `-s`) standard MTG
+    templating already uses for an effect that's yours, or "each player
+    draws" which includes you. Fixed by splitting `produces` on that
+    grammatical distinction rather than a distance- or player-name-based
+    heuristic, neither of which survives Vendilion Clique's subject and
+    verb sitting on opposite ends of a three-verb sentence.
+  - A *replacement* effect ("if/when \[someone\] would draw a card,
+    \[something else happens\] instead") never causes a draw at all,
+    whoever its subject is — Eruth, Tormented Prophet turns your own
+    draws into a different kind of card access entirely, and Urabrask,
+    Heretic Praetor taxes an opponent's draw into something else. A new,
+    broader `CARD_DRAW_REPLACEMENT` excludes the whole family from
+    `produces`; the narrower `CARD_DRAW_REPLACEMENT_AMPLIFIES`
+    (specifically "draw two/three/N cards instead") is what still earns
+    `amplifies` for the three real doublers (Teferi's Ageless Insight,
+    Thought Reflection, Alhammarret's Archive).
+  - A full re-check after both fixes (108 commanders rescued by `cardDraw`
+    alone) found no further false positives, including legitimately
+    ambiguous shapes that were checked and correctly kept: Edric,
+    Spymaster of Trest's "its controller may draw a card" is a genuinely
+    symmetric attacks-matter effect, and Ludevic, Necro-Alchemist's "that
+    player may draw a card" is keyed to each player's own end step in
+    turn.
 - **Signal engine — a wildcard kindred card backed every kindred-caring
   commander in the pool, not just the deck's own themes.** Found verifying
   wildcard kindred above, before merging, by running the real First Sliver

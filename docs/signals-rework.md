@@ -191,10 +191,39 @@ exactly, with no false positives elsewhere in the corpus. Re-measured after ship
 commander-eligible cards now produce zero active signals**, down from 770.
 
 **Phase C2 is now complete** — all seven archetypes (`lifegain`, `gameState`, `drain`,
-`cyclingDiscard`, `temporaryEffects`, `recursion`, `tapForValue`) shipped and merged. Per the
-Sequencing section below, Phase C3 is next (`burn`, `bigMana`, `powerMatters`, `cardDraw`,
-`graveyardToolbox`, `monoColorDevotion`, `pillowfort`), re-measuring with Phase F's coverage report
-before starting.
+`cyclingDiscard`, `temporaryEffects`, `recursion`, `tapForValue`) shipped and merged. Phase C3's own
+tier row had no visible grounding at the time (no description, no named decks or cards, unlike every
+earlier tier), so — per the repo owner's own decision — the plan moved to **Phase E** instead of
+guessing at it. Phase E (wildcard kindred, Changeling, the kindred lifecycle) is now also complete;
+see its own section below.
+
+**Phase C3 policy, set by the repo owner once Phase E finished: build ahead of named-deck
+confirmation rather than wait on it for every remaining archetype.** Real oracle text, pulled from
+the seeded database, stays the only thing any matcher is ever written against — that discipline does
+not relax — and every new archetype is still checked against the full legal card pool for false
+positives before it ships. What changes is only whether a named deck in the corpus is confirmed to
+build around it; `archetypes.md`'s own "Grounding: vetted vs inferred" section is the full policy and
+applies retroactively to every archetype in this document, not just the new ones.
+
+That policy shift also prompted a re-check of Phase C3's own tier row against `archetypes.md`'s
+corpus table — and turned up a correction: six of Phase C3's seven archetypes were never actually
+ungrounded. `burn` (kalamax.txt), `bigMana` and `graveyardToolbox` (trazyn.txt, one deck backing
+both), `powerMatters` (radagast.txt), `cardDraw` (watcher-in-the-water.txt, primary; miles.txt,
+secondary), and `pillowfort` (yshtola.txt) are all named explicitly in that table's own "Confirmed
+axes" column — the "zero grounding" read came from the tier row alone, which never named decks, not
+from checking the corpus table underneath it. Only `monoColorDevotion` is genuinely ungrounded so
+far, confirmed by a direct search (`grep -il devotion` across every fixture's comments and body, zero
+hits) rather than assumed absent.
+
+**`cardDraw` is shipped, the first of Phase C3's archetypes.** See `archetypes.md`'s own entry for
+the full account, including the two real false-positive shapes a full-card-pool sweep found before it
+shipped (a third-person "draws" naming only an opponent as its subject; a replacement effect that
+redirects a draw into something else entirely) — checking the full pool, not just the two grounding
+decks, is what caught both. Re-measured with Phase F's coverage report: **653 of 4,049**
+commander-eligible cards now produce zero active signals, down from 761 — by far the largest single
+movement this coverage number has ever seen, consistent with "draw a card" being one of the most
+common templated effects in the game rather than a sign of over-matching (the false-positive sweep
+above is what actually rules out over-matching, not the size of the number alone).
 
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.

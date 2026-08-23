@@ -515,6 +515,26 @@ describe('analyzeDeck', () => {
     assert.ok(theme.slots.every((s) => s.filled));
   });
 
+  it('a Card Draw deck with engines but no payoff or multiplier reads as incomplete', () => {
+    const { owned, signals } = deckOf(themed('cardDraw', 3, ['produces'], 'e'));
+    const theme = analyzeDeck(owned, signals).themes[0]!;
+    assert.strictEqual(theme.complete, false);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'engines')?.filled, true);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'payoff')?.filled, false);
+    assert.strictEqual(theme.slots.find((s) => s.key === 'multiplier')?.filled, false);
+  });
+
+  it('every Card Draw slot filled reads as complete', () => {
+    const { owned, signals } = deckOf([
+      ...themed('cardDraw', 3, ['produces'], 'e'),
+      ...themed('cardDraw', 2, ['rewards'], 'p'),
+      ...themed('cardDraw', 1, ['amplifies'], 'm'),
+    ]);
+    const theme = analyzeDeck(owned, signals).themes[0]!;
+    assert.strictEqual(theme.complete, true);
+    assert.ok(theme.slots.every((s) => s.filled));
+  });
+
   it('cards that merely have a keyword do not make it a theme', () => {
     // "Cares, not shares", applied to the list rather than the commander: a
     // graveyard deck with four fliers in it is not a Flying deck.

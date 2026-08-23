@@ -283,6 +283,33 @@ export const LIFECYCLES: LifecycleSpec[] = [
       },
     ],
   },
+  {
+    archetype: 'cardDraw',
+    label: 'Card Draw',
+    slots: [
+      {
+        key: 'engines',
+        label: 'Draw engines',
+        description: 'Repeatable ways to draw extra cards, not just one big spell.',
+        roles: ['produces'],
+        minimum: 3,
+      },
+      {
+        key: 'payoff',
+        label: 'Payoffs',
+        description: 'Cards that reward drawing extra cards, not just having them.',
+        roles: ['rewards'],
+        minimum: 2,
+      },
+      {
+        key: 'multiplier',
+        label: 'Multipliers',
+        description: 'Effects that double every draw outright. Optional, but the ceiling of the deck.',
+        roles: ['amplifies'],
+        minimum: 1,
+      },
+    ],
+  },
 ];
 
 /**
