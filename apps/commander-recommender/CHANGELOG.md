@@ -623,6 +623,36 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     tag `produces`.
   - Re-measured with Phase F's coverage report: 591 of 4,049
     commander-eligible cards now produce zero active signals, down from 653.
+- **Signal engine, Phase C3 — `bigMana` and `graveyardToolbox` archetypes.**
+  See `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own
+  entries. One deck, trazyn.txt, whose own confirmed axes name both
+  directly ("graveyard toolbox, big mana into X"). Both
+  `definingRole: produces`, no separate payoff role — same shape as
+  `freeSpells`.
+  - `bigMana`'s `produces` is three or more mana symbols back to back
+    (Basalt Monolith, Thran Dynamo's "Add {C}{C}{C}"; Dark Ritual's burst
+    "Add {B}{B}{B}") or the word-count shape for the same thing (Gilded
+    Lotus, Sceptre of Eternal Glory's "Add three mana of any one color";
+    Klauth, Unrivaled Ancient's "add X mana"). Deliberately excludes Sol
+    Ring/Arcane Signet/Mind Stone-shaped one- or two-mana rocks —
+    format-wide staples, not evidence of a big-mana plan.
+  - `graveyardToolbox`'s `produces` covers returning a flexible card choice
+    from the graveyard to hand (Codex Shredder, Takenuma, Abandoned Mire's
+    Channel ability) and reading a whole graveyard's activated abilities
+    without moving anything (Trazyn's own commander ability; Mirran
+    Safehouse's identical template for lands). Deliberately distinct from
+    `reanimator`'s "return ... to the battlefield" pattern.
+  - Checked against the full legal card pool before shipping: 5 previously
+    zero-active-signal commanders rescued by `bigMana` alone, 9 by
+    `graveyardToolbox` alone — see the Fixed section below for a real bug
+    the sweep caught before shipping.
+  - Verified against the real seeded database: trazyn.txt's own five
+    `bigMana` cards (Basalt Monolith, Dark Ritual, Gilded Lotus, Sceptre of
+    Eternal Glory, Thran Dynamo) and three `graveyardToolbox` cards (Codex
+    Shredder, Takenuma, Trazyn the Infinite) all tag `produces`.
+  - Re-measured with Phase F's coverage report: 576 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    591.
 
 ### Fixed
 
@@ -675,6 +705,16 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   playable commander, among them. Fixed by keying the exclusion to the
   doubler's actual "would deal damage ... instead" replacement shape
   instead of the ambiguous phrase alone.
+- **Signal engine — `graveyardToolbox`'s retrieval pattern didn't
+  distinguish a card that only ever retrieves itself from one that offers a
+  real choice among different cards.** "Return this card from your
+  graveyard to your hand" (Squee, Goblin Nabob; Adéwalé, Breaker of Chains)
+  and "return target card from your graveyard to your hand" (Codex
+  Shredder; Hanna, Ship's Navigator) share every word except the one that
+  matters — the first is repeatable self-recursion, not the flexible,
+  many-cards resource this archetype means. Found checking the full card
+  pool before shipping. Fixed with an explicit "return this card"
+  exclusion.
 - **Signal engine — a wildcard kindred card backed every kindred-caring
   commander in the pool, not just the deck's own themes.** Found verifying
   wildcard kindred above, before merging, by running the real First Sliver
