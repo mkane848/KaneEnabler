@@ -1881,3 +1881,122 @@ describe('Game State: shared state read and written across control, not owned by
     assert.strictEqual(find(signalsFor(solRing), 'gameState'), undefined);
   });
 });
+
+describe('Lifegain: gaining life on purpose, and the payoffs that read it', () => {
+  it('produces from a direct "you gain N life" effect', () => {
+    // Soul Warden — real oracle text.
+    const soulWarden = makeCard({
+      name: 'Soul Warden',
+      type_line: 'Creature — Human Cleric',
+      oracle_text: 'Whenever another creature enters, you gain 1 life.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(soulWarden), 'lifegain'), ['produces']);
+  });
+
+  it('produces from granting lifelink to another permanent, not just having it', () => {
+    // Basilisk Collar — real oracle text. The Equipment itself has no
+    // Lifelink keyword of its own; it grants lifelink to whatever it's
+    // attached to.
+    const basiliskCollar = makeCard({
+      name: 'Basilisk Collar',
+      type_line: 'Artifact — Equipment',
+      keywords: '["Equip"]',
+      oracle_text:
+        'Equipped creature has deathtouch and lifelink. (Any amount of damage it deals to a creature ' +
+        'is enough to destroy it. Damage dealt by this creature also causes you to gain that much ' +
+        'life.)\nEquip {2} ({2}: Attach to target creature you control. Equip only as a sorcery.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(basiliskCollar), 'lifegain'), ['produces']);
+  });
+
+  it('does not produce merely by mentioning a creature that already has lifelink', () => {
+    // Duskfang Mentor — real oracle text, second ability only. Regression
+    // guard: "each creature you control with lifelink" selects existing
+    // lifelink creatures for a payoff, it doesn't grant lifelink to
+    // anything, so it must not register as production.
+    const duskfangMentorSecondAbility = makeCard({
+      name: 'Duskfang Mentor',
+      type_line: 'Creature — Vampire Cleric',
+      oracle_text: '{1}{B}, {T}: Put a +1/+1 counter on each creature you control with lifelink.',
+    });
+    assert.strictEqual(find(signalsFor(duskfangMentorSecondAbility), 'lifegain'), undefined);
+  });
+
+  it('rewards whenever life is gained', () => {
+    // Elenda's Hierophant — real oracle text.
+    const eldensHierophant = makeCard({
+      name: "Elenda's Hierophant",
+      type_line: 'Creature — Vampire Cleric',
+      keywords: '["Flying"]',
+      oracle_text:
+        'Flying\nWhenever you gain life, put a +1/+1 counter on this creature.\nWhen this creature ' +
+        'dies, create X 1/1 white Vampire creature tokens with lifelink, where X is its power.',
+    });
+    const roles = rolesOf(signalsFor(eldensHierophant), 'lifegain');
+    // Also produces: the death trigger creates lifelink tokens.
+    assert.deepStrictEqual(roles, ['produces', 'rewards']);
+  });
+
+  it('rewards a bare "if you gained life this turn" conditional, not just a named threshold', () => {
+    // Bre of Clan Stoutarm — real oracle text, the commander whose deck
+    // motivated this archetype (docs/archetypes.md's keyword-shadow table:
+    // her deck's real theme is Lifegain, previously reported as Lifelink).
+    const bre = makeCard({
+      name: 'Bre of Clan Stoutarm',
+      type_line: 'Legendary Creature — Dwarf Berserker',
+      oracle_text:
+        '{1}{W}, {T}: Another target creature you control gains flying and lifelink until end of turn.\n' +
+        "At the beginning of your end step, if you gained life this turn, exile cards from the top of " +
+        "your library until you exile a nonland card. You may cast that card without paying its mana " +
+        "cost if the spell's mana value is less than or equal to the amount of life you gained this " +
+        'turn. Otherwise, put it into your hand.',
+    });
+    const roles = rolesOf(signalsFor(bre), 'lifegain');
+    // Also produces: her activated ability grants lifelink.
+    assert.deepStrictEqual(roles, ['produces', 'rewards']);
+  });
+
+  it('rewards an exact-threshold conditional', () => {
+    // The Book of Exalted Deeds — real oracle text.
+    const bookOfExaltedDeeds = makeCard({
+      name: 'The Book of Exalted Deeds',
+      type_line: 'Legendary Artifact — Book',
+      oracle_text:
+        'At the beginning of your end step, if you gained 3 or more life this turn, create a 3/3 white ' +
+        'Angel creature token with flying.\n{W}{W}{W}, {T}, Exile The Book of Exalted Deeds: Put an ' +
+        'enlightened counter on target Angel. It gains "You can\'t lose the game and your opponents ' +
+        'can\'t win the game." Activate only as a sorcery.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(bookOfExaltedDeeds), 'lifegain'), ['rewards']);
+  });
+
+  it('amplifies a "would gain life ... instead" doubler', () => {
+    // Angel of Vitality — real oracle text.
+    const angelOfVitality = makeCard({
+      name: 'Angel of Vitality',
+      type_line: 'Creature — Angel',
+      keywords: '["Flying"]',
+      oracle_text:
+        'Flying\nIf you would gain life, you gain that much life plus 1 instead.\nThis creature gets ' +
+        '+2/+2 as long as you have 25 or more life.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(angelOfVitality), 'lifegain'), ['amplifies']);
+  });
+
+  it('does not amplify an opponent-facing lifegain denial effect', () => {
+    // Tainted Remedy — real oracle text. "An opponent" would gain life, not
+    // "you" — this is hate for an opposing lifegain plan, not an amplifier
+    // for this deck's own.
+    const taintedRemedy = makeCard({
+      name: 'Tainted Remedy',
+      type_line: 'Enchantment',
+      oracle_text: 'If an opponent would gain life, that player loses that much life instead.',
+    });
+    assert.strictEqual(find(signalsFor(taintedRemedy), 'lifegain'), undefined);
+  });
+
+  it('does not fire on a card with no lifegain text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'lifegain'), undefined);
+  });
+});
