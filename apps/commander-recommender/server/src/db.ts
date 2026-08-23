@@ -219,6 +219,26 @@ export function findCardsBySignals(keys: SignalKey[]): Map<string, SignalCandida
     const cacheKey = signalKey(key);
     if (map.has(cacheKey)) continue;
 
+    // Kindred's own wildcard (docs/signals-rework.md Phase E): a card
+    // reading "choose a creature type" is stored as `kindred:*` and
+    // supports every kindred qualifier, so a qualified kindred lookup also
+    // pulls those rows in — the same relation `groupByTheme` and
+    // `ownSignalContains` fold, just done in SQL since this is the
+    // candidate-lookup path rather than the analysis path.
+    //
+    // Unlike groupByTheme's fold and gateWildcardKindredSupporters
+    // (synergy.ts), this join has no structural-depth gate of its own — and
+    // does not need one. Its only caller for kindred keys is packages.ts's
+    // requiredSignalKeys, which only ever asks for a `kindred:Type` key that
+    // is already a *reported* DeckTheme, i.e. one that already cleared
+    // groupByTheme's gate. Kindred also has no lifecycle (lifecycleFor
+    // returns undefined), so it's never a crossArchetypeSlot source either —
+    // there is no path that reaches this branch for a type the gate above
+    // would have rejected. If kindred ever gains a lifecycle, or another
+    // caller starts requesting kindred candidates for an ungated qualifier,
+    // this reasoning needs re-checking.
+    const includeWildcard = key.archetype === 'kindred' && !!key.qualifier && key.qualifier !== '*';
+
     // IS NOT DISTINCT FROM would be tidier, but SQLite's `IS` already treats
     // NULL as a comparable value, which is exactly what unqualified
     // archetypes need.
@@ -228,18 +248,25 @@ export function findCardsBySignals(keys: SignalKey[]): Map<string, SignalCandida
          FROM card_signals
          JOIN cards ON cards.oracle_id = card_signals.oracle_id
          WHERE card_signals.archetype = ?
-           AND card_signals.qualifier IS ?
+           AND (card_signals.qualifier IS ? OR (? = 1 AND card_signals.qualifier = '*'))
            AND cards.legality_commander = 'legal'`,
       )
-      .all(key.archetype, key.qualifier ?? null) as (CardRow & { signal_roles: string })[];
+      .all(key.archetype, key.qualifier ?? null, includeWildcard ? 1 : 0) as (CardRow & {
+      signal_roles: string;
+    })[];
 
-    map.set(
-      cacheKey,
-      rows.map(({ signal_roles, ...row }) => ({
+    // A card could in principle carry both the exact-qualifier row and the
+    // wildcard row (a literal Sliver that also reads "choose a creature
+    // type"); dedupe by oracle_id rather than double-list it.
+    const byOracleId = new Map<string, SignalCandidate>();
+    for (const { signal_roles, ...row } of rows) {
+      if (byOracleId.has(row.oracle_id)) continue;
+      byOracleId.set(row.oracle_id, {
         row: row as CardRow,
         roles: JSON.parse(signal_roles) as SignalMatch['roles'],
-      })),
-    );
+      });
+    }
+    map.set(cacheKey, [...byOracleId.values()]);
   }
 
   return map;

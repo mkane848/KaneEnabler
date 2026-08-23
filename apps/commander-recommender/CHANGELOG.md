@@ -453,9 +453,57 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     now produce zero active signals, down from 770.
   - **This completes Phase C2** — all seven archetypes shipped and
     merged.
+- **Signal engine, Phase E (part 1) — wildcard kindred (`*`).** See
+  `docs/signals-rework.md` Phase E. Cards reading `"choose a creature
+  type"` (Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree
+  City, Secluded Courtyard, Unclaimed Territory, Realmwalker) or the
+  dynamic equivalent (Path of Ancestry's `"shares a creature type with
+  your commander"`) now support *every* kindred theme in the list instead
+  of registering as nothing. `ownSignalContains` (synergy.ts) accepts
+  `qualifier === '*'` alongside its existing unqualified case, fixing
+  `supporterMatches` and `playsDefiningRole` together; `groupByTheme`
+  (deckAnalysis.ts) folds a wildcard group's participants into every real
+  kindred group and drops the wildcard group itself; `findCardsBySignals`
+  (db.ts) does the equivalent join in SQL for the suggestion-fill path.
+  Verified against the real seeded database: `first-sliver.txt` now
+  reports `Sliver Kindred (56)` (was 48) with all 8 wildcard cards
+  present. This catalog's original claim was ten wildcard cards; only
+  eight were confirmed by direct database search — see
+  `docs/archetypes.md`'s "Known tensions" for that gap and for
+  Realmwalker's Changeling keyword, not yet honoured (Phase E's next
+  item). Re-measured with Phase F's coverage report: 763 of 4,049
+  commander-eligible cards now produce zero active signals, down from
+  764.
 
 ### Fixed
 
+- **Signal engine — a wildcard kindred card backed every kindred-caring
+  commander in the pool, not just the deck's own themes.** Found verifying
+  wildcard kindred above, before merging, by running the real First Sliver
+  corpus deck through both the deck-summary and the commander-scoring
+  paths — not just the detection unit tests. Two instances of the same
+  bug, at two layers:
+  - **Deck summary (`groupByTheme`, deckAnalysis.ts).** An ungated fold
+    read three of the deck's own incidental type mentions (Realmwalker's
+    printed Shapeshifter type, Sliver Overlord's printed Mutant type,
+    Forbidden Orchard's opponent-facing Spirit token) as real membership,
+    then let the deck's 8 wildcard cards inflate each into a full phantom
+    theme — `Shapeshifter Kindred (8)`, `Mutant Kindred (9)`, `Spirit
+    Kindred (9)` — out of one incidental card apiece that nobody actually
+    built around.
+  - **Commander scoring (`scoreCommanders`, synergy.ts) — more severe.**
+    With no bucket-level view of how deep any given qualifier actually is,
+    the same 8 cards backed *every* kindred-caring commander in the whole
+    candidate pool: commanders for types the list owned zero real cards of
+    (Kithkin, Ooze, Mercenary, Archer, dozens more) each scored "8
+    supporting cards", drowning out the deck's one genuine 56-card Sliver
+    signal in the ranking.
+  - Both fixed with the same rule, applied separately at each layer: a
+    wildcard card only counts toward a qualifier once that qualifier
+    already has real, non-wildcard structural depth of its own. New
+    `gateWildcardKindredSupporters` (synergy.ts) does this for scoring,
+    exempting only the rare commander whose own signal genuinely *is* the
+    wildcard (Kolvori, God of Kinship; Morophon, the Boundless).
 - **Signal engine — `gameState`'s initiative reward matcher missed its own
   motivating card.** Found verifying the `gameState` archetype above:
   the first draft matched only `"if you've"`/`"if you have" the

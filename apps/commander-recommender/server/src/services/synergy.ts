@@ -227,6 +227,13 @@ function unitSignals(
  * Elf kindred signal) does not. Shared by `supporterMatches` (which cards can
  * be cited at all) and `playsDefiningRole` (which of those cards care about
  * it) — the same relation, used twice.
+ *
+ * `qualifier === '*'` is kindred's own wildcard (Herald's Horn, Vanquisher's
+ * Banner — docs/signals-rework.md Phase E): a card reading "choose a
+ * creature type" supports every kindred qualifier the same way an
+ * unqualified signal does, so it's accepted here too. No other archetype
+ * ever produces a `'*'` qualifier, so this is safe to check unconditionally
+ * rather than gating it on `archetype === 'kindred'`.
  */
 function ownSignalContains(
   ownSignals: SignalMatch[],
@@ -234,7 +241,9 @@ function ownSignalContains(
   qualifier: string | undefined,
 ): SignalMatch | undefined {
   return ownSignals.find(
-    (s) => s.archetype === archetype && (s.qualifier === undefined || s.qualifier === qualifier),
+    (s) =>
+      s.archetype === archetype &&
+      (s.qualifier === undefined || s.qualifier === '*' || s.qualifier === qualifier),
   );
 }
 
@@ -316,6 +325,43 @@ const DEEP_SIGNAL_COUNT = 5;
 // theme; the bonus is measured in the cards themselves.
 const DEPTH_BONUS_PER_CARD = 1;
 
+/**
+ * Drops kindred's own wildcard cards ("choose a creature type") from a
+ * qualifier's supporter list unless the deck already has real structural
+ * depth in that type — the same relation `groupByTheme` (deckAnalysis.ts)
+ * gates its wildcard fold on, applied here to scoring instead of deck
+ * summary.
+ *
+ * `ownSignalContains` lets a wildcard card support *any* kindred qualifier,
+ * which is correct in principle (it would genuinely help whichever type gets
+ * chosen) — but left ungated, every wildcard card in the list backs *every*
+ * kindred-caring commander in the entire pool at once. Verified against the
+ * real First Sliver corpus deck: its 8 flexible tribal engines (Herald's
+ * Horn, Vanquisher's Banner, etc.) gave commanders for types the deck owns
+ * zero real cards of — Kithkin, Ooze, Mercenary, Archer — "8 supporting
+ * cards" apiece, which drowned out every real kindred signal in the
+ * suggestion pool. A wildcard card only counts once the qualifier already
+ * has real bodies of its own.
+ */
+function gateWildcardKindredSupporters(
+  supporters: OwnedCard[],
+  qualifier: string,
+  signalsByCard: Map<string, SignalMatch[]>,
+): OwnedCard[] {
+  const isRealBody = (entry: OwnedCard) =>
+    (signalsByCard.get(entry.row.oracle_id) ?? []).some(
+      (s) => s.archetype === 'kindred' && s.qualifier === qualifier && s.roles.includes('is'),
+    );
+  if (supporters.filter(isRealBody).length >= MIN_SIGNAL_COUNT) return supporters;
+
+  const isWildcardOnly = (entry: OwnedCard) => {
+    const own = signalsByCard.get(entry.row.oracle_id) ?? [];
+    const hasRealSignal = own.some((s) => s.archetype === 'kindred' && s.qualifier === qualifier);
+    return !hasRealSignal && own.some((s) => s.archetype === 'kindred' && s.qualifier === '*');
+  };
+  return supporters.filter((entry) => !isWildcardOnly(entry));
+}
+
 // Each signal past the strongest is discounted by this factor, so a wide,
 // generic spread of archetypes can no longer out-accumulate one deep,
 // specific synergy. An infinite run of equal signals converges to
@@ -375,7 +421,7 @@ export function scoreCommanders(
     const matched: { signal: SignalMatch; cards: SupportingCard[] }[] = [];
     for (const signal of active) {
       const bucket = profile.archetypeCards[signal.archetype] ?? [];
-      const supporters = bucket.filter(
+      let supporters = bucket.filter(
         (entry) =>
           fitsIdentity(entry) &&
           supporterMatches(
@@ -384,6 +430,9 @@ export function scoreCommanders(
             profile.signalsByCard.get(entry.row.oracle_id) ?? [],
           ),
       );
+      if (signal.archetype === 'kindred' && signal.qualifier && signal.qualifier !== '*') {
+        supporters = gateWildcardKindredSupporters(supporters, signal.qualifier, profile.signalsByCard);
+      }
       if (supporters.length < MIN_SIGNAL_COUNT) continue;
 
       // Membership counts cards; caring makes a theme. A signal citing

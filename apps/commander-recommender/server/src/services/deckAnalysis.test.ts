@@ -213,6 +213,58 @@ describe('analyzeDeck', () => {
     assert.deepStrictEqual(analyzeDeck(owned, signals).themes, []);
   });
 
+  // --- kindred's own wildcard: same fold, gated by real depth -----------------
+
+  it('a wildcard kindred card joins an already-substantial group and forms none of its own', () => {
+    // Herald's Horn, in miniature: "choose a creature type" supports every
+    // kindred qualifier, the same relation as the unqualified fold above —
+    // but only once the target group already has real bodies of its own.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 4; i++) {
+      const row = makeCard(`Goblin ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is'], 'Goblin')]);
+    }
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Goblin Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Goblin')]);
+    }
+    const wildcard = makeCard("Herald's Horn");
+    owned.push({ row: wildcard, quantity: 1 });
+    signals.set(wildcard.oracle_id, [signal('kindred', ['rewards'], '*')]);
+
+    const themes = analyzeDeck(owned, signals).themes;
+    assert.strictEqual(themes.length, 1);
+    assert.strictEqual(themes[0]!.label, 'kindred (Goblin)');
+    assert.strictEqual(themes[0]!.cardCount, 7);
+    assert.ok(themes[0]!.cards.some((c) => c.name === "Herald's Horn"));
+  });
+
+  it('a wildcard kindred card does not manufacture a theme from one incidental sighting', () => {
+    // The regression this gate exists for: against the real First Sliver
+    // corpus deck, an ungated fold let a handful of wildcard cards' 'rewards'
+    // role clear kindred's own definingRequirement (minimum 2) on a type the
+    // deck touched only once and never actually cared about — Realmwalker is
+    // a printed Shapeshifter, Sliver Overlord a printed Mutant. Reproduced
+    // here with the minimum that trips it: one real member, two wildcard
+    // cards, no 'is' depth to justify a theme.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    const solo = makeCard('Realmwalker');
+    owned.push({ row: solo, quantity: 1 });
+    signals.set(solo.oracle_id, [signal('kindred', ['is'], 'Shapeshifter')]);
+
+    for (let i = 0; i < 2; i++) {
+      const wildcard = makeCard(`Wildcard ${i}`);
+      owned.push({ row: wildcard, quantity: 1 });
+      signals.set(wildcard.oracle_id, [signal('kindred', ['rewards'], '*')]);
+    }
+
+    assert.deepStrictEqual(analyzeDeck(owned, signals).themes, []);
+  });
+
   it('cards within a theme are listed in curve order', () => {
     const { owned, signals } = deckOf(
       [

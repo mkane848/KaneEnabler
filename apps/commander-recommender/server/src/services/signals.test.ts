@@ -234,6 +234,103 @@ describe('token makers are kindred cards', () => {
   });
 });
 
+describe('kindred\'s own wildcard: "choose a creature type" supports every theme, forms none of its own', () => {
+  it('cost reduction and library-peek scoped to the chosen type are enables + produces', () => {
+    // Herald's Horn — real oracle text.
+    const horn = makeCard({
+      name: "Herald's Horn",
+      type_line: 'Artifact',
+      oracle_text:
+        'As this artifact enters, choose a creature type.\n' +
+        'Creature spells you cast of the chosen type cost {1} less to cast.\n' +
+        "At the beginning of your upkeep, look at the top card of your library. If it's a " +
+        'creature card of the chosen type, you may reveal it and put it into your hand.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(horn), 'kindred', '*'), ['enables', 'produces']);
+  });
+
+  it('an anthem and a cast trigger scoped to the chosen type are rewards', () => {
+    // Vanquisher's Banner — real oracle text.
+    const banner = makeCard({
+      name: "Vanquisher's Banner",
+      type_line: 'Artifact',
+      oracle_text:
+        'As this artifact enters, choose a creature type.\n' +
+        'Creatures you control of the chosen type get +1/+1.\n' +
+        'Whenever you cast a creature spell of the chosen type, draw a card.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(banner), 'kindred', '*'), ['rewards']);
+  });
+
+  it('mana restricted to spending on the chosen type is enables', () => {
+    // Unclaimed Territory — real oracle text.
+    const territory = makeCard({
+      name: 'Unclaimed Territory',
+      type_line: 'Land',
+      oracle_text:
+        'As this land enters, choose a creature type.\n' +
+        '{T}: Add {C}.\n' +
+        '{T}: Add one mana of any color. Spend this mana only to cast a creature spell of the ' +
+        'chosen type.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(territory), 'kindred', '*'), ['enables']);
+  });
+
+  it('scrying on a spell that shares a type with the commander is the wildcard trigger, not a name match', () => {
+    // Path of Ancestry — real oracle text. Never says "choose a creature
+    // type" at all; it reads its commander's type dynamically instead, but
+    // the effect is the same shape.
+    const path = makeCard({
+      name: 'Path of Ancestry',
+      type_line: 'Land',
+      oracle_text:
+        'This land enters tapped.\n' +
+        "{T}: Add one mana of any color in your commander's color identity. When that mana is " +
+        'spent to cast a creature spell that shares a creature type with your commander, scry 1.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(path), 'kindred', '*'), ['rewards']);
+  });
+
+  it("a printed type and the wildcard are independent signals on the same card", () => {
+    // Realmwalker — real oracle text. It is itself a Shapeshifter (`is`) and
+    // separately supports every other kindred theme in the deck (`*`,
+    // `produces` — casting from the top of the library scoped to the chosen
+    // type). Changeling is not yet honoured here — see Phase E's own
+    // Changeling sub-item — so this only asserts what detectKindred emits
+    // today, not the eventual "every creature type" reading.
+    const realmwalker = makeCard({
+      name: 'Realmwalker',
+      type_line: 'Creature — Shapeshifter',
+      creature_types: JSON.stringify(['Shapeshifter']),
+      oracle_text:
+        'Changeling (This card is every creature type.)\n' +
+        'As this creature enters, choose a creature type.\n' +
+        'You may look at the top card of your library any time.\n' +
+        'You may cast creature spells of the chosen type from the top of your library.',
+    });
+    const signals = signalsFor(realmwalker, ['Shapeshifter']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', 'Shapeshifter'), ['is']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', '*'), ['produces']);
+  });
+
+  it('a card naming a real type, not the chosen one, never gets a wildcard signal', () => {
+    // Sliver Overlord — real oracle text. A specific-type tutor/steal effect;
+    // nothing about it lets the caster choose a type, so it must stay a
+    // Sliver-only signal rather than also registering as the wildcard.
+    const overlord = makeCard({
+      name: 'Sliver Overlord',
+      type_line: 'Legendary Creature — Sliver Mutant',
+      creature_types: JSON.stringify(['Sliver', 'Mutant']),
+      oracle_text:
+        '{3}: Search your library for a Sliver card, reveal that card, put it into your hand, ' +
+        'then shuffle.\n' +
+        '{3}: Gain control of target Sliver. (This effect lasts indefinitely.)',
+    });
+    const signals = signalsFor(overlord, ['Sliver', 'Mutant']);
+    assert.strictEqual(find(signals, 'kindred', '*'), undefined);
+  });
+});
+
 describe('a bare word mention is not caring about the type', () => {
   it('a card ruling a type out is not a kindred payoff for it', () => {
     // Artificial Evolution — real oracle text. It explicitly forbids the

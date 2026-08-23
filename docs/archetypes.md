@@ -119,10 +119,18 @@ reanimation effect and two `reanimator:Zombie` effects. Grouped separately, both
 `MIN_THEME_CARDS` and **the deck's entire reanimation axis vanishes** — despite five reanimation
 spells. A card that reanimates _anything_ obviously reanimates Zombies.
 
-**Wildcard kindred (`*`).** Cards reading `"choose a creature type"` support _any_ kindred theme and
-form none of their own: Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree City,
-Secluded Courtyard, Unclaimed Territory, Path of Ancestry, Realmwalker. In the Sliver deck **ten
-cards that are the tribal engine do not currently register as Sliver cards at all.**
+**Wildcard kindred (`*`) — shipped.** Cards reading `"choose a creature type"` support _any_ kindred
+theme and form none of their own: Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree
+City, Secluded Courtyard, Unclaimed Territory, Path of Ancestry, Realmwalker (via `"shares a
+creature type with your commander"`'s dynamic variant, Path of Ancestry). Eight cards confirmed by
+textual search against the seeded database, one short of this section's original claim of "ten" —
+recorded here rather than silently rounded down; the other two, if real, weren't found by
+`"choose a creature type"` or the commander-sharing phrasing and may use different wording or may
+have been an overcount. All eight now register as Sliver cards: `first-sliver.txt` reports `Sliver
+Kindred (56)`, not the 48 it reported before this landed. See "Behaviours verified as correct"
+below for a severe regression this shipped with and fixed before merging — an ungated fold let these
+same eight cards inflate *every* kindred-caring commander in the whole pool, not just the deck's own
+themes.
 
 ### Counters are a family, not a keyword
 
@@ -410,12 +418,59 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   pattern (148 raw, 95 post-strip) — Royal Warden's Unearth ability contains that exact phrase in its
   own reminder text and correctly disappears once stripped, leaving genuinely repeatable cards like
   Prized Amalgam, Retrofitted Transmogrant, and Postmortem Professor.
+- **A wildcard card only supports a kindred qualifier the deck already has real depth in — not any
+  qualifier it happens to touch at all.** This distinction (conditional vs. unconditional
+  applicability) is why the wildcard fold needs its own gate where the pre-existing unqualified fold
+  (above) does not: Wilhelt's generic reanimation spell reanimates a Zombie unconditionally, no
+  exception, but Herald's Horn's benefit depends on which type the *player* chooses at deck-building
+  time — a fact the engine cannot observe, not a guaranteed textual claim. Found twice, at two
+  different layers, against the real First Sliver corpus deck:
+  - **Deck-summary layer (`groupByTheme`, deckAnalysis.ts).** An ungated fold read Realmwalker's own
+    printed type (`Creature — Shapeshifter`), Sliver Overlord's own printed type (`Legendary Creature
+    — Sliver Mutant`), and Forbidden Orchard's opponent-facing Spirit token as real membership, then
+    let the deck's 8 wildcard cards inflate each into a full theme — `"Shapeshifter Kindred (8)"`,
+    `"Mutant Kindred (9)"`, `"Spirit Kindred (9)"` — out of one incidental card apiece, none of which
+    the deck owner ever pointed a wildcard card at. Fixed by requiring a qualifier to already have
+    `MIN_THEME_CARDS` worth of real bodies (the `is` role, non-wildcard) before the wildcard fold
+    reaches it.
+  - **Scoring layer (`gateWildcardKindredSupporters`, synergy.ts) — the more severe of the two.**
+    `ownSignalContains`'s wildcard OR-clause (needed so `supporterMatches`/`playsDefiningRole` accept
+    a wildcard card as support at all) has no bucket-level view of how deep any given qualifier
+    actually is, so left as the only guard, the same 8 cards backed *every* kindred-caring commander
+    in the entire candidate pool — not just this deck's real Sliver theme. Commanders for types the
+    list owned zero real cards of scored a full `MIN_SIGNAL_COUNT`-clearing signal from the wildcard
+    cards alone: Kithkin, Ooze, Mercenary, Archer, and dozens of others each showed "8 supporting
+    cards" in `kindredSupport`, drowning out the deck's one genuine 56-card Sliver signal in the
+    ranking. Fixed the same way, applied to the commander-scoring bucket instead of the deck-summary
+    group: a wildcard card is dropped from a qualifier's supporter list unless that qualifier already
+    has `MIN_SIGNAL_COUNT` real (non-wildcard) bodies among the candidates. The two commanders that
+    legitimately keep `kindred:*` support (Kolvori, God of Kinship and Morophon, the Boundless — both
+    themselves read "choose a creature type") are exempted from the gate entirely, since their own
+    signal genuinely *is* the wildcard, not a specific type being backstopped by one.
+  - `findCardsBySignals`'s SQL-level wildcard join (db.ts, the suggestion-fill path) was checked and
+    needs no analogous gate of its own: its only caller for kindred keys only ever requests a
+    qualifier that is already a reported `DeckTheme`, i.e. one that already cleared `groupByTheme`'s
+    gate — see the comment on `includeWildcard` in `db.ts` for the full reasoning, and re-check it if
+    kindred ever gains a lifecycle or a new caller.
 
 ---
 
 ## Known tensions
 
 Recorded rather than resolved, because each is a real trade.
+
+**Wildcard kindred's role detection is grounded on 8 cards, and a 9th (Path of Ancestry) that
+matches a different phrasing entirely.** Every regex in `detectKindred`'s wildcard branch was
+written against the confirmed real text of those cards specifically — a future wildcard-kindred
+printing with different wording for its cost reduction, card selection, or anthem effect will
+silently produce zero wildcard roles (the card is detected as a wildcard trigger at all, but earns
+no `enables`/`produces`/`rewards`, so it never appears as support anywhere) rather than an error.
+This catalog's original claim was ten cards; only eight were confirmed by direct database search —
+recorded as a gap here rather than quietly rounded down, in case the other two are real cards using
+wording the current search missed. **Realmwalker's Changeling keyword is not yet honoured** —
+Phase E's own next sub-item — so it is currently read only as a printed Shapeshifter (`kindred:
+Shapeshifter[is]`) rather than "every creature type", which understates it in any deck that isn't
+actually a Shapeshifter tribal deck.
 
 **Reminder-stripping hides keyword-defined mechanics.** The fix above creates a false negative:
 Overcharged Amalgam's Exploit — a sacrifice outlet — mentions "sacrifice" _only_ in reminder text.

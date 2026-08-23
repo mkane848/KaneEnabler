@@ -447,6 +447,79 @@ describe('"cares, not shares", now enforced by the active-role rule', () => {
   });
 });
 
+describe("kindred's own wildcard is gated by real depth", () => {
+  // Regression coverage for a severe corpus-verified bug: `ownSignalContains`
+  // lets a "choose a creature type" card support any kindred qualifier, which
+  // is correct in principle — but left ungated at the scoring layer, a
+  // handful of wildcard cards backed *every* kindred-caring commander in the
+  // whole pool at once. Against the real First Sliver decklist (8 wildcard
+  // cards, real Sliver depth only), commanders for types the deck owned zero
+  // real cards of — Kithkin, Ooze, Mercenary, Archer — scored "8 supporting
+  // cards" apiece before the gate below (gateWildcardKindredSupporters,
+  // synergy.ts) was added. See also deckAnalysis.ts's groupByTheme, which
+  // gates the same relation for the deck-summary reading of this bug.
+  const wildcardCard = (name: string) =>
+    makeCard({
+      name,
+      type_line: 'Artifact',
+      color_identity: JSON.stringify(['G']),
+      oracle_text:
+        'As this artifact enters, choose a creature type.\n' +
+        'Creatures you control of the chosen type get +1/+1.',
+    });
+
+  it('a wildcard card alone does not back a commander for a type the list has no real members of', () => {
+    const oozeLord = makeCard({
+      name: 'Ooze Lord',
+      color_identity: JSON.stringify(['G']),
+      creature_types: JSON.stringify(['Ooze']),
+      oracle_text: 'Other Oozes you control get +1/+1.',
+    });
+    const wildcards = Array.from({ length: 3 }, (_, i) => wildcardCard(`Wildcard ${i}`));
+    const entries = wildcards.map((c) => owned(c));
+    const units = [solo(oozeLord)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
+    // No real Ooze in the list, so the wildcard cards alone must not clear
+    // even MIN_SIGNAL_COUNT for an Ooze signal — the commander gets no
+    // suggestion at all, not a weak one.
+    assert.deepStrictEqual(suggestions, []);
+  });
+
+  it('a wildcard card joins once the list already has real depth in that type', () => {
+    const oozeLord = makeCard({
+      name: 'Ooze Lord',
+      color_identity: JSON.stringify(['G']),
+      creature_types: JSON.stringify(['Ooze']),
+      oracle_text: 'Other Oozes you control get +1/+1.',
+    });
+    const oozes = Array.from({ length: 3 }, (_, i) =>
+      makeCard({
+        name: `Ooze ${i}`,
+        color_identity: JSON.stringify(['G']),
+        creature_types: JSON.stringify(['Ooze']),
+      }),
+    );
+    const wildcards = Array.from({ length: 2 }, (_, i) => wildcardCard(`Wildcard ${i}`));
+    const entries = [...oozes, ...wildcards].map((c) => owned(c));
+    const units = [solo(oozeLord)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
+    const kindred = suggestions[0]!.kindredSupport.find((k) => k.type === 'Ooze');
+    assert.ok(kindred);
+    // The three real Oozes plus both wildcard cards.
+    assert.strictEqual(kindred.cards.length, 5);
+  });
+});
+
 describe('qualifiers', () => {
   it('a subtype-restricted payoff still counts generic support, but not a bystander', () => {
     // A Sliver-restricted graveyard payoff is backed by every unrestricted
