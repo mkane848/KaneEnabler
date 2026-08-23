@@ -124,6 +124,26 @@ commander-eligible cards now produce zero active signals**, down from 797 — a 
 of these cards already had a signal via `selfMill` or elsewhere; the real win here is the new
 identity, not new catalog coverage.
 
+**`temporaryEffects` is shipped**, Phase C2's fifth archetype and Obeka's own — the deck the `enables`
+role itself was originally justified by ("Obeka — a whole deck whose thesis is three enablers", see
+the `enables`/`protects` section above). Also unqualified, but `definingRole: enables` rather than
+`produces` this time: the ~25 delayed-cost cards (Sneak Attack, Puppeteer Clique — `"sacrifice/exile/
+return it at the beginning of the next end step"`) are common, often-incidental staples that show up
+in many decks regardless of plan, but the enablers that erase that cleanup trigger before it fires
+(Obeka, Sundial of the Infinite, Glorious End: `"end the turn"`, CR's own rules action, distinct from
+the unrelated "until end of turn" duration) are the actual, rare identity — "those three are the
+deck" per archetypes.md's own framing. One real gap found and fixed before shipping, checked against
+the full card pool: Unearth, Encore, Dash, Blitz, Mobilize, and Warp all hide their *entire* cleanup
+template inside their own reminder text (Unearth's real oracle text has every word of what it does
+inside the parenthetical `stripReminderText` deletes), the identical problem Cascade/Suspend forced on
+`freeSpells` — a Kathari Bomber-style Unearth creature registered zero signal at all until `produces`
+started reading `TEMPORARY_EFFECT_KEYWORDS` off `CardFacts.keywords` directly, plus a granting-clause
+text pattern for a card that grants one of those keywords to others (Grixis) rather than having it
+itself — see archetypes.md's "Behaviours verified as correct". Verified against the full corpus:
+`obeka.txt` reports `Temporary Effects` as its top theme (27 cards, matching archetypes.md's own "~25"
+estimate almost exactly), and no other deck in the corpus false-positives on it. Re-measured after
+shipping: **777 of 4,049 commander-eligible cards now produce zero active signals**, down from 793.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

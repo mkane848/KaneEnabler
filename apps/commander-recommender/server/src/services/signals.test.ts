@@ -2169,3 +2169,115 @@ describe('Cycling / Discard: discarding cards on purpose as a resource', () => {
     assert.strictEqual(find(signalsFor(solRing), 'cyclingDiscard'), undefined);
   });
 });
+
+describe('Temporary Effects: delayed-cost cards and the enablers that erase the trigger', () => {
+  it('enables from Obeka herself — nothing in her text says "temporary"', () => {
+    // Obeka, Brute Chronologist — real oracle text. She has no delayed-cost
+    // clause of her own; her whole job is ending other cards' turns early.
+    const obeka = makeCard({
+      name: 'Obeka, Brute Chronologist',
+      type_line: 'Legendary Creature — Ogre Wizard',
+      oracle_text:
+        '{T}: The player whose turn it is may end the turn. (Exile all spells and abilities from the ' +
+        'stack. The player whose turn it is discards down to their maximum hand size. Damage wears ' +
+        'off, and "this turn" and "until end of turn" effects end.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(obeka), 'temporaryEffects'), ['enables']);
+  });
+
+  it('enables from Sundial of the Infinite, the archetype\'s other named eraser', () => {
+    // Sundial of the Infinite — real oracle text.
+    const sundial = makeCard({
+      name: 'Sundial of the Infinite',
+      type_line: 'Artifact',
+      oracle_text:
+        '{1}, {T}: End the turn. Activate only during your turn. (Exile all spells and abilities from ' +
+        'the stack. Discard down to your maximum hand size. Damage wears off, and "this turn" and ' +
+        '"until end of turn" effects end.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(sundial), 'temporaryEffects'), ['enables']);
+  });
+
+  it('produces from a delayed reanimation effect', () => {
+    // Sneak Attack — real oracle text.
+    const sneakAttack = makeCard({
+      name: 'Sneak Attack',
+      type_line: 'Enchantment',
+      oracle_text:
+        '{R}: You may put a creature card from your hand onto the battlefield. That creature gains ' +
+        'haste. Sacrifice the creature at the beginning of the next end step.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(sneakAttack), 'temporaryEffects'), ['produces']);
+  });
+
+  it('produces from Unearth, whose entire cleanup template hides in reminder text', () => {
+    // Kathari Bomber — real oracle text. Regression guard: Unearth's whole
+    // functional text lives inside its own parenthetical, which
+    // stripReminderText deletes — the bare "at the beginning of the next
+    // end step" text matcher never sees it, so this has to come from the
+    // literal Scryfall keyword instead.
+    const kathariBomber = makeCard({
+      name: 'Kathari Bomber',
+      type_line: 'Creature — Kithkin Rebel',
+      keywords: '["Flying","Unearth"]',
+      oracle_text:
+        'Flying\nWhen this creature deals combat damage to a player, create two 1/1 red Goblin ' +
+        'creature tokens and sacrifice this creature.\nUnearth {3}{B}{R} ({3}{B}{R}: Return this ' +
+        'card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of ' +
+        "the next end step or if it would leave the battlefield. Unearth only as a sorcery.)",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(kathariBomber), 'temporaryEffects'), ['produces']);
+  });
+
+  it('produces from granting Unearth to other cards, not just having it', () => {
+    // Grixis — real oracle text. The grant clause survives reminder
+    // stripping (it sits outside the parenthetical it introduces), so this
+    // needs its own text matcher rather than the keywords array.
+    const grixis = makeCard({
+      name: 'Grixis',
+      type_line: 'Legendary Land',
+      oracle_text:
+        'Blue, black, and/or red creature cards in your graveyard have unearth. The unearth cost is ' +
+        "equal to the card's mana cost. (Pay the card's mana cost: Return it to the battlefield. The " +
+        'creature gains haste. Exile it at the beginning of the next end step or if it would leave ' +
+        'the battlefield. Unearth only as a sorcery.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(grixis), 'temporaryEffects'), ['produces']);
+  });
+
+  it('produces and enables together on the same card', () => {
+    // Glorious End — real oracle text. Ends the turn (enables) and also
+    // carries its own delayed downside using the same template (produces).
+    const gloriousEnd = makeCard({
+      name: 'Glorious End',
+      type_line: 'Instant',
+      oracle_text:
+        'End the turn. (Exile all spells and abilities from the stack, including this card. The ' +
+        'player whose turn it is discards down to their maximum hand size. Damage wears off, and ' +
+        '"this turn" and "until end of turn" effects end.)\nAt the beginning of your next end step, ' +
+        'you lose the game.',
+    });
+    const roles = rolesOf(signalsFor(gloriousEnd), 'temporaryEffects');
+    assert.deepStrictEqual(roles, ['enables', 'produces']);
+  });
+
+  it('does not enable from an unrelated "extra turn" effect', () => {
+    // Alchemist's Gambit — real oracle text. Taking an extra turn is a
+    // different mechanic; it never says "end the turn".
+    const alchemistsGambit = makeCard({
+      name: "Alchemist's Gambit",
+      type_line: 'Sorcery',
+      oracle_text:
+        "Cleave {4}{U}{U}{R} (You may cast this spell for its cleave cost. If you do, remove the " +
+        'words in square brackets.)\nTake an extra turn after this one. During that turn, damage ' +
+        "can't be prevented. [At the beginning of that turn's end step, you lose the game.]\nExile " +
+        "Alchemist's Gambit.",
+    });
+    assert.strictEqual(find(signalsFor(alchemistsGambit), 'temporaryEffects'), undefined);
+  });
+
+  it('does not fire on a card with no temporary-effect text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'temporaryEffects'), undefined);
+  });
+});
