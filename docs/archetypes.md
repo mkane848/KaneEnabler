@@ -204,6 +204,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `drain`        | `produces` ×1    | No qualifier, same reasoning as `lifegain`. No separate payoff role — causing the life loss *is* the identity, same shape as `freeSpells`. Sanguine Bond/Vito's "whenever you gain life, opponent loses that much" is still `produces`, since their trigger reads a *different* resource (lifegain) — but a card whose trigger IS "an opponent loses life" itself (Exquisite Blood, Bloodthirsty Conqueror) is `rewards` only, since it reads someone else's loss rather than causing it; `DRAIN_TRIGGER_READS_LOSS` is the shared pattern both roles check to keep that split exact rather than double-counting. |
 | `cyclingDiscard` | `produces` ×1  | No qualifier. No separate payoff role, same shape as `drain`/`freeSpells` — discarding on purpose is the identity, not a means to some other reward. The Cycling keyword alone is `produces`; a card whose trigger IS discarding/cycling itself (Ivora's counter, Rielle's card draw) is `rewards` only via the same causes-vs-reads split `drain` uses, `CYCLING_DISCARD_TRIGGER_READS_DISCARD` playing `DRAIN_TRIGGER_READS_LOSS`'s role. Deliberately overlaps `selfMill` (a discarded card also fills the graveyard) rather than replacing it — see below for why that overlap is left alone. |
 | `temporaryEffects` | `enables` ×1 | No qualifier. `definingRole: enables`, not `produces` — the ~25 delayed-cost cards (Sneak Attack, Puppeteer Clique) are common, often-incidental staples across many decks, but the enablers that erase their cleanup trigger (Obeka, Sundial of the Infinite, Glorious End: `"end the turn"`) are the actual, rare identity — "those three are the deck" per the `enables` role's own motivating section above. Unearth/Encore/Dash/Blitz/Mobilize/Warp's entire cleanup template lives inside their own reminder text (the same problem Cascade/Suspend forced on `freeSpells`), so `produces` reads `CardFacts.keywords` for a card that has one of them and a granting-clause text pattern for a card that grants one to others. |
+| `recursion`    | `produces` ×1    | No qualifier. Persist/Undying (own keyword or granted via text — Isilu, Carrier of Twilight: "has persist"; Mikaeus, the Unhallowed: "have undying"), Gravecrawler's repeatable self-cast template, and Prized Amalgam's repeatable self-return trigger — all scoped, via the full card pool, to exclude Flashback/Escape/Unearth's *one-shot* "cast/return this card ... then exile it" shape, which is a different plan (graveyard value or `temporaryEffects`), not this. `amplifies`: the deck's own combo piece per the repo owner — a card that puts a +1/+1 counter on an *entering* creature (Cathars' Crusade: `"on each creature you control"`, not a card that only buffs itself) cancels Persist's own -1/-1 counter under CR 704.5q, letting the loop repeat instead of firing once. |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -220,7 +221,7 @@ deck is a guess.
 |        | ~~`drain`~~ **Shipped** — see "Shipping today" above                                                | 2      | Life loss as a _trigger_. Sanguine Bond and Vito are the bridge cards to `lifegain`                                                                                                   |
 |        | ~~`cyclingDiscard`~~ **Shipped** — see "Shipping today" above                                       | 3      | Discard as a resource, which the engine only sees as "mill"                                                                                                                           |
 |        | ~~`temporaryEffects`~~ **Shipped** — see "Shipping today" above                                     | 3      | Delayed-cost cards and the enablers that erase the trigger                                                                                                                            |
-|        | `recursion`                                                                                          | 3      | The same body returning repeatedly — distinct from `reanimator`'s "cheat something big into play"                                                                                     |
+|        | ~~`recursion`~~ **Shipped** — see "Shipping today" above                                            | 2      | The same body returning repeatedly — distinct from `reanimator`'s "cheat something big into play". Unlike this catalog's other entries, no corpus fixture comment named the motivating decks or the original "3" count's third deck; confirmed with the repo owner as `wilhelt.txt` and `eirdu.txt` before implementation — see "Behaviours verified as correct" below for the real interaction (Isilu's granted Persist + Cathars' Crusade's counter-cancel) that grounds it. |
 |        | `tapForValue`                                                                                        | 2      | Tapping and untapping your own permanents; also where combo _ingredients_ get classified                                                                                              |
 |        | ~~`gameState`~~ **Shipped** — see "Shipping today" above                                            | 6      | The Ring, the monarch, Max speed, initiative, day/night                                                                                                                               |
 | **C3** | `burn`, `bigMana`, `powerMatters`, `cardDraw`, `graveyardToolbox`, `monoColorDevotion`, `pillowfort` | 2 each |                                                                                                                                                                                       |
@@ -382,6 +383,32 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   and/or red creature cards in your graveyard have unearth"`) — that clause survives stripping, since
   it sits outside the parenthetical it's introducing, the same reasoning `lifegain`'s lifelink-granting
   matcher already established.
+- **`recursion` was grounded by the repo owner directly, not by a corpus fixture comment** — the one
+  archetype in this catalog where that was necessary. The real interaction: Eirdu's back face, Isilu,
+  Carrier of Twilight, grants Persist to every other creature (`"Each other nontoken creature you
+  control has persist"`); a persist creature returns with a -1/-1 counter and can't trigger Persist
+  again while that counter is on it. Cathars' Crusade (`"Whenever a creature you control enters, put a
+  +1/+1 counter on each creature you control"`) fires on that same re-entry and puts a +1/+1 counter on
+  it too — under **CR 704.5q**, a permanent with both a +1/+1 and a -1/-1 counter has them annihilate
+  as a state-based action, so the creature ends up with *no* counters at all, and the next time it
+  dies, Persist's own `"if it had no -1/-1 counters on it"` check passes again. The loop repeats instead
+  of firing once. `amplifies`'s regex is deliberately narrow because of this: a card that puts a
+  counter only on *itself* (Hulkling, Burgeoning Bruiser: `"put a +1/+1 counter on Hulkling"`) never
+  touches the counter on the creature that just returned, so it doesn't enable the loop — checked
+  against the full card pool, the same false-positive shape as `drain`/`cyclingDiscard`'s causes-vs-
+  reads splits, just for a third role pair (`produces` vs. `amplifies`) instead of `produces` vs.
+  `rewards`.
+- **Flashback, Escape, and Unearth's "cast/return this card from your graveyard" is a one-shot use of
+  the card, not `recursion`'s repeatable loop — and, checked against the full card pool once reminder
+  text is stripped, the two are textually indistinguishable except for the "then exile it" clause,
+  which sits in the same reminder-text parenthetical `stripReminderText` deletes.** Before the check,
+  the raw oracle-text pattern for `"you may cast this card from your graveyard"` matched 354 cards,
+  most of them Flashback/Escape spells that get exiled after their one use; after checking what
+  `CardFacts.text` actually contains post-strip, only 35 real matches survive, none of them
+  Flashback/Escape/Unearth. `"return this card from your graveyard to the battlefield"` shows the same
+  pattern (148 raw, 95 post-strip) — Royal Warden's Unearth ability contains that exact phrase in its
+  own reminder text and correctly disappears once stripped, leaving genuinely repeatable cards like
+  Prized Amalgam, Retrofitted Transmogrant, and Postmortem Professor.
 
 ---
 

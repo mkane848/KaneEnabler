@@ -144,6 +144,34 @@ itself — see archetypes.md's "Behaviours verified as correct". Verified agains
 estimate almost exactly), and no other deck in the corpus false-positives on it. Re-measured after
 shipping: **777 of 4,049 commander-eligible cards now produce zero active signals**, down from 793.
 
+**`recursion` is shipped**, Phase C2's sixth archetype and the one entry in this catalog that needed
+the repo owner's direct grounding rather than a corpus fixture comment — unlike every other archetype
+built this rework, no fixture file names its motivating decks, and the tier table's own "3" deck count
+cites none either. Confirmed with the repo owner before implementation: `wilhelt.txt` and `eirdu.txt`.
+Also unqualified, `definingRole: produces` — the same shape as `drain`/`cyclingDiscard`/`freeSpells`.
+`produces` covers Persist/Undying (a card's own keyword, or granted to others via text — Isilu,
+Carrier of Twilight: `"has persist"`; Mikaeus, the Unhallowed: `"have undying"`), Gravecrawler's
+repeatable self-cast template, and Prized Amalgam's repeatable self-return trigger. One real precision
+issue found and fixed before shipping, checked against the full card pool: Flashback, Escape, and
+Unearth's `"cast/return this card from your graveyard"` phrasing is textually identical to
+`recursion`'s own templates until reminder text is stripped — the "then exile it" clause that
+distinguishes a one-shot use from a repeatable loop lives in the same parenthetical
+`stripReminderText` deletes, so checking `CardFacts.text` (not raw `oracle_text`) was the only way to
+confirm the pattern actually excludes them (354 raw matches for the cast-from-graveyard phrase dropped
+to 35 real ones post-strip, none of them Flashback/Escape/Unearth). `amplifies` covers the archetype's
+own combo enabler, per the repo owner's own clarification: Isilu's granted Persist creature returns
+with a -1/-1 counter, and a card that puts a +1/+1 counter on that *same entering creature* (Cathars'
+Crusade: `"on each creature you control"`) cancels it under **CR 704.5q**, letting Persist trigger
+again on the next death instead of only once — narrow enough to exclude a card that only buffs itself
+(Hulkling, Burgeoning Bruiser), which never touches the counter on a different creature and so can't
+enable the loop — see archetypes.md's "Behaviours verified as correct" for the full mechanism.
+Verified against the real seeded database: `eirdu.txt` reports `Recursion (3)` directly; `wilhelt.txt`
+has the same 3 real supporting cards (confirmed via direct signal inspection) but doesn't surface in
+its displayed theme list — it ties `Drain` at `cardCount: 3` and loses the alphabetical tie-break for
+the deck's 8th and last `MAX_THEMES` slot, a pre-existing cutoff mechanism unrelated to this
+archetype's own correctness. Re-measured after shipping: **770 of 4,049 commander-eligible cards now
+produce zero active signals**, down from 777.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 
