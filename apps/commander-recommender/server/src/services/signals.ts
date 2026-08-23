@@ -753,6 +753,14 @@ function findPermanentSubtypes(typeLine: string): string[] {
  * territory respectively, not artifacts'. */
 const ARTIFACT_ARCHETYPE_SUBTYPES = ['Vehicle', 'Food', 'Clue', 'Treasure'];
 
+/** A `drain` clause whose *trigger* is "an opponent loses life" itself, by
+ * any cause — Exquisite Blood, Bloodthirsty Conqueror. This is `rewards`
+ * only: the clause doesn't cause the loss, it reads someone else's. Shared
+ * so `produces` can exclude exactly this shape rather than double-counting
+ * it, while still catching triggers that read a *different* resource and
+ * cause the loss themselves (Sanguine Bond's "whenever you gain life"). */
+const DRAIN_TRIGGER_READS_LOSS = /\bwhenever (?:an? )?(?:opponent|player)s? (?:loses?|lose) life\b/i;
+
 /** Word lookups for `findQualifier`, mirroring `Vocabulary.typeByWord` for the
  * two qualifier kinds that narrow to a curated constant instead of a
  * creature-type vocabulary — Kalamax copies *instants*, not creatures. */
@@ -1207,6 +1215,48 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // punished (Tainted Remedy, Sulfuric Vortex, Rain of Gore) is hate,
         // not an amplifier for this deck's own plan.
         /\bif you would gain life\b/i,
+      ],
+    },
+  },
+  {
+    key: 'drain',
+    label: 'Drain',
+    description:
+      'Life loss as a trigger, not damage — direct effects that make an opponent lose life (often ' +
+      'alongside you gaining it), and the payoffs that read an opponent\'s life loss for more value. ' +
+      'Sanguine Bond and Vito, Thorn of the Dusk Rose are the bridge cards to Lifegain: they read a ' +
+      "gain-life event and turn it straight into an opponent's loss.",
+    weight: 20,
+    // No separate payoff role, the same shape as freeSpells: causing the
+    // life loss *is* the identity here, not a means to some other reward.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // Covers the direct devotion/X-drain template (Gray Merchant of
+        // Asphodel, Exsanguinate, Debt to the Deathless), aristocrats-style
+        // death triggers (Zulaport Cutthroat, Blood Artist), and Sanguine
+        // Bond/Vito's own "whenever you gain life, opponent loses that
+        // much" — their trigger reads a *different* resource (lifegain),
+        // so the life loss they cause is still this archetype's own
+        // production, not a reward for something drain itself produced.
+        // Excludes any clause DRAIN_TRIGGER_READS_LOSS already claims — a
+        // card whose trigger IS "an opponent loses life" doesn't cause the
+        // loss, it reads someone else's (Exquisite Blood).
+        (f: CardFacts) =>
+          clauses(f.text).some(
+            (c) =>
+              /\b(?:opponent|player|controller)s?\b[^.\n]*\bloses?\b[^.\n]*\blife\b/i.test(c) &&
+              !DRAIN_TRIGGER_READS_LOSS.test(c),
+          ),
+      ],
+      rewards: [
+        // Reads an opponent's life loss — this archetype's own resource —
+        // as the trigger for a *different* payoff (Exquisite Blood,
+        // Bloodthirsty Conqueror: life; Mindcrank: mill). Deliberately
+        // excludes "whenever you lose life" self-referential triggers
+        // (Vilis, Vampire Scrivener) — that's a life-as-a-resource theme
+        // of its own, not this one.
+        DRAIN_TRIGGER_READS_LOSS,
       ],
     },
   },

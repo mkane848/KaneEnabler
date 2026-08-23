@@ -281,6 +281,40 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     report: 814 of 4,049 commander-eligible cards now produce zero active
     signals, down from 889 — confirming `lifegain` really was the
     largest single gap.
+- **Signal engine, Phase C2 — `drain` archetype.** See
+  `docs/signals-rework.md` Phase C. Life loss as a trigger, not damage.
+  No qualifier, the same reasoning as `lifegain`. `definingRole:
+  produces` — no separate payoff role, the same shape as `freeSpells`:
+  causing the life loss *is* the identity, not a means to some other
+  reward.
+  - `produces`: the direct devotion/X-drain template (Gray Merchant of
+    Asphodel, Exsanguinate, Debt to the Deathless), aristocrats-style
+    death triggers (Zulaport Cutthroat, Blood Artist), and Sanguine
+    Bond/Vito's own `"whenever you gain life, opponent loses that much
+    life"` — their trigger reads a *different* resource (lifegain), so
+    the loss they cause is still this archetype's own production.
+  - `rewards`: a trigger that reads an opponent's life loss — this
+    archetype's own resource — as the condition for a *different*
+    payoff (Exquisite Blood, Bloodthirsty Conqueror). Deliberately
+    excludes `"whenever you lose life"` self-referential triggers
+    (Vampire Scrivener) — a life-as-a-resource theme of its own, not
+    this one.
+  - One precision issue found and fixed before shipping, checked against
+    the full card pool rather than just the corpus: a first-draft
+    `produces` matcher was a bare `"opponent/player/controller ... loses
+    ... life"` scan, and Exquisite Blood matched it directly even though
+    the card never causes a loss itself, it only reads one from any
+    source. `produces` now excludes any clause a shared
+    `DRAIN_TRIGGER_READS_LOSS` pattern already claims (also `rewards`'s
+    own matcher), keeping the "causes drain" (Sanguine Bond) vs. "reads
+    drain" (Exquisite Blood) split exact rather than double-counting.
+  - Verified against the real seeded database and the full 20-deck
+    corpus: `wilhelt.txt` reports `Drain (3)` and `yshtola.txt` reports
+    `Drain (6)`, both matching `docs/archetypes.md`'s own motivating
+    decks exactly, and `trazyn.txt` reports `Drain (4)`, matching its
+    own "fallback: aggro, drain" identity. Re-measured with Phase F's
+    coverage report: 797 of 4,049 commander-eligible cards now produce
+    zero active signals, down from 814.
 
 ### Fixed
 

@@ -2000,3 +2000,82 @@ describe('Lifegain: gaining life on purpose, and the payoffs that read it', () =
     assert.strictEqual(find(signalsFor(solRing), 'lifegain'), undefined);
   });
 });
+
+describe('Drain: life loss as a trigger, not damage', () => {
+  it('produces from the direct devotion/X-drain template', () => {
+    // Gray Merchant of Asphodel — real oracle text.
+    const grayMerchant = makeCard({
+      name: 'Gray Merchant of Asphodel',
+      type_line: 'Creature — Zombie',
+      oracle_text:
+        'When this creature enters, each opponent loses X life, where X is your devotion to black. ' +
+        'You gain life equal to the life lost this way. (Each {B} in the mana costs of permanents you ' +
+        'control counts toward your devotion to black.)',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(grayMerchant), 'drain'), ['produces']);
+  });
+
+  it('produces from an aristocrats-style death trigger', () => {
+    // Zulaport Cutthroat — real oracle text.
+    const zulaportCutthroat = makeCard({
+      name: 'Zulaport Cutthroat',
+      type_line: 'Creature — Human Rogue Ally',
+      oracle_text:
+        'Whenever this creature or another creature you control dies, each opponent loses 1 life and ' +
+        'you gain 1 life.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(zulaportCutthroat), 'drain'), ['produces']);
+  });
+
+  it('produces from the Sanguine Bond/Vito bridge shape, since their trigger reads a different resource', () => {
+    // Sanguine Bond — real oracle text. Its trigger is "you gain life"
+    // (lifegain's own resource), so the opponent life loss it causes is
+    // still drain's own production, not a reward for something drain
+    // itself already produced.
+    const sanguineBond = makeCard({
+      name: 'Sanguine Bond',
+      type_line: 'Enchantment',
+      oracle_text: 'Whenever you gain life, target opponent loses that much life.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(sanguineBond), 'drain'), ['produces']);
+  });
+
+  it('rewards, not produces, a card whose trigger IS an opponent losing life by any cause', () => {
+    // Exquisite Blood — real oracle text. Regression guard: unlike Sanguine
+    // Bond, this card doesn't cause the loss itself, it reads someone
+    // else's — a bare "each/opponent ... loses ... life" production
+    // matcher would have false-positived it as also producing drain.
+    const exquisiteBlood = makeCard({
+      name: 'Exquisite Blood',
+      type_line: 'Enchantment',
+      oracle_text: 'Whenever an opponent loses life, you gain that much life.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(exquisiteBlood), 'drain'), ['rewards']);
+  });
+
+  it('does not reward a self-referential "whenever you lose life" trigger', () => {
+    // Vampire Scrivener — real oracle text. A different, life-as-a-resource
+    // theme (paying life for value), not this archetype.
+    const vampireScrivener = makeCard({
+      name: 'Vampire Scrivener',
+      type_line: 'Creature — Vampire Cleric',
+      oracle_text: 'Whenever you lose life during your turn, put a +1/+1 counter on this creature.',
+    });
+    assert.strictEqual(find(signalsFor(vampireScrivener), 'drain'), undefined);
+  });
+
+  it('does not fire on an edict — sacrificing is not losing life', () => {
+    // Accursed Marauder — real oracle text.
+    const accursedMarauder = makeCard({
+      name: 'Accursed Marauder',
+      type_line: 'Creature — Zombie Warrior',
+      oracle_text: 'When this creature enters, each player sacrifices a nontoken creature of their choice.',
+    });
+    assert.strictEqual(find(signalsFor(accursedMarauder), 'drain'), undefined);
+  });
+
+  it('does not fire on a card with no drain text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'drain'), undefined);
+  });
+});
