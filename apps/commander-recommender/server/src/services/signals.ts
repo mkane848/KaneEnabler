@@ -1415,6 +1415,36 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'tapForValue',
+    label: 'Tap for Value',
+    description:
+      "Tapping and untapping your own permanents as a resource, rather than a single card's own " +
+      '{T} ability — a card that taps a *different* permanent you control as a cost (a "mana ' +
+      'producer that taps"), and one that untaps your permanents for you. Combo ingredients, ' +
+      'classified rather than detected — the engine flags the parts, not the loop (Commander ' +
+      'Spellbook already answers "what does my list combo into").',
+    weight: 20,
+    // No separate payoff role, the same shape as drain/cyclingDiscard/
+    // recursion — the tap or untap itself is the identity.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // Tapping a *different* permanent you control as a cost for
+        // something else — mana (Springleaf Drum, Holdout Settlement,
+        // Survivors' Encampment, Gene Pollinator, Relic of Legends), or
+        // any other value (Honor-Worn Shaku's own untap). This is what
+        // turns Kalamax on at instant speed without attacking — the
+        // motivating cards for this archetype and for `enables`' own
+        // existence (docs/archetypes.md).
+        /\btap an untapped (?:creature|permanent|legendary creature|legendary permanent) you control\b/i,
+        // Untapping your own permanents for free — the archetype's other
+        // named ingredient (Seedborn Muse-style repeated untappers, extra-
+        // combat enablers like Aurelia's own trigger).
+        /\buntap (?:target |all |each )?(?:permanents?|creatures?|artifacts?|lands?)\b[^.\n]*you control\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:

@@ -172,6 +172,30 @@ the deck's 8th and last `MAX_THEMES` slot, a pre-existing cutoff mechanism unrel
 archetype's own correctness. Re-measured after shipping: **770 of 4,049 commander-eligible cards now
 produce zero active signals**, down from 777.
 
+**`tapForValue` is shipped, completing Phase C2.** The seventh and last archetype in the tier: tapping
+and untapping your own permanents as a resource, and where combo *ingredients* get classified — per
+the "flag ingredients, do not detect loops" rule above, this catalogs the parts (an untapper, a mana
+producer that taps), not the combo itself, which stays Commander Spellbook's job. Also unqualified,
+`definingRole: produces` — the same shape as `drain`/`cyclingDiscard`/`recursion`/`freeSpells`. Like
+`recursion`, only one of the tier table's two decks has confirmed textual backing: kalamax.txt, via
+the six mana-tap enablers the `enables`/`protects` section above already names by card (Springleaf
+Drum, Holdout Settlement, Survivors' Encampment, Gene Pollinator, Relic of Legends, Honor-Worn Shaku)
+as the reason `enables` needed to exist in the first place — shipped on that grounding alone rather
+than inventing a second deck. `produces` covers tapping a *different* permanent you control as a cost
+for something else (never a card's own bare `{T}:` ability, which is ubiquitous and not itself
+evidence of anything), and untapping your own permanents for free (Seedborn Muse). Kalamax herself
+doesn't register — her text only reads `"if Kalamax is tapped"` as a condition; she's the beneficiary
+of this archetype, not its identity, and a dedicated test guards against that. Verified against the
+real seeded database: `kalamax.txt` reports `Tap for Value (7)`, matching its own doc-confirmed axis
+exactly, with no false positives elsewhere in the corpus. Re-measured after shipping: **764 of 4,049
+commander-eligible cards now produce zero active signals**, down from 770.
+
+**Phase C2 is now complete** — all seven archetypes (`lifegain`, `gameState`, `drain`,
+`cyclingDiscard`, `temporaryEffects`, `recursion`, `tapForValue`) shipped and merged. Per the
+Sequencing section below, Phase C3 is next (`burn`, `bigMana`, `powerMatters`, `cardDraw`,
+`graveyardToolbox`, `monoColorDevotion`, `pillowfort`), re-measuring with Phase F's coverage report
+before starting.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 
