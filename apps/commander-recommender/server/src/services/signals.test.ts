@@ -3085,3 +3085,141 @@ describe('Burn: damage dealt directly, not through combat', () => {
     assert.strictEqual(find(signalsFor(solRing), 'burn'), undefined);
   });
 });
+
+describe('Big Mana: ramping toward an X spell or another huge-cost payoff', () => {
+  it('produces from three or more mana symbols back to back', () => {
+    // Basalt Monolith and Dark Ritual — real oracle text.
+    const basaltMonolith = makeCard({
+      name: 'Basalt Monolith',
+      type_line: 'Artifact',
+      oracle_text:
+        "This artifact doesn't untap during your untap step.\n" +
+        '{T}: Add {C}{C}{C}.\n' +
+        '{3}: Untap this artifact.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(basaltMonolith), 'bigMana'), ['produces']);
+
+    const darkRitual = makeCard({
+      name: 'Dark Ritual',
+      type_line: 'Instant',
+      oracle_text: 'Add {B}{B}{B}.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(darkRitual), 'bigMana'), ['produces']);
+  });
+
+  it('produces from the word-count shape, including X mana', () => {
+    // Gilded Lotus and Klauth, Unrivaled Ancient — real oracle text.
+    const gildedLotus = makeCard({
+      name: 'Gilded Lotus',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add three mana of any one color.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(gildedLotus), 'bigMana'), ['produces']);
+
+    const klauth = makeCard({
+      name: 'Klauth, Unrivaled Ancient',
+      type_line: 'Legendary Creature — Dragon',
+      oracle_text:
+        'Flying, haste\n' +
+        'Whenever Klauth attacks, add X mana in any combination of colors, where X is the total power ' +
+        "of attacking creatures. Spend this mana only to cast spells. Until end of turn, you don't lose " +
+        'this mana as steps and phases end.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(klauth), 'bigMana'), ['produces']);
+  });
+
+  it('does not produce from a one- or two-mana rock, a format-wide staple rather than a big-mana plan', () => {
+    // Sol Ring and Arcane Signet — real oracle text.
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'bigMana'), undefined);
+
+    const arcaneSignet = makeCard({
+      name: 'Arcane Signet',
+      type_line: 'Artifact',
+      oracle_text: "{T}: Add one mana of any color in your commander's color identity.",
+    });
+    assert.strictEqual(find(signalsFor(arcaneSignet), 'bigMana'), undefined);
+  });
+});
+
+describe('Graveyard Toolbox: flexible retrieval from the graveyard as a resource', () => {
+  it('produces from returning a flexible card choice to hand', () => {
+    // Codex Shredder and Takenuma, Abandoned Mire — real oracle text.
+    const codexShredder = makeCard({
+      name: 'Codex Shredder',
+      type_line: 'Artifact',
+      oracle_text:
+        '{T}: Target player mills a card. (They put the top card of their library into their graveyard.)\n' +
+        '{5}, {T}, Sacrifice this artifact: Return target card from your graveyard to your hand.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(codexShredder), 'graveyardToolbox'), ['produces']);
+
+    const takenuma = makeCard({
+      name: 'Takenuma, Abandoned Mire',
+      type_line: 'Legendary Land',
+      oracle_text:
+        '{T}: Add {B}.\n' +
+        'Channel — {3}{B}, Discard this card: Mill three cards, then return a creature or planeswalker ' +
+        'card from your graveyard to your hand. This ability costs {1} less to activate for each ' +
+        'legendary creature you control.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(takenuma), 'graveyardToolbox'), ['produces']);
+  });
+
+  it('produces from reading a whole graveyard of activated abilities', () => {
+    // Trazyn the Infinite and Mirran Safehouse — real oracle text.
+    const trazyn = makeCard({
+      name: 'Trazyn the Infinite',
+      type_line: 'Legendary Artifact Creature — Necron',
+      oracle_text:
+        'Deathtouch\n' +
+        'Prismatic Gallery — As long as Trazyn is on the battlefield, it has all activated abilities of ' +
+        'all artifact cards in your graveyard.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(trazyn), 'graveyardToolbox'), ['produces']);
+
+    const mirranSafehouse = makeCard({
+      name: 'Mirran Safehouse',
+      type_line: 'Artifact',
+      oracle_text: 'As long as this artifact is on the battlefield, it has all activated abilities of all land cards in all graveyards.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(mirranSafehouse), 'graveyardToolbox'), ['produces']);
+  });
+
+  it('does not produce from a card that only ever retrieves itself', () => {
+    // Squee, Goblin Nabob and Adéwalé, Breaker of Chains — real oracle text.
+    // Regression guard: repeatable self-recursion isn't the flexible,
+    // many-different-cards resource this archetype means, found checking
+    // the full card pool before shipping.
+    const squee = makeCard({
+      name: 'Squee, Goblin Nabob',
+      type_line: 'Legendary Creature — Goblin',
+      oracle_text: 'At the beginning of your upkeep, you may return this card from your graveyard to your hand.',
+    });
+    assert.strictEqual(find(signalsFor(squee), 'graveyardToolbox'), undefined);
+
+    const adewale = makeCard({
+      name: 'Adéwalé, Breaker of Chains',
+      type_line: 'Legendary Creature — Human Assassin Pirate',
+      oracle_text:
+        'When Adéwalé enters, reveal the top six cards of your library. Put an Assassin, Pirate, or ' +
+        'Vehicle card from among them into your hand and the rest on the bottom of your library in a ' +
+        'random order.\n' +
+        'Whenever a Vehicle you control deals combat damage to a player, you may return this card from ' +
+        'your graveyard to your hand.',
+    });
+    assert.strictEqual(find(signalsFor(adewale), 'graveyardToolbox'), undefined);
+  });
+
+  it('does not produce from a reanimation effect that returns to the battlefield, not the hand', () => {
+    // Beacon of Unrest — real oracle text. Reanimator's own territory.
+    const beaconOfUnrest = makeCard({
+      name: 'Beacon of Unrest',
+      type_line: 'Sorcery',
+      oracle_text:
+        "Put target artifact or creature card from a graveyard onto the battlefield under your control. " +
+        "Shuffle Beacon of Unrest into its owner's library.",
+    });
+    assert.strictEqual(find(signalsFor(beaconOfUnrest), 'graveyardToolbox'), undefined);
+  });
+});

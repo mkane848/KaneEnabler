@@ -236,6 +236,17 @@ F's coverage report: **591 of 4,049** commander-eligible cards now produce zero 
 from 653 — 62 commanders rescued, cleanly split across the power-into-damage template, fixed/X-damage
 payoffs, and doublers, with no false positive surviving manual review.
 
+**`bigMana` and `graveyardToolbox` are shipped, the third and fourth of Phase C3's archetypes.** One
+deck, trazyn.txt, whose own confirmed axes name both directly ("graveyard toolbox, big mana into X").
+Both `definingRole: produces`, the same no-separate-payoff-role shape as `freeSpells`. See
+`archetypes.md`'s own entries for the full account, including a real bug the full-card-pool sweep
+caught: an early version of `graveyardToolbox`'s "return ... card ... to your hand" pattern didn't
+distinguish "return **this** card" (repeatable self-recursion — Squee, Goblin Nabob; Adéwalé, Breaker
+of Chains) from "return **target** card" (a genuine choice among different cards, the archetype's
+actual identity), which wrongly counted both self-only commanders. Re-measured with Phase F's coverage
+report: **576 of 4,049** commander-eligible cards now produce zero active signals, down from 591 — 5
+rescued by `bigMana` alone, 9 by `graveyardToolbox` alone, no false positive surviving manual review.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

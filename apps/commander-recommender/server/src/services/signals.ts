@@ -1630,6 +1630,72 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'bigMana',
+    label: 'Big Mana',
+    description:
+      'Ramping toward an X spell or another huge-cost payoff — mana sources that produce a lot at ' +
+      'once, not land count for its own sake (see Lands Matter for that plan).',
+    weight: 18,
+    // No separate payoff role required to register at all, the same shape as
+    // freeSpells: producing a lot of mana at once *is* the identity here.
+    // trazyn.txt's own confirmed axes name this plan directly ("big mana
+    // into X", with a real X spell, Exsanguinate, sitting in the list).
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // Three or more mana symbols back to back — Basalt Monolith and
+        // Thran Dynamo's "Add {C}{C}{C}", Dark Ritual's burst "Add
+        // {B}{B}{B}". Deliberately excludes Sol Ring/Arcane Signet/Mind
+        // Stone-shaped one- or two-mana rocks: those are format-wide
+        // staples present in nearly every deck, not evidence of a big-mana
+        // plan specifically.
+        /\badd (?:\{[wubrgc]\}){3,}/i,
+        // The word-count shape for the same thing — Gilded Lotus and
+        // Sceptre of Eternal Glory's "Add three mana of any one color".
+        /\badd (?:x|three|four|five|six|seven|eight|nine|ten) mana\b/i,
+      ],
+    },
+  },
+  {
+    key: 'graveyardToolbox',
+    label: 'Graveyard Toolbox',
+    description:
+      'Flexible retrieval from the graveyard as a resource — cards or abilities pulled back for reuse ' +
+      '— rather than one big reanimation target (see Reanimator for that plan).',
+    weight: 18,
+    // No separate payoff role, the same shape as bigMana: retrieving the
+    // card *is* the identity. Same source deck as bigMana (trazyn.txt),
+    // a distinct half of its own confirmed axes ("graveyard toolbox, big
+    // mana into X").
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // Back to your hand, not the battlefield — Reanimator's own
+        // "return ... to the battlefield" pattern is deliberately a
+        // different regex, so a card can't satisfy both by accident.
+        // Codex Shredder ("Return target card from your graveyard to your
+        // hand"), Takenuma, Abandoned Mire's Channel ability (restricted
+        // to creature/planeswalker, still flexible rather than one fixed
+        // target). Excludes "return this card" — Squee, Goblin Nabob and
+        // Adéwalé, Breaker of Chains only ever retrieve themselves, which
+        // is repeatable self-recursion, not the flexible, many-different-
+        // cards resource this archetype means — found checking the full
+        // card pool, not just the grounding deck.
+        (f: CardFacts) =>
+          clauses(f.text).some(
+            (c) =>
+              /\breturn[^.;]*card[^.;]*from your graveyard to your hand\b/i.test(c) &&
+              !/\breturn this card\b/i.test(c),
+          ),
+        // Reading a whole graveyard's worth of activated abilities without
+        // moving anything — Trazyn's own commander ability, and the same
+        // template Mirran Safehouse uses for lands. This is the deck's own
+        // centerpiece expression of the archetype, not an edge case.
+        /\bhas (?:all )?activated abilities of all [a-z]+ cards? in (?:your|all) graveyards?\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
