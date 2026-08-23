@@ -200,6 +200,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `freeSpells`   | `produces` ×1    | No separate payoff role — granting a free/reduced cast is the identity itself. Reads `alternativeCost`, plus Cascade/Discover/Suspend/Plot/Rebound from the bare keyword (their own reminder text is the only place they say "without paying its mana cost", and reminder text is stripped). |
 | `artifacts`    | `rewards` ×1     | Becomes `qualifiable: permanentSubtype`, scoped to `Vehicle`/`Food`/`Clue`/`Treasure` only — `Equipment`/`Saga` are `PERMANENT_SUBTYPES` too, but voltron's and counters' territory, not this archetype's `is` role. A card's own structural subtype qualifies it directly (Smuggler's Copter needs no text to be a Vehicle) *except* when its own reward reads artifacts generically (Cranial Plating is an Equipment but "for each artifact you control" doesn't restrict to Equipment — see below). |
 | `gameState`    | `produces` ×1    | Becomes `qualifiable: gameState`, one of five named states (`theRing`, `monarch`, `initiative`, `maxSpeed`, `dayNight`) computed once onto `CardFacts.gameStates` via a dedicated keyword-and-text detector, the same shape as `counterType` — not the payoff-matcher clause scan `cardType`/`permanentSubtype` use. Max speed and day/night lean on the literal Scryfall `keywords` array where reminder text is the only place the mechanic names itself (`Start your engines!`, `Daybound`, `Nightbound`); the Ring, the monarch, and the initiative are text-only, no matching keyword exists. |
+| `lifegain`     | `rewards` ×1     | No qualifier — unlike `counters`/`gameState`, there's no restricted "kind" a payoff cares about, just the event itself. Granting lifelink (not merely having it structurally) is `produces`, resolving the keyword-shadow rule's own Bre example below — a bare "creature ... with lifelink" *selection* (Duskfang Mentor's second ability) is deliberately excluded from production, since caring about existing lifelink creatures isn't granting it. |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -212,7 +213,7 @@ deck is a guess.
 |        | cost reduction _(as `enables`, not an archetype)_ — **shipped in Phase B**                           | 6      | Modelled once, parameterised by what it reduces, instead of a regex per archetype                                                                                                     |
 |        | ~~`freeSpells`~~ **Shipped** — see "Shipping today" above                                           | 5      | Cascade, suspend, `"without paying its mana cost"`, alternative costs                                                                                                                 |
 |        | ~~`artifacts`~~ **Shipped** — see "Shipping today" above                                             | 5      | Miles's Vehicles and Sophia's Food ride one qualifier                                                                                                                                 |
-| **C2** | `lifegain`                                                                                           | 3      | **The largest single gap** — one of the format's most-built themes, entirely absent                                                                                                   |
+| **C2** | ~~`lifegain`~~ **Shipped** — see "Shipping today" above                                             | 3      | **The largest single gap** — one of the format's most-built themes, entirely absent                                                                                                   |
 |        | `drain`                                                                                              | 2      | Life loss as a _trigger_. Sanguine Bond and Vito are the bridge cards to `lifegain`                                                                                                   |
 |        | `cyclingDiscard`                                                                                     | 3      | Discard as a resource, which the engine only sees as "mill"                                                                                                                           |
 |        | `temporaryEffects`                                                                                   | 3      | Delayed-cost cards and the enablers that erase the trigger                                                                                                                            |
@@ -329,6 +330,16 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   is third-person and doesn't even keep "you" as the sole subject — `"if you or a player you're
   attacking has the initiative"` — so it produced only `produces`, never `rewards`, until the regex was
   widened to `/\b(?:has|have|'ve) the initiative\b/i`.
+- **Granting lifelink is production; caring about a creature that already has it is not.** Checked
+  against the full card pool while building `lifegain`, not just the corpus: Duskfang Mentor's
+  `"Put a +1/+1 counter on each creature you control with lifelink"` selects existing lifelink
+  creatures for a payoff — a real card that would have false-positived under a bare `"with lifelink"`
+  production matcher. `lifegain`'s produces regex requires a granting verb (`has`/`have`/`gains`/
+  `gets`/`grants`/`creates`/`becomes`) immediately governing `lifelink`, which correctly matches every
+  real granting template found (`"Equipped creature has ... lifelink"`, `"Create a ... token with
+  lifelink"`, `"becomes a ... creature with lifelink"`) while leaving Duskfang Mentor's second ability
+  unmatched. The same scan also resolves the keyword-shadow rule's own Bre example above: her deck now
+  reports `Lifegain (17)` as its top theme instead of a phantom `Lifelink` keyword theme.
 
 ---
 

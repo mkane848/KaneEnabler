@@ -65,6 +65,27 @@ reports `Game State (theRing)` with 11 supporting cards and `miles.txt` reports 
 (maxSpeed)` with 4, both matching archetypes.md's own motivating decks. Re-measured after shipping:
 **889 of 4,049 commander-eligible cards now produce zero active signals**, down from 898.
 
+**`lifegain` is shipped**, Phase C2's second archetype and "the largest single gap" per
+archetypes.md's own tiering — one of the format's most-built themes, previously entirely absent. No
+qualifier: unlike `counterType`/`gameState` there's no restricted "kind" a payoff cares about, just
+the gain-life event itself. Granting lifelink (not merely having it structurally — a creature's own
+printed Lifelink still counts, read off `CardFacts.keywords`) is `produces`, the format's dominant
+passive way to gain life; a `whenever you gain life`/`if you('ve) gained ... life`/`the amount of
+life you('ve) gained` family covers both trigger-per-event and end-of-turn-threshold payoffs
+(`rewards`); `if you would gain life ... instead` doublers are `amplifies`, deliberately scoped to
+`you` only so an opponent-facing lifegain-denial effect (Tainted Remedy: `"If an opponent would gain
+life, that player loses that much life instead"`) doesn't register as an amplifier for this deck's
+own plan. Checked against the full card pool, not just the corpus, for the same false-positive shape
+`artifacts`' Cranial Plating fix found: a card that merely *selects* creatures already having
+lifelink (Duskfang Mentor's `"Put a +1/+1 counter on each creature you control with lifelink"`) must
+not register as granting it — see archetypes.md's "Behaviours verified as correct". This resolves
+the keyword-shadow rule's own Bre example (archetypes.md's "the rules that are settled" table): her
+deck now reports `Lifegain (17)` as its top theme, verified against the full corpus, instead of a
+phantom `Lifelink` keyword theme. `eirdu.txt` and `giada.txt` also correctly surface `Lifegain`,
+matching their stated axes. Re-measured after shipping: **814 of 4,049 commander-eligible cards now
+produce zero active signals**, down from 889 — confirming `lifegain` really was the largest single
+gap.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

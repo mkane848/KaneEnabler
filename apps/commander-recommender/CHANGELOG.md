@@ -244,6 +244,43 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   motivating decks exactly. Re-measured with Phase F's coverage report:
   889 of 4,049 commander-eligible cards now produce zero active signals,
   down from 898.
+- **Signal engine, Phase C2 — `lifegain` archetype.** See
+  `docs/signals-rework.md` Phase C. "The largest single gap" per
+  `docs/archetypes.md`'s own tiering — one of the format's most-built
+  themes, previously entirely absent. No qualifier: unlike
+  `counterType`/`gameState` there's no restricted "kind" a payoff cares
+  about, just the gain-life event itself.
+  - `produces`: a creature's own printed Lifelink (`CardFacts.keywords`),
+    a direct `"you gain N life"`/`"you gain life equal to"` effect, or
+    granting lifelink to something else (equipment, auras, tokens,
+    animation) — matched by a granting-verb-governs-`lifelink` regex
+    (`has`/`have`/`gains`/`gets`/`grants`/`creates`/`becomes`) rather than
+    a bare `"lifelink"` mention, since a card can *select* creatures that
+    already have lifelink for a payoff without granting it itself.
+  - `rewards`: `"whenever you gain life"` triggers, both the
+    exact-threshold (`"if you gained 3 or more life this turn"`) and
+    bare-conditional (`"if you gained life this turn"`) end-step
+    templates, and X-scaling payoffs reading `"the amount of life you
+    gained"`.
+  - `amplifies`: `"if you would gain life ... instead"` doublers, scoped
+    to `you` only so an opponent-facing lifegain-denial effect (Tainted
+    Remedy: `"If an opponent would gain life, that player loses that much
+    life instead"`) doesn't register as an amplifier for this deck's own
+    plan.
+  - Checked against the full card pool, not just the corpus, for the same
+    false-positive shape the `artifacts` archetype's Cranial Plating fix
+    found: Duskfang Mentor's `"Put a +1/+1 counter on each creature you
+    control with lifelink"` selects existing lifelink creatures for a
+    payoff rather than granting it, and correctly stays unmatched.
+  - Resolves the keyword-shadow rule's own Bre example
+    (`docs/archetypes.md`'s "the rules that are settled"): her deck now
+    reports `Lifegain (17)` as its top theme, verified against the full
+    20-deck corpus, instead of a phantom `Lifelink` keyword theme.
+    `eirdu.txt` and `giada.txt` also correctly surface `Lifegain`,
+    matching their stated axes. Re-measured with Phase F's coverage
+    report: 814 of 4,049 commander-eligible cards now produce zero active
+    signals, down from 889 — confirming `lifegain` really was the
+    largest single gap.
 
 ### Fixed
 

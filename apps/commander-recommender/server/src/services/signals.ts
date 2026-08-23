@@ -1171,6 +1171,46 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    key: 'lifegain',
+    label: 'Lifegain',
+    description:
+      'Gaining life on purpose, and the payoffs that turn a life-gain event into more than padding — ' +
+      'triggers off gaining life, thresholds on how much was gained this turn, and doublers. Granting ' +
+      'lifelink (not merely having it structurally) is production here — the format\'s dominant way to ' +
+      'gain life passively, and this archetype\'s own keyword shadow (docs/archetypes.md).',
+    weight: 20,
+    roles: {
+      produces: [
+        // A creature's own printed Lifelink is production, not merely a
+        // structural property — every attack is a gain-life event.
+        (f: CardFacts) => f.keywords.includes('Lifelink'),
+        /\byou (?:may )?gain (?:\d+|x) life\b/i,
+        /\byou (?:may )?gain life equal to\b/i,
+        // Granting lifelink to something else (equipment, auras, tokens,
+        // animation) — never a bare "creature ... with lifelink" selection,
+        // which cares about lifelink rather than granting it.
+        /\b(?:has|have|gains?|gets?|grants?|creates?|becomes?)\b[^.\n]*\blifelink\b/i,
+      ],
+      rewards: [
+        /\bwhenever you gain life\b/i,
+        // "if/unless you('ve) gained ... life" covers both the exact-threshold
+        // template (Book of Exalted Deeds, Valkyrie Harbinger: "gained 3 or
+        // more life") and the bare-conditional one (Bre of Clan Stoutarm,
+        // Crested Sunmare: "gained life this turn").
+        /\b(?:if|unless) (?:you(?:'ve| have)?|your team) gained[^.\n]*\blife\b/i,
+        // X-scaling payoffs that never say "if" at all (Accomplished
+        // Alchemist, Willowdusk, Betor, Ancestor's Voice).
+        /\bthe amount of life (?:you|your team)(?:'ve)? gained\b/i,
+      ],
+      amplifies: [
+        // "you" only — an opponent's or "a player"'s life gain being
+        // punished (Tainted Remedy, Sulfuric Vortex, Rain of Gore) is hate,
+        // not an amplifier for this deck's own plan.
+        /\bif you would gain life\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
