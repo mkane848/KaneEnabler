@@ -766,6 +766,17 @@ const DRAIN_TRIGGER_READS_LOSS = /\bwhenever (?:an? )?(?:opponent|player)s? (?:l
  * causes-vs-reads split as `DRAIN_TRIGGER_READS_LOSS`. */
 const CYCLING_DISCARD_TRIGGER_READS_DISCARD = /\bwhenever you (?:cycle|discard)\b/i;
 
+/** Keyword abilities whose entire "at the beginning of the next end step"
+ * cleanup lives inside their own reminder text (Unearth, Encore, Dash,
+ * Blitz, Mobilize, Warp), which stripReminderText deletes — the same shape
+ * Cascade/Suspend forced on `freeSpells`. `temporaryEffects.produces` reads
+ * this list twice: once against `CardFacts.keywords` for a card that has
+ * the keyword itself, and once as a granting clause (Grixis: "creature
+ * cards in your graveyard have unearth") for a card that grants it to
+ * others — that clause survives stripping, since it sits outside the
+ * reminder parenthetical it's introducing. */
+const TEMPORARY_EFFECT_KEYWORDS = ['Unearth', 'Encore', 'Dash', 'Blitz', 'Mobilize', 'Warp'];
+
 /** Word lookups for `findQualifier`, mirroring `Vocabulary.typeByWord` for the
  * two qualifier kinds that narrow to a curated constant instead of a
  * creature-type vocabulary — Kalamax copies *instants*, not creatures. */
@@ -1307,6 +1318,50 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // Ivora's counter, Rielle's card draw, Marauding Mako's counters,
         // Glint-Horn's damage).
         CYCLING_DISCARD_TRIGGER_READS_DISCARD,
+      ],
+    },
+  },
+  {
+    key: 'temporaryEffects',
+    label: 'Temporary Effects',
+    description:
+      'Delayed-cost effects — reanimating, blinking, or copying something with a built-in ' +
+      '"sacrifice/exile/return it at the beginning of the next end step" cleanup — and the enablers ' +
+      "that end the turn early to erase that cleanup before it ever fires, turning a loan into a " +
+      'keeper. Obeka herself is one of the enablers, not a payoff for the produces side — nothing in ' +
+      "her text says \"temporary,\" she just makes other cards' temporary effects never end.",
+    weight: 20,
+    // The identity here is the erasers, not the (much more common, often
+    // incidental) delayed-cost cards themselves — "three cards... are the
+    // deck" per docs/archetypes.md's own framing of why `enables` exists.
+    definingRole: 'enables',
+    roles: {
+      produces: [
+        // Temporary reanimation (Sneak Attack, Puppeteer Clique, Gruesome
+        // Encore), temporary token copies (Feldon of the Third Path,
+        // Twinflame), and temporary blinks (Hide on the Ceiling) all share
+        // this one cleanup template regardless of what they're temporarily
+        // doing.
+        /\bat the beginning of (?:your |the )?next end step\b/i,
+        // A card that itself has Unearth/Encore/Dash/Blitz/Mobilize/Warp —
+        // see TEMPORARY_EFFECT_KEYWORDS's own doc comment for why this
+        // can't be the bare-text pattern above.
+        (f: CardFacts) => TEMPORARY_EFFECT_KEYWORDS.some((k) => f.keywords.includes(k)),
+        // A card that grants one of those keywords to others (Grixis,
+        // Mishra, Tamer of Mak Fawa, Sedris, the Traitor King).
+        /\b(?:has|have|gains?|gets?|grants?)\b[^.\n]*\b(?:unearth|encore|dash|blitz|mobilize|warp)\b/i,
+      ],
+      enables: [
+        // Obeka, Sundial of the Infinite, Glorious End, Time Stop,
+        // Discontinuity — CR's own "end the turn" rules action, distinct
+        // from "until end of turn" (an unrelated duration, not this
+        // ability). Ending the turn early jumps straight past the rest of
+        // the turn to cleanup, so a delayed "at the beginning of the next
+        // end step" trigger — this archetype's own produces side — never
+        // gets the end step it was waiting for and simply never fires.
+        // Sneak Attack's creature never gets sacrificed; it stays. A loan
+        // with no due date.
+        /\bend the turn\b/i,
       ],
     },
   },

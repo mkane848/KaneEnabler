@@ -349,6 +349,40 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     alongside it. Re-measured with Phase F's coverage report: 793 of
     4,049 commander-eligible cards now produce zero active signals,
     down from 797.
+- **Signal engine, Phase C2 — `temporaryEffects` archetype (Obeka's
+  own).** See `docs/signals-rework.md` Phase C. Delayed-cost effects —
+  reanimating, blinking, or copying something with a built-in
+  "sacrifice/exile/return it at the beginning of the next end step"
+  cleanup — and the enablers that end the turn early to erase that
+  cleanup before it ever fires. No qualifier, `definingRole: enables`
+  rather than `produces` this time: the delayed-cost cards themselves
+  are common, often-incidental staples across many decks, but the
+  enablers (Obeka, Sundial of the Infinite, Glorious End: `"end the
+  turn"`) are the actual, rare identity — "those three are the deck"
+  per `docs/archetypes.md`'s own framing of why the `enables` role
+  exists in the first place.
+  - `produces`: the bare `"at the beginning of the next end step"`
+    cleanup template, plus a card that has or grants Unearth, Encore,
+    Dash, Blitz, Mobilize, or Warp.
+  - `enables`: CR's own "end the turn" rules action, distinct from the
+    unrelated "until end of turn" duration.
+  - One real gap found and fixed before shipping, checked against the
+    full card pool rather than just the corpus: Unearth/Encore/Dash/
+    Blitz/Mobilize/Warp all hide their entire cleanup template inside
+    their own reminder text (the identical problem Cascade/Suspend
+    forced on `freeSpells`) — a Kathari Bomber-style Unearth creature
+    registered zero signal at all until `produces` started reading a
+    new `TEMPORARY_EFFECT_KEYWORDS` list off `CardFacts.keywords`
+    directly, plus a granting-clause text pattern for a card that
+    grants one of those keywords to others (Grixis) rather than having
+    it itself — regression tests for both are in `signals.test.ts`.
+  - Verified against the real seeded database and the full 20-deck
+    corpus: `obeka.txt` reports `Temporary Effects` as its top theme
+    (27 cards, matching `docs/archetypes.md`'s own "~25" estimate
+    almost exactly), and no other deck in the corpus false-positives on
+    it. Re-measured with Phase F's coverage report: 777 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    793.
 
 ### Fixed
 

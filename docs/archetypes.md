@@ -203,6 +203,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `lifegain`     | `rewards` ×1     | No qualifier — unlike `counters`/`gameState`, there's no restricted "kind" a payoff cares about, just the event itself. Granting lifelink (not merely having it structurally) is `produces`, resolving the keyword-shadow rule's own Bre example below — a bare "creature ... with lifelink" *selection* (Duskfang Mentor's second ability) is deliberately excluded from production, since caring about existing lifelink creatures isn't granting it. |
 | `drain`        | `produces` ×1    | No qualifier, same reasoning as `lifegain`. No separate payoff role — causing the life loss *is* the identity, same shape as `freeSpells`. Sanguine Bond/Vito's "whenever you gain life, opponent loses that much" is still `produces`, since their trigger reads a *different* resource (lifegain) — but a card whose trigger IS "an opponent loses life" itself (Exquisite Blood, Bloodthirsty Conqueror) is `rewards` only, since it reads someone else's loss rather than causing it; `DRAIN_TRIGGER_READS_LOSS` is the shared pattern both roles check to keep that split exact rather than double-counting. |
 | `cyclingDiscard` | `produces` ×1  | No qualifier. No separate payoff role, same shape as `drain`/`freeSpells` — discarding on purpose is the identity, not a means to some other reward. The Cycling keyword alone is `produces`; a card whose trigger IS discarding/cycling itself (Ivora's counter, Rielle's card draw) is `rewards` only via the same causes-vs-reads split `drain` uses, `CYCLING_DISCARD_TRIGGER_READS_DISCARD` playing `DRAIN_TRIGGER_READS_LOSS`'s role. Deliberately overlaps `selfMill` (a discarded card also fills the graveyard) rather than replacing it — see below for why that overlap is left alone. |
+| `temporaryEffects` | `enables` ×1 | No qualifier. `definingRole: enables`, not `produces` — the ~25 delayed-cost cards (Sneak Attack, Puppeteer Clique) are common, often-incidental staples across many decks, but the enablers that erase their cleanup trigger (Obeka, Sundial of the Infinite, Glorious End: `"end the turn"`) are the actual, rare identity — "those three are the deck" per the `enables` role's own motivating section above. Unearth/Encore/Dash/Blitz/Mobilize/Warp's entire cleanup template lives inside their own reminder text (the same problem Cascade/Suspend forced on `freeSpells`), so `produces` reads `CardFacts.keywords` for a card that has one of them and a granting-clause text pattern for a card that grants one to others. |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -218,7 +219,7 @@ deck is a guess.
 | **C2** | ~~`lifegain`~~ **Shipped** — see "Shipping today" above                                             | 3      | **The largest single gap** — one of the format's most-built themes, entirely absent                                                                                                   |
 |        | ~~`drain`~~ **Shipped** — see "Shipping today" above                                                | 2      | Life loss as a _trigger_. Sanguine Bond and Vito are the bridge cards to `lifegain`                                                                                                   |
 |        | ~~`cyclingDiscard`~~ **Shipped** — see "Shipping today" above                                       | 3      | Discard as a resource, which the engine only sees as "mill"                                                                                                                           |
-|        | `temporaryEffects`                                                                                   | 3      | Delayed-cost cards and the enablers that erase the trigger                                                                                                                            |
+|        | ~~`temporaryEffects`~~ **Shipped** — see "Shipping today" above                                     | 3      | Delayed-cost cards and the enablers that erase the trigger                                                                                                                            |
 |        | `recursion`                                                                                          | 3      | The same body returning repeatedly — distinct from `reanimator`'s "cheat something big into play"                                                                                     |
 |        | `tapForValue`                                                                                        | 2      | Tapping and untapping your own permanents; also where combo _ingredients_ get classified                                                                                              |
 |        | ~~`gameState`~~ **Shipped** — see "Shipping today" above                                            | 6      | The Ring, the monarch, Max speed, initiative, day/night                                                                                                                               |
@@ -368,6 +369,19 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   Discard` as its top theme (48 cards), and `obeka.txt`/`sauron.txt` — the two decks the corpus fixture
   comments name as this pattern's earlier, unaddressed instances — now report it too (8 and 9 cards),
   both still keeping their pre-existing `Self-Mill` signal alongside it rather than losing it.
+- **`temporaryEffects`'s named keyword mechanics hide their whole cleanup template in reminder text,
+  the same problem Cascade/Suspend forced on `freeSpells`.** Unearth's real oracle text is
+  `"Unearth {3}{B}{R} ({3}{B}{R}: Return this card from your graveyard to the battlefield. It gains
+  haste. Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth
+  only as a sorcery.)"` — every word of what it *does* sits inside the parenthetical, which
+  `stripReminderText` deletes, so the bare `"at the beginning of the next end step"` text matcher
+  never sees a Kathari Bomber-style card at all (caught by checking a real Unearth card against the
+  full pool, not assumed). Encore, Dash, Blitz, Mobilize, and Warp all share the identical shape.
+  `TEMPORARY_EFFECT_KEYWORDS` reads `CardFacts.keywords` for a card that has one of them directly, and
+  a separate granting-clause text pattern for a card that grants one to others (Grixis: `"Blue, black,
+  and/or red creature cards in your graveyard have unearth"`) — that clause survives stripping, since
+  it sits outside the parenthetical it's introducing, the same reasoning `lifegain`'s lifelink-granting
+  matcher already established.
 
 ---
 
