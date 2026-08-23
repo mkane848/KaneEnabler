@@ -1844,6 +1844,54 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    // Vetted — yshtola.txt's own confirmed axes name it directly
+    // ("Drain, pillowfort, spellslinger, politics, MV-vs-cost"). Phase
+    // C4's second archetype, and the one flagged as the fuzziest concept
+    // in the catalog — kept crisp here by unifying three textually
+    // different but real, well-defined social tools rather than reaching
+    // for one broad "affects other players" scan, which would sweep in
+    // board wipes and group draw spells that have nothing to do with
+    // politics.
+    key: 'politics',
+    label: 'Politics',
+    description:
+      'Multiplayer social tools that direct threat elsewhere or make another player choose — ' +
+      "goading a creature into someone else's combat, giving away a permanent, and symmetric " +
+      'effects that force two players to interact.',
+    weight: 18,
+    // No separate payoff role — taking the political action *is* the
+    // identity, the same shape as pillowfort/alternateWin.
+    definingRole: 'produces',
+    roles: {
+      produces: [
+        // Goad — a real Scryfall keyword (Eye of Nidhogg's own "is
+        // goaded"), read directly off CardFacts.keywords rather than
+        // re-deriving the text pattern.
+        (f: CardFacts) => f.keywords.includes('Goad'),
+        // Giving away a permanent as a political tool — Donate's own
+        // "Target player gains control of target permanent you control",
+        // Crown of Doom's self-referential "Target player other than this
+        // artifact's owner gains control of it", Bazaar Trader, and
+        // Domineering Will (handing an opponent's creature to a third
+        // player and forcing it to block — a real EDH political staple
+        // for exactly that reason). Scoped to "target player" specifically,
+        // not "target opponent" — Humble Defector/Yes Man-style
+        // self-sacrifice-for-value engines and Chaos Lord/Jinxed
+        // Ring-style always-an-opponent effects are a different plan, not
+        // a political choice among several players; checked against the
+        // full card pool, which found exactly these four and no others.
+        (f: CardFacts) =>
+          clauses(f.text).some((c) => /\btarget player[^.;]*gains control of\b/i.test(c)),
+        // The reveal-and-exchange shape Parker Luck and Keen Duelist share
+        // verbatim: each of two players reveals a card and loses life
+        // based on what the *other* one revealed. Deliberately narrow —
+        // this exact phrase appears nowhere else in the legal card pool —
+        // rather than a broad "each player"/"each opponent" scan.
+        /\brevealed by the other player\b/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
