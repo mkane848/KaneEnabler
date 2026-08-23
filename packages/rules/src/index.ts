@@ -36,7 +36,7 @@ export {
   type CounterMechanic,
   type TurnStep,
 } from './counters.js';
-export { parseCreatureTypes } from './creatureTypes.js';
+export { hasChangeling, parseCreatureTypes } from './creatureTypes.js';
 export { isCommanderLegal, type LegalityCardLike } from './legality.js';
 export {
   COMMANDER_DECK_SIZE,

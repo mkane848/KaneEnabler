@@ -234,6 +234,15 @@ function unitSignals(
  * unqualified signal does, so it's accepted here too. No other archetype
  * ever produces a `'*'` qualifier, so this is safe to check unconditionally
  * rather than gating it on `archetype === 'kindred'`.
+ *
+ * A Changeling card (CR 702.73a — Realmwalker, Chomping Changeling; Phase E)
+ * takes the plain `s.qualifier === undefined` branch above rather than a
+ * dedicated case: `detectKindred` pushes it as a genuinely unqualified
+ * kindred signal (`is` only), since "this card is every creature type" is
+ * the same unconditional relation Wilhelt's unqualified reanimation spell
+ * already uses — unlike the wildcard, it needs no gate in `groupByTheme` or
+ * here, because crediting it to a specific type is not a guess about a
+ * future player choice.
  */
 function ownSignalContains(
   ownSignals: SignalMatch[],

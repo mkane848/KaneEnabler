@@ -7,7 +7,12 @@ import {
   frontFaceField,
   frontImageUri,
 } from '@mtg/card-model';
-import { frontFaceCharacteristics, isCommanderEligible, parseCreatureTypes } from '@mtg/rules';
+import {
+  frontFaceCharacteristics,
+  hasChangeling,
+  isCommanderEligible,
+  parseCreatureTypes,
+} from '@mtg/rules';
 import { readSidecar } from '@mtg/scryfall';
 import { faceNameEntries } from '../src/services/cardNames';
 import { buildCardFacts, buildVocabulary, detectSignals, hasActiveRole } from '../src/services/signals';
@@ -126,6 +131,11 @@ db.exec(`
     game_changer INTEGER DEFAULT 0,
     is_legendary INTEGER DEFAULT 0,
     is_commander_eligible INTEGER DEFAULT 0,
+    -- Changeling (CR 702.73a): "This card is every creature type." A flag
+    -- rather than an expansion of creature_types into Magic's ~300-type
+    -- catalog — see @mtg/rules' hasChangeling for why. Honoured in
+    -- signals.ts's detectKindred.
+    is_changeling INTEGER DEFAULT 0,
     -- Partner-family ability (rule 702.124): one of 'partner', 'partner_with',
     -- 'partner_suffix', 'friends_forever', 'choose_background',
     -- 'doctors_companion', or NULL. partner_target holds the "partner with
@@ -261,14 +271,14 @@ const insert = db.prepare(`
     oracle_id, name, name_lower, mana_cost, cmc, type_line, oracle_text,
     colors, color_identity, keywords, creature_types,
     power, toughness, scryfall_uri,
-    legality_commander, game_changer, is_legendary, is_commander_eligible,
+    legality_commander, game_changer, is_legendary, is_commander_eligible, is_changeling,
     partner_ability, partner_target, is_background, image_uri,
     back_image_uri, back_name
   ) VALUES (
     @oracle_id, @name, @name_lower, @mana_cost, @cmc, @type_line, @oracle_text,
     @colors, @color_identity, @keywords, @creature_types,
     @power, @toughness, @scryfall_uri,
-    @legality_commander, @game_changer, @is_legendary, @is_commander_eligible,
+    @legality_commander, @game_changer, @is_legendary, @is_commander_eligible, @is_changeling,
     @partner_ability, @partner_target, @is_background, @image_uri,
     @back_image_uri, @back_name
   )
@@ -316,6 +326,7 @@ const insertMany = db.transaction((rows: any[]) => {
     const front = frontFaceCharacteristics(card);
     const isLegendary = front.typeLine.includes('Legendary') ? 1 : 0;
     const commanderEligible = isCommanderEligible(card) ? 1 : 0;
+    const isChangeling = hasChangeling(card.keywords ?? []) ? 1 : 0;
 
     const { ability: partnerAbility, target: partnerTarget } = detectPartnerAbility(oracleText);
     const isBackground = front.typeLine.includes('Background') ? 1 : 0;
@@ -348,6 +359,7 @@ const insertMany = db.transaction((rows: any[]) => {
       game_changer: card.game_changer ? 1 : 0,
       is_legendary: isLegendary,
       is_commander_eligible: commanderEligible,
+      is_changeling: isChangeling,
       partner_ability: partnerAbility,
       partner_target: partnerTarget,
       is_background: isBackground,

@@ -71,6 +71,7 @@ function makeCard(overrides: Partial<CardRow> = {}): CardRow {
     game_changer: 0,
     is_legendary: 1,
     is_commander_eligible: 1,
+    is_changeling: 0,
     image_uri: null,
     back_image_uri: null,
     back_name: null,
@@ -517,6 +518,84 @@ describe("kindred's own wildcard is gated by real depth", () => {
     assert.ok(kindred);
     // The three real Oozes plus both wildcard cards.
     assert.strictEqual(kindred.cards.length, 5);
+  });
+});
+
+describe('Changeling backs any kindred qualifier at the normal minimum, with no depth gate', () => {
+  // Contrast with the wildcard gate above: `detectKindred` emits a
+  // Changeling card's signal unqualified (`is` only), not `qualifier: '*'`,
+  // so `gateWildcardKindredSupporters` never touches it at all — it rides
+  // `ownSignalContains`'s pre-existing, already-shipped undefined-qualifier
+  // branch instead, the same one Wilhelt's unqualified reanimation spell
+  // uses. That is deliberate, not an oversight: "this card is every
+  // creature type" (CR 702.73a) is unconditionally true of the printed
+  // card, not a guess about a choice the player hasn't made yet, so there
+  // is nothing here that needs gating the way a wildcard card's *eventual*
+  // chosen type does.
+  const changelingCard = (name: string) =>
+    makeCard({
+      name,
+      type_line: 'Creature — Shapeshifter',
+      color_identity: JSON.stringify(['G']),
+      creature_types: JSON.stringify(['Shapeshifter']),
+      keywords: JSON.stringify(['Changeling']),
+      is_changeling: 1,
+      oracle_text:
+        'Changeling (This card is every creature type.)\n' +
+        'When this creature enters, draw a card.',
+    });
+
+  it('a Changeling card joins a qualifier at the normal minimum, no extra depth required', () => {
+    const oozeLord = makeCard({
+      name: 'Ooze Lord',
+      color_identity: JSON.stringify(['G']),
+      creature_types: JSON.stringify(['Ooze']),
+      oracle_text: 'Other Oozes you control get +1/+1.',
+    });
+    // Kindred's own defining requirement needs cards that CARE (`rewards`),
+    // not just members — two real Ooze payoffs clear it on their own, same
+    // as `oozeLord`'s own text.
+    const oozes = Array.from({ length: 2 }, (_, i) =>
+      makeCard({
+        name: `Ooze Payoff ${i}`,
+        color_identity: JSON.stringify(['G']),
+        creature_types: JSON.stringify(['Ooze']),
+        oracle_text: 'Whenever an Ooze you control dies, draw a card.',
+      }),
+    );
+    const changeling = changelingCard('A Changeling');
+    const entries = [...oozes, changeling].map((c) => owned(c));
+    const units = [solo(oozeLord)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
+    const kindred = suggestions[0]!.kindredSupport.find((k) => k.type === 'Ooze');
+    assert.ok(kindred);
+    // The two real Oozes plus the one changeling — exactly MIN_SIGNAL_COUNT,
+    // no extra bodies needed first.
+    assert.strictEqual(kindred.cards.length, 3);
+    assert.ok(kindred.cards.some((c) => c.name === 'A Changeling'));
+  });
+
+  it('a Changeling card alone still cannot clear MIN_SIGNAL_COUNT by itself', () => {
+    const oozeLord = makeCard({
+      name: 'Ooze Lord',
+      color_identity: JSON.stringify(['G']),
+      creature_types: JSON.stringify(['Ooze']),
+      oracle_text: 'Other Oozes you control get +1/+1.',
+    });
+    const entries = [changelingCard('A Changeling')].map((c) => owned(c));
+    const units = [solo(oozeLord)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
+    assert.deepStrictEqual(suggestions, []);
   });
 });
 

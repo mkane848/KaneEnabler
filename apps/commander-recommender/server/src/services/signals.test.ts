@@ -46,6 +46,7 @@ function makeCard(overrides: Partial<CardRow> = {}): CardRow {
     game_changer: 0,
     is_legendary: 0,
     is_commander_eligible: 0,
+    is_changeling: 0,
     image_uri: null,
     back_image_uri: null,
     back_name: null,
@@ -328,6 +329,91 @@ describe('kindred\'s own wildcard: "choose a creature type" supports every theme
     });
     const signals = signalsFor(overlord, ['Sliver', 'Mutant']);
     assert.strictEqual(find(signals, 'kindred', '*'), undefined);
+  });
+});
+
+describe('Changeling (CR 702.73a) is every creature type, unqualified', () => {
+  it('a changeling with no type mentions of its own registers as an unqualified kindred member', () => {
+    // Chomping Changeling — real oracle text. No creature-type word appears
+    // anywhere in it, so the per-type loop finds nothing to attach roles to;
+    // the unqualified signal is the only source of kindred membership here.
+    const chomping = makeCard({
+      name: 'Chomping Changeling',
+      type_line: 'Creature — Shapeshifter',
+      creature_types: JSON.stringify(['Shapeshifter']),
+      keywords: JSON.stringify(['Changeling']),
+      is_changeling: 1,
+      oracle_text:
+        'Changeling (This card is every creature type.)\n' +
+        'When this creature enters, destroy up to one target artifact or enchantment.',
+    });
+    const signals = signalsFor(chomping, ['Shapeshifter']);
+    // Its own printed type, from the structural per-type loop.
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', 'Shapeshifter'), ['is']);
+    // Every other type, from the unqualified signal — 'is' only, since
+    // Changeling is structural, not a claim of caring about anything.
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', undefined), ['is']);
+    assert.strictEqual(hasActiveRole(rolesOf(signals, 'kindred', undefined)), false);
+  });
+
+  it("Realmwalker's own tribal engine still qualifies by its own text, on top of the unqualified signal", () => {
+    // Realmwalker — real oracle text. Its wildcard-kindred signal (Phase E's
+    // earlier sub-item) and this unqualified Changeling signal are
+    // independent: one says "supports whichever type you choose", the other
+    // says "and is unconditionally every type regardless".
+    const realmwalker = makeCard({
+      name: 'Realmwalker',
+      type_line: 'Creature — Shapeshifter',
+      creature_types: JSON.stringify(['Shapeshifter']),
+      keywords: JSON.stringify(['Changeling']),
+      is_changeling: 1,
+      oracle_text:
+        'Changeling (This card is every creature type.)\n' +
+        'As this creature enters, choose a creature type.\n' +
+        'You may look at the top card of your library any time.\n' +
+        'You may cast creature spells of the chosen type from the top of your library.',
+    });
+    const signals = signalsFor(realmwalker, ['Shapeshifter']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', 'Shapeshifter'), ['is']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', '*'), ['produces']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', undefined), ['is']);
+  });
+
+  it('a card with the Changeling keyword grants no extra kindred role beyond `is`, however active its other abilities are', () => {
+    // Flock Impostor — real oracle text. Flash/Flying and a bounce trigger,
+    // none of which are kindred-caring text — the unqualified signal must
+    // stay `is`-only regardless of how much else the card does.
+    const impostor = makeCard({
+      name: 'Flock Impostor',
+      type_line: 'Creature — Shapeshifter',
+      creature_types: JSON.stringify(['Shapeshifter']),
+      keywords: JSON.stringify(['Changeling', 'Flying', 'Flash']),
+      is_changeling: 1,
+      oracle_text:
+        'Changeling (This card is every creature type.)\n' +
+        'Flash\n' +
+        'Flying\n' +
+        "When this creature enters, return up to one other target creature you control to its owner's hand.",
+    });
+    const signals = signalsFor(impostor, ['Shapeshifter']);
+    assert.deepStrictEqual(rolesOf(signals, 'kindred', undefined), ['is']);
+  });
+
+  it('a card without the Changeling keyword produces no unqualified kindred signal', () => {
+    // Sliver Overlord again — a real, specific-type Sliver with no Changeling
+    // keyword at all. Must not somehow register as "every type".
+    const overlord = makeCard({
+      name: 'Sliver Overlord',
+      type_line: 'Legendary Creature — Sliver Mutant',
+      creature_types: JSON.stringify(['Sliver', 'Mutant']),
+      is_changeling: 0,
+      oracle_text:
+        '{3}: Search your library for a Sliver card, reveal that card, put it into your hand, ' +
+        'then shuffle.\n' +
+        '{3}: Gain control of target Sliver. (This effect lasts indefinitely.)',
+    });
+    const signals = signalsFor(overlord, ['Sliver', 'Mutant']);
+    assert.strictEqual(find(signals, 'kindred', undefined), undefined);
   });
 });
 

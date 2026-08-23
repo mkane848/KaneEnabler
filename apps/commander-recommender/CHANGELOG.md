@@ -469,11 +469,41 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   reports `Sliver Kindred (56)` (was 48) with all 8 wildcard cards
   present. This catalog's original claim was ten wildcard cards; only
   eight were confirmed by direct database search — see
-  `docs/archetypes.md`'s "Known tensions" for that gap and for
-  Realmwalker's Changeling keyword, not yet honoured (Phase E's next
-  item). Re-measured with Phase F's coverage report: 763 of 4,049
-  commander-eligible cards now produce zero active signals, down from
-  764.
+  `docs/archetypes.md`'s "Known tensions" for that gap. Re-measured with
+  Phase F's coverage report: 763 of 4,049 commander-eligible cards now
+  produce zero active signals, down from 764.
+- **Signal engine, Phase E (part 2) — Changeling.** See
+  `docs/signals-rework.md` Phase E. `@mtg/rules` gains `hasChangeling`,
+  citing CR 702.73a alongside `parseCreatureTypes` and reading Scryfall's
+  own `keywords` array rather than parsing text — Changeling's reminder
+  ("This card is every creature type.") names no type words for a text
+  matcher to find. Stored as a plain `is_changeling` column, the same
+  pattern as `is_legendary`/`is_background`, rather than expanding
+  `creature_types` into Magic's ~300-type catalog per changeling card,
+  which would undo `candidateTypes`'s own performance optimisation for
+  every changeling printing.
+  - `detectKindred` honours the flag by pushing one *unqualified*
+    `kindred[is]` signal (never `qualifier: '*'`) rather than enumerating
+    types — which means `supporterMatches` needed no direct edit at all:
+    `ownSignalContains`'s existing `s.qualifier === undefined` branch
+    (Phase B, for the unqualified-reanimator case) already accepts it as
+    support for any kindred qualifier, and `groupByTheme` already folds an
+    unqualified group into every qualified sibling. Deliberately *not*
+    gated the way the wildcard fold is: crediting a wildcard card to a
+    type is a guess about a future player choice, but Changeling makes a
+    card unconditionally, always every type — the same unconditional
+    shape as Wilhelt's generic reanimation spell, so it rides that
+    mechanism rather than a third parallel one.
+  - Verified against the real Brigid corpus deck: Chomping Changeling,
+    Flock Impostor, and Crib Swap — none of which mentions a specific
+    creature type anywhere in its own text — now correctly appear in the
+    deck's real `Kithkin Kindred (26)` theme, with no phantom type
+    anywhere in a full corpus sweep. Only four real cards ground this
+    feature (Realmwalker plus those three); see `docs/archetypes.md`'s
+    "Known tensions" for what that thin sample doesn't cover. Re-measured:
+    still 763 of 4,049 zero-active-signal commanders, unchanged, since
+    `is` is a passive role and this signal never carries an active one on
+    its own.
 
 ### Fixed
 

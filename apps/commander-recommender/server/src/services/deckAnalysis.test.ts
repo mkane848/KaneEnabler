@@ -38,6 +38,7 @@ function makeCard(name?: string, cmc = 1): CardRow {
     game_changer: 0,
     is_legendary: 0,
     is_commander_eligible: 0,
+    is_changeling: 0,
     image_uri: null,
     back_image_uri: null,
     back_name: null,
@@ -262,6 +263,45 @@ describe('analyzeDeck', () => {
       signals.set(wildcard.oracle_id, [signal('kindred', ['rewards'], '*')]);
     }
 
+    assert.deepStrictEqual(analyzeDeck(owned, signals).themes, []);
+  });
+
+  // --- Changeling: the same fold, deliberately ungated ------------------------
+
+  it('a Changeling card joins a qualified group at the normal minimum, with no depth gate', () => {
+    // Unlike the wildcard fold above, this needs no `MIN_THEME_CARDS` worth
+    // of real bodies first — "this card is every creature type" (CR
+    // 702.73a) is unconditionally true, not a guess about a future player
+    // choice, so detectKindred emits it as a plain unqualified signal
+    // (qualifier undefined) and it rides Phase B's pre-existing unqualified
+    // fold instead of a dedicated gated one. Two real lords already clear
+    // kindred's own two-card minimum on their own; the changeling just adds
+    // membership on top.
+    const owned: OwnedCard[] = [];
+    const signals = new Map<string, SignalMatch[]>();
+    for (let i = 0; i < 2; i++) {
+      const row = makeCard(`Sliver Lord ${i}`);
+      owned.push({ row, quantity: 1 });
+      signals.set(row.oracle_id, [signal('kindred', ['is', 'rewards'], 'Sliver')]);
+    }
+    const changeling = makeCard('Chomping Changeling');
+    owned.push({ row: changeling, quantity: 1 });
+    signals.set(changeling.oracle_id, [signal('kindred', ['is'])]);
+
+    const themes = analyzeDeck(owned, signals).themes;
+    assert.strictEqual(themes.length, 1);
+    assert.strictEqual(themes[0]!.label, 'kindred (Sliver)');
+    assert.strictEqual(themes[0]!.cardCount, 3);
+    assert.ok(themes[0]!.cards.some((c) => c.name === 'Chomping Changeling'));
+  });
+
+  it('a Changeling card alone, with no real members anywhere, forms no theme of its own', () => {
+    // Membership still counts cards, caring still makes a theme — a solo
+    // changeling with nothing else in kindred is exactly one card, under
+    // MIN_THEME_CARDS, the same as any other lone member.
+    const changeling = makeCard('Chomping Changeling');
+    const owned: OwnedCard[] = [{ row: changeling, quantity: 1 }];
+    const signals = new Map([[changeling.oracle_id, [signal('kindred', ['is'])]]]);
     assert.deepStrictEqual(analyzeDeck(owned, signals).themes, []);
   });
 
