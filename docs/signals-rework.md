@@ -270,6 +270,20 @@ produce zero active signals, down from 568 — 2 rescued by `pillowfort` alone, 
 surviving manual review. **This completes Phase C3's grounded archetypes** — only `monoColorDevotion`,
 the tier's one genuinely Inferred entry, remains.
 
+**`monoColorDevotion` is shipped, Phase C3's seventh and final archetype — and its first genuinely
+Inferred one.** No deck in the corpus is confirmed to build around it, confirmed absent by directly
+searching every fixture rather than assumed. Built entirely from CR 700.6 (devotion to a color is the
+number of mana symbols of that color among the mana costs of permanents you control) and verified
+against the full legal card pool alone, since there is no grounding deck to check it against. Gains a
+genuinely new `QualifierKind`: `'color'`, the five WUBRG names — see `archetypes.md`'s own entry for
+the full account, including why a two-color devotion threshold (six real Theros gods) is deliberately
+excluded rather than folded in, and why Nykthos, Shrine to Nyx's "devotion to *that* color" is a known,
+accepted gap rather than a bug. Re-measured with Phase F's coverage report: **564 of 4,049**
+commander-eligible cards now produce zero active signals, down from 566 — 2 rescued by
+`monoColorDevotion` alone (Thassa, Deep-Dwelling; Thassa, God of the Sea), and every one of the 45
+cards it matched across the whole pool a real Theros-block devotion payoff correctly qualified by
+color — no false positive found. **This completes Phase C3.**
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 

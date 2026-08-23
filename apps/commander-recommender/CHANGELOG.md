@@ -705,6 +705,37 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     commander-eligible cards now produce zero active signals, down from
     568. This completes Phase C3's grounded archetypes — only
     `monoColorDevotion`, the tier's one genuinely Inferred entry, remains.
+- **Signal engine, Phase C3 — `monoColorDevotion` archetype, and a new
+  `color` qualifier kind.** See `docs/signals-rework.md` Phase C and
+  `docs/archetypes.md`'s own entry. Phase C3's seventh and final
+  archetype, and its first genuinely Inferred one — no deck in the corpus
+  is confirmed to build around it, confirmed absent by directly searching
+  every fixture rather than assumed. Built entirely from CR 700.6
+  (devotion to a color is the number of mana symbols of that color among
+  the mana costs of permanents you control) and verified against the full
+  legal card pool alone, since there is no grounding deck to check it
+  against.
+  - `qualifiable: 'color'` — a genuinely new `QualifierKind`, the five
+    WUBRG names, added alongside `cardType`/`permanentSubtype` in
+    `findQualifier`'s curated-word-lookup shape rather than a creature-type
+    vocabulary scan.
+  - `rewards` is the literal, always-reprinted phrase ("your devotion to
+    black" — Gray Merchant of Asphodel, Erebos, God of the Dead) requiring
+    a single named color, not a color pair ("devotion to blue and black" —
+    Phenax, Keranos, Ephara, Iroas, Karametra, Athreos, six real Theros
+    gods with a genuinely different, dual-color threshold this archetype's
+    own name deliberately excludes).
+  - Checked against the full legal card pool: 45 cards matched across the
+    whole pool, every one a real Theros-block devotion payoff correctly
+    qualified by color, and 2 previously zero-active-signal commanders
+    rescued (Thassa, Deep-Dwelling; Thassa, God of the Sea) — no false
+    positive found. Nykthos, Shrine to Nyx's "devotion to *that* color"
+    (the color an activated ability chooses, not one its own text names)
+    is a known, accepted gap, not a bug — nothing in its text for the
+    qualifier to key on.
+  - Re-measured with Phase F's coverage report: 564 of 4,049
+    commander-eligible cards now produce zero active signals, down from
+    566. **This completes Phase C3.**
 
 ### Fixed
 

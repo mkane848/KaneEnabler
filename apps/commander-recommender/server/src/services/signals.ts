@@ -131,7 +131,10 @@ export function hasActiveRole(roles: Role[]): boolean {
  * itself — see `findGameState` — the Ring, the monarch, the initiative,
  * Max speed, and day/night, five persistent shared states with nothing
  * else in common, so each is its own named kind rather than a vocabulary
- * lookup.
+ * lookup. `color` qualifies `monoColorDevotion` — the five WUBRG names, the
+ * same curated-word-lookup shape `cardType`/`permanentSubtype` already use,
+ * since a devotion payoff always spells its color out by name in the same
+ * clause ("your devotion to black").
  */
 export type QualifierKind =
   | 'creatureType'
@@ -139,7 +142,8 @@ export type QualifierKind =
   | 'cardType'
   | 'permanentSubtype'
   | 'counterType'
-  | 'gameState';
+  | 'gameState'
+  | 'color';
 
 /** One archetype a card participates in, with the capacities it does so in. */
 export interface SignalMatch {
@@ -748,6 +752,13 @@ function findCardTypes(typeLine: string): string[] {
  */
 const PERMANENT_SUBTYPES = ['Vehicle', 'Equipment', 'Saga', 'Clue', 'Treasure', 'Food'];
 
+/** The five WUBRG colors a `color` qualifier can narrow to. Devotion (CR
+ * 700.6) is defined per color, and can be defined for a color pair too
+ * ("devotion to blue and black") — `monoColorDevotion`'s own matcher
+ * excludes that shape deliberately, so this list only ever needs to name
+ * one color at a time. */
+const COLORS = ['White', 'Blue', 'Black', 'Red', 'Green'];
+
 function findPermanentSubtypes(typeLine: string): string[] {
   return PERMANENT_SUBTYPES.filter((subtype) => new RegExp(`\\b${subtype}\\b`, 'i').test(typeLine));
 }
@@ -840,12 +851,13 @@ const BURN_DAMAGE_DOUBLER_SELF_ONLY =
 const TEMPORARY_EFFECT_KEYWORDS = ['Unearth', 'Encore', 'Dash', 'Blitz', 'Mobilize', 'Warp'];
 
 /** Word lookups for `findQualifier`, mirroring `Vocabulary.typeByWord` for the
- * two qualifier kinds that narrow to a curated constant instead of a
+ * three qualifier kinds that narrow to a curated constant instead of a
  * creature-type vocabulary — Kalamax copies *instants*, not creatures. */
 const CARD_TYPE_BY_WORD = new Map(CARD_TYPES.map((type) => [type.toLowerCase(), type]));
 const PERMANENT_SUBTYPE_BY_WORD = new Map(
   PERMANENT_SUBTYPES.map((subtype) => [subtype.toLowerCase(), subtype]),
 );
+const COLOR_BY_WORD = new Map(COLORS.map((color) => [color.toLowerCase(), color]));
 
 /** Keywords that are themselves an alternative cost, rather than text saying
  * so — Evoke (Walker of the Grove), Cleave (Lantern Flare), Delve (Empty the
@@ -1777,6 +1789,38 @@ export const ARCHETYPES: ArchetypeDef[] = [
     },
   },
   {
+    // Inferred, not Vetted — see docs/archetypes.md's "Grounding: vetted vs
+    // inferred" section. No deck in the twenty-deck corpus is confirmed to
+    // build around this, confirmed by directly searching every fixture for
+    // "devotion" rather than assumed absent. Built from CR 700.6 alone —
+    // a precise, well-defined mechanic, which is what makes it safe to
+    // build ahead of a real example — and checked against the full legal
+    // card pool rather than a grounding deck's own cards.
+    key: 'monoColorDevotion',
+    label: 'Mono-Color Devotion',
+    description:
+      "Payoffs that read your devotion to a single color (CR 700.6: the number of mana symbols of " +
+      "that color among the mana costs of permanents you control) — token counts, damage, life " +
+      "gain, or a God's own threshold for being a creature at all, all scaled by one color's pip " +
+      'count.',
+    weight: 18,
+    qualifiable: 'color',
+    roles: {
+      rewards: [
+        // "Your devotion to black" (Gray Merchant of Asphodel, Erebos,
+        // God of the Dead), always this exact phrase — CR 700.6 is
+        // reprinted as reminder text on every card that uses it, so the
+        // mechanic never hides behind different wording the way some
+        // others do. Requires a single named color, not a color pair
+        // ("devotion to blue and black" — Phenax, Keranos, Ephara, Iroas,
+        // Karametra, Athreos, all real Theros gods) — a genuinely
+        // different, dual-color payoff shape this archetype's own name
+        // deliberately excludes.
+        /\bdevotion to (?:white|blue|black|red|green)\b(?! and)/i,
+      ],
+    },
+  },
+  {
     key: 'counters',
     label: 'Counters',
     description:
@@ -1958,14 +2002,17 @@ function findQualifier(facts: CardFacts, def: ArchetypeDef, vocab: Vocabulary): 
     if (structural) return structural;
   }
 
-  // cardType/permanentSubtype narrow to a curated constant rather than the
-  // creature-type vocabulary — Kalamax copies *instants*, not creatures.
+  // cardType/permanentSubtype/color narrow to a curated constant rather
+  // than the creature-type vocabulary — Kalamax copies *instants*, not
+  // creatures; a devotion payoff names a WUBRG color, not a creature type.
   const typeByWord =
     def.qualifiable === 'cardType'
       ? CARD_TYPE_BY_WORD
       : def.qualifiable === 'permanentSubtype'
         ? PERMANENT_SUBTYPE_BY_WORD
-        : vocab.typeByWord;
+        : def.qualifiable === 'color'
+          ? COLOR_BY_WORD
+          : vocab.typeByWord;
 
   // rewards/consumes checked first, same order as always — Angel of Glory's
   // Rise depends on rewards being tried before a broader-matching consumes
