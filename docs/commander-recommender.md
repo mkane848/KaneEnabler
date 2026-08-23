@@ -724,7 +724,7 @@ joined — see `unitKey()`) used as the dismiss/row key instead of a single
 card's own id. `/api/combos` takes `commanderNames: string[]` (1-2) so a
 Spellbook lookup can be run against a pair. There is no "Partner" badge in
 the UI by design — Partner-family keywords stay excluded from the generic
-shared-keyword signal (see `synergy.ts`'s `EXCLUDED_KEYWORDS` note) rather
+shared-keyword signal (see `signals.ts`'s `IGNORED_KEYWORDS` note) rather
 than surfaced as a tag, since the pairing itself is the feature.
 **Spot-checked against real Scryfall data (2026-08-18)** —
 `packages/rules/src/partners.real-data.test.ts`, fields copied verbatim

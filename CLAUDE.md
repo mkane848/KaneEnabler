@@ -149,7 +149,7 @@ Two workflows in `.github/workflows/`:
 | [`docs/commander-recommender.md`](./docs/commander-recommender.md) | Commander recommender's own handoff doc — deep design rationale, file map     |
 | [`docs/rules-audit.md`](./docs/rules-audit.md)                     | Every Magic rules defect found in the incoming code, with file:line citations |
 | [`docs/archetypes.md`](./docs/archetypes.md)                       | Signal vocabulary: roles, archetypes, qualifiers, and the decks behind them   |
-| [`docs/signals-rework.md`](./docs/signals-rework.md)               | Implementation plan for the signal engine rework (not started)                |
+| [`docs/signals-rework.md`](./docs/signals-rework.md)               | Implementation plan for the signal engine rework (shipped — every phase, including the conditional Phase C4 and the deferred Phase D) |
 | [`docs/api-policy.md`](./docs/api-policy.md)                       | **Hard rule.** External API limits and etiquette                              |
 
 ## Hard rules
