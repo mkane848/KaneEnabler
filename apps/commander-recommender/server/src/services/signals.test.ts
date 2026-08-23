@@ -3484,3 +3484,55 @@ describe('Mono-Color Devotion: payoffs that read your devotion to a single color
     assert.strictEqual(find(signalsFor(solRing), 'monoColorDevotion'), undefined);
   });
 });
+
+describe('Alternate Win Condition: a genuine "you win the game" outcome', () => {
+  it('produces from a threshold-gated win condition', () => {
+    // Knuckles the Echidna — real oracle text.
+    const knuckles = makeCard({
+      name: 'Knuckles the Echidna',
+      type_line: 'Legendary Creature — Echidna Warrior',
+      oracle_text:
+        'Double strike, trample, haste\n' +
+        'Whenever one or more creatures you control deal combat damage to a player, create a ' +
+        'Treasure token.\n' +
+        'Treasure Hunter — At the beginning of your upkeep, if you control thirty or more ' +
+        'artifacts, you win the game.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(knuckles), 'alternateWin'), ['produces']);
+  });
+
+  it('produces from a mill-out win condition', () => {
+    // Doctor Doom, Unrivaled — real oracle text.
+    const doctorDoom = makeCard({
+      name: 'Doctor Doom, Unrivaled',
+      type_line: 'Legendary Creature — Human Sorcerer Villain',
+      oracle_text:
+        'Lifelink\n' +
+        '{T}: You draw a card and lose 1 life. Then if your library has no cards in it, you win ' +
+        "the game. (You win even if you have 0 life or didn't draw a card.)",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(doctorDoom), 'alternateWin'), ['produces']);
+  });
+
+  it('does not produce from a symmetric "can\'t lose/win" grant, only a genuine win', () => {
+    // The Book of Exalted Deeds — real oracle text. Regression guard: this
+    // only ever grants an Angel "you can't lose the game and your
+    // opponents can't win the game" — a symmetric protection clause, not a
+    // win condition for its own controller.
+    const bookOfExaltedDeeds = makeCard({
+      name: 'The Book of Exalted Deeds',
+      type_line: 'Legendary Artifact — Book',
+      oracle_text:
+        'At the beginning of your end step, if you gained 3 or more life this turn, create a 3/3 ' +
+        'white Angel creature token with flying.\n{W}{W}{W}, {T}, Exile The Book of Exalted ' +
+        'Deeds: Put an enlightened counter on target Angel. It gains "You can\'t lose the game ' +
+        'and your opponents can\'t win the game." Activate only as a sorcery.',
+    });
+    assert.strictEqual(find(signalsFor(bookOfExaltedDeeds), 'alternateWin'), undefined);
+  });
+
+  it('does not fire on a card with no win-condition text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'alternateWin'), undefined);
+  });
+});

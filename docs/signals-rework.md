@@ -284,6 +284,30 @@ commander-eligible cards now produce zero active signals, down from 566 — 2 re
 cards it matched across the whole pool a real Theros-block devotion payoff correctly qualified by
 color — no false positive found. **This completes Phase C3.**
 
+**Phase C4, decided by the repo owner: attempt it.** C1–C3 hold up — every archetype shipped this
+rework has been checked against its own grounding deck (or the full pool, for the two Inferred
+entries) with no surviving false positive, and the full test suite and coverage report have stayed
+clean at every step. `storm` and `alternateWin` ship if they can be kept crisp; `politics` — the
+fuzziest concept in the catalog — ships only if it can be, and gets dropped rather than shipped vague
+if not.
+
+Re-checking C4's own tier row against `archetypes.md`'s corpus table found the same correction Phase
+C3's own tier row needed: two of its three archetypes were never actually ungrounded. `alternateWin`
+(shadow.txt, via Knuckles the Echidna) and `politics` (yshtola.txt's own confirmed axes name it
+directly) are both named explicitly in the corpus table — only `storm` has no deck's own confirmed
+axes naming it, confirmed by checking directly (real Storm-keyword cards exist in the corpus, but
+incidentally, not as a deck's own intentional plan).
+
+**`alternateWin` is shipped, Phase C4's first archetype.** `definingRole: produces`, the same
+no-separate-payoff-role shape as `freeSpells`/`drain` — reads the precomputed `CardFacts.alternateWin`
+fact (Phase B) directly rather than re-deriving the pattern, since that fact was already built and
+verified against The Book of Exalted Deeds' symmetric "can't lose/win" grant. See `archetypes.md`'s
+own entry for the full account. Checked against the full legal card pool: only 4 commander-eligible
+cards in the entire game carry a genuine "you win the game" clause, all four correctly matched, no
+false positive — a small number by design, since an outright win condition is one of the rarest,
+most heavily-costed effects in the game. Re-measured with Phase F's coverage report: **563 of 4,049**
+commander-eligible cards now produce zero active signals, down from 564.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 
