@@ -2375,3 +2375,68 @@ describe('Recursion: the same body coming back from the graveyard, again and aga
     assert.strictEqual(find(signalsFor(solRing), 'recursion'), undefined);
   });
 });
+
+describe('Tap for Value: tapping and untapping your own permanents as a resource', () => {
+  it('produces from tapping a different creature you control as a cost for mana', () => {
+    // Springleaf Drum — real oracle text. One of the six mana-tap enablers
+    // named in docs/archetypes.md's own "enables" section — this is what
+    // turns Kalamax on at instant speed without her needing to attack.
+    const springleafDrum = makeCard({
+      name: 'Springleaf Drum',
+      type_line: 'Artifact',
+      oracle_text: '{T}, Tap an untapped creature you control: Add one mana of any color.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(springleafDrum), 'tapForValue'), ['produces']);
+  });
+
+  it('produces from tapping a different legendary permanent you control for a non-mana benefit', () => {
+    // Honor-Worn Shaku — real oracle text.
+    const honorWornShaku = makeCard({
+      name: 'Honor-Worn Shaku',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}.\nTap an untapped legendary permanent you control: Untap this artifact.',
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(honorWornShaku), 'tapForValue'), ['produces']);
+  });
+
+  it('produces from untapping your own permanents for free', () => {
+    // Seedborn Muse — real oracle text.
+    const seedbornMuse = makeCard({
+      name: 'Seedborn Muse',
+      type_line: 'Creature — Spirit',
+      oracle_text: "Untap all permanents you control during each other player's untap step.",
+    });
+    assert.deepStrictEqual(rolesOf(signalsFor(seedbornMuse), 'tapForValue'), ['produces']);
+  });
+
+  it('does not fire on the beneficiary of a tap-for-value enabler, only the enabler itself', () => {
+    // Kalamax, the Stormsire — real oracle text. Her own text only reads
+    // "if Kalamax is tapped" as a condition; she has no tap-another-
+    // permanent ability of her own, so she isn't this archetype's own
+    // identity even though the six enablers exist specifically for her.
+    const kalamax = makeCard({
+      name: 'Kalamax, the Stormsire',
+      type_line: 'Legendary Creature — Elemental Dinosaur',
+      oracle_text:
+        'Whenever you cast your first instant spell each turn, if Kalamax is tapped, copy that ' +
+        'spell. You may choose new targets for the copy.\nWhenever you copy an instant spell, put ' +
+        'a +1/+1 counter on Kalamax.',
+    });
+    assert.strictEqual(find(signalsFor(kalamax), 'tapForValue'), undefined);
+  });
+
+  it('does not fire on a plain tapped land with no tap-for-value ability', () => {
+    // Training Center — real oracle text.
+    const trainingCenter = makeCard({
+      name: 'Training Center',
+      type_line: 'Land',
+      oracle_text: 'This land enters tapped unless you have two or more opponents.\n{T}: Add {U} or {R}.',
+    });
+    assert.strictEqual(find(signalsFor(trainingCenter), 'tapForValue'), undefined);
+  });
+
+  it('does not fire on a card with no tap-for-value text at all', () => {
+    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    assert.strictEqual(find(signalsFor(solRing), 'tapForValue'), undefined);
+  });
+});

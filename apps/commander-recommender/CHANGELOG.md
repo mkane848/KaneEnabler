@@ -424,6 +424,35 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
     unrelated to this archetype's own correctness. Re-measured with
     Phase F's coverage report: 770 of 4,049 commander-eligible cards
     now produce zero active signals, down from 777.
+- **Signal engine, Phase C2 — `tapForValue` archetype, completing
+  Phase C2.** See `docs/signals-rework.md` Phase C. Tapping and
+  untapping your own permanents as a resource, and where combo
+  *ingredients* get classified — the engine flags the parts (an
+  untapper, a mana producer that taps), not the loop itself, which
+  stays Commander Spellbook's job. No qualifier, `definingRole:
+  produces` — the same shape as `drain`/`cyclingDiscard`/`recursion`/
+  `freeSpells`. Like `recursion`, only one of the tier table's two
+  decks has confirmed textual backing: kalamax.txt, via the six
+  mana-tap enablers `docs/archetypes.md`'s own `enables` section
+  already names by card (Springleaf Drum, Holdout Settlement,
+  Survivors' Encampment, Gene Pollinator, Relic of Legends, Honor-Worn
+  Shaku) as the reason `enables` needed to exist in the first place —
+  shipped on that grounding alone rather than inventing a second deck.
+  - `produces`: tapping a *different* permanent you control as a cost
+    for something else (never a card's own bare `{T}:` ability, which
+    is ubiquitous and not itself evidence of anything), and untapping
+    your own permanents for free (Seedborn Muse).
+  - Kalamax herself doesn't register — her text only reads "if Kalamax
+    is tapped" as a condition; she's the beneficiary of this
+    archetype, not its identity, and a dedicated test guards against
+    that.
+  - Verified against the real seeded database: `kalamax.txt` reports
+    `Tap for Value (7)`, matching its own doc-confirmed axis exactly,
+    with no false positives elsewhere in the corpus. Re-measured with
+    Phase F's coverage report: 764 of 4,049 commander-eligible cards
+    now produce zero active signals, down from 770.
+  - **This completes Phase C2** — all seven archetypes shipped and
+    merged.
 
 ### Fixed
 
