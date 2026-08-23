@@ -38,6 +38,9 @@ export interface CardRow {
   game_changer: number; // 0 | 1
   is_legendary: number; // 0 | 1
   is_commander_eligible: number; // 0 | 1
+  // Changeling (CR 702.73a) — this card is every creature type. See
+  // @mtg/rules' hasChangeling and signals.ts's detectKindred.
+  is_changeling: number; // 0 | 1
   image_uri: string | null;
   // Second face of a true two-sided card (transform/modal_dfc), for the
   // art preview's flip control. Null for single-faced cards — and possibly

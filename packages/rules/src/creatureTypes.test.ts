@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCreatureTypes } from './creatureTypes';
+import { hasChangeling, parseCreatureTypes } from './creatureTypes';
 
 describe('parseCreatureTypes', () => {
   const CREATURE_TYPES = new Set(['Boar', 'Lhurgoyf', 'Knight', 'Goblin', 'Elf', 'Wall']);
@@ -68,5 +68,26 @@ describe('parseCreatureTypes', () => {
     // different known multi-word type ("Time Lord").
     const types = new Set(['Time Lord', 'Wizard']);
     expect(parseCreatureTypes('Creature — Time Wizard', types)).toEqual(['Wizard']);
+  });
+});
+
+describe('hasChangeling', () => {
+  it('recognizes the Changeling keyword', () => {
+    // Realmwalker — real Scryfall `keywords` array.
+    expect(hasChangeling(['Changeling'])).toBe(true);
+  });
+
+  it('is case-insensitive', () => {
+    expect(hasChangeling(['changeling'])).toBe(true);
+  });
+
+  it('recognizes Changeling alongside other keywords, in any position', () => {
+    // Flock Impostor — real Scryfall `keywords` array.
+    expect(hasChangeling(['Changeling', 'Flying', 'Flash'])).toBe(true);
+  });
+
+  it('a card without Changeling is not every creature type', () => {
+    expect(hasChangeling(['Flying', 'Trample'])).toBe(false);
+    expect(hasChangeling([])).toBe(false);
   });
 });

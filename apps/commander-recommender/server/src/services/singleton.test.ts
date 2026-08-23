@@ -34,6 +34,7 @@ function makeCard(overrides: Partial<CardRow> = {}): CardRow {
     game_changer: 0,
     is_legendary: 0,
     is_commander_eligible: 0,
+    is_changeling: 0,
     image_uri: null,
     back_image_uri: null,
     back_name: null,

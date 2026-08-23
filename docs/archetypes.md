@@ -452,6 +452,24 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
     qualifier that is already a reported `DeckTheme`, i.e. one that already cleared `groupByTheme`'s
     gate — see the comment on `includeWildcard` in `db.ts` for the full reasoning, and re-check it if
     kindred ever gains a lifecycle or a new caller.
+- **Changeling (CR 702.73a) needs no depth gate, unlike its own wildcard sibling above — because
+  it isn't conditional on anything.** `hasChangeling` (`@mtg/rules`) stores a single `is_changeling`
+  column rather than expanding `creature_types` into Magic's ~300-type catalog per changeling card;
+  `detectKindred` reads it and pushes exactly one *unqualified* `kindred[is]` signal (qualifier
+  `undefined`, never `'*'`), reusing Phase B's pre-existing "unqualified supports qualified" fold
+  and `ownSignalContains`'s pre-existing undefined-qualifier branch — the same relation Wilhelt's
+  unqualified reanimation spell already rides, not a new mechanism next to the wildcard one. That
+  reuse is the point, not an implementation shortcut: crediting a wildcard card to a specific type
+  is a guess about a player's future deck-building choice, which is why it needs real structural
+  depth in that type before the fold applies; crediting a Changeling card is not a guess at all — CR
+  702.73a makes it unconditionally, always true of the printed card, in every deck, so there is
+  nothing to gate. Verified against the real Brigid corpus deck (all three of its changeling
+  creatures — Chomping Changeling, Flock Impostor, Crib Swap — mention no creature type anywhere in
+  their own text, so `candidateTypes`' text scan finds nothing for any of them): the deck's real
+  `Kithkin Kindred` theme now includes all three, and no other kindred type appears anywhere in
+  scoring output for the deck. `qualifierKind` is left `undefined` to match the convention every
+  other unqualified signal in this catalog already uses, rather than `'creatureType'` — nothing
+  reads it for a signal with no qualifier to narrow.
 
 ---
 
@@ -467,10 +485,15 @@ silently produce zero wildcard roles (the card is detected as a wildcard trigger
 no `enables`/`produces`/`rewards`, so it never appears as support anywhere) rather than an error.
 This catalog's original claim was ten cards; only eight were confirmed by direct database search —
 recorded as a gap here rather than quietly rounded down, in case the other two are real cards using
-wording the current search missed. **Realmwalker's Changeling keyword is not yet honoured** —
-Phase E's own next sub-item — so it is currently read only as a printed Shapeshifter (`kindred:
-Shapeshifter[is]`) rather than "every creature type", which understates it in any deck that isn't
-actually a Shapeshifter tribal deck.
+wording the current search missed.
+
+**Only four real cards ground Changeling's own detection** (Realmwalker, Chomping Changeling,
+Flock Impostor, Crib Swap — all four appear in the corpus, none of them named a specific creature
+type anywhere in their own text). `hasChangeling` (`@mtg/rules`) is a single boolean read off
+Scryfall's `keywords` array, so there's little surface area for that thin sample to have missed —
+but it means the corpus never exercised a Changeling creature that *also* has active kindred text
+of its own (a changeling lord, say), only ones whose only kindred contribution is passive
+membership.
 
 **Reminder-stripping hides keyword-defined mechanics.** The fix above creates a false negative:
 Overcharged Amalgam's Exploit — a sacrifice outlet — mentions "sacrifice" _only_ in reminder text.

@@ -58,3 +58,18 @@ export function parseCreatureTypes(typeLine: string, knownTypes?: Set<string>): 
   }
   return found;
 }
+
+/**
+ * Whether a card is every creature type (CR 702.73a, Changeling).
+ *
+ * Read off Scryfall's own `keywords` array, not derived from `parseCreatureTypes` or matched
+ * against oracle text — Changeling's reminder text ("This card is every creature type.") names no
+ * type words for either of those to find, and the keyword itself is the whole fact. Deliberately a
+ * boolean rather than an expansion of `parseCreatureTypes`'s result into Magic's ~300-type catalog:
+ * that catalog is looped once per *deck's* creature-type vocabulary already (`candidateTypes` in
+ * commander-recommender's `signals.ts`, kept proportional to a card's own text for performance
+ * reasons), and pre-expanding it per changeling card here would undo that.
+ */
+export function hasChangeling(keywords: string[]): boolean {
+  return keywords.some((k) => k.toLowerCase() === 'changeling');
+}

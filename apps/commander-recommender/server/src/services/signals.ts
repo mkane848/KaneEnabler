@@ -192,6 +192,10 @@ export interface CardFacts {
   rawText: string;
   creatureTypes: string[];
   keywords: string[];
+  /** Changeling (CR 702.73a) — this card is every creature type. Stored as a
+   * column (@mtg/rules' `hasChangeling`) rather than expanded into
+   * `creatureTypes`; see `detectKindred`'s own comment for why. */
+  isChangeling: boolean;
   /** Creature types this card creates tokens of, or grows via `amass`
    * (always including 'Army'). "Create two 1/1 red Goblin creature tokens"
    * makes Krenko's Command a Goblin card despite a Sorcery having no
@@ -847,6 +851,7 @@ export function buildCardFacts(row: CardRow, vocab: Vocabulary): CardFacts {
     rawText,
     creatureTypes: parseJsonArray(row.creature_types),
     keywords: parseJsonArray(row.keywords),
+    isChangeling: !!row.is_changeling,
     producedTokenTypes: [
       ...new Set([...findProducedTokenTypes(text, vocab), ...findAmassedTypes(text, vocab)]),
     ],
@@ -1843,6 +1848,47 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
         roles: [...new Set(wildcardRoles)],
       });
     }
+  }
+
+  // Changeling (CR 702.73a, docs/signals-rework.md Phase E): "This card is
+  // every creature type" — unconditionally, not a deck-building choice like
+  // the wildcard above. Realmwalker, Chomping Changeling, Flock Impostor and
+  // Crib Swap none mention a specific type anywhere in their own text
+  // (`candidateTypes` above finds nothing to loop for any of them), so the
+  // per-type loop never sees them for anything but their own printed type —
+  // Realmwalker registers only as `kindred:Shapeshifter[is]`, understating a
+  // card that is, as a rules fact, equally a Sliver, a Goblin, and everything
+  // else.
+  //
+  // Pushed unqualified rather than enumerating every type in scope: that
+  // reuses Phase B's existing "unqualified supports qualified" fold
+  // (`groupByTheme`) and `ownSignalContains`'s existing undefined-qualifier
+  // check (synergy.ts) for free — the exact mechanism Wilhelt's unqualified
+  // reanimation spell already relies on — rather than looping Magic's
+  // ~300-type catalog per changeling card, which is what `is_changeling`
+  // being a stored flag instead of an expanded `creatureTypes` list exists to
+  // avoid (see `candidateTypes`'s own doc comment on why that loop is scoped
+  // to a card's own text in the first place).
+  //
+  // `is` only, deliberately never `rewards`: Changeling is structural — the
+  // card IS every type — not a claim that it CARES about any of them. That
+  // keeps kindred's own definingRequirement (`rewards` x2) doing its job
+  // unchanged: a deck full of changelings and nothing else still reports no
+  // kindred theme, the same as a deck full of plain, passive tribe members
+  // does today. It is also why this needs no depth-gate the way the wildcard
+  // fold above does — crediting a changeling to a specific type is not an
+  // assumption about a future player choice, it is already, unconditionally,
+  // true of the printed card.
+  if (facts.isChangeling) {
+    out.push({
+      archetype: 'kindred',
+      label: 'Kindred (every type)',
+      description: 'Changeling: this card is every creature type, and supports every kindred theme in the deck.',
+      weight: 15,
+      qualifier: undefined,
+      qualifierKind: undefined,
+      roles: ['is'],
+    });
   }
 
   return out;

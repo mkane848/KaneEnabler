@@ -19,9 +19,10 @@ monorepo holding:
 - `packages/config` (`@mtg/config`) — shared tsconfig/ESLint/Prettier/Vitest bases both apps extend
 - `packages/rules` (`@mtg/rules`) — CR-cited Magic rules primitives shared by both apps: commander
   eligibility, singleton limit, Partner/Background pairing, commander tax, color-identity subset
-  checks, counter taxonomy/turn steps, creature-type parsing, and commander format legality, plus
-  deck size and whole-deck color-identity validation. Every primitive except the last two is already
-  called from both apps — the deck-size and whole-deck color-identity checks are tested and CR-cited
+  checks, counter taxonomy/turn steps, creature-type parsing and Changeling detection, and
+  commander format legality, plus deck size and whole-deck color-identity validation. Every
+  primitive except the last two is already called from both apps — the deck-size and whole-deck
+  color-identity checks are tested and CR-cited
   but not wired in yet, since neither app has a deck-list-validation feature for them to back (see
   `docs/handoff.md`'s Phase 3b table). Consumed straight from `.ts` source by Vite
   and time-counters, but also built to real CommonJS for commander-recommender/server's bare-Node
