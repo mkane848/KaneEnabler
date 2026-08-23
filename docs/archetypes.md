@@ -202,6 +202,7 @@ Each archetype declares a **`definingRole`** (default `rewards`) and a **minimum
 | `gameState`    | `produces` ×1    | Becomes `qualifiable: gameState`, one of five named states (`theRing`, `monarch`, `initiative`, `maxSpeed`, `dayNight`) computed once onto `CardFacts.gameStates` via a dedicated keyword-and-text detector, the same shape as `counterType` — not the payoff-matcher clause scan `cardType`/`permanentSubtype` use. Max speed and day/night lean on the literal Scryfall `keywords` array where reminder text is the only place the mechanic names itself (`Start your engines!`, `Daybound`, `Nightbound`); the Ring, the monarch, and the initiative are text-only, no matching keyword exists. |
 | `lifegain`     | `rewards` ×1     | No qualifier — unlike `counters`/`gameState`, there's no restricted "kind" a payoff cares about, just the event itself. Granting lifelink (not merely having it structurally) is `produces`, resolving the keyword-shadow rule's own Bre example below — a bare "creature ... with lifelink" *selection* (Duskfang Mentor's second ability) is deliberately excluded from production, since caring about existing lifelink creatures isn't granting it. |
 | `drain`        | `produces` ×1    | No qualifier, same reasoning as `lifegain`. No separate payoff role — causing the life loss *is* the identity, same shape as `freeSpells`. Sanguine Bond/Vito's "whenever you gain life, opponent loses that much" is still `produces`, since their trigger reads a *different* resource (lifegain) — but a card whose trigger IS "an opponent loses life" itself (Exquisite Blood, Bloodthirsty Conqueror) is `rewards` only, since it reads someone else's loss rather than causing it; `DRAIN_TRIGGER_READS_LOSS` is the shared pattern both roles check to keep that split exact rather than double-counting. |
+| `cyclingDiscard` | `produces` ×1  | No qualifier. No separate payoff role, same shape as `drain`/`freeSpells` — discarding on purpose is the identity, not a means to some other reward. The Cycling keyword alone is `produces`; a card whose trigger IS discarding/cycling itself (Ivora's counter, Rielle's card draw) is `rewards` only via the same causes-vs-reads split `drain` uses, `CYCLING_DISCARD_TRIGGER_READS_DISCARD` playing `DRAIN_TRIGGER_READS_LOSS`'s role. Deliberately overlaps `selfMill` (a discarded card also fills the graveyard) rather than replacing it — see below for why that overlap is left alone. |
 
 ### Proposed, ordered by how many independent decks back them
 
@@ -216,7 +217,7 @@ deck is a guess.
 |        | ~~`artifacts`~~ **Shipped** — see "Shipping today" above                                             | 5      | Miles's Vehicles and Sophia's Food ride one qualifier                                                                                                                                 |
 | **C2** | ~~`lifegain`~~ **Shipped** — see "Shipping today" above                                             | 3      | **The largest single gap** — one of the format's most-built themes, entirely absent                                                                                                   |
 |        | ~~`drain`~~ **Shipped** — see "Shipping today" above                                                | 2      | Life loss as a _trigger_. Sanguine Bond and Vito are the bridge cards to `lifegain`                                                                                                   |
-|        | `cyclingDiscard`                                                                                     | 3      | Discard as a resource, which the engine only sees as "mill"                                                                                                                           |
+|        | ~~`cyclingDiscard`~~ **Shipped** — see "Shipping today" above                                       | 3      | Discard as a resource, which the engine only sees as "mill"                                                                                                                           |
 |        | `temporaryEffects`                                                                                   | 3      | Delayed-cost cards and the enablers that erase the trigger                                                                                                                            |
 |        | `recursion`                                                                                          | 3      | The same body returning repeatedly — distinct from `reanimator`'s "cheat something big into play"                                                                                     |
 |        | `tapForValue`                                                                                        | 2      | Tapping and untapping your own permanents; also where combo _ingredients_ get classified                                                                                              |
@@ -352,6 +353,21 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   Vito's `"whenever you gain life, opponent loses that much life"` stays `produces`, correctly
   distinguishing the "bridge card" shape (causes drain, reading lifegain) from the "payoff" shape
   (reads drain, causing something else).
+- **`cyclingDiscard` deliberately overlaps `selfMill` rather than replacing its discard-catching.**
+  `selfMill.produces` already treats a bare `"discards?"` mention as filling the graveyard (Faithless
+  Looting, Thrill of Possibility, Windfall are named explicitly in its own comment) — that's still true
+  once `cyclingDiscard` exists, not made wrong by it: a discarded card really does end up in the
+  graveyard. What was actually missing wasn't a correction, it was the *other* identity these decks
+  have — the cycling/looting payoffs (`Curator of Mysteries`' scry, `Ivora`'s counter, `Rielle`'s extra
+  draw) that `selfMill` has no matchers for at all, since "discard for card selection" and "fill the
+  yard for reanimation" are different plans that happen to share a mechanic. Same "causes vs. reads"
+  split as `drain`: Ivora and Rielle's own triggers ARE discarding itself, so a bare
+  `"discards? a card"` matcher would have doubled as `produces` for them too — `produces` excludes any
+  clause `CYCLING_DISCARD_TRIGGER_READS_DISCARD` already claims, the same shape as
+  `DRAIN_TRIGGER_READS_LOSS`. Verified against the full corpus: `captain-howler.txt` reports `Cycling /
+  Discard` as its top theme (48 cards), and `obeka.txt`/`sauron.txt` — the two decks the corpus fixture
+  comments name as this pattern's earlier, unaddressed instances — now report it too (8 and 9 cards),
+  both still keeping their pre-existing `Self-Mill` signal alongside it rather than losing it.
 
 ---
 
