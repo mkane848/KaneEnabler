@@ -322,6 +322,35 @@ deliberately narrow design paying off exactly as intended. Re-measured with Phas
 report: **560 of 4,049** commander-eligible cards now produce zero active signals, down from 563 —
 3 rescued by `politics` alone, all real goad commanders, no false positive found.
 
+**`storm` is shipped, Phase C4's third and final archetype — and with it, the entire signal-engine
+rework plan.** No deck's own confirmed axes name it; real Storm-keyword cards exist in the corpus
+(krenko.txt's Empty the Warrens and Haze of Rage; tenth-doctor-rose-tyler.txt's All of History, All
+at Once) but neither deck's own note claims Storm as an intentional plan. **Inferred**, built from
+CR 702.39 (the Storm keyword itself) and the real, recurring "spells you've cast this turn" payoff
+template. `definingRole: produces` — the Storm keyword itself is this archetype's namesake
+mechanic, the same no-separate-payoff-role shape as `freeSpells`/`drain`/`bigMana`. `produces`
+reads the Storm keyword directly off `CardFacts.keywords`; `rewards` catches a payoff scaled
+directly by spells cast this turn (Aetherflux Reservoir's life gain, Gnostro's X, Volcanic
+Torrent's damage, Rionya's tokens), excluding cost reduction scaled by the same count (Demilich,
+Urza — `spellslinger`'s `enables` territory, not a storm payoff) and a flat effect for the turn
+that doesn't scale by anything (Domri, Anarch of Bolas's "can't be countered"). One real bug
+surfaced mid-implementation and was caught by the full-pool sweep before shipping: an early
+version's cost-reduction exclusion used `\bcost\b`, whose word-boundary semantics don't match the
+plural "costs" — Demilich's own "This spell costs {U} less to cast..." slipped through as a false
+positive until the exclusion was widened to `\bcosts?\b`. See `archetypes.md`'s own entry for the
+full account. Checked against the full legal card pool before shipping: 19 real cards matched after
+both exclusions, all genuine count-scaled payoffs, none of them cost reduction. Re-measured with
+Phase F's coverage report: **559 of 4,049** commander-eligible cards now produce zero active
+signals, down from 560 — 1 rescued by `storm` alone (Hurkyl, Master Wizard), no false positive
+found.
+
+**This completes Phase C4 — and the entire A → B → C1 → C2 → C3 → C4 → E → F signal-engine rework
+plan.** Every archetype shipped this rework has been checked against its own grounding deck (or the
+full legal card pool, for the two genuinely Inferred entries — `monoColorDevotion` and `storm`, the
+only ones in the whole catalog with no corpus deck confirmed to build around them) with no
+surviving false positive, and the full test suite and coverage report have stayed clean at every
+step.
+
 > **Where a line number is cited it was accurate at the commit that added this file.** Treat them as
 > signposts, not addresses — find the code by what it does.
 
