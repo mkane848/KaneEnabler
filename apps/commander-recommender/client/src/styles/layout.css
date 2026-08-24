@@ -59,3 +59,24 @@
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
+/* Matches NavBar.css's own mobile breakpoint, so the chrome and the hero
+   switch to their compact layout at the same width. Tightens the vertical
+   run before CardListUpload and stops the headline's clamp floor from
+   wrapping to three lines inside a 20ch cap on a narrow phone. */
+@media (max-width: 640px) {
+  .app-shell {
+    padding: max(1.5rem, calc(env(safe-area-inset-top) + 1rem))
+      max(1.5rem, env(safe-area-inset-right)) max(2rem, calc(env(safe-area-inset-bottom) + 1rem))
+      max(1.5rem, env(safe-area-inset-left));
+  }
+
+  .app-header {
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .app-title {
+    max-width: none;
+  }
+}

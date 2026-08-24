@@ -9,6 +9,22 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Fixed
+
+- **NavBar no longer stops short of the screen edges.** `App.tsx` nested `<NavBar>` inside
+  `.app-shell`, a container written for the page content column (`max-width: 960px` plus side
+  padding), so the shared navbar picked up that inset instead of spanning full width the way it
+  does on the home and time-counters apps. `<NavBar>` is now a sibling of `.app-shell`, matching
+  those two apps' layout.
+- **Tightened the hero on small screens.** The headline, its surrounding spacing, and the page's
+  top/bottom padding had no mobile breakpoint at all, so on a narrow phone the 46-character
+  headline wrapped to three lines and pushed the card-list upload well down the page. A
+  `max-width: 640px` breakpoint (matching NavBar's own) now shrinks that padding and drops the
+  headline's `max-width` cap so it wraps less and the upload panel is reachable with less
+  scrolling.
+- Added `text-size-adjust: 100%` to the base reset (also applied in apps/home and time-counters)
+  as a defensive guard against mobile browsers auto-boosting font size in a narrowed column.
+
 ## [1.11.0] — 2026-08-24
 
 ### Changed
