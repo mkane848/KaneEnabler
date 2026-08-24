@@ -9,6 +9,8 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-08-24
+
 ### Added
 
 - **Per-card recommendation coverage.** See `docs/recommendation-coverage.md`.
