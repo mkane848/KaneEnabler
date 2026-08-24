@@ -1,12 +1,17 @@
-name: Release
+name: Release (commander-recommender)
 
 # Runs after every push to main (in practice: every merge). It's a no-op
-# unless the root package.json's version doesn't have a matching git tag
-# yet — so an ordinary feature PR that doesn't touch the version changes
-# nothing here. Cutting a release is still a deliberate act (bump the
-# version, move the CHANGELOG's [Unreleased] entries under it, merge that);
-# this workflow only automates the mechanical last step — tag + GitHub
-# release — once that decision has already been made and merged.
+# unless apps/commander-recommender/package.json's version doesn't have a
+# matching git tag yet — so an ordinary feature PR that doesn't touch the
+# version changes nothing here. Cutting a release is still a deliberate act
+# (bump the version, move the CHANGELOG's [Unreleased] entries under it,
+# merge that); this workflow only automates the mechanical last step — tag
+# + GitHub release — once that decision has already been made and merged.
+#
+# Must live under the repo's own top-level .github/workflows/ — GitHub only
+# discovers workflows there, never in a subdirectory — which is why this
+# file previously sat unnoticed at
+# apps/commander-recommender/.github/workflows/release.yml and never ran.
 on:
   push:
     branches: [main]
@@ -18,6 +23,9 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/commander-recommender
     steps:
       - uses: actions/checkout@v4
         with:

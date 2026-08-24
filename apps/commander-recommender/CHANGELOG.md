@@ -9,6 +9,8 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+## [1.11.1] — 2026-08-24
+
 ### Fixed
 
 - **NavBar no longer stops short of the screen edges.** `App.tsx` nested `<NavBar>` inside
