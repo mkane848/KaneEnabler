@@ -371,6 +371,14 @@
   color: var(--pip-r);
 }
 
+/* The "Also playable" tier's own badge (CommanderCard's CoverageBadge) —
+   green rather than the brass/red above, so a weaker coverage pick reads as
+   its own thing rather than borrowing a confident-tier color. */
+.badge-coverage {
+  background: rgba(46, 125, 50, 0.15);
+  color: #2e7d32;
+}
+
 /* Relative match-strength badge + its hover/tap tooltip. Positioned so the
    tooltip can float above the card without pushing other badges around. */
 .match-badge-wrap {

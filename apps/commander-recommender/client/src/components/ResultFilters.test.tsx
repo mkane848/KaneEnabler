@@ -33,7 +33,7 @@ describe('ResultFilters', () => {
     const onChange = vi.fn();
     const { rerender } = render(<ResultFilters {...BASE_PROPS} onChange={onChange} />);
 
-    const whitePip = screen.getByLabelText('White: not filtered — click to allow this color');
+    const whitePip = screen.getByLabelText('White: not filtered — click to include this color');
     whitePip.click();
     expect(onChange).toHaveBeenLastCalledWith({
       ...EMPTY_FILTERS,
@@ -45,7 +45,7 @@ describe('ResultFilters', () => {
       colors: { include: ['W'], exclude: [] },
     };
     rerender(<ResultFilters {...BASE_PROPS} filters={includedFilters} onChange={onChange} />);
-    screen.getByLabelText('White: allowed — click to exclude it instead').click();
+    screen.getByLabelText('White: included — click to exclude it instead').click();
     expect(onChange).toHaveBeenLastCalledWith({
       ...EMPTY_FILTERS,
       colors: { include: [], exclude: ['W'] },

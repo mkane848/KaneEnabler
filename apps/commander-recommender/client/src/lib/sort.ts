@@ -76,11 +76,11 @@ const NATURAL_DIRECTION: Record<SortMode, SortDirection> = {
  * would just be wasted work on every render. Reversing it still only costs a
  * copy, never a comparison.
  */
-export function sortSuggestions(
-  suggestions: CommanderSuggestionDTO[],
+export function sortSuggestions<T extends CommanderSuggestionDTO>(
+  suggestions: T[],
   mode: SortMode,
   direction: SortDirection = NATURAL_DIRECTION[mode],
-): CommanderSuggestionDTO[] {
+): T[] {
   const reversed = direction !== NATURAL_DIRECTION[mode];
 
   if (mode === 'relevance') {

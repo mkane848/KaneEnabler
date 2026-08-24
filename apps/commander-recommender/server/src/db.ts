@@ -80,25 +80,46 @@ const flavorNameStmt = tableExists('card_flavor_names')
     `)
   : null;
 
+/** Rungs 1–3 in order, against one already-lowercased name. */
+function lookupOneName(lower: string): CardRow | undefined {
+  return (exactNameStmt?.get(lower) ?? faceNameStmt?.get(lower) ?? flavorNameStmt?.get(lower)) as
+    CardRow | undefined;
+}
+
 /**
  * Resolves written-down card names to rows, in decreasing order of certainty:
  *
  *   1. the exact full name, which is what most cards are;
  *   2. a face name, front faces before back faces;
- *   3. a re-skinned printing's name.
+ *   3. a re-skinned printing's name;
+ *   4. a "FlavourName - RealName" export line, split on ` - ` and each half
+ *      retried through rungs 1–3.
  *
  * The order is what keeps the broader matching safe. 27 face names are also
  * the real name of a different card — "Lightning Bolt" is a card, and the
  * back face of "Emeritus of Conflict // Lightning Bolt" — so exact matching
- * has to win outright, and re-skins come last for the same reason.
+ * has to win outright, and re-skins come last for the same reason. Rung 4 is
+ * safe as a last resort for the same reason: exact matching already wins
+ * outright over it, and no real card name contains a space-hyphen-space —
+ * Magic uses an em dash — so splitting on ` - ` never misreads an
+ * intra-word hyphen like "Ghost-Lit".
+ *
+ * This belongs here rather than in parseList.ts: only the resolver can tell
+ * which half is the real name. "Dracula the Voyager - Edgar, Charmed Groom"
+ * resolves on its *right*-hand side, because the printed flavour name is
+ * "Dracula, Voyager" — not what an export using this shape actually wrote.
  */
 export function findCardsByNames(names: string[]): Map<string, CardRow> {
   const map = new Map<string, CardRow>();
   for (const name of names) {
     const lower = name.toLowerCase();
-    const row = (exactNameStmt?.get(lower) ??
-      faceNameStmt?.get(lower) ??
-      flavorNameStmt?.get(lower)) as CardRow | undefined;
+    let row = lookupOneName(lower);
+    if (!row && lower.includes(' - ')) {
+      for (const half of lower.split(' - ')) {
+        row = lookupOneName(half.trim());
+        if (row) break;
+      }
+    }
     if (row) map.set(lower, row);
   }
   return map;

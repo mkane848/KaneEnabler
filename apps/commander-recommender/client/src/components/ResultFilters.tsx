@@ -77,15 +77,15 @@ function nextModeDescription(current: FilterMode | null): string {
 
 /**
  * Colors read differently from every other facet, so they get their own
- * wording. Including Bracket 3 or a theme *requires* it; including White does
- * not require white, it permits it — a commander shows when its whole color
- * identity fits inside what you have allowed. Picking White and Black is the
- * Orzhov question ("what could I build here?"), which is why mono-black still
- * appears, and why calling this "require" was actively misleading.
+ * wording. Including Bracket 3 or a theme *requires* it; including White
+ * doesn't require white on its own — it keeps anything that touches white,
+ * Orzhov and five-colour piles included. A colourless commander touches no
+ * color at all, so it drops out the moment any color is included; the
+ * `colorless` chip alongside these pips is how to ask for those instead.
  */
 function nextColorModeDescription(current: FilterMode | null): string {
-  if (current === null) return 'not filtered — click to allow this color';
-  if (current === 'include') return 'allowed — click to exclude it instead';
+  if (current === null) return 'not filtered — click to include this color';
+  if (current === 'include') return 'included — click to exclude it instead';
   return 'excluded — click to clear';
 }
 
@@ -154,7 +154,7 @@ export function ResultFilters({
           )}
         </div>
         <span className="filter-hint">
-          click to allow a color, again to exclude — results fit within the allowed colors
+          click to include a color, again to exclude — results touch at least one included color
         </span>
       </div>
 

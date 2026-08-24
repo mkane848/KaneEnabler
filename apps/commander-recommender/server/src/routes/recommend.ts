@@ -13,6 +13,8 @@ import {
   buildCollectionProfile,
   scoreCommanders,
   selectSuggestions,
+  toSupportingCard,
+  type CommanderSuggestion,
   type SupportingCard,
 } from '../services/synergy';
 import { buildCommanderUnits, unitKey } from '../services/partners';
@@ -20,6 +22,7 @@ import { estimateBracket } from '../services/bracket';
 import { applySingletonLimits } from '../services/singleton';
 import { createCardIndex } from '../services/cardIndex';
 import { toCardDTO } from '../services/cardDTO';
+import { buildCoverage } from '../services/coverage';
 import { analyzeDeck } from '../services/deckAnalysis';
 import { attachSuggestions, collectionColors, requiredSignalKeys } from '../services/packages';
 import { parseJsonArray } from '../types';
@@ -85,14 +88,28 @@ router.post('/recommend', (req, res) => {
     allowedColors: collectionColors(owned.map((entry) => entry.row)),
   });
   const { suggestions: selected, weakMatchesOnly } = selectSuggestions(scored);
+  // A second, clearly-labelled tier underneath the two bars above — every
+  // commander you already own in the list, plus a relaxed narrow pick for
+  // whatever's still uncovered. See docs/recommendation-coverage.md.
+  const coverage = buildCoverage({
+    suggestions: selected,
+    units,
+    owned,
+    profile,
+    candidateSignals,
+  });
 
   // Cited cards go out once, referenced by position — see cardIndex.ts. This
   // is filled as the suggestions below are serialized, so it must be read
-  // after that map, not during it.
+  // after both arrays are built, not during either of them.
   const cardIndex = createCardIndex();
   const cite = (cards: SupportingCard[]) => cards.map((card) => cardIndex.indexOf(card));
+  const ownedByOracleId = new Map(owned.map((entry) => [entry.row.oracle_id, entry]));
 
-  const suggestions = selected.map((s) => {
+  // Shared by both `suggestions` and `alsoPlayable` so they run through one
+  // code path and one cardIndex/cite() instance — a second index would
+  // double the response and break rehydrate.ts's position lookups.
+  function serialize(s: CommanderSuggestion) {
     // Every card in the unit counts toward the Bracket, alongside any Game
     // Changers in the list that fit its color identity — a Partner pair is
     // jointly "the commander" (702.124e), so both halves' own status matters.
@@ -119,6 +136,19 @@ router.post('/recommend', (req, res) => {
       gameChangerCount,
       bracket: estimateBracket(gameChangerCount),
     };
+  }
+
+  const suggestions = selected.map(serialize);
+  const alsoPlayable = coverage.map((c) => {
+    const coveredCards = c.coveredCards
+      .map((oracleId) => ownedByOracleId.get(oracleId))
+      .filter((entry): entry is (typeof owned)[number] => !!entry)
+      .map(toSupportingCard);
+    return {
+      ...serialize(c),
+      coverageReason: c.coverageReason,
+      coveredCards: cite(coveredCards),
+    };
   });
 
   res.json({
@@ -143,6 +173,9 @@ router.post('/recommend', (req, res) => {
     // functions — answerable without picking a commander at all.
     deck,
     suggestions,
+    // A second, labelled tier: commanders you already own, and relaxed
+    // narrow picks that rescue whatever the confident ranking couldn't.
+    alsoPlayable,
   });
 });
 

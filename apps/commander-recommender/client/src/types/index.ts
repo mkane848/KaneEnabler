@@ -58,9 +58,15 @@ export type WireCommanderSuggestionDTO = Omit<
   gameChangerCards: number[];
 };
 
-export type WireRecommendResponse = Omit<RecommendResponse, 'suggestions'> & {
+export type WireAlsoPlayableSuggestionDTO = WireCommanderSuggestionDTO & {
+  coverageReason: CoverageReasonDTO;
+  coveredCards: number[];
+};
+
+export type WireRecommendResponse = Omit<RecommendResponse, 'suggestions' | 'alsoPlayable'> & {
   cardIndex: SupportingCardDTO[];
   suggestions: WireCommanderSuggestionDTO[];
+  alsoPlayable: WireAlsoPlayableSuggestionDTO[];
 };
 
 /** One card of a commander unit — a solo commander has one, a Partner/Background pair has two. */
@@ -98,6 +104,21 @@ export interface CommanderSuggestionDTO {
   gameChangerCards: SupportingCardDTO[];
   gameChangerCount: number;
   bracket: BracketEstimateDTO;
+}
+
+/** Why a coverage pick is here: it's a commander you already own, or a
+ * relaxed narrow pick that rescues cards nothing in `suggestions` cites. See
+ * docs/recommendation-coverage.md. */
+export type CoverageReasonDTO = 'owned' | 'covers';
+
+/** A second, clearly-labelled tier below the confident ranking — everything
+ * a `CommanderSuggestionDTO` has, plus which of your cards this pick rescues
+ * and why. Never mixed into `suggestions`: a weak pick reading as a strong
+ * one is the bug this tier exists to avoid. */
+export interface AlsoPlayableSuggestionDTO extends CommanderSuggestionDTO {
+  coverageReason: CoverageReasonDTO;
+  /** Your cards this pick rescues — positions into the same `cardIndex`. */
+  coveredCards: SupportingCardDTO[];
 }
 
 export interface ComboDTO {
@@ -177,6 +198,10 @@ export interface RecommendResponse {
   /** The list's own strongest archetypes, and whether each one functions. */
   deck: DeckAnalysisDTO;
   suggestions: CommanderSuggestionDTO[];
+  /** A second, labelled tier below `suggestions`: commanders you already
+   * own, and relaxed narrow picks that rescue whatever the confident ranking
+   * couldn't. See docs/recommendation-coverage.md. */
+  alsoPlayable: AlsoPlayableSuggestionDTO[];
 }
 
 /** Server-side facts about the deployment itself, from /api/meta. */

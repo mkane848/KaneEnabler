@@ -58,17 +58,26 @@ describe('filters', () => {
     );
   });
 
-  // --- color filtering (subset-include, any-touch-exclude) --------------
+  // --- color filtering (any-touch-include, any-touch-exclude) -----------
 
-  it('color include keeps subsets of the selected colors, plus colorless', () => {
+  it('color include keeps anything touching an included color', () => {
     const golgari = makeSuggestion({ colorIdentity: ['B', 'G'] });
     const monoBlack = makeSuggestion({ colorIdentity: ['B'] });
-    const colorless = makeSuggestion({ colorIdentity: [] });
+    const wb = makeSuggestion({ colorIdentity: ['W', 'B'] });
     const boros = makeSuggestion({ colorIdentity: ['W', 'R'] });
 
-    const filters = { ...EMPTY_FILTERS, colors: { include: ['B', 'G'], exclude: [] } };
-    const kept = applyFilters([golgari, monoBlack, colorless, boros], filters);
-    assert.deepStrictEqual(kept, [golgari, monoBlack, colorless]);
+    const filters = { ...EMPTY_FILTERS, colors: { include: ['B'], exclude: [] } };
+    const kept = applyFilters([golgari, monoBlack, wb, boros], filters);
+    assert.deepStrictEqual(kept, [golgari, monoBlack, wb]);
+  });
+
+  it('color include drops a colourless commander — it touches nothing', () => {
+    const monoBlack = makeSuggestion({ colorIdentity: ['B'] });
+    const colorless = makeSuggestion({ colorIdentity: [] });
+
+    const filters = { ...EMPTY_FILTERS, colors: { include: ['B'], exclude: [] } };
+    const kept = applyFilters([monoBlack, colorless], filters);
+    assert.deepStrictEqual(kept, [monoBlack]);
   });
 
   it('color exclude drops anything touching an excluded color', () => {

@@ -45,6 +45,14 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   Kindred requires the unit's own text to _care_ about a type (`caresAboutCreatureType`), not
   merely have it. Color identity gates eligibility and contributes nothing to score — see the
   "scoring measures focus" tests in `synergy.test.ts` before changing the weight formula.
+- **`server/src/services/coverage.ts`** is a second, clearly-labelled tier beneath `synergy.ts`'s
+  own two bars, not a lower bar on them — see
+  [`../../docs/recommendation-coverage.md`](../../docs/recommendation-coverage.md). Every commander
+  already in the submitted list gets suggested regardless of whether it clears `MIN_SIGNAL_COUNT`
+  (reason `'owned'`), and a relaxed, narrowest-identity-first pick covers whatever card the
+  confident tier still didn't cite (reason `'covers'`). `routes/recommend.ts` sends this as
+  `alsoPlayable`, serialized through the same `serialize()`/`cardIndex` the confident `suggestions`
+  use — never a second index.
 - **`server/src/services/signals.ts`** (879 lines, the largest file) is the signal/role model
   feeding `synergy.ts`: what a card contributes to a deck's plan (`is`/`produces`/`consumes`/
   `rewards`/`amplifies`) and in what capacity. **Read

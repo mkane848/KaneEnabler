@@ -1,4 +1,3 @@
-import { isWithinColorIdentity } from '@mtg/rules';
 import type { CommanderSuggestionDTO } from '../types';
 import { visibleThemeLabels } from './suggestions';
 
@@ -61,17 +60,25 @@ export function cycleSelection(selection: FilterSelection, value: string): Filte
 }
 
 /**
- * Color filtering keeps subset semantics for "include": picking {B, G}
- * keeps everything playable in a Golgari deck — mono-black, mono-green,
- * Golgari, and colorless — rather than only things that touch both colors.
- * "Exclude" is the literal complement: identities that touch an excluded
- * color at all are dropped, regardless of what else they contain.
+ * Color filtering is "touches this color" for "include": picking Black keeps
+ * anything whose identity intersects it — mono-black, Golgari, a five-colour
+ * pile — rather than only things that fit entirely inside what's picked. A
+ * colourless commander touches nothing, so it no longer survives a colour
+ * include; the `colorless` chip in `colorCategory` is how you ask for those
+ * instead. "Exclude" is unchanged: the literal complement, dropping any
+ * identity that touches an excluded color at all.
+ *
+ * This used to be subset semantics ("picking {B, G} keeps everything
+ * playable in a Golgari deck"), which is why mono-black could vanish from a
+ * rainbow pool the moment you clicked Black — the pip could ask for
+ * commanders this list has none of, with no way to ask "what's the best
+ * black deck in this pool?" instead. See docs/recommendation-coverage.md.
  */
 function matchesColors(suggestion: CommanderSuggestionDTO, selection: FilterSelection): boolean {
   const { include, exclude } = selection;
   if (include.length > 0) {
     const allowed = new Set(include);
-    if (!isWithinColorIdentity(suggestion.colorIdentity, allowed)) return false;
+    if (!suggestion.colorIdentity.some((color) => allowed.has(color))) return false;
   }
   if (exclude.length > 0) {
     const excluded = new Set(exclude);
@@ -123,10 +130,10 @@ function matchesBracket(suggestion: CommanderSuggestionDTO, selection: FilterSel
   return true;
 }
 
-export function applyFilters(
-  suggestions: CommanderSuggestionDTO[],
+export function applyFilters<T extends CommanderSuggestionDTO>(
+  suggestions: T[],
   filters: SuggestionFilters,
-): CommanderSuggestionDTO[] {
+): T[] {
   return suggestions.filter(
     (s) =>
       matchesColors(s, filters.colors) &&

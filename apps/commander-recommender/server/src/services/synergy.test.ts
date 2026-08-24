@@ -204,6 +204,25 @@ describe('identity + signal gating', () => {
     assert.strictEqual(suggestions.length, 0);
   });
 
+  it('minSignalCount relaxes the threshold without touching the default', () => {
+    // The exact case coverage.ts's Tier B relies on: two supporters clear a
+    // relaxed bar of 1 but not the default of 3.
+    const ownedCards = sacrificeCards(2, { color_identity: JSON.stringify(['B']) });
+    const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
+    const entries = ownedCards.map((c) => owned(c));
+    const units = [solo(candidate)];
+    const signals = candidateSignalsFor(units);
+
+    assert.strictEqual(scoreCommanders(units, buildCollectionProfile(entries), entries, signals).length, 0);
+
+    const relaxed = scoreCommanders(units, buildCollectionProfile(entries), entries, signals, {
+      minSignalCount: 1,
+    });
+    assert.strictEqual(relaxed.length, 1);
+    assert.ok(relaxed[0]!.matchedThemes.includes('Aristocrats'));
+    assert.strictEqual(relaxed[0]!.themeSupport[0]!.cards.length, 2);
+  });
+
   it('summed quantity of one card is not enough — the threshold counts distinct cards', () => {
     const sacCard = makeCard({
       color_identity: JSON.stringify(['B']),
@@ -235,6 +254,28 @@ describe('identity + signal gating', () => {
     assert.strictEqual(suggestions.length, 1);
     assert.ok(suggestions[0]!.matchedThemes.includes('Aristocrats'));
     assert.strictEqual(suggestions[0]!.themeSupport[0]!.cards.length, 3);
+  });
+
+  it('citedOracleIds names the cards actually cited, not every identity-fitting card', () => {
+    const cited = sacrificeCards(3, { color_identity: JSON.stringify(['B']) });
+    // Fits the candidate's identity but supports nothing — included in
+    // includedCardCount, but must not show up in citedOracleIds.
+    const uncited = makeCard({ color_identity: JSON.stringify(['B']), oracle_text: 'Draw a card.' });
+    const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
+    const entries = [...cited, uncited].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    );
+    assert.strictEqual(suggestions.length, 1);
+    assert.strictEqual(suggestions[0]!.includedCardCount, 4);
+    assert.deepStrictEqual(
+      [...suggestions[0]!.citedOracleIds].sort(),
+      cited.map((c) => c.oracle_id).sort(),
+    );
   });
 
   it('a signal the candidate does not actively engage with is not scored', () => {
@@ -1044,6 +1085,7 @@ describe('selecting which suggestions are worth showing', () => {
       kindredSupport: [],
       keywordSupport: [],
       gameChangerCards: [],
+      citedOracleIds: [],
     };
   }
 

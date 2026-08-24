@@ -150,7 +150,7 @@ Two workflows in `.github/workflows/`:
 | [`docs/rules-audit.md`](./docs/rules-audit.md)                         | Every Magic rules defect found in the incoming code, with file:line citations                                                                 |
 | [`docs/archetypes.md`](./docs/archetypes.md)                           | Signal vocabulary: roles, archetypes, qualifiers, and the decks behind them                                                                   |
 | [`docs/signals-rework.md`](./docs/signals-rework.md)                   | Implementation plan for the signal engine rework (shipped — every phase, including the conditional Phase C4 and the deferred Phase D)         |
-| [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md) | Implementation plan for per-card recommendation coverage — treating a submitted list as a pool rather than one deck (**not yet implemented**) |
+| [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md) | Implementation plan for per-card recommendation coverage — treating a submitted list as a pool rather than one deck (shipped — see `apps/commander-recommender/server/src/services/coverage.ts`) |
 | [`docs/api-policy.md`](./docs/api-policy.md)                           | **Hard rule.** External API limits and etiquette                                                                                              |
 
 ## Hard rules
