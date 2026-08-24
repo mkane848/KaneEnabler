@@ -2,12 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ResultFilters } from './ResultFilters';
 import { EMPTY_FILTERS, type SuggestionFilters } from '../lib/filters';
+import { WUBRG } from '../lib/mtg';
 
 const BASE_PROPS = {
   filters: EMPTY_FILTERS,
   onChange: vi.fn(),
   availableBrackets: [],
   availableThemes: ['Aristocrats', 'Reanimator'],
+  availableColors: new Set(WUBRG),
   hasColorless: false,
   hasMulticolor: false,
   sortMode: 'relevance' as const,
@@ -58,6 +60,26 @@ describe('ResultFilters', () => {
     rerender(<ResultFilters {...BASE_PROPS} filters={excludedFilters} onChange={onChange} />);
     screen.getByLabelText('White: excluded — click to clear').click();
     expect(onChange).toHaveBeenLastCalledWith(EMPTY_FILTERS);
+  });
+
+  it('mutes a color pip absent from availableColors but still lets it cycle', () => {
+    const onChange = vi.fn();
+    render(
+      <ResultFilters
+        {...BASE_PROPS}
+        availableColors={new Set(['U', 'B', 'R', 'G'])}
+        onChange={onChange}
+      />,
+    );
+
+    const whitePip = screen.getByLabelText('White: not filtered — click to include this color');
+    expect(whitePip.className).toContain('toggle-pip-unavailable');
+
+    whitePip.click();
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...EMPTY_FILTERS,
+      colors: { include: ['W'], exclude: [] },
+    });
   });
 
   it('renders a chip per available theme and cycles its filter state on click', () => {

@@ -1,6 +1,8 @@
 # Colour filter: restore subset ("fits inside these colours") semantics
 
-**Status:** approved by the repo owner, not started.
+**Status:** shipped. The implementation lives in `client/src/lib/filters.ts` (`matchesColors`),
+`client/src/components/ResultFilters.tsx`, and `client/src/components/RecommendationResults.tsx`,
+per §4 below; kept here as the design record.
 **Branch:** `claude/filter-commander-identity-bug-76s2zs` — already carries this document; the
 implementation goes on top of it.
 **Scope:** `apps/commander-recommender/client` only. No server changes, no `packages/*` changes.

@@ -74,6 +74,22 @@
   box-shadow: 0 0 0 1px var(--pip-r);
 }
 
+/* Nothing in the current pool has this color — under subset semantics
+   clicking it can only ever return zero results. Muted, not disabled: it
+   still cycles normally, since building up an include set legitimately
+   passes through states with no matches yet (see filters.ts's matchesColors
+   comment). Needs to read as visibly different from the base .toggle-pip's
+   own 0.45 opacity, not just a hair dimmer, so this stacks grayscale on top
+   rather than only lowering opacity further. */
+.toggle-pip-unavailable {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+
+.toggle-pip-unavailable:hover {
+  opacity: 0.4;
+}
+
 .toggle-chip {
   display: inline-flex;
   align-items: center;

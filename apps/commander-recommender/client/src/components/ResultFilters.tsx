@@ -17,6 +17,7 @@ interface Props {
   onChange: (filters: SuggestionFilters) => void;
   availableBrackets: string[];
   availableThemes: string[];
+  availableColors: Set<string>;
   hasColorless: boolean;
   hasMulticolor: boolean;
   sortMode: SortMode;
@@ -78,10 +79,11 @@ function nextModeDescription(current: FilterMode | null): string {
 /**
  * Colors read differently from every other facet, so they get their own
  * wording. Including Bracket 3 or a theme *requires* it; including White
- * doesn't require white on its own — it keeps anything that touches white,
- * Orzhov and five-colour piles included. A colourless commander touches no
- * color at all, so it drops out the moment any color is included; the
- * `colorless` chip alongside these pips is how to ask for those instead.
+ * keeps anything that *fits inside* the colors picked so far — White alone
+ * keeps mono-white and colourless, not Orzhov or a five-colour pile. A
+ * colourless commander is a subset of every color combination, so it
+ * survives any include; the `colorless` chip alongside these pips is how to
+ * ask for *only* those instead.
  */
 function nextColorModeDescription(current: FilterMode | null): string {
   if (current === null) return 'not filtered — click to include this color';
@@ -94,6 +96,7 @@ export function ResultFilters({
   onChange,
   availableBrackets,
   availableThemes,
+  availableColors,
   hasColorless,
   hasMulticolor,
   sortMode,
@@ -119,11 +122,12 @@ export function ResultFilters({
           {WUBRG.map((color) => {
             const mode = modeOf(filters.colors, color);
             const name = COLOR_LABELS[color];
+            const unavailable = !availableColors.has(color);
             return (
               <button
                 key={color}
                 type="button"
-                className={`toggle-pip toggle-pip-${mode ?? 'off'}`}
+                className={`toggle-pip toggle-pip-${mode ?? 'off'}${unavailable ? ' toggle-pip-unavailable' : ''}`}
                 onClick={() => updateFacet('colors', cycleSelection(filters.colors, color))}
                 aria-label={`${name}: ${nextColorModeDescription(mode)}`}
                 title={`${name}: ${nextColorModeDescription(mode)}`}
@@ -154,7 +158,7 @@ export function ResultFilters({
           )}
         </div>
         <span className="filter-hint">
-          click to include a color, again to exclude — results touch at least one included color
+          click to include a color, again to exclude — results fit inside the colors you include
         </span>
       </div>
 

@@ -104,6 +104,16 @@ Confirmed with the repo owner before this plan was written:
   intersects the allowed set. Consequence to carry through the UI: a colourless commander no longer
   survives a colour include, because it touches nothing — the existing `colorless` chip in the
   `colorCategory` facet is how you ask for those, and the hint text must say so.
+
+  **2026-08-24 update: reversed.** See [`color-filter-semantics.md`](./color-filter-semantics.md)
+  (shipped). Once this coverage tier landed, the reason for "touches" — a narrow-identity commander
+  going unreachable from a rainbow pool because it never cleared the scorer's signal-count bar —
+  was gone: the `covers` tier surfaces a narrowest-identity pick under any colour filter regardless
+  of signal count. Colour pips are back to subset semantics ("fits inside these colours"), the
+  decision this bullet originally reversed. Treat subset as current; this bullet's problem
+  statement above (§2) is kept as the historical record of why "touches" was tried, not as a
+  description of current behaviour.
+
 - **Coverage picks render as a separate labelled tier below** the confident ranking, so a weak pick
   never reads as a strong one.
 - **Coverage includes** commanders already in your list, and relaxed-bar narrow picks.
