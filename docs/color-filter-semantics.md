@@ -1,8 +1,7 @@
 # Colour filter: restore subset ("fits inside these colours") semantics
 
 **Status:** approved by the repo owner, not started.
-**Branch:** `claude/filter-commander-identity-bug-76s2zs` — already carries this document; the
-implementation goes on top of it.
+**Branch:** this document is already on `main`; the implementation is a fresh change on top of it.
 **Scope:** `apps/commander-recommender/client` only. No server changes, no `packages/*` changes.
 
 Read [`../CLAUDE.md`](../CLAUDE.md) and
@@ -236,9 +235,10 @@ Run from the repo root.
 
 ## 7. Wrapping up
 
-- Commit to `claude/filter-commander-identity-bug-76s2zs` and push with
-  `git push -u origin claude/filter-commander-identity-bug-76s2zs`.
-- A draft PR for that branch may already exist (this document was pushed to it). If not, open one.
+- Start from the current `main`, which already carries this document. Don't stack the
+  implementation on the branch that delivered it — that branch's history is merged and finished.
+- Commit, push with `git push -u origin <branch>`, and open a **draft** PR. It is a new pull
+  request; the one that landed this brief is merged and closed.
 - No version bump — the changelog entry goes under `[Unreleased]`, where the entry being rewritten
   already sits.
 
