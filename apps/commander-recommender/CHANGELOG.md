@@ -9,6 +9,8 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-08-24
+
 ### Changed
 
 - **The Themes filter no longer explodes into one chip per creature type.**
