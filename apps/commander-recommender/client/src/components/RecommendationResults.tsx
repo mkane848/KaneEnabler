@@ -145,6 +145,7 @@ export function RecommendationResults() {
   }
 
   const suggestions = useMemo(() => result?.suggestions ?? [], [result]);
+  const alsoPlayable = useMemo(() => result?.alsoPlayable ?? [], [result]);
 
   // Dismissals and filters are separate ideas: dismissing is the user saying
   // "not this one", filtering is "not right now". Both narrow the grid, but
@@ -161,6 +162,23 @@ export function RecommendationResults() {
   const { brackets, themes, hasColorless, hasMulticolor } = useMemo(
     () => availableFilterValues(kept),
     [kept],
+  );
+
+  // The coverage tier runs through the same dismissal set and filter bar as
+  // the main grid — a Black filter producing an empty main grid above a
+  // full, unfiltered coverage list would be a worse bug than the one this
+  // tier exists to fix. See docs/recommendation-coverage.md.
+  const alsoPlayableKept = useMemo(
+    () => alsoPlayable.filter((s) => !dismissed.includes(s.unitId)),
+    [alsoPlayable, dismissed],
+  );
+  const alsoPlayableFiltered = useMemo(
+    () => applyFilters(alsoPlayableKept, filters),
+    [alsoPlayableKept, filters],
+  );
+  const alsoPlayableSorted = useMemo(
+    () => sortSuggestions(alsoPlayableFiltered, sortMode, sortDirection),
+    [alsoPlayableFiltered, sortMode, sortDirection],
   );
 
   // The whole page scrolls (no inner scroll pane — see .app-shell in
@@ -324,6 +342,25 @@ export function RecommendationResults() {
             </div>
           )}
         </>
+      )}
+
+      {/* A second, clearly-labelled tier below the confident ranking, so a
+          weak pick never reads as a strong one. Unconditional on the main
+          grid being non-empty — a list with no confident match can still
+          have a commander it already owns. */}
+      {alsoPlayableSorted.length > 0 && (
+        <section className="coverage-section">
+          <h2>Also playable</h2>
+          <p className="coverage-intro">
+            Commanders already in your list, and narrower picks that rescue cards nothing above
+            cites — a weaker case than the ranking, worth a look rather than a recommendation.
+          </p>
+          <div className="coverage-grid">
+            {alsoPlayableSorted.map((suggestion) => (
+              <CommanderCard key={suggestion.unitId} suggestion={suggestion} />
+            ))}
+          </div>
+        </section>
       )}
     </section>
   );

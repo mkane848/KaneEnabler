@@ -1,8 +1,9 @@
 # Per-card recommendation coverage: implementation plan
 
-A submitted card list is a **pool**, not a deck-in-progress. This document says what to change so
-every card in a pool gets some commander recommended for it, in what order, and how to know it
-worked. Nothing here has been implemented — this is the brief.
+**Shipped.** A submitted card list is a **pool**, not a deck-in-progress. This document says what
+to change so every card in a pool gets some commander recommended for it, in what order, and how
+to know it worked — it was written as the brief and is kept here as the design record; the
+implementation itself lives in `server/src/services/coverage.ts` (see that app's own `CLAUDE.md`).
 
 The companion reading is [`commander-recommender.md`](./commander-recommender.md) (the app's own
 handoff doc, including the scoring model this plan modifies) and

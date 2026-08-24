@@ -68,6 +68,12 @@ function buildFixture() {
   // A re-skin name that is *also* a real card, to pin the precedence.
   addCard.run('decoy', 'Count Dracula', 'count dracula');
 
+  // The reported "FlavourName - RealName" export line — rung 4. The printed
+  // flavour name is "Dracula, Voyager", not "Dracula the Voyager", so this
+  // only resolves via the fourth rung splitting on ' - ', never via the
+  // flavor-name table above.
+  addCard.run('edgar', 'Edgar, Charmed Groom', 'edgar, charmed groom');
+
   const exact = db.prepare('SELECT * FROM cards WHERE name_lower = ? LIMIT 1');
   const byFace = db.prepare(`
     SELECT cards.* FROM card_face_names
@@ -82,10 +88,21 @@ function buildFixture() {
     WHERE card_flavor_names.flavor_name_lower = ?
     LIMIT 1
   `);
+  const lookupOne = (lower: string) =>
+    (exact.get(lower) ?? byFace.get(lower) ?? byFlavor.get(lower)) as { name: string } | undefined;
+
+  // Mirrors db.ts's findCardsByNames rung 4 exactly, so this test exercises
+  // the same behaviour rather than a paraphrase of it.
   return (name: string) => {
     const lower = name.toLowerCase();
-    return (exact.get(lower) ?? byFace.get(lower) ?? byFlavor.get(lower)) as
-      { name: string } | undefined;
+    let row = lookupOne(lower);
+    if (!row && lower.includes(' - ')) {
+      for (const half of lower.split(' - ')) {
+        row = lookupOne(half.trim());
+        if (row) break;
+      }
+    }
+    return row;
   };
 }
 
@@ -215,5 +232,21 @@ describe('face-name resolution order (real database)', () => {
     const find = buildFixture();
     // Sorin is reachable by his own name; the re-skin only fills gaps.
     assert.strictEqual(find('Sorin the Mirthless')?.name, 'Sorin the Mirthless');
+  });
+
+  it('a "FlavourName - RealName" export line resolves on its real-name half', () => {
+    const find = buildFixture();
+    // The exact reproducing line from docs/recommendation-coverage.md.
+    assert.strictEqual(
+      find('Dracula the Voyager - Edgar, Charmed Groom')?.name,
+      'Edgar, Charmed Groom',
+    );
+  });
+
+  it('rung 4 never fires when the whole name already resolves', () => {
+    const find = buildFixture();
+    // No ' - ' in this name at all, so rung 4 should never even be tried;
+    // this just pins that the earlier rungs still win outright.
+    assert.strictEqual(find('Lightning Bolt')?.name, 'Lightning Bolt');
   });
 });

@@ -100,9 +100,18 @@ export interface CommanderSuggestion {
   kindredSupport: KindredSupport[];
   keywordSupport: KeywordSupport[];
   gameChangerCards: SupportingCard[];
+  /** oracle_ids of every card cited as a signal supporter, i.e. cards this
+   * commander actually *wants* — distinct from `includedCardCount`, which is
+   * mere colour-identity fit (every card in a five-colour commander's
+   * identity counts toward that whether or not it supports anything). The
+   * coverage pass (`services/coverage.ts`) keys off this, not fit. Internal
+   * only — never put on the wire; `SupportingCard` carries no `oracle_id`
+   * today, and adding one there would grow every citation in the response
+   * (see `docs/response-size.md`). */
+  citedOracleIds: string[];
 }
 
-function toSupportingCard({ row, quantity }: OwnedCard): SupportingCard {
+export function toSupportingCard({ row, quantity }: OwnedCard): SupportingCard {
   return {
     name: row.name,
     quantity,
@@ -244,7 +253,7 @@ function unitSignals(
  * here, because crediting it to a specific type is not a guess about a
  * future player choice.
  */
-function ownSignalContains(
+export function ownSignalContains(
   ownSignals: SignalMatch[],
   archetype: string,
   qualifier: string | undefined,
@@ -269,7 +278,7 @@ function ownSignalContains(
  * creature supports "Reanimator (Sliver)" just by existing, with no
  * reanimator signal of its own at all. A card with neither supports nothing.
  */
-function supporterMatches(
+export function supporterMatches(
   signal: SignalMatch,
   facts: CardFacts | undefined,
   ownSignals: SignalMatch[],
@@ -377,6 +386,14 @@ function gateWildcardKindredSupporters(
 // 1 / (1 - factor), so 0.7 caps pure breadth at ~3.3x the best single match.
 const DIMINISHING_FACTOR = 0.7;
 
+export interface ScoreCommandersOptions {
+  /** Overrides `MIN_SIGNAL_COUNT` — the coverage pass (`services/coverage.ts`)
+   * relaxes this to 1 for its second-tier pass over a shortlist already
+   * narrowed by identity and shared archetype, where the ordinary bar would
+   * exclude every narrow-identity commander from a wide, rainbow pool. */
+  minSignalCount?: number;
+}
+
 /**
  * Scores each candidate commander against the collection profile.
  *
@@ -395,7 +412,9 @@ export function scoreCommanders(
   profile: CollectionProfile,
   owned: OwnedCard[],
   candidateSignals: Map<string, SignalMatch[]>,
+  options: ScoreCommandersOptions = {},
 ): CommanderSuggestion[] {
+  const minSignalCount = options.minSignalCount ?? MIN_SIGNAL_COUNT;
   const suggestions: CommanderSuggestion[] = [];
 
   for (const unit of units) {
@@ -428,6 +447,7 @@ export function scoreCommanders(
     const active = unitSignals(unit, candidateSignals).filter((s) => hasActiveRole(s.roles));
 
     const matched: { signal: SignalMatch; cards: SupportingCard[] }[] = [];
+    const citedOracleIds = new Set<string>();
     for (const signal of active) {
       const bucket = profile.archetypeCards[signal.archetype] ?? [];
       let supporters = bucket.filter(
@@ -442,7 +462,7 @@ export function scoreCommanders(
       if (signal.archetype === 'kindred' && signal.qualifier && signal.qualifier !== '*') {
         supporters = gateWildcardKindredSupporters(supporters, signal.qualifier, profile.signalsByCard);
       }
-      if (supporters.length < MIN_SIGNAL_COUNT) continue;
+      if (supporters.length < minSignalCount) continue;
 
       // Membership counts cards; caring makes a theme. A signal citing
       // MIN_SIGNAL_COUNT cards that all merely belong (fetchlands, but no
@@ -453,6 +473,7 @@ export function scoreCommanders(
       ).length;
       if (caringCount < minimum) continue;
 
+      for (const entry of supporters) citedOracleIds.add(entry.row.oracle_id);
       matched.push({ signal, cards: supporters.map(toSupportingCard) });
     }
 
@@ -515,6 +536,7 @@ export function scoreCommanders(
       kindredSupport,
       keywordSupport,
       gameChangerCards,
+      citedOracleIds: [...citedOracleIds],
     });
   }
 

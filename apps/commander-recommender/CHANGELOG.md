@@ -9,6 +9,44 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Added
+
+- **Per-card recommendation coverage.** See `docs/recommendation-coverage.md`.
+  Uploading a wide, rainbow card pool that happened to contain a strong
+  mono-black commander (Tergrid, God of Fright, among others) returned zero
+  suggestions the moment you clicked the Black colour filter — the pool's own
+  narrow-identity commanders never had enough legal, identity-narrowed
+  supporters to clear the scorer's signal-count bar, so only wide (3+ colour)
+  commanders ever reached the ranking. A new server-side coverage pass
+  (`server/src/services/coverage.ts`) runs underneath the existing ranking,
+  not instead of it, and adds a second, clearly-labelled "Also playable" tier
+  beneath the confident results: every commander already in your list (reason
+  `owned`), plus a relaxed, narrowest-identity-first pick for any card the
+  confident ranking never cited (reason `covers`). The two bars that keep a
+  wide pool's result count from running to four figures are unchanged.
+
+### Changed
+
+- **Colour filter pips now mean "touches this colour," not "fits inside these
+  colours."** Including Black used to keep only commanders whose whole
+  identity was a subset of what you'd picked, which is why a mono-black
+  commander could vanish from a rainbow pool's results the instant you
+  clicked Black — the pip could ask for something the list had none of, with
+  no way to ask "what's the best black deck in this pool?" instead. Including
+  a colour now keeps anything whose identity intersects it. One consequence
+  worth knowing: a colourless commander no longer survives a colour include,
+  since it touches none of them — use the existing `colorless` chip for
+  those.
+
+### Fixed
+
+- **A `FlavourName - RealName` export line (e.g. "Dracula the Voyager - Edgar,
+  Charmed Groom") failed to resolve and silently landed in "not found."** Name
+  resolution gains a fourth rung: split on ` - ` and retry each half through
+  the existing exact/face/flavour lookups. No real card name contains a
+  space-hyphen-space (Magic uses an em dash), so this is safe as a last
+  resort.
+
 ## [1.9.0] — 2026-08-23
 
 ### Added

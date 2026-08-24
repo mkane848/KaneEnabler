@@ -1,4 +1,9 @@
-import type { CommanderCardDTO, CommanderSuggestionDTO, SupportingCardDTO } from '../types';
+import type {
+  AlsoPlayableSuggestionDTO,
+  CommanderCardDTO,
+  CommanderSuggestionDTO,
+  SupportingCardDTO,
+} from '../types';
 
 let counter = 0;
 
@@ -63,6 +68,19 @@ export function makeSuggestion(
     gameChangerCards: [],
     gameChangerCount: 0,
     bracket: { label: 'Exhibition / Core', range: 'Bracket 1–2', note: '' },
+    ...overrides,
+  };
+}
+
+/** An "also playable" coverage pick — everything a suggestion has, plus why
+ * this weaker tier is showing it. */
+export function makeAlsoPlayableSuggestion(
+  overrides: Partial<AlsoPlayableSuggestionDTO> = {},
+): AlsoPlayableSuggestionDTO {
+  return {
+    ...makeSuggestion(overrides),
+    coverageReason: 'owned',
+    coveredCards: [],
     ...overrides,
   };
 }

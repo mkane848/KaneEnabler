@@ -65,6 +65,39 @@ function wire(
         bracket: { label: 'Core', range: '1-3', note: '' },
       },
     ],
+    alsoPlayable: [],
+  };
+}
+
+/** Same shape as `wire`'s one suggestion, but as an alsoPlayable entry. */
+function wireWithAlsoPlayable(
+  cardIndex: SupportingCardDTO[],
+  coverageReason: 'owned' | 'covers',
+  coveredCards: number[],
+): WireRecommendResponse {
+  return {
+    ...wire(cardIndex, {}),
+    suggestions: [],
+    alsoPlayable: [
+      {
+        unitId: 'unit',
+        cards: [],
+        colorIdentity: ['B'],
+        score: 0,
+        matchedThemes: [],
+        matchedCreatureTypes: [],
+        matchedKeywords: [],
+        includedCardCount: 1,
+        themeSupport: [],
+        kindredSupport: [],
+        keywordSupport: [],
+        gameChangerCards: [],
+        gameChangerCount: 0,
+        bracket: { label: 'Core', range: '1-3', note: '' },
+        coverageReason,
+        coveredCards,
+      },
+    ],
   };
 }
 
@@ -148,7 +181,24 @@ describe('rehydrateRecommendations', () => {
       deck: { themes: [] },
       cardIndex: [],
       suggestions: [],
+      alsoPlayable: [],
     };
-    assert.deepStrictEqual(rehydrateRecommendations(empty).suggestions, []);
+    const result = rehydrateRecommendations(empty);
+    assert.deepStrictEqual(result.suggestions, []);
+    assert.deepStrictEqual(result.alsoPlayable, []);
+  });
+
+  it('alsoPlayable entries are rehydrated the same way suggestions are', () => {
+    const result = rehydrateRecommendations(wireWithAlsoPlayable(INDEX, 'owned', []));
+    assert.strictEqual(result.alsoPlayable.length, 1);
+    assert.strictEqual(result.alsoPlayable[0]!.coverageReason, 'owned');
+  });
+
+  it('coveredCards resolves the same way any other citation does', () => {
+    const result = rehydrateRecommendations(wireWithAlsoPlayable(INDEX, 'covers', [2, 0]));
+    assert.deepStrictEqual(
+      result.alsoPlayable[0]!.coveredCards.map((c) => c.name),
+      ['Grave Pact', 'Blood Artist'],
+    );
   });
 });

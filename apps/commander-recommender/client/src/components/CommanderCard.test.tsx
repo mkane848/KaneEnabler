@@ -1,7 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommanderCard } from './CommanderCard';
-import { makeCommanderCard, makeSuggestion, makeSupportingCard } from '../test/fixtures';
+import {
+  makeAlsoPlayableSuggestion,
+  makeCommanderCard,
+  makeSuggestion,
+  makeSupportingCard,
+} from '../test/fixtures';
 
 // CommanderCard's own job is to lay out a suggestion — combo lookups,
 // like/dislike persistence, and dismissal are each their own component/store
@@ -105,6 +110,29 @@ describe('CommanderCard', () => {
     expect(screen.getByText('Blood Artist')).toBeInTheDocument();
     // The mocked-out ComboFinder still renders inside the expanded panel.
     expect(screen.getByTestId('combo-finder')).toBeInTheDocument();
+  });
+
+  it('shows no coverage badge for a plain confident suggestion', () => {
+    render(<CommanderCard suggestion={makeSuggestion()} />);
+    expect(screen.queryByText('In your list')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Covers /)).not.toBeInTheDocument();
+  });
+
+  it('an \'owned\' coverage pick is badged "In your list"', () => {
+    render(<CommanderCard suggestion={makeAlsoPlayableSuggestion({ coverageReason: 'owned' })} />);
+    expect(screen.getByText('In your list')).toBeInTheDocument();
+  });
+
+  it("a 'covers' coverage pick names the cards it rescues", () => {
+    render(
+      <CommanderCard
+        suggestion={makeAlsoPlayableSuggestion({
+          coverageReason: 'covers',
+          coveredCards: [makeSupportingCard({ name: 'Tergrid, God of Fright' })],
+        })}
+      />,
+    );
+    expect(screen.getByText('Covers Tergrid, God of Fright')).toBeInTheDocument();
   });
 
   it("the dismiss button dismisses this suggestion's unitId", () => {

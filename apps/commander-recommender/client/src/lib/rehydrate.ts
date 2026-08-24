@@ -1,4 +1,12 @@
-import type { RecommendResponse, SupportingCardDTO, WireRecommendResponse } from '../types';
+import type {
+  AlsoPlayableSuggestionDTO,
+  CommanderSuggestionDTO,
+  RecommendResponse,
+  SupportingCardDTO,
+  WireAlsoPlayableSuggestionDTO,
+  WireCommanderSuggestionDTO,
+  WireRecommendResponse,
+} from '../types';
 
 /**
  * Swaps the wire response's card positions back for card objects.
@@ -12,7 +20,7 @@ import type { RecommendResponse, SupportingCardDTO, WireRecommendResponse } from
  * the components have no idea any of this happens.
  */
 export function rehydrateRecommendations(wire: WireRecommendResponse): RecommendResponse {
-  const { cardIndex, suggestions, ...rest } = wire;
+  const { cardIndex, suggestions, alsoPlayable, ...rest } = wire;
 
   // Positions come from the same response that carries the index, so an
   // out-of-range one would mean the server contradicted itself. Dropping the
@@ -23,9 +31,8 @@ export function rehydrateRecommendations(wire: WireRecommendResponse): Recommend
       .map((position) => cardIndex[position])
       .filter((card): card is SupportingCardDTO => !!card);
 
-  return {
-    ...rest,
-    suggestions: suggestions.map((suggestion) => ({
+  function rehydrateSuggestion(suggestion: WireCommanderSuggestionDTO): CommanderSuggestionDTO {
+    return {
       ...suggestion,
       themeSupport: suggestion.themeSupport.map((theme) => ({
         ...theme,
@@ -40,6 +47,22 @@ export function rehydrateRecommendations(wire: WireRecommendResponse): Recommend
         cards: resolve(keyword.cards),
       })),
       gameChangerCards: resolve(suggestion.gameChangerCards),
-    })),
+    };
+  }
+
+  function rehydrateAlsoPlayable(
+    suggestion: WireAlsoPlayableSuggestionDTO,
+  ): AlsoPlayableSuggestionDTO {
+    return {
+      ...rehydrateSuggestion(suggestion),
+      coverageReason: suggestion.coverageReason,
+      coveredCards: resolve(suggestion.coveredCards),
+    };
+  }
+
+  return {
+    ...rest,
+    suggestions: suggestions.map(rehydrateSuggestion),
+    alsoPlayable: alsoPlayable.map(rehydrateAlsoPlayable),
   };
 }

@@ -316,6 +316,10 @@ server/                Express + TS + better-sqlite3
                                 weights are 16–22 (kindred 15, keyword 8) — see signals.ts, not a
                                 single flat `kindred*15 + theme*10 + keyword*8 + archetype*20`
                                 formula; that describes an earlier version of this logic.
+      coverage.ts               a second, labelled tier beneath synergy.ts's own two bars: every
+                                 commander already in the submitted list, plus a relaxed narrow
+                                 pick for any card the confident ranking never cited — see
+                                 docs/recommendation-coverage.md and CHANGELOG [Unreleased]
       deckAnalysis.ts          what the submitted list is trying to do, independent of any
                                 commander: strongest archetypes (themes) + what's missing
                                 (lifecycle gaps), both off the same pass over signals.ts's output

@@ -12,7 +12,33 @@ import {
   visibleKindredSupport,
 } from '../lib/suggestions';
 import { ManaSymbol } from './ManaSymbol';
-import type { BracketEstimateDTO, CommanderCardDTO, CommanderSuggestionDTO } from '../types';
+import type {
+  AlsoPlayableSuggestionDTO,
+  BracketEstimateDTO,
+  CommanderCardDTO,
+  CommanderSuggestionDTO,
+} from '../types';
+
+/** A card renders either a confident suggestion or an "also playable"
+ * coverage pick — the latter carries `coverageReason`/`coveredCards` on top
+ * of everything a plain suggestion has. */
+type CardSuggestion = CommanderSuggestionDTO | AlsoPlayableSuggestionDTO;
+
+function isCoveragePick(suggestion: CardSuggestion): suggestion is AlsoPlayableSuggestionDTO {
+  return 'coverageReason' in suggestion;
+}
+
+/** "In your list" for a commander you already own; "Covers X, Y" for a
+ * relaxed pick, naming the cards it rescues — the reason this weaker tier is
+ * here at all, per docs/recommendation-coverage.md. */
+function CoverageBadge({ suggestion }: { suggestion: AlsoPlayableSuggestionDTO }) {
+  if (suggestion.coverageReason === 'owned') {
+    return <span className="badge badge-coverage">In your list</span>;
+  }
+  const names = suggestion.coveredCards.map((c) => c.name);
+  if (names.length === 0) return null;
+  return <span className="badge badge-coverage">Covers {names.join(', ')}</span>;
+}
 
 /**
  * The raw score this suggestion was ranked by, shown as-is.
@@ -163,7 +189,7 @@ function CommanderFace({
   );
 }
 
-export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionDTO }) {
+export function CommanderCard({ suggestion }: { suggestion: CardSuggestion }) {
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
   const dismiss = useAppStore((s) => s.dismiss);
@@ -251,6 +277,7 @@ export function CommanderCard({ suggestion }: { suggestion: CommanderSuggestionD
 
         <div className="badge-row">
           <LikeDislikeButtons oracleIds={suggestion.cards.map((c) => c.oracleId)} />
+          {isCoveragePick(suggestion) && <CoverageBadge suggestion={suggestion} />}
           <ScoreBadge suggestion={suggestion} />
           {/* Bracket badge and its note are hidden while the estimate is
               being reworked — `bracket` is still on the DTO and still drives
