@@ -103,11 +103,11 @@ Two workflows in `.github/workflows/`:
   the root. Deliberately doesn't fetch real Scryfall data — lint/typecheck/build don't need it, and
   the committed seed data is enough for `test`, so a normal PR never triggers extra Scryfall traffic.
 - **`scryfall-fetch-check.yml`** — scheduled (Monday 13:00 UTC) plus manual dispatch, kept separate
-  from `ci.yml` for the same reason. Runs the *real* Scryfall bulk-data fetch for both apps
+  from `ci.yml` for the same reason. Runs the _real_ Scryfall bulk-data fetch for both apps
   (`mtg-recommender-server`'s `prepare-data`, `mtg-time-tracker`'s `fetch-cards`), which is also the
   only place `recommend.integration.test.ts` and `cards.integration.test.ts` actually execute
   (they `skipIf` themselves everywhere else, since they need a real seeded database). This is the
-  regression guard for a bad *fetch* (a changed bulk-data shape, a moved field) — see
+  regression guard for a bad _fetch_ (a changed bulk-data shape, a moved field) — see
   `docs/api-policy.md` before changing what it calls, how often, or what triggers it.
 
 ## Architecture
@@ -143,15 +143,16 @@ Two workflows in `.github/workflows/`:
 
 ## Documents
 
-| Document                                                               | What it's for                                                                                                                                 |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`docs/handoff.md`](./docs/handoff.md)                                 | The plan: target architecture, all seven phases, verification steps                                                                           |
-| [`docs/commander-recommender.md`](./docs/commander-recommender.md)     | Commander recommender's own handoff doc — deep design rationale, file map                                                                     |
-| [`docs/rules-audit.md`](./docs/rules-audit.md)                         | Every Magic rules defect found in the incoming code, with file:line citations                                                                 |
-| [`docs/archetypes.md`](./docs/archetypes.md)                           | Signal vocabulary: roles, archetypes, qualifiers, and the decks behind them                                                                   |
-| [`docs/signals-rework.md`](./docs/signals-rework.md)                   | Implementation plan for the signal engine rework (shipped — every phase, including the conditional Phase C4 and the deferred Phase D)         |
-| [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md) | Implementation plan for per-card recommendation coverage — treating a submitted list as a pool rather than one deck (shipped — see `apps/commander-recommender/server/src/services/coverage.ts`) |
-| [`docs/api-policy.md`](./docs/api-policy.md)                           | **Hard rule.** External API limits and etiquette                                                                                              |
+| Document                                                               | What it's for                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`docs/handoff.md`](./docs/handoff.md)                                 | The plan: target architecture, all seven phases, verification steps                                                                                                                                                     |
+| [`docs/commander-recommender.md`](./docs/commander-recommender.md)     | Commander recommender's own handoff doc — deep design rationale, file map                                                                                                                                               |
+| [`docs/rules-audit.md`](./docs/rules-audit.md)                         | Every Magic rules defect found in the incoming code, with file:line citations                                                                                                                                           |
+| [`docs/archetypes.md`](./docs/archetypes.md)                           | Signal vocabulary: roles, archetypes, qualifiers, and the decks behind them                                                                                                                                             |
+| [`docs/signals-rework.md`](./docs/signals-rework.md)                   | Implementation plan for the signal engine rework (shipped — every phase, including the conditional Phase C4 and the deferred Phase D)                                                                                   |
+| [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md) | Implementation plan for per-card recommendation coverage — treating a submitted list as a pool rather than one deck (shipped — see `apps/commander-recommender/server/src/services/coverage.ts`)                        |
+| [`docs/color-filter-semantics.md`](./docs/color-filter-semantics.md)   | Implementation brief for returning the recommender's colour pips to subset ("fits inside these colours") semantics, and why that reverses the decision recorded in `recommendation-coverage.md` (approved, not started) |
+| [`docs/api-policy.md`](./docs/api-policy.md)                           | **Hard rule.** External API limits and etiquette                                                                                                                                                                        |
 
 ## Hard rules
 
