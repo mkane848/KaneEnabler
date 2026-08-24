@@ -27,16 +27,20 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Changed
 
-- **Colour filter pips now mean "touches this colour," not "fits inside these
-  colours."** Including Black used to keep only commanders whose whole
-  identity was a subset of what you'd picked, which is why a mono-black
-  commander could vanish from a rainbow pool's results the instant you
-  clicked Black — the pip could ask for something the list had none of, with
-  no way to ask "what's the best black deck in this pool?" instead. Including
-  a colour now keeps anything whose identity intersects it. One consequence
-  worth knowing: a colourless commander no longer survives a colour include,
-  since it touches none of them — use the existing `colorless` chip for
-  those.
+- **Colour filter pips mean "fits inside these colours" again.** Including
+  Red and Green keeps only commanders whose whole identity is a subset of
+  {R, G} — mono-R, mono-G, Gruul, and colourless — matching how Scryfall and
+  EDHREC's own colour filters read, and dropping the wide, off-colour piles
+  a plain intersection let through (an Abzan commander no longer shows up
+  under an R+G filter). A colourless commander survives any colour include,
+  since the empty identity is a subset of anything; the existing `colorless`
+  chip is still how you ask for *only* those. This briefly shipped as
+  "touches this colour" instead, to work around narrow-identity commanders
+  disappearing from a rainbow pool's results the moment you filtered by
+  their colour — that workaround is no longer needed now that the "Also
+  playable" coverage tier above surfaces a narrowest-identity pick
+  regardless of colour filter. A colour pip with nothing in the pool now
+  renders muted rather than looking identical to every other pip.
 
 ### Fixed
 
