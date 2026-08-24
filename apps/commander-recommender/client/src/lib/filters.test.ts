@@ -13,7 +13,7 @@ import {
   modeOf,
   type FilterSelection,
 } from './filters';
-import { makeSuggestion, makeSupportingCard } from '../test/fixtures';
+import { makeSuggestion, makeSupportingCard, makeThemeSupport } from '../test/fixtures';
 
 describe('filters', () => {
   // --- state machine -----------------------------------------------------
@@ -141,26 +141,29 @@ describe('filters', () => {
   });
 
   // --- theme filtering (AND include, OR exclude, visible-only) -----------
+  //
+  // Filter *values* are archetype/qualifier keys ('sacrifice',
+  // 'goWide:Sliver'), not display labels — see groupFacetOptions in
+  // filters.ts. An unqualified theme's key and archetype are the same
+  // string, so its own key doubles as "this archetype, unqualified".
 
-  const sac = {
+  const sac = makeThemeSupport({
     key: 'sacrifice',
     label: 'Sacrifice',
-    description: '',
     cards: [makeSupportingCard({ name: 'A' })],
-  };
-  const tokens = {
+  });
+  const tokens = makeThemeSupport({
     key: 'tokens',
     label: 'Tokens',
-    description: '',
     cards: [makeSupportingCard({ name: 'B' })],
-  };
-  const emptyTheme = { key: 'graveyard', label: 'Graveyard', description: '', cards: [] };
+  });
+  const emptyTheme = makeThemeSupport({ key: 'graveyard', label: 'Graveyard', cards: [] });
 
   it('theme include requires every selected theme to be present', () => {
     const both = makeSuggestion({ themeSupport: [sac, tokens] });
     const sacOnly = makeSuggestion({ themeSupport: [sac] });
 
-    const filters = { ...EMPTY_FILTERS, themes: { include: ['Sacrifice', 'Tokens'], exclude: [] } };
+    const filters = { ...EMPTY_FILTERS, themes: { include: ['sacrifice', 'tokens'], exclude: [] } };
     assert.deepStrictEqual(applyFilters([both, sacOnly], filters), [both]);
   });
 
@@ -168,7 +171,7 @@ describe('filters', () => {
     const withSac = makeSuggestion({ themeSupport: [sac] });
     const withTokens = makeSuggestion({ themeSupport: [tokens] });
 
-    const filters = { ...EMPTY_FILTERS, themes: { include: [], exclude: ['Sacrifice'] } };
+    const filters = { ...EMPTY_FILTERS, themes: { include: [], exclude: ['sacrifice'] } };
     assert.deepStrictEqual(applyFilters([withSac, withTokens], filters), [withTokens]);
   });
 
@@ -177,11 +180,50 @@ describe('filters', () => {
     // filtering — it should behave as if this suggestion doesn't have it.
     const suggestion = makeSuggestion({ themeSupport: [sac, emptyTheme] });
 
-    const includeGraveyard = { ...EMPTY_FILTERS, themes: { include: ['Graveyard'], exclude: [] } };
+    const includeGraveyard = { ...EMPTY_FILTERS, themes: { include: ['graveyard'], exclude: [] } };
     assert.deepStrictEqual(applyFilters([suggestion], includeGraveyard), []);
 
-    const excludeGraveyard = { ...EMPTY_FILTERS, themes: { include: [], exclude: ['Graveyard'] } };
+    const excludeGraveyard = { ...EMPTY_FILTERS, themes: { include: [], exclude: ['graveyard'] } };
     assert.deepStrictEqual(applyFilters([suggestion], excludeGraveyard), [suggestion]);
+  });
+
+  // --- qualified themes (the "Go-Wide Combat (Dinosaur)" explosion) ------
+
+  const goWideSliver = makeThemeSupport({
+    key: 'goWide:Sliver',
+    label: 'Go-Wide Combat (Sliver)',
+    archetype: 'goWide',
+    archetypeLabel: 'Go-Wide Combat',
+    qualifier: 'Sliver',
+    cards: [makeSupportingCard({ name: 'Sliver payoff' })],
+  });
+  const goWideGoblin = makeThemeSupport({
+    key: 'goWide:Goblin',
+    label: 'Go-Wide Combat (Goblin)',
+    archetype: 'goWide',
+    archetypeLabel: 'Go-Wide Combat',
+    qualifier: 'Goblin',
+    cards: [makeSupportingCard({ name: 'Goblin payoff' })],
+  });
+
+  it('selecting the base archetype value matches any qualifier, or none', () => {
+    const sliverDeck = makeSuggestion({ themeSupport: [goWideSliver] });
+    const goblinDeck = makeSuggestion({ themeSupport: [goWideGoblin] });
+    const unrelated = makeSuggestion({ themeSupport: [sac] });
+
+    const filters = { ...EMPTY_FILTERS, themes: { include: ['goWide'], exclude: [] } };
+    assert.deepStrictEqual(applyFilters([sliverDeck, goblinDeck, unrelated], filters), [
+      sliverDeck,
+      goblinDeck,
+    ]);
+  });
+
+  it('selecting a narrowed qualifier value matches only that qualifier', () => {
+    const sliverDeck = makeSuggestion({ themeSupport: [goWideSliver] });
+    const goblinDeck = makeSuggestion({ themeSupport: [goWideGoblin] });
+
+    const filters = { ...EMPTY_FILTERS, themes: { include: ['goWide:Sliver'], exclude: [] } };
+    assert.deepStrictEqual(applyFilters([sliverDeck, goblinDeck], filters), [sliverDeck]);
   });
 
   // --- bracket filtering ---------------------------------------------------
@@ -201,8 +243,71 @@ describe('filters', () => {
 
   it('availableFilterValues only offers themes that still have supporting cards', () => {
     const suggestion = makeSuggestion({ themeSupport: [sac, emptyTheme] });
-    const { themes } = availableFilterValues([suggestion]);
-    assert.deepStrictEqual(themes, ['Sacrifice']);
+    const { themeFacets } = availableFilterValues([suggestion]);
+    assert.deepStrictEqual(themeFacets, [{ value: 'sacrifice', label: 'Sacrifice', qualifiers: [] }]);
+  });
+
+  it('an archetype with only one qualifier present stays a single flat chip', () => {
+    // Only Sliver shows up anywhere in this result set — nothing to narrow
+    // between yet, so this should read exactly like an unqualified theme
+    // rather than a base chip with a one-item disclosure under it.
+    const suggestion = makeSuggestion({ themeSupport: [goWideSliver] });
+    const { themeFacets } = availableFilterValues([suggestion]);
+    assert.deepStrictEqual(themeFacets, [
+      { value: 'goWide:Sliver', label: 'Go-Wide Combat (Sliver)', qualifiers: [] },
+    ]);
+  });
+
+  it('an archetype with 2+ qualifiers present groups into one base chip with a narrowed list', () => {
+    // The screenshot bug this exists for: a broad result set turning up
+    // "Go-Wide Combat (Dinosaur)", "(Dragon)", "(Dwarf)", ... as one flat
+    // wall of chips. Once 2+ tribes are actually present, they collapse
+    // into one "Go-Wide Combat" base chip plus a narrowed qualifier list.
+    const sliverDeck = makeSuggestion({ themeSupport: [goWideSliver] });
+    const goblinDeck = makeSuggestion({ themeSupport: [goWideGoblin] });
+    const { themeFacets } = availableFilterValues([sliverDeck, goblinDeck]);
+    assert.deepStrictEqual(themeFacets, [
+      {
+        value: 'goWide',
+        label: 'Go-Wide Combat',
+        qualifiers: [
+          { value: 'goWide:Goblin', label: 'Goblin' },
+          { value: 'goWide:Sliver', label: 'Sliver' },
+        ],
+      },
+    ]);
+  });
+
+  // --- kindred filtering — same grouped shape, its own suggestion field --
+
+  it('kindred include/exclude and grouping mirror themes, off kindredSupport', () => {
+    const sliverDeck = makeSuggestion({
+      kindredSupport: [{ type: 'Sliver', cards: [makeSupportingCard({ name: 'Sliver Overlord' })] }],
+    });
+    const goblinDeck = makeSuggestion({
+      kindredSupport: [{ type: 'Goblin', cards: [makeSupportingCard({ name: 'Goblin Chieftain' })] }],
+    });
+
+    const { kindredFacets } = availableFilterValues([sliverDeck, goblinDeck]);
+    assert.deepStrictEqual(kindredFacets, [
+      {
+        value: 'kindred',
+        label: 'Kindred',
+        qualifiers: [
+          { value: 'kindred:Goblin', label: 'Goblin' },
+          { value: 'kindred:Sliver', label: 'Sliver' },
+        ],
+      },
+    ]);
+
+    const anyKindred = { ...EMPTY_FILTERS, kindred: { include: ['kindred'], exclude: [] } };
+    assert.deepStrictEqual(applyFilters([sliverDeck, goblinDeck], anyKindred), [
+      sliverDeck,
+      goblinDeck,
+    ]);
+
+    const sliverOnly = { ...EMPTY_FILTERS, kindred: { include: ['kindred:Sliver'], exclude: [] } };
+    assert.deepStrictEqual(applyFilters([sliverDeck, goblinDeck], sliverOnly), [sliverDeck]);
   });
 
   it('availableFilterValues flags colorless/multicolor presence', () => {

@@ -12,15 +12,14 @@ import {
   visibleKindredSupport,
   visibleKindredTypes,
 } from './suggestions';
-import { makeSuggestion, makeSupportingCard } from '../test/fixtures';
+import { makeSuggestion, makeSupportingCard, makeThemeSupport } from '../test/fixtures';
 
-const withCards = {
+const withCards = makeThemeSupport({
   key: 'sacrifice',
   label: 'Sacrifice',
-  description: '',
   cards: [makeSupportingCard()],
-};
-const empty = { key: 'tokens', label: 'Tokens', description: '', cards: [] };
+});
+const empty = makeThemeSupport({ key: 'tokens', label: 'Tokens', cards: [] });
 
 describe('suggestion visibility', () => {
   it('visibleThemeSupport drops themes with zero supporting cards', () => {

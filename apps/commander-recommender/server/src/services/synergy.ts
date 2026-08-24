@@ -74,6 +74,16 @@ export interface ThemeSupport {
   label: string;
   description: string;
   cards: SupportingCard[];
+  /** The archetype's catalog key ('goWide') and, when this match is
+   * restricted to one creature type/keyword/etc., the qualifier itself — see
+   * `signals.ts`'s `ArchetypeDef.qualifiable`. `archetypeLabel` is the
+   * stable unqualified display name ("Go-Wide Combat") even when `label`
+   * itself is qualified ("Go-Wide Combat (Dinosaur)") — the client groups
+   * same-archetype, different-qualifier entries under it rather than
+   * showing one flat chip per qualifier. */
+  archetype: string;
+  qualifier?: string;
+  archetypeLabel: string;
 }
 
 /** A creature type the commander cares about and the list can field. */
@@ -523,6 +533,15 @@ export function scoreCommanders(
         label: signal.label,
         description: signal.description,
         cards,
+        archetype: signal.archetype,
+        qualifier: signal.qualifier,
+        // `signal` here always came from `unitSignals`, i.e. `db.ts`'s
+        // `findSignalsByOracleIds` reading the precomputed `card_signals`
+        // table (see this function's own comment on why) — never straight
+        // from `detectSignals`. That path rebuilds every signal's display
+        // fields via `archetypeDisplay`, which always sets archetypeLabel,
+        // so this is safe unconditionally.
+        archetypeLabel: signal.archetypeLabel!,
       }));
 
     suggestions.push({

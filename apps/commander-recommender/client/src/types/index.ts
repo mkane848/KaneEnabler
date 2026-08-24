@@ -25,6 +25,15 @@ export interface ThemeSupportDTO {
   label: string;
   description: string;
   cards: SupportingCardDTO[];
+  /** The archetype's catalog key ('goWide') and, when this match is
+   * restricted to one creature type/keyword/etc., the qualifier itself.
+   * `archetypeLabel` is the stable unqualified display name ("Go-Wide
+   * Combat") even when `label` itself is qualified ("Go-Wide Combat
+   * (Dinosaur)") — the filter bar groups same-archetype, different-qualifier
+   * entries under it instead of showing one flat chip per qualifier. */
+  archetype: string;
+  qualifier?: string;
+  archetypeLabel: string;
 }
 
 export interface KindredSupportDTO {

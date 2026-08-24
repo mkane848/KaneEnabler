@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ResultFilters } from './ResultFilters';
 import { EMPTY_FILTERS, type SuggestionFilters } from '../lib/filters';
@@ -8,7 +8,11 @@ const BASE_PROPS = {
   filters: EMPTY_FILTERS,
   onChange: vi.fn(),
   availableBrackets: [],
-  availableThemes: ['Aristocrats', 'Reanimator'],
+  availableThemeFacets: [
+    { value: 'aristocrats', label: 'Aristocrats', qualifiers: [] },
+    { value: 'reanimator', label: 'Reanimator', qualifiers: [] },
+  ],
+  availableKindredFacets: [],
   availableColors: new Set(WUBRG),
   hasColorless: false,
   hasMulticolor: false,
@@ -92,13 +96,128 @@ describe('ResultFilters', () => {
     screen.getByText('Aristocrats').click();
     expect(onChange).toHaveBeenCalledWith({
       ...EMPTY_FILTERS,
-      themes: { include: ['Aristocrats'], exclude: [] },
+      themes: { include: ['aristocrats'], exclude: [] },
     });
   });
 
   it('hides the themes row entirely when there are none to filter by', () => {
-    render(<ResultFilters {...BASE_PROPS} availableThemes={[]} />);
+    render(<ResultFilters {...BASE_PROPS} availableThemeFacets={[]} />);
     expect(screen.queryByText('Themes')).not.toBeInTheDocument();
+  });
+
+  // --- grouped facets: the "Go-Wide Combat (Dinosaur)" explosion fix -----
+
+  it('a qualified archetype with 2+ qualifiers groups into a base chip with a collapsed narrowed list', () => {
+    const onChange = vi.fn();
+    const facets = [
+      {
+        value: 'goWide',
+        label: 'Go-Wide Combat',
+        qualifiers: [
+          { value: 'goWide:Goblin', label: 'Goblin' },
+          { value: 'goWide:Sliver', label: 'Sliver' },
+        ],
+      },
+    ];
+    render(<ResultFilters {...BASE_PROPS} availableThemeFacets={facets} onChange={onChange} />);
+
+    // Collapsed by default — the narrowed chips aren't in the DOM yet, only
+    // the one base chip and its disclosure toggle.
+    expect(screen.getByText('Go-Wide Combat')).toBeInTheDocument();
+    expect(screen.queryByText('Sliver')).not.toBeInTheDocument();
+
+    // The disclosure toggle only flips its own local state (no callback
+    // prop to observe), so it needs fireEvent's act() wrapping to flush
+    // synchronously — unlike the FacetChip clicks below, which just need
+    // their onChange call args checked.
+    fireEvent.click(screen.getByText('2 types'));
+    expect(screen.getByText('Sliver')).toBeInTheDocument();
+    expect(screen.getByText('Goblin')).toBeInTheDocument();
+
+    // The base chip means "this archetype, any qualifier or none".
+    screen.getByText('Go-Wide Combat').click();
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...EMPTY_FILTERS,
+      themes: { include: ['goWide'], exclude: [] },
+    });
+
+    // A narrowed chip means exactly that qualifier.
+    screen.getByText('Sliver').click();
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...EMPTY_FILTERS,
+      themes: { include: ['goWide:Sliver'], exclude: [] },
+    });
+  });
+
+  it('an archetype with a single qualifier renders as one flat chip, not a base+disclosure group', () => {
+    const facets = [{ value: 'goWide:Sliver', label: 'Go-Wide Combat (Sliver)', qualifiers: [] }];
+    render(<ResultFilters {...BASE_PROPS} availableThemeFacets={facets} />);
+
+    expect(screen.getByText('Go-Wide Combat (Sliver)')).toBeInTheDocument();
+    expect(screen.queryByText(/types$/)).not.toBeInTheDocument();
+  });
+
+  it('does not show a search box for a small narrowed list', () => {
+    const small = [
+      {
+        value: 'goWide',
+        label: 'Go-Wide Combat',
+        qualifiers: [
+          { value: 'goWide:Goblin', label: 'Goblin' },
+          { value: 'goWide:Sliver', label: 'Sliver' },
+        ],
+      },
+    ];
+    render(<ResultFilters {...BASE_PROPS} availableThemeFacets={small} />);
+    fireEvent.click(screen.getByText('2 types'));
+    expect(screen.queryByPlaceholderText(/Search/)).not.toBeInTheDocument();
+  });
+
+  it('shows a search box once a narrowed list has more than 12 entries', () => {
+    const large = [
+      {
+        value: 'kindred',
+        label: 'Kindred',
+        qualifiers: Array.from({ length: 13 }, (_, i) => ({
+          value: `kindred:Type${i}`,
+          label: `Type${i}`,
+        })),
+      },
+    ];
+    render(<ResultFilters {...BASE_PROPS} availableThemeFacets={large} />);
+    fireEvent.click(screen.getByText('13 types'));
+    expect(screen.getByPlaceholderText(/Search 13 types/)).toBeInTheDocument();
+  });
+
+  // --- the Kindred row: its own facet, same grouped shape as Themes ------
+
+  it('renders the Kindred row, separately from Themes, using the same grouped shape', () => {
+    const onChange = vi.fn();
+    const kindredFacets = [
+      {
+        value: 'kindred',
+        label: 'Kindred',
+        qualifiers: [
+          { value: 'kindred:Goblin', label: 'Goblin' },
+          { value: 'kindred:Sliver', label: 'Sliver' },
+        ],
+      },
+    ];
+    render(
+      <ResultFilters {...BASE_PROPS} availableKindredFacets={kindredFacets} onChange={onChange} />,
+    );
+
+    expect(screen.getAllByText('Kindred').length).toBeGreaterThan(0);
+    screen.getByLabelText(/Kindred, any type/).click();
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...EMPTY_FILTERS,
+      kindred: { include: ['kindred'], exclude: [] },
+    });
+  });
+
+  it('hides the Kindred row entirely when there is nothing to filter by', () => {
+    render(<ResultFilters {...BASE_PROPS} availableKindredFacets={[]} />);
+    expect(screen.queryByText('Kindred')).not.toBeInTheDocument();
   });
 
   it('only shows "Clear filters" once a filter is active, and it resets everything', () => {

@@ -39,6 +39,7 @@ function parseFilters(value: unknown): SuggestionFilters {
     colorCategory: parseFilterSelection(raw.colorCategory),
     brackets: parseFilterSelection(raw.brackets),
     themes: parseFilterSelection(raw.themes),
+    kindred: parseFilterSelection(raw.kindred),
   };
 }
 

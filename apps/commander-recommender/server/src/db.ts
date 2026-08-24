@@ -214,6 +214,7 @@ export function findSignalsByOracleIds(oracleIds: string[]): Map<string, SignalM
         qualifier: row.qualifier ?? undefined,
         qualifierKind: (row.qualifier_kind as SignalMatch['qualifierKind']) ?? undefined,
         roles: JSON.parse(row.roles) as SignalMatch['roles'],
+        archetypeLabel: def.archetypeLabel,
       };
       const existing = map.get(row.oracle_id);
       if (existing) existing.push(signal);

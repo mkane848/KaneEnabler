@@ -56,7 +56,14 @@ function wire(
         matchedKeywords: [],
         includedCardCount: 1,
         themeSupport: [
-          { key: 'aristocrats', label: 'Aristocrats', description: '', cards: cites.theme ?? [] },
+          {
+            key: 'aristocrats',
+            label: 'Aristocrats',
+            description: '',
+            cards: cites.theme ?? [],
+            archetype: 'aristocrats',
+            archetypeLabel: 'Aristocrats',
+          },
         ],
         kindredSupport: [{ type: 'Vampire', cards: cites.kindred ?? [] }],
         keywordSupport: [{ keyword: 'Flying', cards: cites.keyword ?? [] }],

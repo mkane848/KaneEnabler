@@ -155,6 +155,19 @@ export interface SignalMatch {
   qualifier?: string;
   qualifierKind?: QualifierKind;
   roles: Role[];
+  /**
+   * The archetype's stable, unqualified display name — "Reanimator" whether
+   * or not this particular match is qualified. Always set by `archetypeDisplay`
+   * (the presentation layer for a signal read back out of `card_signals` —
+   * db.ts's `findSignalsByOracleIds` is what actually populates a commander
+   * candidate's own signals, which is what `synergy.ts`'s `themeSupport`
+   * reads). Only the *live* `detectSignals` path leaves it unset for
+   * `detectKindred`/`detectKeywordCare` matches — set by the `ARCHETYPES`
+   * loop there, not by those two — but nothing reads it off that path either
+   * (see `themeSupport`'s filter in synergy.ts), so this stays optional
+   * rather than forcing every push site to fill in a value nothing needs.
+   */
+  archetypeLabel?: string;
 }
 
 /**
@@ -2595,6 +2608,7 @@ export function detectSignals(facts: CardFacts, vocab: Vocabulary): SignalMatch[
       qualifier,
       qualifierKind: qualifier ? def.qualifiable : undefined,
       roles,
+      archetypeLabel: def.label,
     });
   }
 
@@ -2614,12 +2628,13 @@ export function detectSignals(facts: CardFacts, vocab: Vocabulary): SignalMatch[
 export function archetypeDisplay(
   archetype: string,
   qualifier: string | null,
-): { label: string; description: string; weight: number } {
+): { label: string; description: string; weight: number; archetypeLabel: string } {
   if (archetype === 'kindred' && qualifier) {
     return {
       label: `${qualifier} Kindred`,
       description: `${pluralOfType(qualifier)}, and cards that care about having them.`,
       weight: 15,
+      archetypeLabel: 'Kindred',
     };
   }
   if (archetype === 'keywordCare' && qualifier) {
@@ -2627,6 +2642,7 @@ export function archetypeDisplay(
       label: qualifier,
       description: `Cards with ${qualifier}, where the commander actually cares about it.`,
       weight: 8,
+      archetypeLabel: qualifier,
     };
   }
 
@@ -2635,11 +2651,12 @@ export function archetypeDisplay(
     // An archetype in the database that the catalog no longer defines — the
     // shape of things after a rename without a re-import. Degrade to the raw
     // key rather than crashing; the next import drops the row.
-    return { label: archetype, description: '', weight: 10 };
+    return { label: archetype, description: '', weight: 10, archetypeLabel: archetype };
   }
   return {
     label: qualifier ? `${def.label} (${qualifier})` : def.label,
     description: def.description,
     weight: def.weight,
+    archetypeLabel: def.label,
   };
 }

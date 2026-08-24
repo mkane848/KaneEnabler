@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { COLOR_LABELS, WUBRG } from '../lib/mtg';
 import { ManaSymbol } from './ManaSymbol';
 import {
@@ -9,6 +9,7 @@ import {
   type FilterMode,
   type FilterSelection,
   type SuggestionFilters,
+  type ThemeFacetOption,
 } from '../lib/filters';
 import { SORT_MODE_LABELS, type SortDirection, type SortMode } from '../lib/sort';
 
@@ -16,7 +17,8 @@ interface Props {
   filters: SuggestionFilters;
   onChange: (filters: SuggestionFilters) => void;
   availableBrackets: string[];
-  availableThemes: string[];
+  availableThemeFacets: ThemeFacetOption[];
+  availableKindredFacets: ThemeFacetOption[];
   availableColors: Set<string>;
   hasColorless: boolean;
   hasMulticolor: boolean;
@@ -27,6 +29,12 @@ interface Props {
   shown: number;
   total: number;
 }
+
+/** Once an archetype has 2+ real qualifiers, the nested list can still run
+ * long (a big, varied decklist can turn up 30+ creature types under Kindred
+ * or Go-Wide Combat) — a plain filter box beats scrolling a wall of chips to
+ * find one tribe. Below this, the chip list alone is faster than typing. */
+const QUALIFIER_SEARCH_THRESHOLD = 12;
 
 const MODE_ICON: Record<FilterMode, string> = { include: '+', exclude: '−' };
 
@@ -70,6 +78,102 @@ function FacetChip({
   );
 }
 
+/**
+ * One archetype-shaped facet chip: either a plain `FacetChip` (an archetype
+ * with 0 or 1 qualifier present just renders exactly as before), or — once
+ * `option.qualifiers` has 2+ entries — a base chip meaning "this archetype,
+ * any qualifier or none" plus a disclosure revealing the specific qualifiers
+ * underneath. This is what turns "Go-Wide Combat (Dinosaur)", "Go-Wide
+ * Combat (Dragon)", ... into one "Go-Wide Combat" chip with a narrowed list
+ * behind it, and is reused as-is for the Kindred row.
+ */
+function QualifiableFacet({
+  option,
+  selection,
+  onToggle,
+}: {
+  option: ThemeFacetOption;
+  selection: FilterSelection;
+  onToggle: (value: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState('');
+  const panelId = useId();
+
+  if (option.qualifiers.length === 0) {
+    return (
+      <FacetChip
+        label={option.label}
+        mode={modeOf(selection, option.value)}
+        onClick={() => onToggle(option.value)}
+        describe={(m) => `${option.label}: ${nextModeDescription(m)}`}
+      />
+    );
+  }
+
+  const showSearch = option.qualifiers.length > QUALIFIER_SEARCH_THRESHOLD;
+  const needle = query.trim().toLowerCase();
+  const visibleQualifiers =
+    showSearch && needle
+      ? option.qualifiers.filter((q) => q.label.toLowerCase().includes(needle))
+      : option.qualifiers;
+
+  return (
+    <div className="facet-group">
+      <div className="facet-group-header">
+        <FacetChip
+          label={option.label}
+          mode={modeOf(selection, option.value)}
+          onClick={() => onToggle(option.value)}
+          describe={(m) => `${option.label}, any type: ${nextModeDescription(m)}`}
+        />
+        <button
+          type="button"
+          className="facet-group-toggle"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={() => setExpanded((e) => !e)}
+        >
+          {option.qualifiers.length} types
+          <span aria-hidden="true" className="explain-chevron">
+            {expanded ? '▲' : '▼'}
+          </span>
+        </button>
+      </div>
+      {expanded && (
+        <div id={panelId} className="facet-group-panel">
+          {showSearch && (
+            <input
+              type="text"
+              className="facet-search"
+              placeholder={`Search ${option.qualifiers.length} types…`}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label={`Search ${option.label} types`}
+            />
+          )}
+          <div
+            className="toggle-group facet-group-chips"
+            role="group"
+            aria-label={`${option.label} types`}
+          >
+            {visibleQualifiers.map((q) => (
+              <FacetChip
+                key={q.value}
+                label={q.label}
+                mode={modeOf(selection, q.value)}
+                onClick={() => onToggle(q.value)}
+                describe={(m) => `${option.label} (${q.label}): ${nextModeDescription(m)}`}
+              />
+            ))}
+            {visibleQualifiers.length === 0 && <span className="facet-no-match">No matches</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function nextModeDescription(current: FilterMode | null): string {
   if (current === null) return 'not filtered — click to require';
   if (current === 'include') return 'required — click to exclude instead';
@@ -95,7 +199,8 @@ export function ResultFilters({
   filters,
   onChange,
   availableBrackets,
-  availableThemes,
+  availableThemeFacets,
+  availableKindredFacets,
   availableColors,
   hasColorless,
   hasMulticolor,
@@ -186,24 +291,38 @@ export function ResultFilters({
         </div>
       )}
 
-      {availableThemes.length > 0 && (
+      {availableThemeFacets.length > 0 && (
         <div className="filter-row">
           <span className="filter-label" id="filter-theme-label">
             Themes
           </span>
           <div className="toggle-group" role="group" aria-labelledby="filter-theme-label">
-            {availableThemes.map((theme) => {
-              const mode = modeOf(filters.themes, theme);
-              return (
-                <FacetChip
-                  key={theme}
-                  label={theme}
-                  mode={mode}
-                  onClick={() => updateFacet('themes', cycleSelection(filters.themes, theme))}
-                  describe={(m) => `${theme}: ${nextModeDescription(m)}`}
-                />
-              );
-            })}
+            {availableThemeFacets.map((option) => (
+              <QualifiableFacet
+                key={option.value}
+                option={option}
+                selection={filters.themes}
+                onToggle={(value) => updateFacet('themes', cycleSelection(filters.themes, value))}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {availableKindredFacets.length > 0 && (
+        <div className="filter-row">
+          <span className="filter-label" id="filter-kindred-label">
+            Kindred
+          </span>
+          <div className="toggle-group" role="group" aria-labelledby="filter-kindred-label">
+            {availableKindredFacets.map((option) => (
+              <QualifiableFacet
+                key={option.value}
+                option={option}
+                selection={filters.kindred}
+                onToggle={(value) => updateFacet('kindred', cycleSelection(filters.kindred, value))}
+              />
+            ))}
           </div>
         </div>
       )}

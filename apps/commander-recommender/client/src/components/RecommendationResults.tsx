@@ -159,7 +159,7 @@ export function RecommendationResults() {
     () => sortSuggestions(filtered, sortMode, sortDirection),
     [filtered, sortMode, sortDirection],
   );
-  const { brackets, themes, colors, hasColorless, hasMulticolor } = useMemo(
+  const { brackets, themeFacets, kindredFacets, colors, hasColorless, hasMulticolor } = useMemo(
     () => availableFilterValues(kept),
     [kept],
   );
@@ -285,7 +285,8 @@ export function RecommendationResults() {
             filters={filters}
             onChange={setFilters}
             availableBrackets={brackets}
-            availableThemes={themes}
+            availableThemeFacets={themeFacets}
+            availableKindredFacets={kindredFacets}
             availableColors={colors}
             hasColorless={hasColorless}
             hasMulticolor={hasMulticolor}

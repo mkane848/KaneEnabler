@@ -1,6 +1,6 @@
 import { isWithinColorIdentity } from '@mtg/rules';
 import type { CommanderSuggestionDTO } from '../types';
-import { visibleThemeLabels } from './suggestions';
+import { visibleThemeSupport, visibleKindredSupport } from './suggestions';
 
 /** A facet's selection: values the user wants to require, and values they
  * want to rule out. A value never appears in both at once. */
@@ -25,6 +25,12 @@ export interface SuggestionFilters {
   colorCategory: FilterSelection;
   brackets: FilterSelection;
   themes: FilterSelection;
+  /** Separate from `themes` — kindred is its own suggestion field
+   * (`kindredSupport`), not one of the archetypes in `themeSupport`, and
+   * reads differently to a player ("what tribe" vs. "what plan"), so it gets
+   * its own filter row rather than being folded in. Same grouped facet shape
+   * and matching semantics as `themes`, though — see `groupFacetOptions`. */
+  kindred: FilterSelection;
 }
 
 const EMPTY_SELECTION: FilterSelection = { include: [], exclude: [] };
@@ -34,6 +40,7 @@ export const EMPTY_FILTERS: SuggestionFilters = {
   colorCategory: EMPTY_SELECTION,
   brackets: EMPTY_SELECTION,
   themes: EMPTY_SELECTION,
+  kindred: EMPTY_SELECTION,
 };
 
 export function hasActiveFilters(filters: SuggestionFilters): boolean {
@@ -112,18 +119,56 @@ function matchesColorCategory(
   return true;
 }
 
-/** Included themes are AND-ed (must have all); excluded themes are ruled out
- * if the suggestion has any of them. Matched against the same "still has
- * supporting cards after the identity filter" set the card display uses, so
- * a filter chip never claims a theme that suggestion isn't actually showing
- * as a reason. */
-function matchesThemes(suggestion: CommanderSuggestionDTO, selection: FilterSelection): boolean {
+/**
+ * Every filter value a suggestion satisfies for one archetype-shaped facet
+ * (themes or kindred): the bare archetype ("goWide") for every qualified or
+ * unqualified match it has, *and* each specific qualified key ("goWide:
+ * Dinosaur") — so selecting the base chip means "this archetype at all, any
+ * qualifier or none" while selecting a narrowed chip still means exactly
+ * that qualifier. Matched against the same "still has supporting cards after
+ * the identity filter" set the card display uses, so a filter chip never
+ * claims a theme a suggestion isn't actually showing as a reason.
+ */
+function themePresentValues(suggestion: CommanderSuggestionDTO): Set<string> {
+  const present = new Set<string>();
+  for (const theme of visibleThemeSupport(suggestion)) {
+    present.add(theme.archetype);
+    present.add(theme.key);
+  }
+  return present;
+}
+
+/** Kindred has no server-sent `key`/`archetype` of its own (unlike
+ * `themeSupport`, it's just a creature type) — `'kindred'`/`` `kindred:${type}` ``
+ * are built here purely as this facet's own opaque filter-value scheme, the
+ * same shape `signalKey` gives `themeSupport`, not parsed back out of
+ * anything. */
+function kindredPresentValues(suggestion: CommanderSuggestionDTO): Set<string> {
+  const present = new Set<string>();
+  for (const kindred of visibleKindredSupport(suggestion)) {
+    present.add('kindred');
+    present.add(`kindred:${kindred.type}`);
+  }
+  return present;
+}
+
+/** Included values are AND-ed (must have all); excluded values are ruled out
+ * if the suggestion has any of them. Shared by every facet built from a
+ * present-value set (`themePresentValues`, `kindredPresentValues`). */
+function matchesPresentValues(present: Set<string>, selection: FilterSelection): boolean {
   const { include, exclude } = selection;
   if (include.length === 0 && exclude.length === 0) return true;
-  const present = new Set(visibleThemeLabels(suggestion));
-  if (include.length > 0 && !include.every((theme) => present.has(theme))) return false;
-  if (exclude.length > 0 && exclude.some((theme) => present.has(theme))) return false;
+  if (include.length > 0 && !include.every((value) => present.has(value))) return false;
+  if (exclude.length > 0 && exclude.some((value) => present.has(value))) return false;
   return true;
+}
+
+function matchesThemes(suggestion: CommanderSuggestionDTO, selection: FilterSelection): boolean {
+  return matchesPresentValues(themePresentValues(suggestion), selection);
+}
+
+function matchesKindred(suggestion: CommanderSuggestionDTO, selection: FilterSelection): boolean {
+  return matchesPresentValues(kindredPresentValues(suggestion), selection);
 }
 
 function matchesBracket(suggestion: CommanderSuggestionDTO, selection: FilterSelection): boolean {
@@ -142,27 +187,107 @@ export function applyFilters<T extends CommanderSuggestionDTO>(
       matchesColors(s, filters.colors) &&
       matchesColorCategory(s, filters.colorCategory) &&
       matchesBracket(s, filters.brackets) &&
-      matchesThemes(s, filters.themes),
+      matchesThemes(s, filters.themes) &&
+      matchesKindred(s, filters.kindred),
   );
+}
+
+/** A qualifier chip nested under a grouped base chip — "Dinosaur" under
+ * "Go-Wide Combat", or "Sliver" under "Kindred". */
+export interface FacetQualifierOption {
+  value: string;
+  label: string;
+}
+
+/**
+ * One filter chip for an archetype-shaped facet (themes or kindred).
+ *
+ * `qualifiers` is only ever non-empty once the archetype has 2+ distinct
+ * qualifiers actually present in the current result set — that's what turns
+ * dozens of "Go-Wide Combat (Dinosaur)", "Go-Wide Combat (Dragon)", ...
+ * chips into one "Go-Wide Combat" chip with a narrowed, searchable list
+ * underneath, without hardcoding which archetypes get this treatment: any
+ * archetype (`qualifiable` or not, present or future) that happens to
+ * qualify against 2+ real values gets grouped, and everything else — most of
+ * the 29 archetypes never qualify at all — renders as a single flat chip
+ * exactly as before.
+ */
+export interface ThemeFacetOption {
+  value: string;
+  label: string;
+  qualifiers: FacetQualifierOption[];
+}
+
+interface QualifiableEntry {
+  key: string;
+  label: string;
+  archetype: string;
+  archetypeLabel: string;
+  qualifier?: string;
+}
+
+function groupFacetOptions(entries: QualifiableEntry[]): ThemeFacetOption[] {
+  const byArchetype = new Map<string, { archetypeLabel: string; entries: Map<string, QualifiableEntry> }>();
+  for (const entry of entries) {
+    let group = byArchetype.get(entry.archetype);
+    if (!group) {
+      group = { archetypeLabel: entry.archetypeLabel, entries: new Map() };
+      byArchetype.set(entry.archetype, group);
+    }
+    group.entries.set(entry.key, entry);
+  }
+
+  const facets: ThemeFacetOption[] = [];
+  for (const [archetype, group] of byArchetype) {
+    const distinct = [...group.entries.values()];
+    const distinctQualifiers = new Set(
+      distinct.map((e) => e.qualifier).filter((q): q is string => q !== undefined),
+    );
+    if (distinctQualifiers.size >= 2) {
+      facets.push({
+        value: archetype,
+        label: group.archetypeLabel,
+        qualifiers: distinct
+          .filter((e): e is QualifiableEntry & { qualifier: string } => e.qualifier !== undefined)
+          .map((e) => ({ value: e.key, label: e.qualifier }))
+          .sort((a, b) => a.label.localeCompare(b.label)),
+      });
+    } else {
+      for (const e of distinct) {
+        facets.push({ value: e.key, label: e.label, qualifiers: [] });
+      }
+    }
+  }
+  return facets.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 /**
  * The filter values worth offering, taken from the results themselves — no
  * point showing a Bracket 4–5 toggle when nothing in the list is Bracket 4–5.
- * Themes are drawn from the same "still has supporting cards" set the card
- * display uses, so a filter chip never offers a theme no suggestion actually
- * shows.
+ * Themes and kindred are drawn from the same "still has supporting cards"
+ * set the card display uses, so a filter chip never offers a theme no
+ * suggestion actually shows.
  */
 export function availableFilterValues(suggestions: CommanderSuggestionDTO[]) {
   const brackets = new Set<string>();
-  const themes = new Set<string>();
+  const themeEntries: QualifiableEntry[] = [];
+  const kindredEntries: QualifiableEntry[] = [];
   const colors = new Set<string>();
   let hasColorless = false;
   let hasMulticolor = false;
 
   for (const suggestion of suggestions) {
     brackets.add(suggestion.bracket.range);
-    visibleThemeLabels(suggestion).forEach((theme) => themes.add(theme));
+    themeEntries.push(...visibleThemeSupport(suggestion));
+    for (const kindred of visibleKindredSupport(suggestion)) {
+      kindredEntries.push({
+        key: `kindred:${kindred.type}`,
+        label: `${kindred.type} Kindred`,
+        archetype: 'kindred',
+        archetypeLabel: 'Kindred',
+        qualifier: kindred.type,
+      });
+    }
     suggestion.colorIdentity.forEach((color) => colors.add(color));
     if (suggestion.colorIdentity.length === 0) hasColorless = true;
     if (suggestion.colorIdentity.length >= 2) hasMulticolor = true;
@@ -170,7 +295,8 @@ export function availableFilterValues(suggestions: CommanderSuggestionDTO[]) {
 
   return {
     brackets: [...brackets].sort(),
-    themes: [...themes].sort(),
+    themeFacets: groupFacetOptions(themeEntries),
+    kindredFacets: groupFacetOptions(kindredEntries),
     colors,
     hasColorless,
     hasMulticolor,
