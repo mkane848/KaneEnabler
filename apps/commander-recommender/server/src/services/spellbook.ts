@@ -32,7 +32,7 @@ const HEADERS = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
   'User-Agent':
-    'CommanderIHardlyKnowEr/1.10.0 (hobby project; https://github.com/mkane848/KaneEnabler)',
+    'CommanderIHardlyKnowEr/1.11.0 (hobby project; https://github.com/mkane848/KaneEnabler)',
 };
 
 export interface ComboResult {
