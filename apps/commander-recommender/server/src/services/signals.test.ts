@@ -12,6 +12,7 @@ import assert from 'node:assert';
 import { describe, it } from 'vitest';
 import type { CardRow } from '../types';
 import {
+  archetypeDisplay,
   buildCardFacts,
   buildVocabulary,
   definingRequirement,
@@ -3749,5 +3750,45 @@ describe("Storm: casting many spells in a single turn as its own payoff", () => 
   it('does not fire on a card with no storm text at all', () => {
     const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
     assert.strictEqual(find(signalsFor(solRing), 'storm'), undefined);
+  });
+});
+
+describe('archetypeDisplay: rebuilding a signal read back out of card_signals', () => {
+  // This is the presentation layer db.ts's findSignalsByOracleIds actually
+  // uses to reconstruct a commander candidate's own signals from storage —
+  // the path synergy.ts's themeSupport is built from, not detectSignals
+  // directly (see synergy.ts's unitSignals). archetypeLabel has to survive
+  // this round trip too, or the filter bar's grouping silently breaks for
+  // every real commander suggestion even though a `detectSignals`-only test
+  // would look fine.
+
+  it('an unqualified archetype: label and archetypeLabel are the same', () => {
+    const display = archetypeDisplay('aristocrats', null);
+    assert.strictEqual(display.label, 'Aristocrats');
+    assert.strictEqual(display.archetypeLabel, 'Aristocrats');
+  });
+
+  it('a qualified archetype: archetypeLabel stays the unqualified name', () => {
+    const display = archetypeDisplay('goWide', 'Sliver');
+    assert.strictEqual(display.label, 'Go-Wide Combat (Sliver)');
+    assert.strictEqual(display.archetypeLabel, 'Go-Wide Combat');
+  });
+
+  it('kindred gets a generic archetypeLabel, not the per-type label', () => {
+    const display = archetypeDisplay('kindred', 'Sliver');
+    assert.strictEqual(display.label, 'Sliver Kindred');
+    assert.strictEqual(display.archetypeLabel, 'Kindred');
+  });
+
+  it('keywordCare has no separate base concept — archetypeLabel is the keyword itself', () => {
+    const display = archetypeDisplay('keywordCare', 'Flying');
+    assert.strictEqual(display.label, 'Flying');
+    assert.strictEqual(display.archetypeLabel, 'Flying');
+  });
+
+  it('an unknown archetype (a rename without a re-import) degrades without crashing', () => {
+    const display = archetypeDisplay('someRemovedArchetype', null);
+    assert.strictEqual(display.label, 'someRemovedArchetype');
+    assert.strictEqual(display.archetypeLabel, 'someRemovedArchetype');
   });
 });

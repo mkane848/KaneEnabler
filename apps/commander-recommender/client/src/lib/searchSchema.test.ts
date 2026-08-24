@@ -18,6 +18,7 @@ describe('validateRecommenderSearch', () => {
         colorCategory: { include: [], exclude: ['colorless'] },
         brackets: { include: ['3'], exclude: [] },
         themes: { include: [], exclude: [] },
+        kindred: { include: [], exclude: [] },
       },
       sortMode: 'colorNameValue',
       sortDirection: 'asc',
@@ -49,6 +50,7 @@ describe('validateRecommenderSearch', () => {
       colorCategory: { include: [], exclude: [] },
       brackets: { include: [], exclude: [] },
       themes: { include: [], exclude: [] },
+      kindred: { include: [], exclude: [] },
     });
   });
 

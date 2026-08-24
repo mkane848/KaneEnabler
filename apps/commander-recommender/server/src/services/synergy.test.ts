@@ -254,6 +254,12 @@ describe('identity + signal gating', () => {
     assert.strictEqual(suggestions.length, 1);
     assert.ok(suggestions[0]!.matchedThemes.includes('Aristocrats'));
     assert.strictEqual(suggestions[0]!.themeSupport[0]!.cards.length, 3);
+    // Unqualified case: archetype and archetypeLabel agree, and there's no
+    // qualifier — the same structured shape a qualified match uses, just
+    // with qualifier absent.
+    assert.strictEqual(suggestions[0]!.themeSupport[0]!.archetype, 'aristocrats');
+    assert.strictEqual(suggestions[0]!.themeSupport[0]!.archetypeLabel, 'Aristocrats');
+    assert.strictEqual(suggestions[0]!.themeSupport[0]!.qualifier, undefined);
   });
 
   it('citedOracleIds names the cards actually cited, not every identity-fitting card', () => {
@@ -697,6 +703,13 @@ describe('qualifiers', () => {
     // All ten unrestricted reanimation spells, but not the vanilla bystander.
     assert.strictEqual(reanimator.cards.length, 10);
     assert.ok(!reanimator.cards.some((c) => c.name === 'Bystander'));
+    // archetype/qualifier are structured fields the client groups qualified
+    // labels by, rather than parsing "Reanimator (Sliver)" back apart —
+    // archetypeLabel stays the stable unqualified name even though this
+    // particular match is qualified.
+    assert.strictEqual(reanimator.archetype, 'reanimator');
+    assert.strictEqual(reanimator.qualifier, 'Sliver');
+    assert.strictEqual(reanimator.archetypeLabel, 'Reanimator');
   });
 
   // cardType and permanentSubtype narrowing (supporterMatches, synergy.ts)
@@ -1081,6 +1094,8 @@ describe('selecting which suggestions are worth showing', () => {
         label: `Theme ${i}`,
         description: '',
         cards: cards(n),
+        archetype: `t${i}`,
+        archetypeLabel: `Theme ${i}`,
       })),
       kindredSupport: [],
       keywordSupport: [],

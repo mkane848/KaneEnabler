@@ -130,6 +130,76 @@
   line-height: 1;
 }
 
+/* A qualifiable archetype (Go-Wide Combat, Kindred, ...) with 2+ real
+   qualifiers: the base chip plus a disclosure, rather than one flat chip per
+   qualifier — see ResultFilters.tsx's QualifiableFacet. */
+.facet-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.facet-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.facet-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  padding: 0.2rem 0.3rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.facet-group-toggle:hover {
+  color: var(--text-primary);
+}
+
+.facet-group-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  /* Indented under the base chip it belongs to, with a rule that reads as
+     "nested in", not a second independent filter row. */
+  margin-left: 1rem;
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--ink-border);
+}
+
+.facet-group-chips {
+  margin: 0;
+}
+
+.facet-search {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  background: var(--ink);
+  border: 1px solid var(--ink-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  max-width: 16rem;
+}
+
+.facet-search:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.facet-no-match {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .sort-control {
   display: inline-flex;
   align-items: center;

@@ -6,6 +6,7 @@ import {
   makeCommanderCard,
   makeSuggestion,
   makeSupportingCard,
+  makeThemeSupport,
 } from '../test/fixtures';
 
 // CommanderCard's own job is to lay out a suggestion — combo lookups,
@@ -90,12 +91,12 @@ describe('CommanderCard', () => {
 
     const withReasons = makeSuggestion({
       themeSupport: [
-        {
+        makeThemeSupport({
           key: 'aristocrats',
           label: 'Aristocrats',
           description: 'Sacrifice fodder into a payoff.',
           cards: [makeSupportingCard({ name: 'Blood Artist' })],
-        },
+        }),
       ],
     });
     rerender(<CommanderCard suggestion={withReasons} />);

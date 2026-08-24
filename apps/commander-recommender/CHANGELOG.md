@@ -9,6 +9,26 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Changed
+
+- **The Themes filter no longer explodes into one chip per creature type.**
+  A broad, varied decklist could turn "Go-Wide Combat" or "Reanimator" into
+  dozens of standalone chips — "Go-Wide Combat (Dinosaur)", "(Dragon)",
+  "(Dwarf)", ... — one for every tribe any suggested commander happened to
+  restrict the archetype to, with no grouping or search to make the wall of
+  buttons navigable. An archetype with 2+ distinct qualifiers actually
+  present now collapses into one base chip ("Go-Wide Combat", meaning "this
+  archetype, any tribe or none") with a collapsed, searchable list of the
+  specific tribes underneath; an archetype that only ever shows up unqualified
+  or with a single qualifier still renders exactly as one plain chip, same as
+  before. The **Kindred** filter row is new — tribal synergy, previously only
+  visible per-card in a commander's own "why" panel, is now filterable using
+  the same grouped design (since kindred is, by its own definition, one
+  instance per creature type, and would explode identically the moment it
+  became filterable at all). Filter values in the URL changed shape as part
+  of this (archetype/qualifier keys instead of raw label text) — an old
+  bookmarked filter link using a theme's display label will no longer match.
+
 ## [1.10.0] — 2026-08-24
 
 ### Added

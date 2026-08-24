@@ -3,6 +3,7 @@ import type {
   CommanderCardDTO,
   CommanderSuggestionDTO,
   SupportingCardDTO,
+  ThemeSupportDTO,
 } from '../types';
 
 let counter = 0;
@@ -20,6 +21,26 @@ export function makeSupportingCard(overrides: Partial<SupportingCardDTO> = {}): 
     backImageUri: null,
     backName: null,
     scryfallUri: null,
+    ...overrides,
+  };
+}
+
+/** A theme support entry, for tests that build `themeSupport` by hand.
+ * `archetype`/`archetypeLabel` default to match `key`/`label` (the
+ * unqualified case) — pass `qualifier` and override them for a qualified
+ * one, e.g. `{ key: 'goWide:Sliver', label: 'Go-Wide Combat (Sliver)',
+ * archetype: 'goWide', archetypeLabel: 'Go-Wide Combat', qualifier:
+ * 'Sliver' }`. */
+export function makeThemeSupport(overrides: Partial<ThemeSupportDTO> = {}): ThemeSupportDTO {
+  const key = overrides.key ?? 'theme';
+  const label = overrides.label ?? 'Theme';
+  return {
+    key,
+    label,
+    description: '',
+    cards: [],
+    archetype: key,
+    archetypeLabel: label,
     ...overrides,
   };
 }
