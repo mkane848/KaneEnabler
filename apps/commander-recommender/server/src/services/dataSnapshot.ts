@@ -19,4 +19,4 @@
  * `importedSnapshot.ts` for the *was the database built from that file, by
  * this version of the import?* question this version number answers.
  */
-export const IMPORT_VERSION = 8;
+export const IMPORT_VERSION = 9;

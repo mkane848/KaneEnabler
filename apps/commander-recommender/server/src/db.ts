@@ -174,6 +174,12 @@ export function getBackgroundCards(): CardRow[] {
 // degrades to no deck analysis rather than crashing on first query.
 const hasSignalsTable = tableExists('card_signals');
 
+// A database seeded before qualifier_source existed has the rest of
+// card_signals but not this column — degrades to every qualifier reading as
+// text-derived (the pre-existing behavior) rather than a raw SQL error on
+// `SELECT qualifier_source` against an old schema.
+const hasQualifierSourceColumn = hasSignalsTable && columnExists('card_signals', 'qualifier_source');
+
 /**
  * The archetypes each of these cards participates in, and in what capacity.
  *
@@ -192,7 +198,9 @@ export function findSignalsByOracleIds(oracleIds: string[]): Map<string, SignalM
     const chunk = oracleIds.slice(i, i + CHUNK);
     const rows = db
       .prepare(
-        `SELECT oracle_id, archetype, qualifier, qualifier_kind, roles
+        `SELECT oracle_id, archetype, qualifier, qualifier_kind, roles${
+          hasQualifierSourceColumn ? ', qualifier_source' : ''
+        }
          FROM card_signals
          WHERE oracle_id IN (${chunk.map(() => '?').join(',')})`,
       )
@@ -202,6 +210,7 @@ export function findSignalsByOracleIds(oracleIds: string[]): Map<string, SignalM
       qualifier: string | null;
       qualifier_kind: string | null;
       roles: string;
+      qualifier_source?: string | null;
     }[];
 
     for (const row of rows) {
@@ -213,6 +222,7 @@ export function findSignalsByOracleIds(oracleIds: string[]): Map<string, SignalM
         weight: def.weight,
         qualifier: row.qualifier ?? undefined,
         qualifierKind: (row.qualifier_kind as SignalMatch['qualifierKind']) ?? undefined,
+        qualifierSource: (row.qualifier_source as SignalMatch['qualifierSource']) ?? undefined,
         roles: JSON.parse(row.roles) as SignalMatch['roles'],
         archetypeLabel: def.archetypeLabel,
       };

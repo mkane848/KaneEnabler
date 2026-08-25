@@ -665,6 +665,15 @@ describe('the right archetype for the right object', () => {
     assert.deepStrictEqual(rolesOf(signalsFor(bloodArtist), 'aristocrats'), ['rewards']);
   });
 
+  it('a plural death trigger ("creatures ... die") is Aristocrats too, not just the singular "dies"', () => {
+    const plural = makeCard({
+      name: 'Test Plural Reaper',
+      type_line: 'Creature — Spirit',
+      oracle_text: 'Whenever one or more other creatures you control die, draw a card.',
+    });
+    assert.ok(rolesOf(signalsFor(plural), 'aristocrats').includes('rewards'));
+  });
+
   it('an amplifier is tagged as one, and amplifying alone is its own role', () => {
     // Teysa Karlov — real oracle text. Doubles death triggers (amplifies) and
     // buffs your creature tokens (a go-wide payoff).
@@ -756,6 +765,62 @@ describe('qualifiers: a restricted payoff only pays off its own subtype', () => 
   });
 });
 
+describe('qualifier borrowing: a produces-only match can inherit this card\'s own kindred restriction', () => {
+  /** Ajani, Nacatl Pariah // Ajani, Nacatl Avenger — real oracle text, both
+   * faces joined (import-scryfall.ts's own behaviour for a transform card).
+   * His only goWide-matching text is "create ... creature token" (produces)
+   * — no rewards clause of his own scales with board size the way goWide's
+   * own regexes look for — so findQualifier alone leaves him unqualified and
+   * generic, even though the token he makes is explicitly a Cat. His
+   * "Whenever one or more other Cats you control die..." transform trigger
+   * is a *different* clause that independently earns kindred:Cat an active
+   * rewards role, which is what this fixture is really about. */
+  function ajaniNacatlPariah(): CardRow {
+    return makeCard({
+      name: 'Ajani, Nacatl Pariah // Ajani, Nacatl Avenger',
+      type_line: 'Legendary Creature — Cat Warrior',
+      creature_types: JSON.stringify(['Cat', 'Warrior']),
+      back_name: 'Ajani, Nacatl Avenger',
+      oracle_text:
+        'When Ajani enters, create a 2/1 white Cat Warrior creature token.\n' +
+        'Whenever one or more other Cats you control die, you may exile Ajani, then return him to the ' +
+        "battlefield transformed under his owner's control.\n" +
+        '+2: Put a +1/+1 counter on each Cat you control.\n' +
+        '0: Create a 2/1 white Cat Warrior creature token. When you do, if you control a red permanent ' +
+        'other than Ajani, he deals damage equal to the number of creatures you control to any target.\n' +
+        '−4: Each opponent chooses an artifact, a creature, an enchantment, and a planeswalker from ' +
+        'among the nonland permanents they control, then sacrifices the rest.',
+    });
+  }
+
+  it('goWide borrows Cat from kindred, and aristocrats qualifies to Cat on its own text', () => {
+    const signals = signalsFor(ajaniNacatlPariah(), ['Cat']);
+
+    // The evidence the borrow depends on: kindred:Cat is real and active,
+    // independent of anything goWide-specific.
+    assert.ok(rolesOf(signals, 'kindred', 'Cat').includes('rewards'));
+
+    // No more phantom generic match — every goWide signal on this card is
+    // now qualified.
+    assert.strictEqual(find(signals, 'goWide', undefined), undefined);
+
+    const goWide = find(signals, 'goWide', 'Cat');
+    assert.ok(goWide, 'expected a Cat-qualified goWide signal');
+    assert.ok(goWide!.roles.includes('produces'));
+    assert.strictEqual(goWide!.qualifierSource, 'kindred');
+    assert.strictEqual(goWide!.label, 'Go-Wide Combat (Cat)');
+
+    // aristocrats reaches Cat a different way: the "dies?" regex fix lets it
+    // match Ajani's own death-trigger clause directly, and that clause
+    // already names Cats — findQualifier's ordinary text scan handles it,
+    // no borrowing involved.
+    const aristocrats = find(signals, 'aristocrats', 'Cat');
+    assert.ok(aristocrats, 'expected a Cat-qualified aristocrats signal');
+    assert.ok(aristocrats!.roles.includes('rewards'));
+    assert.strictEqual(aristocrats!.qualifierSource, undefined);
+  });
+});
+
 describe('self-mill and opponent mill are different decks', () => {
   it('milling yourself is Self-Mill', () => {
     const selfMiller = makeCard({
@@ -827,7 +892,13 @@ describe('Voltron', () => {
 describe('sacrificesACreature/sacrificesKind read the cost side only', () => {
   it('a sacrifice cost naming a creature type is an Aristocrats outlet, not just kindred', () => {
     // Siege-Gang Commander — real oracle text. Says "Sacrifice a Goblin",
-    // never the literal word "creature".
+    // never the literal word "creature". Its aristocrats match also carries
+    // `produces` (the token-making clause), so it stays unqualified rather
+    // than borrowing Goblin from its own kindred signal — borrowing is
+    // reserved for a produces-only match with no identity of its own to
+    // protect (see `borrowedCreatureTypeQualifier`'s comment); `Sacrifice a
+    // Goblin` being unreadable to `findQualifier` (a function matcher, not a
+    // regex) is a separate, narrower gap this fix doesn't attempt to close.
     const siegeGang = makeCard({
       name: 'Siege-Gang Commander',
       type_line: 'Creature — Goblin',
@@ -856,7 +927,9 @@ describe('sacrificesACreature/sacrificesKind read the cost side only', () => {
     // Wilhelt, the Rotcleaver — real oracle text. "You may sacrifice a
     // Zombie" is a real Zombie consumer and a real Aristocrats outlet, which
     // the old check missed entirely because it required the literal word
-    // "creature".
+    // "creature". Here the death-trigger clause itself names "Zombie", so
+    // findQualifier's own text scan finds it directly — no borrowing needed,
+    // unlike the two sacrifice-cost cases above.
     const wilhelt = makeCard({
       name: 'Wilhelt, the Rotcleaver',
       type_line: 'Legendary Creature — Zombie Warrior',
@@ -868,7 +941,8 @@ describe('sacrificesACreature/sacrificesKind read the cost side only', () => {
     });
     const signals = signalsFor(wilhelt, ['Zombie']);
     assert.ok(rolesOf(signals, 'kindred', 'Zombie').includes('consumes'));
-    assert.ok(rolesOf(signals, 'aristocrats').includes('consumes'));
+    assert.ok(rolesOf(signals, 'aristocrats', 'Zombie').includes('consumes'));
+    assert.strictEqual(find(signals, 'aristocrats', 'Zombie')?.qualifierSource, undefined);
   });
 
   it('Sophia does not consume Dogs — she sacrifices an artifact token', () => {
@@ -1383,6 +1457,16 @@ describe('token descriptor stripping is scoped to token-creation clauses', () =>
     assert.ok(
       rolesOf(signalsFor(dreadhordeInvasion, ['Zombie']), 'kindred', 'Zombie').includes('rewards'),
     );
+
+    // Pinned, not incidental: kindred:Zombie's active `rewards` role above is
+    // exactly the evidence the goWide-borrows-from-kindred fix looks for, so
+    // this card's own otherwise-generic amass production now reads as
+    // goWide:Zombie rather than a phantom unqualified Go-Wide Combat match.
+    const signals = signalsFor(dreadhordeInvasion, ['Zombie']);
+    assert.strictEqual(find(signals, 'goWide', undefined), undefined);
+    const goWide = find(signals, 'goWide', 'Zombie');
+    assert.ok(goWide, 'expected a Zombie-qualified goWide signal');
+    assert.strictEqual(goWide!.qualifierSource, 'kindred');
   });
 
   it('"create a token that\'s a copy of" is recognised as token production', () => {
@@ -1443,6 +1527,12 @@ describe('amass produces the named type and Army, though its own text is reminde
     assert.deepStrictEqual(rolesOf(signals, 'kindred', 'Orc'), ['produces']);
     assert.deepStrictEqual(rolesOf(signals, 'kindred', 'Army'), ['produces']);
     assert.ok(rolesOf(signals, 'counters').includes('produces'));
+    // Still unqualified after the goWide-borrows-from-kindred fix: both of
+    // Gothmog's own kindred types are produces-only (asserted above), so
+    // caresBeyondProduction declines both and there is nothing to borrow —
+    // `rolesOf(signals, 'goWide')` (no qualifier arg) would return `[]` were
+    // this accidentally qualified, since `find` would no longer see an
+    // unqualified match at all.
     assert.ok(rolesOf(signals, 'goWide').includes('produces'));
   });
 });

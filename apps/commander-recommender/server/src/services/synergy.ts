@@ -297,6 +297,15 @@ export function ownSignalContains(
  * Gravemother's reanimation only pays off Slivers, so an ordinary Sliver
  * creature supports "Reanimator (Sliver)" just by existing, with no
  * reanimator signal of its own at all. A card with neither supports nothing.
+ *
+ * That "merely unqualified own signal still counts" fallback is deliberately
+ * *not* extended to a signal whose qualifier was borrowed from the
+ * commander's own kindred signal rather than stated in the archetype's own
+ * text (`signal.qualifierSource === 'kindred'` — see `detectSignals`).
+ * Ajani, Nacatl Pariah's Go-Wide Combat (Cat) is weaker, inferred evidence
+ * than Wilhelt's own text actually restricting Reanimator to Zombies, so an
+ * unrelated card merely sharing the unqualified archetype must not count —
+ * it needs to be a Cat, produce one, or carry its own Cat-qualified signal.
  */
 export function supporterMatches(
   signal: SignalMatch,
@@ -304,7 +313,13 @@ export function supporterMatches(
   ownSignals: SignalMatch[],
 ): boolean {
   if (!signal.qualifier) return true;
-  if (ownSignalContains(ownSignals, signal.archetype, signal.qualifier)) return true;
+  const hasOwnSupport =
+    signal.qualifierSource === 'kindred'
+      ? ownSignals.some(
+          (s) => s.archetype === signal.archetype && s.qualifier === signal.qualifier,
+        )
+      : !!ownSignalContains(ownSignals, signal.archetype, signal.qualifier);
+  if (hasOwnSupport) return true;
   if (!facts) return false;
   if (signal.qualifierKind === 'creatureType') {
     return (

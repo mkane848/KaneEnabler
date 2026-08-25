@@ -14,7 +14,9 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import app from '../app';
-import { isSeeded } from '../db';
+import { findCardsByNames, findSignalsByOracleIds, isSeeded } from '../db';
+import { buildCollectionProfile, scoreCommanders, type OwnedCard } from '../services/synergy';
+import type { CommanderUnit } from '../services/partners';
 
 describe.skipIf(!isSeeded)('POST /api/recommend — real seeded database', () => {
   it('returns ranked suggestions for a real decklist', async () => {
@@ -85,5 +87,49 @@ describe.skipIf(!isSeeded)('POST /api/recommend — real seeded database', () =>
 
     const empty = await request(app).post('/api/recommend').send({ list: '   ' });
     expect(empty.status).toBe(400);
+  });
+});
+
+describe.skipIf(!isSeeded)('goWide/aristocrats qualifier borrowing — real seeded database', () => {
+  it("Ajani, Nacatl Pariah's Go-Wide Combat cites Cats, not unrelated token-makers", () => {
+    // The real precomputed round trip this fix depends on: Ajani's own
+    // card_signals row for goWide is written at import time (produces-only,
+    // borrowed from his own kindred:Cat signal) and read back by
+    // findSignalsByOracleIds, not recomputed live — see db.ts/import-scryfall.ts.
+    // Eager Glyphmage, Leonin Lightscribe, and Kemba, Kha Regent are real
+    // Cats with their own (unqualified) goWide role, cited via the
+    // structural fallback. Devoted Paladin and Pyretic Charge are real,
+    // unrelated goWide participants that are not Cats and must not be cited.
+    const names = [
+      'Ajani, Nacatl Pariah // Ajani, Nacatl Avenger',
+      'Eager Glyphmage',
+      'Leonin Lightscribe',
+      'Kemba, Kha Regent',
+      'Devoted Paladin',
+      'Pyretic Charge',
+    ];
+    const cards = findCardsByNames(names);
+    for (const name of names) {
+      expect(cards.has(name.toLowerCase()), `expected to find ${name}`).toBe(true);
+    }
+
+    const ajani = cards.get('ajani, nacatl pariah // ajani, nacatl avenger')!;
+    const owned: OwnedCard[] = [...cards.values()]
+      .filter((row) => row.oracle_id !== ajani.oracle_id)
+      .map((row) => ({ row, quantity: 1 }));
+    const units: CommanderUnit[] = [{ cards: [ajani] }];
+
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(owned),
+      owned,
+      findSignalsByOracleIds([ajani.oracle_id]),
+    );
+
+    expect(suggestions.length).toBe(1);
+    const goWide = suggestions[0]!.themeSupport.find((t) => t.label === 'Go-Wide Combat (Cat)');
+    expect(goWide).toBeDefined();
+    const citedNames = goWide!.cards.map((c) => c.name).sort();
+    expect(citedNames).toEqual(['Eager Glyphmage', 'Kemba, Kha Regent', 'Leonin Lightscribe']);
   });
 });

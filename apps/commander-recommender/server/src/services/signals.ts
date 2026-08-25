@@ -154,6 +154,16 @@ export interface SignalMatch {
   /** Present when the signal is restricted — "Reanimator (Sliver)". */
   qualifier?: string;
   qualifierKind?: QualifierKind;
+  /**
+   * Set when `qualifier` was not read off this archetype's own text, but
+   * borrowed from a creature type this same card's `kindred` signals show it
+   * actually caring about — see `detectSignals`'s borrowing step. Absent for
+   * every qualifier read directly off the archetype's own text, including
+   * every case that predates this field (Sliver Gravemother, Wilhelt) —
+   * `synergy.ts`'s `supporterMatches` keeps treating those exactly as before;
+   * only a `'kindred'`-sourced qualifier gets the stricter citation rule.
+   */
+  qualifierSource?: 'kindred';
   roles: Role[];
   /**
    * The archetype's stable, unqualified display name — "Reanimator" whether
@@ -1004,6 +1014,12 @@ export const ARCHETYPES: ArchetypeDef[] = [
       'trigger when a creature dies. Deliberately creature-specific: sacrificing an artifact or a land is a ' +
       'different deck.',
     weight: 20,
+    // A death trigger restricted to a creature type — Ajani, Nacatl Pariah's
+    // "Whenever one or more other Cats you control die..." — is a Cat
+    // payoff, not evidence of a generic sacrifice-anything plan, the same
+    // reasoning goWide/reanimator already apply to their own restricted
+    // payoffs.
+    qualifiable: 'creatureType',
     roles: {
       // "Sacrifice a creature:" or "Sacrifice a Goblin:" — an indefinite
       // creature (by name or by type), not itself. A fetch land sacrificing
@@ -1015,14 +1031,16 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // reminder-only; the keyword's printed name survives stripping.
         /\bexploit\b/i,
       ],
-      // "dying" as well as "dies": Teysa Karlov reads "If a creature dying
-      // causes a triggered ability ... to trigger". CR 700.4 defines "dies"
-      // as put into a graveyard from the battlefield — Psychomancer spells
-      // that definition out instead of using the word, and exile-from-the-
-      // battlefield is the same shape (Skullclamp-adjacent "sacrifice or
-      // exile" outlets included).
+      // "dying" as well as "dies"/"die": Teysa Karlov reads "If a creature
+      // dying causes a triggered ability ... to trigger", and a plural
+      // subject reads "die" rather than "dies" — Ajani, Nacatl Pariah's own
+      // transform trigger is "Whenever one or more other Cats you control
+      // die...". CR 700.4 defines "dies" as put into a graveyard from the
+      // battlefield — Psychomancer spells that definition out instead of
+      // using the word, and exile-from-the-battlefield is the same shape
+      // (Skullclamp-adjacent "sacrifice or exile" outlets included).
       rewards: [
-        /(?:whenever|if)[^.;]*\b(?:dies|dying)\b/i,
+        /(?:whenever|if)[^.;]*\b(?:dies?|dying)\b/i,
         /(?:whenever|if)[^.;]*is put into (?:a|your) graveyard from the battlefield/i,
         /(?:whenever|if)[^.;]*is put into exile from the battlefield/i,
       ],
@@ -1039,7 +1057,7 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /\bblitz\b/i,
         /\bfor mirrodin!/i,
       ],
-      amplifies: [/\b(?:dies|dying)\b[^.]*triggers? an additional time/i],
+      amplifies: [/\b(?:dies?|dying)\b[^.]*triggers? an additional time/i],
     },
   },
   {
@@ -2592,14 +2610,75 @@ export function definingRequirement(archetype: string, qualifier?: string): { ro
   return { role: def?.definingRole ?? 'rewards', minimum: def?.definingMinimum ?? 1 };
 }
 
+/** Whether a kindred signal's roles show the card actually caring about the
+ * type, not merely making tokens of it — the same "produces alone doesn't
+ * count" line `findQualifier`'s own comment draws for Gothmog/amass,
+ * generalised so `detectSignals` can borrow across archetypes with it. */
+function caresBeyondProduction(roles: Role[]): boolean {
+  return roles.some((r) => r !== 'produces' && ACTIVE_ROLES.includes(r));
+}
+
+/**
+ * A creature-type qualifier borrowed from this same card's own kindred
+ * signals, for a `creatureType`-qualifiable archetype match whose own
+ * `findQualifier` scan came back empty.
+ *
+ * Only tried when the archetype's *own* match on this card is `produces`
+ * alone (see the caller) — a card whose match also carries a `consumes` or
+ * `rewards` role of its own already has a real, if generic, identity in that
+ * archetype, and an unrelated type mentioned elsewhere on the same card must
+ * not hijack it. A commander that generically "Sacrifice a creature: Draw a
+ * card" and, completely separately, buffs a tribe it doesn't otherwise
+ * interact with must not read as Aristocrats (that tribe) — that outlet
+ * really does take any creature. `produces` alone is different: it is never
+ * itself a restriction (Gothmog's "amass Orcs 1" is genuine go-wide
+ * production regardless of the type it happens to create — see
+ * `findQualifier`'s own comment above), so a produces-only match has no
+ * identity of its own to protect, and a card can independently earn an
+ * *active*, non-produces kindred signal for that exact type from a
+ * *different* clause. Ajani, Nacatl Pariah only ever matches `goWide` via
+ * `produces` (his token-making clause) — `findQualifier` correctly leaves
+ * him unqualified — but his "Whenever one or more other Cats you control
+ * die..." clause independently earns `kindred:Cat` an active `rewards`
+ * role, which is real evidence `goWide` can borrow.
+ *
+ * Exactly one qualifying type, never more, never the kindred wildcard ('*')
+ * — two or more real candidates, or zero, and this stays unqualified rather
+ * than guessing, the same conservative posture `findQualifier` itself takes
+ * for "one of each" and ability-copy clauses.
+ */
+function borrowedCreatureTypeQualifier(kindredSignals: SignalMatch[]): string | undefined {
+  const types = new Set(
+    kindredSignals
+      .filter((s) => s.qualifier && s.qualifier !== '*' && caresBeyondProduction(s.roles))
+      .map((s) => s.qualifier!),
+  );
+  return types.size === 1 ? [...types][0] : undefined;
+}
+
 /** Every archetype this card participates in, and how. */
 export function detectSignals(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
   const out: SignalMatch[] = [];
+  const kindredSignals = detectKindred(facts, vocab);
 
   for (const def of ARCHETYPES) {
     const roles = rolesFor(def, facts, vocab);
     if (roles.length === 0) continue;
-    const qualifier = def.qualifiable ? findQualifier(facts, def, vocab) : undefined;
+    let qualifier = def.qualifiable ? findQualifier(facts, def, vocab) : undefined;
+    let qualifierSource: SignalMatch['qualifierSource'];
+    // Only a produces-only match is eligible to borrow — see
+    // borrowedCreatureTypeQualifier's own comment for why a match that also
+    // carries a role of its own (Siege-Gang Commander's "Sacrifice a
+    // Goblin", generic though findQualifier can't read it — or a fully
+    // untyped "Sacrifice a creature: Draw a card") must not be hijacked by
+    // an unrelated type mentioned elsewhere on the card.
+    if (def.qualifiable === 'creatureType' && !qualifier && roles.every((r) => r === 'produces')) {
+      const borrowed = borrowedCreatureTypeQualifier(kindredSignals);
+      if (borrowed) {
+        qualifier = borrowed;
+        qualifierSource = 'kindred';
+      }
+    }
     out.push({
       archetype: def.key,
       label: qualifier ? `${def.label} (${qualifier})` : def.label,
@@ -2607,12 +2686,13 @@ export function detectSignals(facts: CardFacts, vocab: Vocabulary): SignalMatch[
       weight: def.weight,
       qualifier,
       qualifierKind: qualifier ? def.qualifiable : undefined,
+      qualifierSource,
       roles,
       archetypeLabel: def.label,
     });
   }
 
-  out.push(...detectKindred(facts, vocab));
+  out.push(...kindredSignals);
   out.push(...detectKeywordCare(facts, vocab));
   return out;
 }
