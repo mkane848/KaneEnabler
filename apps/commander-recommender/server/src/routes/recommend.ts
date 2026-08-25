@@ -11,6 +11,7 @@ import { parseCardList } from '../services/parseList';
 import { partitionSubmittedCards } from '../services/legality';
 import {
   buildCollectionProfile,
+  evidenceStrength,
   scoreCommanders,
   selectSuggestions,
   toSupportingCard,
@@ -28,6 +29,11 @@ import { attachSuggestions, collectionColors, requiredSignalKeys } from '../serv
 import { parseJsonArray } from '../types';
 
 const router = Router();
+
+// One decimal, not whole numbers: density-based scores are small, so rounding
+// to an integer would collapse genuinely different matches onto the same
+// value — and the score badge's breakdown is shown at this precision too.
+const round1 = (n: number) => Math.round(n * 10) / 10;
 
 router.post('/recommend', (req, res) => {
   if (!isSeeded) {
@@ -117,21 +123,45 @@ router.post('/recommend', (req, res) => {
       s.cards.filter((c) => c.game_changer).length + s.gameChangerCards.length;
     const colorIdentity = [...new Set(s.cards.flatMap((c) => parseJsonArray(c.color_identity)))];
 
+    const themeSupport = s.themeSupport.map((t) => ({
+      ...t,
+      cards: cite(t.cards),
+      points: round1(t.points),
+    }));
+    const kindredSupport = s.kindredSupport.map((k) => ({
+      ...k,
+      cards: cite(k.cards),
+      points: round1(k.points),
+    }));
+    const keywordSupport = s.keywordSupport.map((k) => ({
+      ...k,
+      cards: cite(k.cards),
+      points: round1(k.points),
+    }));
+
     return {
       unitId: unitKey(s),
       cards: s.cards.map(toCardDTO),
       colorIdentity,
-      // One decimal, not whole numbers: density-based scores are small, so
-      // rounding to an integer would collapse genuinely different matches
-      // onto the same value and flatten the match badge's percentages.
-      score: Math.round(s.score * 10) / 10,
+      // Summed from the rounded per-signal figures rather than rounded from
+      // `s.score`, so the score badge's breakdown adds up to the badge
+      // exactly instead of landing 0.1 off it. Ranking is unaffected:
+      // scoreCommanders sorts on the full-precision score before we get here.
+      score: round1(
+        [...themeSupport, ...kindredSupport, ...keywordSupport].reduce(
+          (sum, signal) => sum + signal.points,
+          0,
+        ),
+      ),
       matchedThemes: s.matchedThemes,
       matchedCreatureTypes: s.matchedCreatureTypes,
       matchedKeywords: s.matchedKeywords,
       includedCardCount: s.includedCardCount,
-      themeSupport: s.themeSupport.map((t) => ({ ...t, cards: cite(t.cards) })),
-      kindredSupport: s.kindredSupport.map((k) => ({ ...k, cards: cite(k.cards) })),
-      keywordSupport: s.keywordSupport.map((k) => ({ ...k, cards: cite(k.cards) })),
+      poolSize: s.poolSize,
+      evidence: evidenceStrength(s),
+      themeSupport,
+      kindredSupport,
+      keywordSupport,
       gameChangerCards: cite(s.gameChangerCards),
       gameChangerCount,
       bracket: estimateBracket(gameChangerCount),

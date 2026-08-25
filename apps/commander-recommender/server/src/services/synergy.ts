@@ -84,12 +84,14 @@ export interface ThemeSupport {
   archetype: string;
   qualifier?: string;
   archetypeLabel: string;
+  points: number;
 }
 
 /** A creature type the commander cares about and the list can field. */
 export interface KindredSupport {
   type: string;
   cards: SupportingCard[];
+  points: number;
 }
 
 /** A keyword the commander actively cares about — grants it, or triggers off
@@ -97,6 +99,7 @@ export interface KindredSupport {
 export interface KeywordSupport {
   keyword: string;
   cards: SupportingCard[];
+  points: number;
 }
 
 export interface CommanderSuggestion {
@@ -106,6 +109,13 @@ export interface CommanderSuggestion {
   matchedCreatureTypes: string[];
   matchedKeywords: string[];
   includedCardCount: number;
+  /** The denominator every signal's density was measured against: *distinct*
+   * identity-fitting cards. Deliberately not `includedCardCount`, which sums
+   * quantity and is display-only — see the comment on the two counts in
+   * `scoreCommanders`. Sent on the wire so the score badge can state the
+   * proportion the scoring actually used rather than one that merely looks
+   * like it. */
+  poolSize: number;
   themeSupport: ThemeSupport[];
   kindredSupport: KindredSupport[];
   keywordSupport: KeywordSupport[];
@@ -333,7 +343,10 @@ function playsDefiningRole(
   signalsByCard: Map<string, SignalMatch[]>,
 ): boolean {
   const own = signalsByCard.get(entry.row.oracle_id) ?? [];
-  return ownSignalContains(own, signal.archetype, signal.qualifier)?.roles.includes(definingRole) ?? false;
+  return (
+    ownSignalContains(own, signal.archetype, signal.qualifier)?.roles.includes(definingRole) ??
+    false
+  );
 }
 
 // Require at least this many *citable* cards — i.e. after narrowing to this
@@ -470,14 +483,21 @@ export function scoreCommanders(
           ),
       );
       if (signal.archetype === 'kindred' && signal.qualifier && signal.qualifier !== '*') {
-        supporters = gateWildcardKindredSupporters(supporters, signal.qualifier, profile.signalsByCard);
+        supporters = gateWildcardKindredSupporters(
+          supporters,
+          signal.qualifier,
+          profile.signalsByCard,
+        );
       }
       if (supporters.length < minSignalCount) continue;
 
       // Membership counts cards; caring makes a theme. A signal citing
       // MIN_SIGNAL_COUNT cards that all merely belong (fetchlands, but no
       // landfall payoff) is not real evidence — see definingRequirement.
-      const { role: definingRole, minimum } = definingRequirement(signal.archetype, signal.qualifier);
+      const { role: definingRole, minimum } = definingRequirement(
+        signal.archetype,
+        signal.qualifier,
+      );
       const caringCount = supporters.filter((entry) =>
         playsDefiningRole(entry, signal, definingRole, profile.signalsByCard),
       ).length;
@@ -504,11 +524,28 @@ export function scoreCommanders(
       .sort((a, b) => b - a)
       .reduce((sum, raw, rank) => sum + raw * DIMINISHING_FACTOR ** rank, 0);
 
-    const depthScore = matched.reduce(
-      (sum, { cards }) =>
-        sum + Math.max(0, cards.length - DEEP_SIGNAL_COUNT + 1) * DEPTH_BONUS_PER_CARD,
-      0,
-    );
+    const depthBonus = (supporting: number) =>
+      Math.max(0, supporting - DEEP_SIGNAL_COUNT + 1) * DEPTH_BONUS_PER_CARD;
+
+    const depthScore = matched.reduce((sum, { cards }) => sum + depthBonus(cards.length), 0);
+
+    // The same two terms attributed back to the signal that earned them — its
+    // breadth contribution at its own rank, plus its own depth bonus — so the
+    // score badge can show what actually drove a number rather than
+    // describing the formula. Computed alongside the sums above rather than
+    // replacing them: re-associating the addition moves the total in its last
+    // float digit, and that total is what every suggestion is ranked by.
+    const ranked = matched.map((entry) => ({
+      entry,
+      raw: density(entry.cards.length) * entry.signal.weight,
+    }));
+    ranked.sort((a, b) => b.raw - a.raw);
+    const points = new Map<(typeof matched)[number], number>();
+    ranked.forEach(({ entry, raw }, rank) => {
+      points.set(entry, raw * DIMINISHING_FACTOR ** rank + depthBonus(entry.cards.length));
+    });
+    // Every key was put there from `matched` itself, one entry per iteration.
+    const pointsFor = (entry: (typeof matched)[number]) => points.get(entry)!;
 
     // Mapped back onto the three support lists the API and client already
     // speak. Kindred and keyword-care are the two qualifier-generated
@@ -518,30 +555,39 @@ export function scoreCommanders(
       // detectKindred (signals.ts) always sets qualifier to the creature
       // type for every 'kindred' signal it produces — the filter above
       // guarantees every signal reaching here came from there.
-      .map(({ signal, cards }) => ({ type: signal.qualifier!, cards }));
+      .map((entry) => ({
+        type: entry.signal.qualifier!,
+        cards: entry.cards,
+        points: pointsFor(entry),
+      }));
 
     const keywordSupport: KeywordSupport[] = matched
       .filter(({ signal }) => signal.archetype === 'keywordCare')
       // Same guarantee as kindredSupport above, via detectKeywordCare
       // (signals.ts), which always sets qualifier to the keyword itself.
-      .map(({ signal, cards }) => ({ keyword: signal.qualifier!, cards }));
+      .map((entry) => ({
+        keyword: entry.signal.qualifier!,
+        cards: entry.cards,
+        points: pointsFor(entry),
+      }));
 
     const themeSupport: ThemeSupport[] = matched
       .filter(({ signal }) => signal.archetype !== 'kindred' && signal.archetype !== 'keywordCare')
-      .map(({ signal, cards }) => ({
-        key: signalKey(signal),
-        label: signal.label,
-        description: signal.description,
-        cards,
-        archetype: signal.archetype,
-        qualifier: signal.qualifier,
+      .map((entry) => ({
+        key: signalKey(entry.signal),
+        label: entry.signal.label,
+        description: entry.signal.description,
+        cards: entry.cards,
+        archetype: entry.signal.archetype,
+        qualifier: entry.signal.qualifier,
+        points: pointsFor(entry),
         // `signal` here always came from `unitSignals`, i.e. `db.ts`'s
         // `findSignalsByOracleIds` reading the precomputed `card_signals`
         // table (see this function's own comment on why) — never straight
         // from `detectSignals`. That path rebuilds every signal's display
         // fields via `archetypeDisplay`, which always sets archetypeLabel,
         // so this is safe unconditionally.
-        archetypeLabel: signal.archetypeLabel!,
+        archetypeLabel: entry.signal.archetypeLabel!,
       }));
 
     suggestions.push({
@@ -551,6 +597,7 @@ export function scoreCommanders(
       matchedCreatureTypes: kindredSupport.map((k) => k.type),
       matchedKeywords: keywordSupport.map((k) => k.keyword),
       includedCardCount,
+      poolSize: includedDistinctCount,
       themeSupport,
       kindredSupport,
       keywordSupport,
@@ -579,8 +626,14 @@ function signalSizes(suggestion: CommanderSuggestion): number[] {
   ];
 }
 
+/** How much evidence sits behind a suggestion, on the same structural terms
+ * the selection bar below is written in. Sent on the wire so the score badge
+ * can say how far to trust a number — the score itself is unbounded and
+ * comparable only within one list, so it cannot answer that on its own. */
+export type EvidenceStrength = 'strong' | 'moderate' | 'thin';
+
 /**
- * Whether a suggestion is worth showing, as opposed to a coincidence.
+ * How strong a suggestion's case is, as opposed to a coincidence.
  *
  * A commander whose entire case is *one* signal sitting at exactly
  * MIN_SIGNAL_COUNT has told us nothing: on a real graveyard list, 877
@@ -590,14 +643,25 @@ function signalSizes(suggestion: CommanderSuggestion): number[] {
  * commander that sacrifices creatures".
  *
  * So the bar is depth *or* breadth: one signal deep enough to matter, or
- * more than one signal at all. Note this is a structural test rather than a
- * score threshold. A fixed score floor cannot work here — the same number
- * that trims a focused kindred list (top score 51.9) wipes out every result
- * for a list whose whole range is 3.3 to 5.0.
+ * more than one signal at all. `strong` is both at once. Note these are
+ * structural tests rather than score thresholds. A fixed score floor cannot
+ * work here — the same number that trims a focused kindred list (top score
+ * 51.9) wipes out every result for a list whose whole range is 3.3 to 5.0.
  */
-function isMeaningfulMatch(suggestion: CommanderSuggestion): boolean {
+export function evidenceStrength(suggestion: CommanderSuggestion): EvidenceStrength {
   const sizes = signalSizes(suggestion);
-  return sizes.length >= 2 || sizes.some((size) => size >= DEEP_SIGNAL_COUNT);
+  const broad = sizes.length >= 2;
+  const deep = sizes.some((size) => size >= DEEP_SIGNAL_COUNT);
+  if (broad && deep) return 'strong';
+  if (broad || deep) return 'moderate';
+  return 'thin';
+}
+
+/** Whether a suggestion is worth showing. Defined in terms of the tiers above
+ * rather than repeating their thresholds, so the bar the engine enforces and
+ * the strength the client displays cannot drift apart. */
+function isMeaningfulMatch(suggestion: CommanderSuggestion): boolean {
+  return evidenceStrength(suggestion) !== 'thin';
 }
 
 export interface SelectedSuggestions {

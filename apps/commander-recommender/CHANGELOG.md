@@ -9,6 +9,32 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Changed
+
+- **The score badge now justifies its number instead of explaining the metric.** The tooltip
+  used to describe how scoring works — "ranked on 46.6, from 2 kindred matches, 3 themes,
+  weighed against the 87 cards it can play" — which told you the formula and nothing about the
+  commander in front of you. It could not do better: the per-signal weights and the
+  diminishing-returns discount were computed inside the scorer and thrown away, so the client
+  was counting matched labels and guessing. Those figures are now carried through to each
+  support entry, and the tooltip itemises them — every signal by name, how many of your cards
+  back it, and how many points it earned — with the rows adding up to the badge exactly.
+- **The badge says how much to trust the number.** It reads `score 46.6 · strong` now, where
+  the strength is the engine's own `isMeaningfulMatch` bar surfaced rather than hidden:
+  `strong` is two or more signals with at least one backed by five cards, `moderate` clears
+  that one way, and `thin` is a single bare-minimum signal — the case a commander shares with
+  hundreds of others. A thin badge is greyed rather than blue, and the tooltip says why in a
+  sentence. This is deliberately not the "X% match" removed in 1.5.0: a percentage of the top
+  result read as a confidence nothing had measured, whereas this restates a threshold the
+  engine already enforces when deciding which suggestions are worth showing at all.
+- A suggestion with no synergy behind it at all — an "Also playable" commander that is simply
+  already in your list — now says so ("not ranked on synergy") rather than presenting a bare
+  `score 0` next to a breakdown of nothing.
+- The tooltip opens upward, over the card's own art, because `.commander-card` clips its
+  overflow for its rounded corners; a panel this size hanging below the badge lost its right
+  and bottom edges. It is anchored to the badge row rather than to the badge, so a wide
+  "Covers …" badge ahead of it can no longer push it out through the card's edge.
+
 ## [1.11.1] — 2026-08-24
 
 ### Fixed

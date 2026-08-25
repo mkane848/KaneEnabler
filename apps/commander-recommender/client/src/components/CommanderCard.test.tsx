@@ -4,6 +4,8 @@ import { CommanderCard } from './CommanderCard';
 import {
   makeAlsoPlayableSuggestion,
   makeCommanderCard,
+  makeKeywordSupport,
+  makeKindredSupport,
   makeSuggestion,
   makeSupportingCard,
   makeThemeSupport,
@@ -55,13 +57,111 @@ describe('CommanderCard', () => {
   it('shows a Kindred/Themes/Keywords line only for support that survived the color-identity filter', () => {
     const suggestion = makeSuggestion({
       kindredSupport: [
-        { type: 'Goblins', cards: [makeSupportingCard({ name: 'Goblin Guide' })] },
-        { type: 'Elves', cards: [] }, // filtered out — no cards left in this identity
+        makeKindredSupport({
+          type: 'Goblins',
+          cards: [makeSupportingCard({ name: 'Goblin Guide' })],
+        }),
+        makeKindredSupport({ type: 'Elves' }), // filtered out — no cards left in this identity
       ],
     });
-    render(<CommanderCard suggestion={suggestion} />);
-    expect(screen.getByText('Goblins')).toBeInTheDocument();
-    expect(screen.queryByText('Elves')).not.toBeInTheDocument();
+    const { container } = render(<CommanderCard suggestion={suggestion} />);
+    // Scoped to the tag line: the score badge's breakdown names its signals
+    // too, so a bare getByText('Goblins') now matches in two places.
+    const tags = container.querySelector('.commander-tags');
+    expect(tags).toHaveTextContent('Goblins');
+    expect(tags).not.toHaveTextContent('Elves');
+  });
+
+  describe('the score badge', () => {
+    /** A suggestion whose signals are named and weighted, so the badge has a
+     * real breakdown to show. */
+    const scored = (overrides = {}) =>
+      makeSuggestion({
+        score: 46.6,
+        evidence: 'strong',
+        poolSize: 87,
+        kindredSupport: [
+          makeKindredSupport({
+            type: 'Goblin',
+            cards: [makeSupportingCard({ name: 'Goblin Guide' })],
+            points: 28.4,
+          }),
+        ],
+        themeSupport: [
+          makeThemeSupport({
+            key: 'aristocrats',
+            label: 'Aristocrats',
+            cards: [makeSupportingCard({ name: 'Blood Artist' })],
+            points: 11.4,
+          }),
+        ],
+        keywordSupport: [
+          makeKeywordSupport({
+            keyword: 'Haste',
+            cards: [makeSupportingCard({ name: 'Fervor' })],
+            points: 6.8,
+          }),
+        ],
+        ...overrides,
+      });
+
+    it('names how strong the evidence is, not just the number', () => {
+      const { container } = render(<CommanderCard suggestion={scored()} />);
+      expect(container.querySelector('.badge-match')).toHaveTextContent('score 46.6 · strong');
+    });
+
+    it('itemises which signals earned the score, strongest first', () => {
+      const { container } = render(<CommanderCard suggestion={scored()} />);
+      const rows = [...container.querySelectorAll('.match-breakdown-label')].map(
+        (node) => node.textContent,
+      );
+      // Ranked by points, not by supporting-card count: the two differ
+      // whenever the signals carry different weights.
+      expect(rows).toEqual(['Goblin', 'Aristocrats', 'Haste']);
+      expect(container.querySelector('.match-breakdown')).toHaveTextContent('+28.4');
+    });
+
+    it('sums the signals it does not list, so the breakdown still accounts for the score', () => {
+      const suggestion = scored({
+        themeSupport: [
+          makeThemeSupport({ key: 'a', label: 'Alpha', points: 11.4 }),
+          makeThemeSupport({ key: 'b', label: 'Beta', points: 2.5 }),
+          makeThemeSupport({ key: 'c', label: 'Gamma', points: 1.6 }),
+        ].map((theme) => ({ ...theme, cards: [makeSupportingCard()] })),
+      });
+      const { container } = render(<CommanderCard suggestion={suggestion} />);
+      const rest = container.querySelector('.match-breakdown-row.is-rest');
+      // Goblin, Alpha and Haste are shown; Beta and Gamma are folded together.
+      expect(rest).toHaveTextContent('2 more');
+      expect(rest).toHaveTextContent('+4.1');
+    });
+
+    it('says so when nothing in your list backs the commander', () => {
+      const suggestion = makeAlsoPlayableSuggestion({ score: 0, coverageReason: 'owned' });
+      render(<CommanderCard suggestion={suggestion} />);
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Not ranked on synergy');
+      // No strength word to give: there is no evidence to be strong or weak.
+      expect(screen.getByRole('button', { name: 'score 0' })).toBeInTheDocument();
+    });
+
+    it('calls a single bare-minimum signal thin, and says why', () => {
+      const suggestion = scored({
+        evidence: 'thin',
+        score: 3.3,
+        themeSupport: [],
+        keywordSupport: [],
+        kindredSupport: [
+          makeKindredSupport({
+            type: 'Goblin',
+            cards: [makeSupportingCard(), makeSupportingCard(), makeSupportingCard()],
+            points: 3.3,
+          }),
+        ],
+      });
+      const { container } = render(<CommanderCard suggestion={suggestion} />);
+      expect(screen.getByRole('tooltip')).toHaveTextContent('One signal on 3 cards');
+      expect(container.querySelector('.badge-match')).toHaveClass('is-thin');
+    });
   });
 
   it('shows the Game Changer badge only when the suggestion has one', () => {

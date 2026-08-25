@@ -61,8 +61,12 @@ function fallbackSuggestion(unit: CommanderUnit, owned: OwnedCard[]): CommanderS
     isWithinColorIdentity(parseJsonArray(entry.row.color_identity), identity);
 
   let includedCardCount = 0;
+  let includedDistinctCount = 0;
   for (const entry of owned) {
-    if (fitsIdentity(entry)) includedCardCount += entry.quantity;
+    if (fitsIdentity(entry)) {
+      includedCardCount += entry.quantity;
+      includedDistinctCount += 1;
+    }
   }
   const gameChangerCards = owned
     .filter((entry) => entry.row.game_changer && fitsIdentity(entry))
@@ -75,6 +79,7 @@ function fallbackSuggestion(unit: CommanderUnit, owned: OwnedCard[]): CommanderS
     matchedCreatureTypes: [],
     matchedKeywords: [],
     includedCardCount,
+    poolSize: includedDistinctCount,
     themeSupport: [],
     kindredSupport: [],
     keywordSupport: [],
