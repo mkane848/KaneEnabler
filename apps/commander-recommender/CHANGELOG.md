@@ -9,6 +9,30 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A commander whose only Go-Wide/Reanimator/Aristocrats text creates or returns a specific
+  creature type, with no separate payoff clause of its own, cited arbitrary unrelated cards as
+  supporting evidence.** Ajani, Nacatl Pariah // Ajani, Nacatl Avenger only ever matches
+  `goWide` via `produces` (his token-making text) — a role the qualifier scan deliberately
+  never reads as a restriction (Gothmog's `amass Orcs 1` is genuine go-wide production
+  regardless of the type it happens to create, not a restriction to it), so he surfaced as an
+  unqualified "Go-Wide Combat" match and cited any token-maker in a submitted list, Cat or not.
+  He independently earns an active `kindred:Cat` signal from a *different* clause ("Whenever
+  one or more other Cats you control die..."), and the signal engine now borrows that type as
+  `goWide`'s qualifier when its own match is produces-only and exactly one such kindred type
+  qualifies — never guessing when zero or several types would fit. Citation for a borrowed
+  qualifier is also stricter than a text-stated one (Wilhelt's unqualified reanimation spells
+  still back every restricted variant, unchanged): a pool card must itself be of the type,
+  produce a token of it, or carry its own matching qualified signal — simply sharing the
+  unqualified archetype is no longer enough. Separately, `aristocrats`'s death-trigger regexes
+  only matched `dies`/`dying`, missing the grammatically-plural "Cats you control die" — widened
+  to `dies?`, and `aristocrats` itself is now qualifiable by creature type the same way
+  `goWide`/`reanimator` already were, so a restricted death payoff like Ajani's own reads as
+  "Aristocrats (Cat)" rather than a generic sacrifice-anything match. See
+  `docs/archetypes.md`'s "A produces-only match can borrow from this same card's own kindred
+  signal" for the full mechanism.
+
 ### Changed
 
 - **The score badge now justifies its number instead of explaining the metric.** The tooltip

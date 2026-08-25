@@ -616,7 +616,14 @@ server/                Express + TS + better-sqlite3
 create ... creature token` means Krenko, Mob Boss reads as an Aristocrats
   card. Tokens genuinely are sacrifice fodder, so this is defensible, but it
   inflates: it fires on most go-wide cards. Worth revisiting if Aristocrats
-  starts showing up on commanders that have nothing to do with it.
+  starts showing up on commanders that have nothing to do with it. A related
+  but separate, already-fixed problem — a `produces`-only Aristocrats/Go-Wide
+  match citing arbitrary unrelated cards rather than ones tied to the
+  commander's actual restriction — is covered in
+  [`archetypes.md`](./archetypes.md)'s "A produces-only match can borrow from
+  this same card's own kindred signal" and its "Behaviours verified as
+  correct" entry for Ajani, Nacatl Pariah; this note is about token
+  production being credited at all, not about mis-citation once credited.
 - **The density denominator is every identity-fitting card (choice A).**
   `scoreCommanders` divides a signal's supporting-card count by _all_
   distinct castable cards, lands included. The alternative considered and

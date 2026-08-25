@@ -133,7 +133,7 @@ all.
 
 | Kind               | Example signal                                         | Notes                                                                                                                                                                                      |
 | ------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `creatureType`     | `kindred:Sliver`, `reanimator:Zombie`, `goWide:Sliver` | The original. `goWide` becomes qualifiable to stop Sliver lords forming a phantom generic Go-Wide theme.                                                                                   |
+| `creatureType`     | `kindred:Sliver`, `reanimator:Zombie`, `goWide:Sliver`, `aristocrats:Zombie` | The original. `goWide`/`reanimator`/`aristocrats` become qualifiable to stop a lord or type-restricted death payoff forming a phantom generic theme. A produces-only match that names no type of its own can also *borrow* one from this same card's kindred signal — see "A produces-only match can borrow from kindred" below. |
 | `keyword`          | `keywordCare:Cascade`                                  | See the keyword-shadow rule below — heavily restricted.                                                                                                                                    |
 | `cardType`         | `copyEffects:instant`                                  | Kalamax copies **instants only**; suggesting sorceries for him is wrong.                                                                                                                   |
 | `permanentSubtype` | `artifacts:Vehicle`, `artifacts:Food`                  | Miles's fifteen Vehicles and Sophia's Food engine ride the same mechanism. Uses a curated constant list — **not** a new Scryfall catalog fetch, which would be an api-policy-gated change. |
@@ -161,6 +161,43 @@ Kindred (56)`, not the 48 it reported before this landed. See "Behaviours verifi
 below for a severe regression this shipped with and fixed before merging — an ungated fold let these
 same eight cards inflate *every* kindred-caring commander in the whole pool, not just the deck's own
 themes.
+
+### A produces-only match can borrow from this same card's own kindred signal
+
+Ajani, Nacatl Pariah // Ajani, Nacatl Avenger only ever matches `goWide` via `produces` (he makes a Cat
+token, twice) — no clause of his own scales with board size the way `goWide`'s own `rewards` regexes
+look for, so `findQualifier` correctly leaves him unqualified, generic Go-Wide Combat. `findQualifier`
+deliberately never reads a `produces` clause for a restriction (Gothmog's `amass Orcs 1` is genuine
+go-wide production regardless of the type it happens to create, not a restriction to it — see its own
+comment in `signals.ts`), so this can never be fixed by widening that scan. But Ajani's own
+`"Whenever one or more other Cats you control die..."` transform trigger is a *different* clause that
+independently earns `kindred:Cat` an active, non-`produces` role (`rewards`) — real evidence that the
+same card's otherwise-generic `goWide` match should read as `goWide:Cat` too.
+
+`detectSignals` now borrows a qualifier this way for any `creatureType`-qualifiable archetype
+(`goWide`, `reanimator`, `aristocrats`) whose own match on a card is `produces` alone: if this same
+card independently has exactly one kindred type with a role beyond bare production, that type
+qualifies the otherwise-generic match. Two or more candidate types, or zero, and it stays unqualified
+rather than guessing — the same posture `findQualifier` itself takes for "one of each" and
+ability-copy clauses.
+
+**This does not reopen the Gothmog case, and is not "produces can now qualify."** The rule borrowed
+from is narrower: *a different, already-active signal on the same card can lend its qualifier* to a
+match that has no identity of its own beyond producing the resource. Gothmog's `kindred:Orc` and
+`kindred:Army` are themselves `produces`-only (nothing else on his card cares about Orcs or Armies), so
+there is nothing to borrow and he stays unqualified, exactly as before. The gate is also scoped to a
+`produces`-only *match*, not merely an unqualified one: a commander that generically "Sacrifice a
+creature: Draw a card" and, in a wholly unrelated ability, buffs a tribe it doesn't otherwise interact
+with must not have that unrelated tribe hijack its Aristocrats identity — that outlet really does take
+any creature. Only when the archetype's own matched roles are `produces` and nothing else does the
+card have no identity of its own to protect.
+
+A borrowed qualifier is also weaker evidence than one read directly off the archetype's own text
+(`qualifierSource: 'kindred'` on the `SignalMatch`, unset for every other qualifier). Citation is
+correspondingly stricter: the "unqualified pool card still counts" fallback that lets Wilhelt's
+generic reanimation spells back `Reanimator (Zombie)` does not apply here — a pool card must itself be
+of the borrowed type, produce a token of it, or carry its own matching qualified signal
+(`synergy.ts`'s `supporterMatches`).
 
 ### Counters are a family, not a keyword
 
@@ -227,7 +264,7 @@ Notes cell says otherwise — Phases A through E all shipped against a named dec
 
 | Key            | `definingRole`   | Notes                                                                                |
 | -------------- | ---------------- | ------------------------------------------------------------------------------------ |
-| `aristocrats`  | `rewards` ×1     | Deliberately creature-specific. Sacrificing an artifact or land is a different deck. |
+| `aristocrats`  | `rewards` ×1     | Deliberately creature-specific. Sacrificing an artifact or land is a different deck. Becomes `qualifiable: creatureType` (Ajani, Nacatl Pariah's Cat-restricted death trigger); its own death-trigger regexes were also widened from `dies\|dying` to `dies?\|dying` — a plural subject reads "die", not "dies". |
 | `goWide`       | `rewards` ×1     | Becomes `qualifiable: creatureType`.                                                 |
 | `voltron`      | `rewards` ×1     | Payoff matchers were narrowed after a false positive and overshot — see below.       |
 | `landsMatter`  | `rewards` **×2** | Fetchlands alone must never constitute a theme.                                      |
@@ -692,6 +729,27 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   turn, unrelated to a defensive shell around the controller's whole board. An initial version matched
   both identically; fixed with an explicit "enchanted/equipped creature" exclusion rather than treating
   every single-target lockdown effect as evidence of a pillowfort plan.
+- **A commander whose only Go-Wide/Reanimator/Aristocrats text creates or returns a specific creature
+  type, with no separate payoff clause of its own, cited arbitrary unrelated cards as supporting
+  evidence — found from a real user report, not the corpus.** Ajani, Nacatl Pariah // Ajani, Nacatl
+  Avenger only ever matches `goWide` via `produces` (his token-making text) — a role `findQualifier`
+  deliberately never scans for a restriction (Gothmog's `amass Orcs 1` is genuine go-wide production
+  regardless of the type it happens to create, not a restriction to it). He surfaced as an unqualified
+  "Go-Wide Combat" match and cited any token-maker in a submitted list, Cat or not — nothing tied the
+  citation to what actually makes him strong (Cats dying to flip him, Cats getting +1/+1 counters).
+  He independently earns an active `kindred:Cat[rewards]` signal from a *different* clause ("Whenever
+  one or more other Cats you control die..."), and `detectSignals` now borrows that type as `goWide`'s
+  qualifier when its own match is `produces`-only and exactly one such kindred type qualifies — see "A
+  produces-only match can borrow from this same card's own kindred signal" above for the full mechanism
+  and why it does not reopen the Gothmog case. Citation for a borrowed qualifier is also stricter than a
+  text-stated one (Wilhelt's unqualified reanimation spells still back every restricted variant,
+  unchanged): a pool card must itself be of the type, produce a token of it, or carry its own matching
+  qualified signal — simply sharing the unqualified archetype is no longer enough. Separately,
+  `aristocrats`'s death-trigger regexes only matched `dies`/`dying`, missing the grammatically-plural
+  "Cats you control die" in Ajani's own transform trigger — widened to `dies?`. Dreadhorde Invasion
+  (already fixtured for an unrelated reason — see "token descriptor stripping" above) is a second real
+  card the borrow newly qualifies, from `goWide` to `goWide:Zombie` — checked and pinned in
+  `signals.test.ts` rather than left as an unasserted side effect.
 - **`monoColorDevotion`'s mono-color scoping is deliberate, not an oversight to "complete" later.**
   "Devotion to blue and black" (Phenax, Keranos, Ephara, Iroas, Karametra, Athreos — six real Theros
   gods) is a genuinely different mechanic from single-color devotion, not a superset of it: a deck

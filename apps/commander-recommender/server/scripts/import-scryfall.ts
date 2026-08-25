@@ -215,6 +215,12 @@ db.exec(`
     -- keyword, and for subtype-restricted payoffs like Reanimator (Sliver).
     qualifier TEXT,
     qualifier_kind TEXT,
+    -- Set only when the qualifier above was borrowed from this card's own
+    -- kindred signal rather than read off the archetype's own text — see
+    -- signals.ts's detectSignals. synergy.ts's supporterMatches cites more
+    -- strictly for these than for a qualifier the archetype's own text
+    -- actually states.
+    qualifier_source TEXT,
     -- JSON array of roles: is / produces / consumes / rewards / amplifies.
     roles TEXT NOT NULL
   );
@@ -444,8 +450,8 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
   const vocabulary = buildVocabulary([...creatureTypes], [...keywords]);
 
   const insertSignal = db.prepare(
-    `INSERT INTO card_signals (oracle_id, archetype, qualifier, qualifier_kind, roles)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO card_signals (oracle_id, archetype, qualifier, qualifier_kind, roles, qualifier_source)
+     VALUES (?, ?, ?, ?, ?, ?)`,
   );
   let signalCount = 0;
   // Phase F's coverage report (docs/signals-rework.md) needs which cards have
@@ -465,6 +471,7 @@ console.log(`${faceNames.c} face names indexed for single-side matching.`);
           signal.qualifier ?? null,
           signal.qualifierKind ?? null,
           JSON.stringify(signal.roles),
+          signal.qualifierSource ?? null,
         );
         signalCount++;
         if (hasActiveRole(signal.roles)) activeSignalOracleIds.add(row.oracle_id);

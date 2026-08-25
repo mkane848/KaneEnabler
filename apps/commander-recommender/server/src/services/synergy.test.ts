@@ -816,6 +816,75 @@ describe('qualifiers', () => {
     assert.strictEqual(support.cards.length, 6);
     assert.ok(!support.cards.some((c) => c.name === 'Bystander'));
   });
+
+  it('a kindred-borrowed qualifier does NOT count an unrestricted supporter — only the type itself, or a card that shares the exact qualifier', () => {
+    // Unlike the cardType/permanentSubtype cases above (and every qualifier
+    // read off the archetype's own text, like Reanimator (Sliver)), a
+    // qualifier borrowed from this same card's kindred signal — Ajani, Nacatl
+    // Pariah's Go-Wide Combat (Cat), for instance — is weaker, inferred
+    // evidence: the commander's own goWide text never said "Cat" at all. An
+    // unrelated token-maker sharing the bare, unqualified archetype must not
+    // count just because it "shares" go-wide the way Wilhelt's unrestricted
+    // reanimation spells share Reanimator.
+    // A card with NO role in the archetype at all never enters its supporter
+    // bucket in the first place (`buildCollectionProfile` only buckets a card
+    // under an archetype it has some signal for), so the structural
+    // "is/produces this type" fallback only ever rescues a card that already
+    // has *some* goWide role of its own — just not one naming Cat. These Cats
+    // make an unrelated token (produces, no reward), same shape a real Ajani
+    // pool would actually contain.
+    const cats = Array.from({ length: 3 }, (_, i) =>
+      makeCard({
+        name: `Cat ${i}`,
+        color_identity: JSON.stringify(['W']),
+        creature_types: JSON.stringify(['Cat']),
+        oracle_text: 'Create a 1/1 white Soldier creature token.',
+      }),
+    );
+    const genericTokenMakers = Array.from({ length: 3 }, (_, i) =>
+      makeCard({
+        name: `Generic Token Maker ${i}`,
+        color_identity: JSON.stringify(['W']),
+        oracle_text: 'Create a 1/1 white Soldier creature token.\nCreatures you control get +1/+1.',
+      }),
+    );
+    const ownQualified = makeCard({
+      name: 'Own Cat Payoff',
+      color_identity: JSON.stringify(['W']),
+      oracle_text: 'Create a 1/1 white Soldier creature token.\nOther Cats you control get +1/+1.',
+    });
+    const bystander = makeCard({
+      name: 'Bystander',
+      color_identity: JSON.stringify(['W']),
+      oracle_text: 'Draw a card.',
+    });
+    const candidate = makeCard({ name: 'Candidate', color_identity: JSON.stringify(['W']) });
+    const entries = [...cats, ...genericTokenMakers, ownQualified, bystander].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const signal: SignalMatch = {
+      archetype: 'goWide',
+      label: 'Go-Wide Combat (Cat)',
+      description: '',
+      weight: 18,
+      qualifier: 'Cat',
+      qualifierKind: 'creatureType',
+      qualifierSource: 'kindred',
+      roles: ['produces'],
+    };
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      new Map([[candidate.oracle_id, [signal]]]),
+    );
+    const support = suggestions[0]!.themeSupport.find((t) => t.label === 'Go-Wide Combat (Cat)');
+    assert.ok(support, JSON.stringify(suggestions[0]?.themeSupport));
+    // The three Cats (structural fallback) and the one card with its own
+    // matching goWide:Cat signal — never the merely-unqualified generic
+    // token-makers, and never the bystander.
+    const names = support.cards.map((c) => c.name).sort();
+    assert.deepStrictEqual(names, ['Cat 0', 'Cat 1', 'Cat 2', 'Own Cat Payoff']);
+  });
 });
 
 describe('scoring measures focus, not color reach', () => {
