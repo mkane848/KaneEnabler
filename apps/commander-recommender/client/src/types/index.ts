@@ -20,7 +20,16 @@ export interface SupportingCardDTO {
   scryfallUri: string | null;
 }
 
-export interface ThemeSupportDTO {
+/** How many points this signal contributed to the suggestion's score: its
+ * own share of the density-times-weight term at its own rank, plus its own
+ * depth bonus. Every signal's points sum to `score`, which is what lets the
+ * badge show a breakdown that adds up rather than a description of the
+ * formula. */
+interface ScoredSignal {
+  points: number;
+}
+
+export interface ThemeSupportDTO extends ScoredSignal {
   key: string;
   label: string;
   description: string;
@@ -36,12 +45,12 @@ export interface ThemeSupportDTO {
   archetypeLabel: string;
 }
 
-export interface KindredSupportDTO {
+export interface KindredSupportDTO extends ScoredSignal {
   type: string;
   cards: SupportingCardDTO[];
 }
 
-export interface KeywordSupportDTO {
+export interface KeywordSupportDTO extends ScoredSignal {
   keyword: string;
   cards: SupportingCardDTO[];
 }
@@ -103,10 +112,21 @@ export interface CommanderSuggestionDTO {
   cards: CommanderCardDTO[];
   colorIdentity: string[];
   score: number;
+  /** How much evidence sits behind the score, on the same structural terms
+   * the server's own selection bar uses (`synergy.ts`'s `evidenceStrength`):
+   * `strong` is two or more signals with at least one deep, `moderate`
+   * clears that one way, `thin` fails it. A `thin` suggestion only reaches
+   * the client through the `weakMatchesOnly` fallback or the coverage tier,
+   * both of which say so in their own right. */
+  evidence: EvidenceStrengthDTO;
   matchedThemes: string[];
   matchedCreatureTypes: string[];
   matchedKeywords: string[];
   includedCardCount: number;
+  /** The denominator each signal's density was measured against: *distinct*
+   * cards fitting this commander's identity. Deliberately not
+   * `includedCardCount`, which sums quantity and is display-only. */
+  poolSize: number;
   themeSupport: ThemeSupportDTO[];
   kindredSupport: KindredSupportDTO[];
   keywordSupport: KeywordSupportDTO[];
@@ -119,6 +139,8 @@ export interface CommanderSuggestionDTO {
  * relaxed narrow pick that rescues cards nothing in `suggestions` cites. See
  * docs/recommendation-coverage.md. */
 export type CoverageReasonDTO = 'owned' | 'covers';
+
+export type EvidenceStrengthDTO = 'strong' | 'moderate' | 'thin';
 
 /** A second, clearly-labelled tier below the confident ranking — everything
  * a `CommanderSuggestionDTO` has, plus which of your cards this pick rescues

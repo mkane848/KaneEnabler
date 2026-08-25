@@ -2,6 +2,8 @@ import type {
   AlsoPlayableSuggestionDTO,
   CommanderCardDTO,
   CommanderSuggestionDTO,
+  KeywordSupportDTO,
+  KindredSupportDTO,
   SupportingCardDTO,
   ThemeSupportDTO,
 } from '../types';
@@ -41,8 +43,20 @@ export function makeThemeSupport(overrides: Partial<ThemeSupportDTO> = {}): Them
     cards: [],
     archetype: key,
     archetypeLabel: label,
+    points: 0,
     ...overrides,
   };
+}
+
+/** A kindred support entry. `points` defaults to 0 — pass it only in tests
+ * that care how the score badge ranks its breakdown. */
+export function makeKindredSupport(overrides: Partial<KindredSupportDTO> = {}): KindredSupportDTO {
+  return { type: 'Goblin', cards: [], points: 0, ...overrides };
+}
+
+/** A keyword support entry. Same `points` default as kindred above. */
+export function makeKeywordSupport(overrides: Partial<KeywordSupportDTO> = {}): KeywordSupportDTO {
+  return { keyword: 'Flying', cards: [], points: 0, ...overrides };
 }
 
 /** One card of a commander unit, for tests that build a suggestion by hand. */
@@ -79,10 +93,12 @@ export function makeSuggestion(
     cards,
     colorIdentity: [],
     score: 0,
+    evidence: 'thin',
     matchedThemes: [],
     matchedCreatureTypes: [],
     matchedKeywords: [],
     includedCardCount: 0,
+    poolSize: 0,
     themeSupport: [],
     kindredSupport: [],
     keywordSupport: [],

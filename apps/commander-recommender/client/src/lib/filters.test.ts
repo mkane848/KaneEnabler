@@ -13,7 +13,12 @@ import {
   modeOf,
   type FilterSelection,
 } from './filters';
-import { makeSuggestion, makeSupportingCard, makeThemeSupport } from '../test/fixtures';
+import {
+  makeKindredSupport,
+  makeSuggestion,
+  makeSupportingCard,
+  makeThemeSupport,
+} from '../test/fixtures';
 
 describe('filters', () => {
   // --- state machine -----------------------------------------------------
@@ -244,7 +249,9 @@ describe('filters', () => {
   it('availableFilterValues only offers themes that still have supporting cards', () => {
     const suggestion = makeSuggestion({ themeSupport: [sac, emptyTheme] });
     const { themeFacets } = availableFilterValues([suggestion]);
-    assert.deepStrictEqual(themeFacets, [{ value: 'sacrifice', label: 'Sacrifice', qualifiers: [] }]);
+    assert.deepStrictEqual(themeFacets, [
+      { value: 'sacrifice', label: 'Sacrifice', qualifiers: [] },
+    ]);
   });
 
   it('an archetype with only one qualifier present stays a single flat chip', () => {
@@ -282,10 +289,20 @@ describe('filters', () => {
 
   it('kindred include/exclude and grouping mirror themes, off kindredSupport', () => {
     const sliverDeck = makeSuggestion({
-      kindredSupport: [{ type: 'Sliver', cards: [makeSupportingCard({ name: 'Sliver Overlord' })] }],
+      kindredSupport: [
+        makeKindredSupport({
+          type: 'Sliver',
+          cards: [makeSupportingCard({ name: 'Sliver Overlord' })],
+        }),
+      ],
     });
     const goblinDeck = makeSuggestion({
-      kindredSupport: [{ type: 'Goblin', cards: [makeSupportingCard({ name: 'Goblin Chieftain' })] }],
+      kindredSupport: [
+        makeKindredSupport({
+          type: 'Goblin',
+          cards: [makeSupportingCard({ name: 'Goblin Chieftain' })],
+        }),
+      ],
     });
 
     const { kindredFacets } = availableFilterValues([sliverDeck, goblinDeck]);

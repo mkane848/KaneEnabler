@@ -40,15 +40,88 @@ function CoverageBadge({ suggestion }: { suggestion: AlsoPlayableSuggestionDTO }
   return <span className="badge badge-coverage">Covers {names.join(', ')}</span>;
 }
 
+/** One signal's contribution to the score, flattened out of the three
+ * support families so they can be ranked against each other. `cards` is the
+ * distinct-card count the density was measured on, not the quantity-summed
+ * count the explain panel shows. */
+interface ScoreRow {
+  /** Family-prefixed, because a creature type and an archetype label could
+   * in principle collide and these three lists are rendered as one. */
+  key: string;
+  label: string;
+  cards: number;
+  points: number;
+}
+
+/** Enough to show what drove a score without turning a tooltip into a table;
+ * whatever is left over is summed into one trailing row so the breakdown
+ * still accounts for the whole number. */
+const BREAKDOWN_ROWS = 3;
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+function scoreRows(suggestion: CommanderSuggestionDTO): ScoreRow[] {
+  return [
+    ...visibleKindredSupport(suggestion).map((k) => ({
+      key: `kindred:${k.type}`,
+      label: k.type,
+      cards: k.cards.length,
+      points: k.points,
+    })),
+    ...visibleThemeSupport(suggestion).map((t) => ({
+      key: `theme:${t.key}`,
+      label: t.label,
+      cards: t.cards.length,
+      points: t.points,
+    })),
+    ...visibleKeywordSupport(suggestion).map((k) => ({
+      key: `keyword:${k.keyword}`,
+      label: k.keyword,
+      cards: k.cards.length,
+      points: k.points,
+    })),
+  ].sort((a, b) => b.points - a.points);
+}
+
 /**
- * The raw score this suggestion was ranked by, shown as-is.
+ * How far to trust the number, in the terms the server actually measured it
+ * in — `evidence` restates the same structural bar that decides which
+ * suggestions are shown at all, so this says out loud what the engine was
+ * already judging silently.
+ */
+function evidenceNote(suggestion: CommanderSuggestionDTO, rows: ScoreRow[]): string {
+  const deepest = rows.reduce((most, row) => Math.max(most, row.cards), 0);
+  // "different cards", not just "cards": this is the distinct-card pool the
+  // density was measured on, and the card's own "Fits N cards" line above
+  // sums quantity, so four basics make the two numbers disagree on purpose.
+  const backing = `${deepest} of the ${suggestion.poolSize} different cards it can play from your list`;
+
+  switch (suggestion.evidence) {
+    case 'strong':
+      return `${rows.length} separate signals, the deepest backed by ${backing}. Deep and broad enough to rank on.`;
+    case 'moderate':
+      return rows.length > 1
+        ? `${rows.length} signals, none backed by more than ${backing}. Real, but thinner than a focused match.`
+        : `One signal, backed by ${backing}. Deep, but it is the only thing tying this commander to your list.`;
+    case 'thin':
+      return `One signal on ${deepest} card${deepest === 1 ? '' : 's'} — too little to tell this apart from every other commander that does the same thing.`;
+  }
+}
+
+/**
+ * The score this suggestion was ranked by, broken down into the signals that
+ * earned it.
  *
- * Deliberately not normalised into a percentage or a confidence label: while
- * the scoring model is still being tuned, the actual number is the useful
- * thing to see — a percentage of the top result hides whether the whole
- * field scored 3 or 300, and reads as a confidence it was never measuring.
- * The explanation below it stays, since *why* a number came out that way is
- * exactly what a raw figure doesn't tell you.
+ * Still the raw number rather than a percentage: a percentage of the top
+ * result hides whether the whole field scored 3 or 300, and reads as a
+ * confidence it never measured. What the number needs is not normalising but
+ * accounting for — so the tooltip itemises which signals contributed what,
+ * and the rows add up to the badge exactly (`recommend.ts` sums the score
+ * from the same rounded figures for that reason).
+ *
+ * The strength beside it is the server's own `evidenceStrength`, i.e. the
+ * structural bar that already decides which suggestions are worth showing —
+ * not a new judgement invented for display.
  *
  * The tooltip stays in the DOM and is shown/hidden with CSS (:hover,
  * :focus-within) so desktop hover needs no JS at all — `open` only exists to
@@ -58,41 +131,64 @@ function ScoreBadge({ suggestion }: { suggestion: CommanderSuggestionDTO }) {
   const [open, setOpen] = useState(false);
   const tooltipId = useId();
 
-  // Each entry names its own kind and carries its own plural, so they read
-  // correctly joined together without a trailing noun to agree with.
-  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-  const signals: string[] = [];
-  if (suggestion.matchedCreatureTypes.length > 0) {
-    signals.push(plural(suggestion.matchedCreatureTypes.length, 'kindred match'));
-  }
-  if (suggestion.matchedThemes.length > 0) {
-    signals.push(plural(suggestion.matchedThemes.length, 'theme'));
-  }
-  if (suggestion.matchedKeywords.length > 0) {
-    signals.push(plural(suggestion.matchedKeywords.length, 'keyword'));
-  }
+  const rows = scoreRows(suggestion);
+  const shown = rows.slice(0, BREAKDOWN_ROWS);
+  const rest = rows.slice(BREAKDOWN_ROWS);
+  const restPoints = round1(rest.reduce((sum, row) => sum + row.points, 0));
 
   return (
     <span className={`match-badge-wrap${open ? ' is-open' : ''}`}>
       <button
         type="button"
-        className="badge badge-match"
+        className={`badge badge-match${suggestion.evidence === 'thin' ? ' is-thin' : ''}`}
         aria-describedby={tooltipId}
         onClick={() => setOpen((o) => !o)}
         onBlur={() => setOpen(false)}
       >
         score {suggestion.score}
+        {rows.length > 0 && (
+          // The separator is a real text node, not a CSS ::before: it is part
+          // of how the badge is announced, not decoration.
+          <span className="badge-match-strength"> · {suggestion.evidence}</span>
+        )}
       </button>
-      {/* The card count is the pool each signal is measured against, not
-          credit in its own right — colors decide what is eligible and score
-          nothing, so the wording must not imply that playing more of your
-          list is itself what earned the score. */}
       <span role="tooltip" id={tooltipId} className="match-tooltip">
-        Ranked on {suggestion.score}
-        {signals.length > 0 ? `, from ${signals.join(', ')}` : ''}, weighed against the{' '}
-        {suggestion.includedCardCount} card{suggestion.includedCardCount === 1 ? '' : 's'} it can
-        play from your list. Each signal counts for the share of that pool backing it. Colors decide
-        which cards count, never how good the match is.
+        {rows.length === 0 ? (
+          <span className="match-tooltip-note">
+            Not ranked on synergy — no theme, kindred type, or keyword in your list backs this
+            commander. It is here for the reason on its badge, not for its score.
+          </span>
+        ) : (
+          <>
+            <span className="match-breakdown">
+              {shown.map((row) => (
+                <span className="match-breakdown-row" key={row.key}>
+                  <span className="match-breakdown-label">{row.label}</span>
+                  <span className="match-breakdown-cards">
+                    {row.cards} card{row.cards === 1 ? '' : 's'}
+                  </span>
+                  <span className="match-breakdown-points">+{round1(row.points)}</span>
+                </span>
+              ))}
+              {rest.length > 0 && (
+                <span className="match-breakdown-row is-rest">
+                  <span className="match-breakdown-label">{rest.length} more</span>
+                  <span className="match-breakdown-cards" />
+                  <span className="match-breakdown-points">+{restPoints}</span>
+                </span>
+              )}
+            </span>
+            <span className="match-tooltip-note">{evidenceNote(suggestion, rows)}</span>
+            {/* The pool a signal is measured against is not credit in its own
+                right — colors decide what is eligible and score nothing, so
+                the wording must not imply that playing more of your list is
+                itself what earned the score. */}
+            <span className="match-tooltip-note">
+              The score ranks commanders against each other for this list only. It is not a rating
+              out of anything, and colors decide which cards count, never how good the match is.
+            </span>
+          </>
+        )}
       </span>
     </span>
   );

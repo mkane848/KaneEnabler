@@ -349,6 +349,12 @@
   gap: 0.4rem;
   flex-wrap: wrap;
   margin: 0.15rem 0;
+  /* Positioning context for the score badge's tooltip. On the badge itself it
+     would be one, too — but then the panel starts wherever that badge happens
+     to sit in the row, and a wide "Covers …" badge ahead of it pushes the
+     panel out through the card's right edge. Anchored to the row, it spans
+     the card's own width whatever precedes it. */
+  position: relative;
 }
 
 .badge {
@@ -379,10 +385,9 @@
   color: #2e7d32;
 }
 
-/* Relative match-strength badge + its hover/tap tooltip. Positioned so the
-   tooltip can float above the card without pushing other badges around. */
+/* Score badge + its hover/tap tooltip. Not the tooltip's containing block —
+   see .badge-row above — so this only has to group the two for :hover. */
 .match-badge-wrap {
-  position: relative;
   display: inline-block;
 }
 
@@ -400,13 +405,35 @@
   background: rgba(15, 106, 181, 0.25);
 }
 
+/* A thin match is shown, but not in the colour a real one earns — the same
+   reasoning as .slot-hint in deck-summary.css, where lower confidence is
+   said in the styling rather than only in the words. */
+.badge-match.is-thin {
+  background: rgba(90, 90, 90, 0.15);
+  color: var(--text-muted);
+}
+
+.badge-match.is-thin:hover,
+.badge-match.is-thin:focus-visible {
+  background: rgba(90, 90, 90, 0.25);
+}
+
+/* Opens upward, over the card's own art and rules text, because
+   .commander-card sets overflow: hidden for its rounded corners — a panel
+   this size hanging below the badge is clipped along its right and bottom
+   edges. Everything above the badge row is card content there is always more
+   than enough of, so upward is the direction that fits without portalling
+   the tooltip out of the card (which would cost the tap-to-toggle that
+   Radix's hover-only HoverCard can't do — see SupportingCards.tsx). */
 .match-tooltip {
   position: absolute;
   z-index: 3;
-  top: calc(100% + 0.4rem);
+  bottom: calc(100% + 0.4rem);
   left: 0;
-  width: 15rem;
-  max-width: 60vw;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
   font-family: var(--font-body);
   font-size: 0.76rem;
   line-height: 1.45;
@@ -421,6 +448,46 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.12s ease;
+}
+
+/* The score, itemised. Three columns so the points line up as a column and
+   the breakdown reads as arithmetic that adds to the badge, which is the
+   whole point of showing it. */
+.match-breakdown {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.15rem 0.6rem;
+}
+
+.match-breakdown-row {
+  display: contents;
+}
+
+.match-breakdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-breakdown-cards {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.match-breakdown-points {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.match-breakdown-row.is-rest .match-breakdown-label {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.match-tooltip-note {
+  color: var(--text-muted);
 }
 
 .match-badge-wrap:hover .match-tooltip,

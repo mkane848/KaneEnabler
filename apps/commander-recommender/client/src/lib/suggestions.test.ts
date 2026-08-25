@@ -12,7 +12,12 @@ import {
   visibleKindredSupport,
   visibleKindredTypes,
 } from './suggestions';
-import { makeSuggestion, makeSupportingCard, makeThemeSupport } from '../test/fixtures';
+import {
+  makeKindredSupport,
+  makeSuggestion,
+  makeSupportingCard,
+  makeThemeSupport,
+} from '../test/fixtures';
 
 const withCards = makeThemeSupport({
   key: 'sacrifice',
@@ -30,8 +35,11 @@ describe('suggestion visibility', () => {
   it('visibleKindredSupport drops kindred groups with zero supporting cards', () => {
     const suggestion = makeSuggestion({
       kindredSupport: [
-        { type: 'Goblin', cards: [] },
-        { type: 'Elf', cards: [makeSupportingCard({ name: 'Fake Elf', quantity: 2 })] },
+        makeKindredSupport({ type: 'Goblin' }),
+        makeKindredSupport({
+          type: 'Elf',
+          cards: [makeSupportingCard({ name: 'Fake Elf', quantity: 2 })],
+        }),
       ],
     });
     assert.deepStrictEqual(
@@ -43,7 +51,7 @@ describe('suggestion visibility', () => {
   it('visibleThemeLabels/visibleKindredTypes only name the visible groups', () => {
     const suggestion = makeSuggestion({
       themeSupport: [withCards, empty],
-      kindredSupport: [{ type: 'Goblin', cards: [] }],
+      kindredSupport: [makeKindredSupport({ type: 'Goblin' })],
     });
     assert.deepStrictEqual(visibleThemeLabels(suggestion), ['Sacrifice']);
     assert.deepStrictEqual(visibleKindredTypes(suggestion), []);
@@ -52,7 +60,7 @@ describe('suggestion visibility', () => {
   it('a suggestion with only empty-card groups shows nothing', () => {
     const suggestion = makeSuggestion({
       themeSupport: [empty],
-      kindredSupport: [{ type: 'Goblin', cards: [] }],
+      kindredSupport: [makeKindredSupport({ type: 'Goblin' })],
     });
     assert.deepStrictEqual(visibleThemeSupport(suggestion), []);
     assert.deepStrictEqual(visibleKindredSupport(suggestion), []);

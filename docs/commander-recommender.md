@@ -461,7 +461,8 @@ server/                Express + TS + better-sqlite3
      matches anything either half of it would match solo, and its combined
      color identity is the union, not the intersection.
 
-     **Kindred requires caring, not sharing** (`caresAboutCreatureType`).
+     **Kindred requires caring, not sharing** (`detectKindred` plus
+     `definingRequirement`'s `rewards` x2 bar, both in `signals.ts`).
      A creature type counts only if the unit's own oracle text names it —
      Krenko counts Goblins, Lathril taps Elves, The First Sliver gives
      Sliver spells cascade. Merely _having_ the type does nothing, which is
@@ -476,9 +477,32 @@ server/                Express + TS + better-sqlite3
 
      Each signal then scores its **density**: the share of the unit's
      castable pool (distinct cards fitting its identity) that backs it,
-     times a per-kind weight — `kindred * 15 + theme * 10 + keyword * 8 +
-archetype * 20`. So a signal every playable card supports is worth its
-     full weight; one that half of them support is worth half.
+     times that signal's own weight — 15 for kindred, 8 for keyword-care,
+     and each archetype's own weight from `ARCHETYPES` in `signals.ts`
+     (16–22 today, `reanimator` highest at 22). So a signal every playable
+     card supports is worth its full weight; one that half of them support
+     is worth half. Signals are then ranked and each one past the strongest
+     is discounted by `DIMINISHING_FACTOR ** rank` (0.7), which caps pure
+     breadth at about 3.3× the best single match; on top of that each
+     signal earns a flat `+1` per supporting card past `DEEP_SIGNAL_COUNT`
+     (5), undiluted by pool size, so a genuinely deep theme on a big list
+     isn't rounded away by density alone.
+
+     Both terms are attributed back to the signal that earned them, as
+     `points` on each `themeSupport`/`kindredSupport`/`keywordSupport`
+     entry, and every signal's points sum to the score. That is what the
+     client's score badge itemises: `routes/recommend.ts` rounds each
+     `points` to one decimal and sums the score from those same rounded
+     figures, so the breakdown the user reads adds up to the badge exactly.
+     Ranking is unaffected — `scoreCommanders` sorts on the full-precision
+     score before any of that.
+
+     `evidenceStrength` names how much is behind a score — `strong` (two or
+     more signals, at least one at `DEEP_SIGNAL_COUNT`), `moderate` (one of
+     those two), `thin` (neither) — and `isMeaningfulMatch` is defined as
+     "not thin" rather than repeating the thresholds, so the bar that
+     decides which suggestions are shown and the strength the badge
+     displays cannot drift apart.
 
      Color identity decides _which cards are eligible_ and contributes
      nothing to the score. It used to: an earlier formula opened with

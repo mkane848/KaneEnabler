@@ -13,6 +13,7 @@ import type { CommanderUnit } from './partners';
 import { buildCardFacts, buildVocabulary, detectSignals, type SignalMatch } from './signals';
 import {
   buildCollectionProfile,
+  evidenceStrength,
   scoreCommanders,
   selectSuggestions,
   type CommanderSuggestion,
@@ -213,7 +214,10 @@ describe('identity + signal gating', () => {
     const units = [solo(candidate)];
     const signals = candidateSignalsFor(units);
 
-    assert.strictEqual(scoreCommanders(units, buildCollectionProfile(entries), entries, signals).length, 0);
+    assert.strictEqual(
+      scoreCommanders(units, buildCollectionProfile(entries), entries, signals).length,
+      0,
+    );
 
     const relaxed = scoreCommanders(units, buildCollectionProfile(entries), entries, signals, {
       minSignalCount: 1,
@@ -266,7 +270,10 @@ describe('identity + signal gating', () => {
     const cited = sacrificeCards(3, { color_identity: JSON.stringify(['B']) });
     // Fits the candidate's identity but supports nothing — included in
     // includedCardCount, but must not show up in citedOracleIds.
-    const uncited = makeCard({ color_identity: JSON.stringify(['B']), oracle_text: 'Draw a card.' });
+    const uncited = makeCard({
+      color_identity: JSON.stringify(['B']),
+      oracle_text: 'Draw a card.',
+    });
     const candidate = sacrificeCommander('Candidate', { color_identity: JSON.stringify(['B']) });
     const entries = [...cited, uncited].map((c) => owned(c));
     const units = [solo(candidate)];
@@ -327,8 +334,7 @@ describe('identity + signal gating', () => {
     // But only 2 fit this candidate's identity, so it must not count.
     const narrowingUnits = [solo(candidate)];
     assert.strictEqual(
-      scoreCommanders(narrowingUnits, profile, entries, candidateSignalsFor(narrowingUnits))
-        .length,
+      scoreCommanders(narrowingUnits, profile, entries, candidateSignalsFor(narrowingUnits)).length,
       0,
     );
   });
@@ -964,6 +970,157 @@ describe('scoring measures focus, not color reach', () => {
   });
 });
 
+/**
+ * The score badge shows this breakdown instead of restating the formula, so
+ * what it must never do is fail to account for the number above it — a
+ * justification that doesn't add up is worse than none.
+ */
+describe('every point is attributed to the signal that earned it', () => {
+  /** Every signal's points, across all three families. */
+  function allPoints(suggestion: CommanderSuggestion): number[] {
+    return [
+      ...suggestion.themeSupport.map((t) => t.points),
+      ...suggestion.kindredSupport.map((k) => k.points),
+      ...suggestion.keywordSupport.map((k) => k.points),
+    ];
+  }
+
+  it('the per-signal points add up to the score', () => {
+    const sac = sacrificeCards(6, { color_identity: JSON.stringify(['B']) });
+    const vampires = Array.from({ length: 4 }, (_, i) =>
+      makeCard({
+        name: `Vampire ${i}`,
+        color_identity: JSON.stringify(['B']),
+        creature_types: JSON.stringify(['Vampire']),
+        oracle_text: i < 2 ? 'Other Vampires you control get +1/+1.' : '',
+      }),
+    );
+    const candidate = makeCard({
+      name: 'Both',
+      color_identity: JSON.stringify(['B']),
+      creature_types: JSON.stringify(['Vampire']),
+      oracle_text: 'Sacrifice a creature: Draw a card. Other Vampires you control get +1/+1.',
+    });
+    const entries = [...sac, ...vampires].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const suggestion = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    )[0]!;
+
+    const points = allPoints(suggestion);
+    assert.ok(points.length >= 2);
+    const total = points.reduce((sum, p) => sum + p, 0);
+    // Floating point, not exactness: the score is summed breadth-then-depth
+    // and this is summed signal-by-signal, so they agree to well within the
+    // one decimal the wire rounds to.
+    assert.ok(Math.abs(total - suggestion.score) < 1e-9);
+  });
+
+  it('the strongest signal carries the largest share', () => {
+    const sac = sacrificeCards(8, { color_identity: JSON.stringify(['B']) });
+    const spells = Array.from({ length: 3 }, (_, i) =>
+      makeCard({
+        name: `Spell ${i}`,
+        color_identity: JSON.stringify(['B']),
+        oracle_text: 'Whenever you cast an instant spell, scry 1.',
+      }),
+    );
+    const candidate = makeCard({
+      name: 'Both',
+      color_identity: JSON.stringify(['B']),
+      oracle_text: 'Sacrifice a creature: Draw a card. Whenever you cast an instant spell, scry 1.',
+    });
+    const entries = [...sac, ...spells].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const suggestion = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    )[0]!;
+
+    const byPoints = [...suggestion.themeSupport].sort((a, b) => b.points - a.points);
+    assert.strictEqual(byPoints.length, 2);
+    // The eight-card signal, not the three-card one — ordering the breakdown
+    // by supporting-card count alone would get this right by luck here and
+    // wrong whenever the weights differ.
+    assert.ok(byPoints[0]!.cards.length > byPoints[1]!.cards.length);
+  });
+
+  it("a deep signal's depth bonus lands on that signal, not spread across them", () => {
+    const landfall = Array.from({ length: 10 }, (_, i) =>
+      makeCard({
+        name: `Landfall ${i}`,
+        color_identity: JSON.stringify(['B']),
+        oracle_text:
+          'Landfall — Whenever a land enters the battlefield under your control, scry 1.',
+      }),
+    );
+    const filler = Array.from({ length: 40 }, (_, i) =>
+      makeCard({
+        name: `Filler ${i}`,
+        color_identity: JSON.stringify(['B']),
+        oracle_text: 'This card does something else entirely.',
+      }),
+    );
+    const candidate = makeCard({
+      name: 'Landfall Deep',
+      color_identity: JSON.stringify(['B']),
+      oracle_text:
+        'Landfall — Whenever a land enters the battlefield under your control, draw a card.',
+    });
+    const entries = [...landfall, ...filler].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const suggestion = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      candidateSignalsFor(units),
+    )[0]!;
+
+    // The whole score is one signal's: breadth 10/50*20 = 4, depth 10-5+1 = 6.
+    assert.strictEqual(suggestion.score, 10);
+    assert.deepStrictEqual(allPoints(suggestion), [10]);
+  });
+});
+
+/**
+ * The tiers the score badge names. They restate the selection bar rather
+ * than adding a second one, so `isMeaningfulMatch` is exactly
+ * "not thin" — see `evidenceStrength`.
+ */
+describe('evidence strength', () => {
+  const suggestion = (sizes: number[]): CommanderSuggestion =>
+    ({
+      themeSupport: sizes.map((n) => ({ cards: new Array(n).fill(null) })),
+      kindredSupport: [],
+      keywordSupport: [],
+    }) as unknown as CommanderSuggestion;
+
+  it('deep and broad is strong', () => {
+    assert.strictEqual(evidenceStrength(suggestion([6, 3])), 'strong');
+  });
+
+  it('broad without depth is moderate', () => {
+    assert.strictEqual(evidenceStrength(suggestion([3, 3, 4])), 'moderate');
+  });
+
+  it('deep without breadth is moderate', () => {
+    assert.strictEqual(evidenceStrength(suggestion([5])), 'moderate');
+  });
+
+  it('one bare-minimum signal is thin', () => {
+    assert.strictEqual(evidenceStrength(suggestion([3])), 'thin');
+  });
+
+  it('no signal at all is thin', () => {
+    assert.strictEqual(evidenceStrength(suggestion([])), 'thin');
+  });
+});
+
 describe('Partner-pair union semantics (702.124e)', () => {
   it("a pair's color identity is the union of both cards, not either alone", () => {
     const ownedCards = sacrificeCards(3, { color_identity: JSON.stringify(['U']) });
@@ -1089,6 +1246,7 @@ describe('selecting which suggestions are worth showing', () => {
       matchedCreatureTypes: [],
       matchedKeywords: [],
       includedCardCount: 50,
+      poolSize: 50,
       themeSupport: sizes.map((n, i) => ({
         key: `t${i}`,
         label: `Theme ${i}`,
@@ -1096,6 +1254,7 @@ describe('selecting which suggestions are worth showing', () => {
         cards: cards(n),
         archetype: `t${i}`,
         archetypeLabel: `Theme ${i}`,
+        points: 0,
       })),
       kindredSupport: [],
       keywordSupport: [],
