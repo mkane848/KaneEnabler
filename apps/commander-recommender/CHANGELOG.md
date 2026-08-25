@@ -7,7 +7,7 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
-## [Unreleased]
+## [1.12.0] — 2026-08-25
 
 ### Fixed
 
