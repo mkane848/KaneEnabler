@@ -885,6 +885,63 @@ describe('qualifiers', () => {
     const names = support.cards.map((c) => c.name).sort();
     assert.deepStrictEqual(names, ['Cat 0', 'Cat 1', 'Cat 2', 'Own Cat Payoff']);
   });
+
+  it('a produces-only own signal does not back a TEXT-qualified signal either, only a flexible one does', () => {
+    // Kratos, Stoic Father's real shape: "whenever a God dies" names God
+    // directly, so this qualifier is text-derived (qualifierSource
+    // undefined), not borrowed — the Wilhelt-style permissive path. Even
+    // there, a produces-only pool card (Kavaron Harrier/Goro-Goro/Young
+    // Pyromancer's shape: makes a *fixed*, non-God token) must not count
+    // just because it shares the unqualified archetype; a flexible rewards
+    // card (Stalking Vengeance's shape: "another creature you control
+    // dies") still does, since its target is chosen at the table and could
+    // be a God.
+    const rigidProducers = Array.from({ length: 3 }, (_, i) =>
+      makeCard({
+        name: `Rigid Producer ${i}`,
+        color_identity: JSON.stringify(['R']),
+        oracle_text: 'Create a 2/2 red Robot artifact creature token.',
+      }),
+    );
+    const flexibleRewarder = makeCard({
+      name: 'Flexible Rewarder',
+      color_identity: JSON.stringify(['R']),
+      oracle_text: 'Whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.',
+    });
+    const bystander = makeCard({
+      name: 'Bystander',
+      color_identity: JSON.stringify(['R']),
+      oracle_text: 'Haste',
+    });
+    const candidate = makeCard({ name: 'Candidate', color_identity: JSON.stringify(['R']) });
+    const entries = [...rigidProducers, flexibleRewarder, bystander].map((c) => owned(c));
+    const units = [solo(candidate)];
+    const signal: SignalMatch = {
+      archetype: 'aristocrats',
+      label: 'Aristocrats (God)',
+      description: '',
+      weight: 20,
+      qualifier: 'God',
+      qualifierKind: 'creatureType',
+      roles: ['rewards'],
+    };
+    const suggestions = scoreCommanders(
+      units,
+      buildCollectionProfile(entries),
+      entries,
+      new Map([[candidate.oracle_id, [signal]]]),
+      { minSignalCount: 1 },
+    );
+    const support = suggestions[0]!.themeSupport.find((t) => t.label === 'Aristocrats (God)');
+    assert.ok(support, JSON.stringify(suggestions[0]?.themeSupport));
+    // Only the flexible rewarder — none of the three rigid producers (their
+    // own signal is produces-only and they aren't Gods), and never the
+    // bystander (no aristocrats signal at all).
+    assert.deepStrictEqual(
+      support.cards.map((c) => c.name),
+      ['Flexible Rewarder'],
+    );
+  });
 });
 
 describe('scoring measures focus, not color reach', () => {
