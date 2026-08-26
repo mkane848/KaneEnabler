@@ -291,17 +291,26 @@ export function ownSignalContains(
  *
  * An unqualified signal accepts any card that participates in the archetype.
  * A *qualified* one additionally accepts a card whose own signal for the same
- * archetype is unqualified or matches (`ownSignalContains`) — Wilhelt's own
- * generic reanimation spells support "Reanimator (Zombie)" this way — or,
- * failing that, a card that's simply *of* that subtype itself: Sliver
- * Gravemother's reanimation only pays off Slivers, so an ordinary Sliver
- * creature supports "Reanimator (Sliver)" just by existing, with no
- * reanimator signal of its own at all. A card with neither supports nothing.
+ * archetype is unqualified and carries a role beyond bare `produces`
+ * (`ownSignalContains`, plus the roles check below) — Wilhelt's own generic
+ * reanimation spells support "Reanimator (Zombie)" this way, since a
+ * `rewards`-role effect ("return target creature card from your graveyard")
+ * operates on a flexible, at-the-table choice that genuinely could be a
+ * Zombie. A card whose own signal is `produces`-only doesn't get this pass:
+ * `produces` makes something *fixed* by the card's own text — Young
+ * Pyromancer always makes an Elemental, never a God — so no amount of it
+ * being a good generic Aristocrats card makes it relevant to a God-specific
+ * one. Failing both, a card that's simply *of* that subtype itself still
+ * counts: Sliver Gravemother's reanimation only pays off Slivers, so an
+ * ordinary Sliver creature supports "Reanimator (Sliver)" just by existing,
+ * with no reanimator signal of its own at all. A card with none of these
+ * supports nothing.
  *
- * That "merely unqualified own signal still counts" fallback is deliberately
- * *not* extended to a signal whose qualifier was borrowed from the
- * commander's own kindred signal rather than stated in the archetype's own
- * text (`signal.qualifierSource === 'kindred'` — see `detectSignals`).
+ * The "merely unqualified own signal still counts" fallback (both its
+ * text-derived form above and its now-narrower produces exclusion) is
+ * deliberately *not* extended to a signal whose qualifier was borrowed from
+ * the commander's own kindred signal rather than stated in the archetype's
+ * own text (`signal.qualifierSource === 'kindred'` — see `detectSignals`).
  * Ajani, Nacatl Pariah's Go-Wide Combat (Cat) is weaker, inferred evidence
  * than Wilhelt's own text actually restricting Reanimator to Zombies, so an
  * unrelated card merely sharing the unqualified archetype must not count —
@@ -318,7 +327,17 @@ export function supporterMatches(
       ? ownSignals.some(
           (s) => s.archetype === signal.archetype && s.qualifier === signal.qualifier,
         )
-      : !!ownSignalContains(ownSignals, signal.archetype, signal.qualifier);
+      : (() => {
+          const own = ownSignalContains(ownSignals, signal.archetype, signal.qualifier);
+          if (!own) return false;
+          // An exact qualifier match ("Cat" backing "Cat") or the kindred
+          // wildcard ('*') is already proven relevant regardless of role —
+          // only the *unqualified* fallback (own.qualifier undefined) needs
+          // the produces exclusion, since that's the case where nothing on
+          // the card itself ties it to this specific qualifier at all.
+          if (own.qualifier !== undefined) return true;
+          return own.roles.some((r) => r !== 'produces');
+        })();
   if (hasOwnSupport) return true;
   if (!facts) return false;
   if (signal.qualifierKind === 'creatureType') {

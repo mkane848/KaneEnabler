@@ -7,6 +7,52 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [Unreleased]
+
+### Fixed
+
+- **A `produces`-only pool card no longer counts as generic backup for a qualified signal, whether
+  the qualifier was borrowed or read directly off the commander's own text.** The previous fix's
+  borrowing mechanism only covered the *commander's own* produces-only match; walking a second real
+  user's citation list card by card (Kratos, Stoic Father, whose "Aristocrats (God)" is
+  text-qualified — his own text names "God" directly) surfaced the same false-citation shape from
+  the *supporter* side instead: three cited cards (Kavaron Harrier, Goro-Goro Disciple of Ryusei,
+  Young Pyromancer) are `produces`-only and each make a fixed, non-God token, cited purely because
+  the old "unqualified own signal still counts" fallback never checked which role a pool card
+  played, only whether it belonged to the archetype at all. `produces` makes something fixed by the
+  card's own text — it can never satisfy a type it doesn't already produce — while `consumes`/
+  `rewards` operate on a flexible, at-the-table choice ("a creature," "target creature") that
+  genuinely could be the qualified type, the same reasoning that lets a generic reanimation spell
+  back "Reanimator (Zombie)." Applies uniformly across every qualifier kind, not just creature
+  type.
+- **Two death-trigger false positives in the same review.** A `"would die ... instead"` replacement
+  effect (nothing actually dies — Flame-Blessed Bolt, and an extremely common burn-spell template
+  found across the full card pool: Pillar of Flame, Obliterating Bolt, Touch of the Void, and
+  others) and a `"dealt damage by [source] ... dies"` combat-kill trigger (always an opponent's
+  creature, not your own board — Markov Enforcer, and the same shape on Blood Cultist, Seraph,
+  Sengir Bats) both matched the Aristocrats death-trigger regex as if they were payoffs. Both
+  excluded with lookbehind/lookahead assertions kept inside the same regex, not converted to
+  function matchers — the qualifier scan reads this regex's own match text to find a restricting
+  creature type, and a function matcher would have silently broken that for every already-qualified
+  card (Ajani's Cats, Wilhelt's Zombies included).
+- **Two sacrifice-cost false positives, same review.** Blood Hypnotist's `"Whenever you sacrifice
+  one or more Blood tokens, target creature can't block this turn"` never sacrifices a creature at
+  all — the old unbounded cost-side scan credited it anyway, reading the unrelated *later*
+  "creature" (the effect's own target, past the comma) as the sacrificed object; the same shape
+  recurs whenever the sacrificed thing isn't a creature but "creature" appears later in the
+  sentence for an unrelated reason. Greater Gargadon's `"Sacrifice an artifact, creature, or
+  land"` lists creature as one of three co-equal, fungible options with no preference toward it —
+  not the creature-specific plan Aristocrats' own description requires, and the single most common
+  shape among the cards this fix now correctly excludes. Both changes verified against the entire
+  legal card pool via a live-vs-precomputed before/after diff (276 cards changed, 0 gained a false
+  positive, 240 correctly lost one, 40 sampled by hand and confirmed correct) — that same diff
+  caught and fixed a real regression in an earlier version of the sacrifice-cost fix before it
+  shipped (it briefly credited Nim Devourer, Polygraph Orb, and Sorin, Imperious Bloodlord with
+  sacrificing a creature none of them do, by not respecting an activated ability's `:` boundary).
+
+See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified signal either,"
+"Death-trigger precision," and "Sacrifice-cost precision" for the full mechanisms.
+
 ## [1.12.0] — 2026-08-25
 
 ### Fixed

@@ -199,6 +199,101 @@ generic reanimation spells back `Reanimator (Zombie)` does not apply here — a 
 of the borrowed type, produce a token of it, or carry its own matching qualified signal
 (`synergy.ts`'s `supporterMatches`).
 
+### A produces-only SUPPORTER doesn't back a qualified signal either, borrowed or not
+
+Kratos, Stoic Father's `"whenever a God dies, you get an experience counter"` names "God" directly, so
+his `aristocrats:God` signal is **text-qualified**, not borrowed — the Wilhelt-style permissive path,
+untouched by the borrowing fix above. Even there, a real user's citation list for him surfaced three
+cards (Kavaron Harrier, Goro-Goro Disciple of Ryusei, Young Pyromancer) whose only aristocrats role is
+`produces` — each makes a *fixed*, non-God token (a Robot, a Dragon Spirit, an Elemental) — cited
+purely because the old "unqualified own signal still counts" fallback checked whether a pool card
+belonged to the archetype at all, never *which role* it played in it.
+
+The fix generalises the same distinction the borrowing rule already draws, applied to the supporter
+side of `supporterMatches` instead of the commander side: `produces` makes something fixed by the
+card's own text, so it can never satisfy a type it doesn't already produce, no matter how good the
+card is generically. `consumes`/`rewards` operate on a flexible, at-the-table choice ("a creature,"
+"target creature," "another creature you control") that genuinely could be the qualified type — the
+same reasoning that makes Wilhelt's unrestricted reanimation spell ("return target creature card from
+your graveyard") a real Zombie reanimator even though its own text never says Zombie. Stalking
+Vengeance's `"whenever another creature you control dies..."` is exactly this shape and correctly
+keeps backing "Aristocrats (God)"; Kavaron Harrier's `produces`-only token no longer does. Applies
+uniformly across every qualifier kind, not just `creatureType` — the rigid/flexible distinction
+doesn't depend on what's being narrowed. An exact qualifier match on the supporter's own signal (or
+the kindred wildcard `*`) is exempt from this check: it's already proven relevant regardless of role,
+the same way a Sliver Gravemother bystander counts by structural type alone.
+
+### Death-trigger precision: replacement effects and combat kills are not Aristocrats rewards
+
+Two more bugs the same real citation list surfaced, both regex-precision issues independent of the
+qualifier work above, verified against the full legal card pool (40 previously-mismatched cards
+sampled by hand across both categories, zero false corrections found; 0 cards newly gained a false
+positive, 240 correctly lost one):
+
+- **`"if [x] would die ... instead"` is a replacement effect, not a death payoff — nothing actually
+  dies.** Flame-Blessed Bolt's `"If that creature or planeswalker would die this turn, exile it
+  instead"` matched the `dies?` regex the produces-only-borrowing fix widened to catch the plural
+  "die." This turns out to be an extremely common burn-spell template — Pillar of Flame, Touch of the
+  Void, Obliterating Bolt, Spikefield Hazard, Underworld Fires, and others all read `"If a creature
+  dealt damage this way would die this turn, exile it instead"` near-verbatim. Excluded with a
+  lookbehind (`(?<!would )`) immediately before the death word, kept inside the same regex rather than
+  converted to a function matcher — `findQualifier` explicitly skips function matchers when scanning
+  for a qualifying type, and this exact regex is what supplies "Cat" for Ajani's and "Zombie" for
+  Wilhelt's qualification, so converting it would silently regress both.
+- **`"a creature dealt damage by [source] ... dies"` is combat/removal value on an opponent's
+  creature, not your own board dying.** Markov Enforcer's `"Whenever a creature dealt damage by this
+  creature this turn dies, create a Blood token"` only ever fires on whatever it just fought — the
+  death-trigger regex never checked whose creature was dying. Same real template recurs on Blood
+  Cultist, Seraph, Sengir Bats, Vampiric Embrace, and others. Excluded with a repeated negative
+  lookahead across the gap (`(?:(?!dealt damage by)[^.;])*`) so "dealt damage by" can't appear anywhere
+  between the trigger word and the death word — same regex-not-function constraint as above.
+
+### Sacrifice-cost precision: a comma isn't always a cost boundary, and creature isn't always the plan
+
+Two further bugs, both in `sacrificesKind`/`sacrificesACreature`'s cost-side scan (`signals.ts`), also
+verified against the full pool with zero false corrections in the sampled cards:
+
+- **A triggered ability's condition and effect can be comma-joined instead of colon-joined, and the
+  old cost-side scan didn't know to stop there.** Blood Hypnotist's `"Whenever you sacrifice one or
+  more Blood tokens, target creature can't block this turn"` never sacrifices a creature at all — Blood
+  tokens are artifacts — but the unbounded scan credited it with one anyway, reading the *unrelated
+  later* "target creature" (the effect's own target, past the comma) as the sacrificed object. The same
+  shape recurs whenever the sacrificed thing isn't a creature but "creature" appears later in the same
+  sentence for an unrelated reason — Crime Novelist and Daring Sleuth sacrifice artifacts/Clues and
+  mention "creature" only as an unrelated buff/transform target; Nyssa of Traken and Szarel, Genesis
+  Shepherd sacrifice artifacts/permanents and mention "creature" only as an unrelated ability target.
+  Fixed by anchoring the scan on the word "sacrifice" itself and bounding it to the next comma *after*
+  that point, rather than scanning the whole remaining clause — this also had to keep respecting an
+  activated ability's `:` first and unchanged (Nim Devourer's `"{B}{B}: Return this card from your
+  graveyard to the battlefield, then sacrifice a creature"` pays only `{B}{B}` to activate; the
+  sacrifice is part of the *effect*, not the cost, and an earlier version of this fix that searched for
+  "sacrifice" before checking for a colon at all wrongly credited this, Polygraph Orb, and Sorin,
+  Imperious Bloodlord with a consumes role none of the three have — caught by the same full-pool
+  before/after diff, not by any of the eight cards that motivated the fix).
+- **Creature listed alongside other fungible resources in one sacrifice cost isn't a creature-specific
+  plan, even though creature is a literal legal choice.** Greater Gargadon's `"Sacrifice an artifact,
+  creature, or land: Remove a time counter..."` is a suspend-acceleration cost with no preference
+  toward creatures at all — consistent with Aristocrats' own description ("deliberately
+  creature-specific: sacrificing an artifact or a land is a different deck"). This turns out to be the
+  single most common shape among the newly-excluded cards: "sacrifice another creature or artifact,"
+  "creature or land," "creature or enchantment," "creature or planeswalker," and Braids, Arisen
+  Nightmare's five-way `"artifact, creature, enchantment, land, or planeswalker"` all recur across the
+  pool. A new `sacrificesCreatureSpecifically` check (used only by `aristocrats.consumes`, not by
+  `detectKindred`'s own per-type calls, which are already type-specific by construction) requires the
+  cost not list a non-creature resource (artifact/land/permanent/enchantment/planeswalker) alongside
+  creature via a comma/"or" list.
+
+### `deckAnalysis.ts`'s own "unqualified supports qualified" fold is a related, still-open gap
+
+`groupByTheme`'s fold (deck-level theme summaries, independent of any commander) uses `ownSignalContains`
+directly and unconditionally — it has none of `supporterMatches`'s qualifier-kind structural fallback
+or the produces/flexible-role distinction above. A submitted list containing one of the produces-only
+cards this section describes would still have it silently folded into every qualified variant of that
+archetype the list happens to contain, the same false-positive shape this section fixes for commander
+suggestions. Deliberately out of scope here — `scoreCommanders`/`supporterMatches` is what a real
+citation list actually renders from, and `groupByTheme` is a second, separate consumer that would need
+its own pass.
+
 ### Counters are a family, not a keyword
 
 `counters` matches the literal string `+1/+1`. That is one counter kind out of at least a dozen the
@@ -750,6 +845,26 @@ Checked against real cards during the corpus review. **Do not "simplify" these a
   (already fixtured for an unrelated reason — see "token descriptor stripping" above) is a second real
   card the borrow newly qualifies, from `goWide` to `goWide:Zombie` — checked and pinned in
   `signals.test.ts` rather than left as an unasserted side effect.
+- **The same false-citation shape recurs for a TEXT-qualified signal, not just a borrowed one — found
+  walking a second real user's citation list card by card.** Kratos, Stoic Father's `"whenever a God
+  dies"` names God directly, so `aristocrats:God` is text-qualified, untouched by the borrowing fix
+  above — yet three cards cited under "Aristocrats (God)" (Kavaron Harrier, Goro-Goro Disciple of
+  Ryusei, Young Pyromancer) are `produces`-only and make a fixed non-God token each. Generalised the
+  same rigid/`produces`-vs-flexible/`consumes`-or-`rewards` distinction to the *supporter* side of
+  `supporterMatches`, across every qualifier kind — see "A produces-only SUPPORTER doesn't back a
+  qualified signal either" above. The same review turned up two more, independent bugs in the same
+  archetype: Flame-Blessed Bolt's `"if [x] would die ... instead"` replacement effect and Markov
+  Enforcer's `"a creature dealt damage by [source] ... dies"` combat-kill trigger both matched the
+  death-trigger regex as if they were payoffs; Blood Hypnotist's sacrifice-cost scan credited it with
+  sacrificing a creature it never mentions, reading an unrelated later "creature" past a comma; Greater
+  Gargadon's three-way `"artifact, creature, or land"` sacrifice cost isn't the creature-specific plan
+  Aristocrats' own description requires. All four fixed and checked against the *entire* legal card
+  pool (not just the motivating cards) via a live-vs-precomputed before/after diff: 276 cards changed,
+  0 gained a new false positive, 240 correctly lost one — 40 of the lost cards sampled by hand across
+  both the death-trigger and sacrifice-cost fixes, all 40 confirmed correct. That same diff caught a
+  real regression in an earlier version of the sacrifice-cost fix before it shipped — see "Sacrifice-cost
+  precision" above for the Nim Devourer/Polygraph Orb/Sorin, Imperious Bloodlord case it would have
+  wrongly credited.
 - **`monoColorDevotion`'s mono-color scoping is deliberate, not an oversight to "complete" later.**
   "Devotion to blue and black" (Phenax, Keranos, Ephara, Iroas, Karametra, Athreos — six real Theros
   gods) is a genuinely different mechanic from single-color devotion, not a superset of it: a deck
