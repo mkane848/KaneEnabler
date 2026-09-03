@@ -1,16 +1,38 @@
-:root {
-  --ink: #17140f;
-  --ink-raised: #221d15;
-  --ink-border: #3a3225;
-  --parchment: #f4ecd8;
-  --parchment-dim: #e6d9b8;
-  --brass: #b8842a;
-  --brass-bright: #dba53f;
-  --text-primary: #f4ecd8;
-  --text-muted: #a89a80;
-  --ink-text: #241f16;
-  --ink-text-muted: #6b5f4a;
+/* This app's own token names, aliased to the platform theme's
+   (@mtg/ui/theme.css, imported ahead of this file in index.css).
 
+   The brass-and-parchment palette that used to be defined here *is* the
+   platform palette now, so every value below resolves to what it always
+   was — this file changed direction, not appearance. Keeping the local
+   names means the ~2,300 lines of rules across styles/ that read
+   `var(--ink)` / `var(--brass)` need no edit, while there is still exactly
+   one place a platform color is defined.
+
+   Only genuinely app-specific tokens (the mana pips) hold literal values
+   here now. */
+:root {
+  --ink: var(--mtg-color-bg);
+  --ink-raised: var(--mtg-color-surface);
+  --ink-border: var(--mtg-color-border);
+  --parchment: var(--mtg-color-text);
+  --brass: var(--mtg-color-accent);
+  --brass-bright: var(--mtg-color-accent-hover);
+  --text-primary: var(--mtg-color-text);
+  --text-muted: var(--mtg-color-text-muted);
+  --ink-text: var(--mtg-color-text-inverse);
+  --ink-text-muted: var(--mtg-color-text-faint);
+
+  /* A dimmer parchment for a large fill that would glare at full strength.
+     No platform equivalent — nothing else on the site fills an area this
+     size with the text color. */
+  --parchment-dim: #e6d9b8;
+
+  /* Mana pips — MTG's own White/Blue/Black/Red/Green colors. Deliberately
+     not platform tokens: a blue pip reads as blue mana under any theme,
+     the same way suit colors on a playing card don't change with the table
+     felt. Paired with ink that stays legible on each disc — dark discs
+     need a light glyph, pale ones a dark glyph, and a hybrid can pair one
+     of each, so the two always travel together. */
   --pip-w: #f8f4e3;
   --pip-w-ink: rgba(20, 16, 10, 0.82);
   --pip-u: #0f6ab5;
@@ -28,30 +50,11 @@
   --pip-generic: #b3aaa1;
   --pip-generic-ink: rgba(20, 16, 10, 0.82);
 
-  /* Destructive actions. Muted enough not to fight the brass accent, red
-     enough to read as "this removes something". */
-  --danger: #8c2f2f;
-  --danger-text: #f8f4e3;
+  --danger: var(--mtg-color-danger);
+  --danger-text: var(--mtg-color-danger-text);
+  --danger-strong: var(--mtg-color-danger-strong);
 
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
-
-  color-scheme: dark;
-
-  /* Platform tokens — read by shared components from @mtg/ui/@mtg/profile
-     (NavBar, AccountMenu, AuthDialog) so they re-theme per app without
-     per-app overrides. Mapped from this app's own tokens above; nothing
-     above is renamed or removed. */
-  --mtg-color-bg: var(--ink);
-  --mtg-color-surface: var(--ink-raised);
-  --mtg-color-border: var(--ink-border);
-  --mtg-color-text: var(--text-primary);
-  --mtg-color-text-muted: var(--text-muted);
-  --mtg-color-accent: var(--brass);
-  --mtg-color-accent-hover: var(--brass-bright);
-  --mtg-color-danger: var(--danger);
-  --mtg-font-display: var(--font-display);
-  --mtg-font-body: var(--font-body);
-  --mtg-font-mono: var(--font-mono);
+  --font-display: var(--mtg-font-display);
+  --font-body: var(--mtg-font-body);
+  --font-mono: var(--mtg-font-mono);
 }

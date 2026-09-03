@@ -455,12 +455,16 @@ scope:
   via a new `GET /api/cards` on the recommender server (`services/cardDTO.ts`'s `toCardDTO`, shared
   with `/api/recommend`'s existing mapping), and exposes the `note` field for the first time — the
   schema always had it, but no UI ever let you write one before this.
-- **"Hidden or demoted" landed as annotated only.** A disliked card/commander shows the same ✕
-  badge as a like, unfilled — nothing currently hides it from the grid or sorts it lower. This
-  app already has a session-only "dismiss" for exactly the "get this out of my results" need
-  (`useAppStore`); wiring a persistent dislike into that same behavior, or into `sort.ts`, is a
-  reasonable follow-up but wasn't done here to avoid reaching into the sort/filter pipeline in the
-  same pass as the data layer.
+- **"Hidden" landed 2026-09-03; "demoted" was deliberately not taken.** This originally shipped as
+  annotation only — a disliked commander showed an unfilled ✕ and nothing hid it or sorted it
+  lower — and the follow-up named here (wire it into the session-dismiss behavior `useAppStore`
+  already provides, or into `sort.ts`) was left open. The dismiss half is now done:
+  `client/src/lib/disliked.ts` partitions disliked units out of both the confident grid and the
+  coverage tier, with a "N disliked / Show" control beside the dismissal count. A Partner or
+  Background pair hides only when _both_ halves are disliked, matching the "unit agrees" rule
+  `LikeDislikeButtons` uses. `sort.ts` was **not** touched, on purpose: the decision on record
+  above is "preferences filter and annotate only — no scoring change", and hiding is a filter
+  while a score penalty is not. Anyone reopening that should change the decision first.
 
 Runs on its own Supabase project ("kaneenabler"), not the account's other one — that one already
 holds an unrelated app's data (campaigns/characters/party, nothing to do with Magic).

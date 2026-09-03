@@ -1,0 +1,331 @@
+/* ==========================================================================
+   The platform theme — one palette, one type scale, one shape scale, for
+   every app on the site.
+
+   Before this file each app defined its own palette from scratch (the
+   recommender in brass on ink, apps/home in violet, time-counters in
+   TARDIS blue) and mapped it *outward* onto the --mtg-* tokens the shared
+   NavBar/AccountMenu/AuthDialog read. Three unrelated looks agreed only on
+   the chrome, so moving between tools read as moving between websites.
+
+   The direction is now reversed: this file is where the palette lives, and
+   each app aliases its own long-standing local token names *inward* to
+   these. That keeps every existing rule (`var(--ink)`, `var(--bg)`,
+   `var(--color-surface)`) working untouched while there is exactly one
+   place a platform color is defined.
+
+   Values are the commander recommender's brass-and-parchment palette,
+   which the repo owner picked as the platform look — it was already the
+   largest styled surface in the monorepo, so adopting it moved the fewest
+   pixels.
+
+   An app may still define tokens this file doesn't (mana pip colors,
+   time-counters' mechanic badges) and may deliberately override these —
+   time-counters' Doctor Who theme is the one sanctioned override, and it
+   reskins by redefining these same names under [data-theme='who'].
+   ========================================================================== */
+
+:root {
+  /* --- Surfaces ------------------------------------------------------- */
+  --mtg-color-bg: #17140f;
+  --mtg-color-surface: #221d15;
+  /* One step above --surface, for a control that needs to read as raised
+     against a card that is itself already raised against the page. */
+  --mtg-color-surface-raised: #2b2419;
+  --mtg-color-surface-hover: #2b2419;
+  --mtg-color-border: #3a3225;
+  /* A divider inside a surface, where a full-strength border would cut the
+     card into pieces rather than group it. */
+  --mtg-color-border-soft: #2a251b;
+
+  /* Page background art, applied to `body` below. A theme that wants a
+     different wash (time-counters' Doctor Who skin) redefines this token
+     rather than restating the body rule. */
+  --mtg-color-bg-image:
+    radial-gradient(circle at 20% -10%, #2a2418 0%, transparent 45%),
+    radial-gradient(circle at 90% 10%, #241f17 0%, transparent 40%);
+
+  /* --- Ink ------------------------------------------------------------ */
+  --mtg-color-text: #f4ecd8;
+  --mtg-color-text-muted: #a89a80;
+  --mtg-color-text-faint: #6b5f4a;
+  /* Ink for text placed *on* a parchment-colored fill rather than on the
+     dark page — the inverse pairing. */
+  --mtg-color-text-inverse: #241f16;
+
+  /* --- Accent --------------------------------------------------------- */
+  --mtg-color-accent: #b8842a;
+  --mtg-color-accent-hover: #dba53f;
+  /* A tinted fill for a selected/active state, dark enough to keep
+     --mtg-color-text legible on top of it. */
+  --mtg-color-accent-soft: #3a2c12;
+  /* Ink for text placed on a solid --mtg-color-accent fill. */
+  --mtg-color-accent-ink: #1c1408;
+
+  /* --- Danger --------------------------------------------------------- */
+  /* Muted enough not to fight the brass accent, red enough to read as
+     "this removes something". */
+  --mtg-color-danger: #8c2f2f;
+  --mtg-color-danger-hover: #a83a3a;
+  --mtg-color-danger-soft: #3a1c1c;
+  /* Ink for text placed on a solid --mtg-color-danger fill. */
+  --mtg-color-danger-text: #f8f4e3;
+  /* Danger as *text on the page*, where the fill color is far too dark to
+     read (--mtg-color-danger on --mtg-color-bg is about 1.5:1). This one
+     clears 8:1, so an error message is legible rather than merely red. */
+  --mtg-color-danger-strong: #e89a8f;
+
+  /* --- Type ----------------------------------------------------------- */
+  --mtg-font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --mtg-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --mtg-font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* --- Shape ---------------------------------------------------------- */
+  --mtg-radius-sm: 8px;
+  --mtg-radius-md: 12px;
+  --mtg-radius-lg: 18px;
+  --mtg-shadow-card: 0 2px 14px rgba(10, 8, 4, 0.45);
+  --mtg-shadow-modal: 0 12px 40px rgba(10, 8, 4, 0.6);
+
+  /* --- Layout --------------------------------------------------------- */
+  /* The measure every app's main column is capped at, so the text column
+     lands in the same place as you move between tools. */
+  --mtg-page-max: 60rem;
+  --mtg-page-gutter: 1.5rem;
+
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Reset. Identical copies of these rules previously sat at the top of all
+   three apps' own stylesheets.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--mtg-color-bg);
+  background-image: var(--mtg-color-bg-image);
+  background-attachment: fixed;
+  color: var(--mtg-color-text);
+  font-family: var(--mtg-font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mtg-color-accent-hover);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Page shell. The frame around every app: same measure, same gutters, same
+   safe-area handling, so the chrome doesn't shift as you cross tools.
+   ========================================================================== */
+
+.mtg-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The main region takes the free vertical space, so SiteFooter sits at the
+   bottom of the viewport on a short page instead of floating mid-screen.
+   Covers apps that lay their own content out (time-counters caps itself far
+   narrower than --mtg-page-max) as well as those using .mtg-page-main. */
+.mtg-page > main {
+  flex: 1;
+}
+
+/* Safe-area insets keep content out from under a mobile URL bar or notch,
+   and clear of the home indicator. The max() means the normal desktop
+   padding still applies wherever the insets are zero. */
+.mtg-page-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--mtg-page-max);
+  margin: 0 auto;
+  padding: max(3rem, calc(env(safe-area-inset-top) + 1.5rem))
+    max(var(--mtg-page-gutter), env(safe-area-inset-right))
+    max(4rem, calc(env(safe-area-inset-bottom) + 2rem))
+    max(var(--mtg-page-gutter), env(safe-area-inset-left));
+}
+
+/* Matches NavBar.css's own mobile breakpoint, so the chrome and the page
+   below it switch to their compact layout at the same width. */
+@media (max-width: 640px) {
+  .mtg-page-main {
+    padding: max(1.5rem, calc(env(safe-area-inset-top) + 1rem))
+      max(var(--mtg-page-gutter), env(safe-area-inset-right))
+      max(2rem, calc(env(safe-area-inset-bottom) + 1rem))
+      max(var(--mtg-page-gutter), env(safe-area-inset-left));
+  }
+}
+
+.mtg-page-title {
+  font-family: var(--mtg-font-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  line-height: 1.15;
+  margin: 0 0 0.9rem;
+}
+
+.mtg-page-subtitle {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--mtg-color-text-muted);
+  max-width: 52ch;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Controls. time-counters defined these first; they live here now so all
+   three apps get the same button and the same field.
+   ========================================================================== */
+
+.mtg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  padding: 0.6em 1.1em;
+  border-radius: var(--mtg-radius-sm);
+  font-family: var(--mtg-font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 80ms ease;
+}
+
+.mtg-btn:active {
+  transform: scale(0.98);
+}
+
+.mtg-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.mtg-btn-primary {
+  background: var(--mtg-color-accent);
+  color: var(--mtg-color-accent-ink);
+}
+
+.mtg-btn-primary:hover:not(:disabled) {
+  background: var(--mtg-color-accent-hover);
+}
+
+.mtg-btn-ghost {
+  background: transparent;
+  color: var(--mtg-color-text-muted);
+  border-color: var(--mtg-color-border);
+}
+
+.mtg-btn-ghost:hover:not(:disabled) {
+  color: var(--mtg-color-text);
+  border-color: var(--mtg-color-accent);
+}
+
+.mtg-btn-danger {
+  background: transparent;
+  color: var(--mtg-color-danger-text);
+  border-color: var(--mtg-color-danger-soft);
+}
+
+.mtg-btn-danger:hover:not(:disabled) {
+  background: var(--mtg-color-danger-soft);
+}
+
+.mtg-btn-sm {
+  padding: 0.35em 0.7em;
+  font-size: 0.8rem;
+}
+
+.mtg-input {
+  width: 100%;
+  background: var(--mtg-color-surface);
+  border: 1px solid var(--mtg-color-border);
+  border-radius: var(--mtg-radius-sm);
+  padding: 0.6em 0.8em;
+  color: var(--mtg-color-text);
+  font-size: 0.95rem;
+}
+
+.mtg-input:focus {
+  border-color: var(--mtg-color-accent);
+}
+
+.mtg-input::placeholder {
+  color: var(--mtg-color-text-faint);
+}
+
+/* ==========================================================================
+   Footer. Every app closes with the same attribution line; it used to be
+   bespoke markup in each (and inline styles in time-counters).
+   ========================================================================== */
+
+.mtg-footer {
+  max-width: var(--mtg-page-max);
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem max(var(--mtg-page-gutter), env(safe-area-inset-right))
+    max(2rem, calc(env(safe-area-inset-bottom) + 1rem))
+    max(var(--mtg-page-gutter), env(safe-area-inset-left));
+  border-top: 1px solid var(--mtg-color-border);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--mtg-color-text-muted);
+}
+
+.mtg-footer p {
+  margin: 0;
+}
+
+.mtg-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

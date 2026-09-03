@@ -15,7 +15,7 @@ export default function AboutModal({ onClose }: AboutModalProps) {
           <h2 className={styles.title}>About</h2>
         </ModalTitle>
         <ModalClose asChild>
-          <button type="button" className="btn btn-ghost btn-sm">
+          <button type="button" className="mtg-btn mtg-btn-ghost mtg-btn-sm">
             Done
           </button>
         </ModalClose>

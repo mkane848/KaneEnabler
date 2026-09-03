@@ -172,7 +172,7 @@ export default function CardTile({ card, onSetCount, onAdjustCount, onRemove }: 
               <span className={styles.resolveText}>{card.resolveNote}</span>
               <button
                 type="button"
-                className="btn btn-sm btn-ghost"
+                className="mtg-btn mtg-btn-sm mtg-btn-ghost"
                 onClick={() => onRemove(card.instanceId)}
               >
                 Done

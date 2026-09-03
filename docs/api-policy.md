@@ -93,7 +93,7 @@ These belong in CI so the policy survives future refactors:
 - **Landed:** `.github/workflows/scryfall-fetch-check.yml` runs the real Scryfall fetch (not just
   the import against a file already on disk) weekly, separate from the main CI workflow so a normal
   PR generates no extra Scryfall traffic — confirmed with the repo owner before implementation, per
-  this doc's own rule, including the cadence. Catches a bad *fetch* (a changed bulk-data shape, a
+  this doc's own rule, including the cadence. Catches a bad _fetch_ (a changed bulk-data shape, a
   moved field) via each script's own floor check before a real deploy hits it. The same workflow now
   also runs `recommend.integration.test.ts` (`server/src/routes/`) right after the fetch, exercising
   the whole `/api/recommend` pipeline against real freshly-imported data — that test `skipIf`s itself

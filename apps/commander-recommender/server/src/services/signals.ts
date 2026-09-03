@@ -494,7 +494,9 @@ function detectsSelfGrowth(rawText: string, names: string[]): boolean {
   const shortNames = names.map((name) => name.split(',')[0]!.trim()).filter((n) => n !== '');
   return counterClauses.every((clause) => {
     if (/\bon this (?:creature|permanent)\b/i.test(clause)) return true;
-    return shortNames.some((short) => new RegExp(`\\bon ${escapeRegExp(short)}\\b`, 'i').test(clause));
+    return shortNames.some((short) =>
+      new RegExp(`\\bon ${escapeRegExp(short)}\\b`, 'i').test(clause),
+    );
   });
 }
 
@@ -846,7 +848,8 @@ const ARTIFACT_ARCHETYPE_SUBTYPES = ['Vehicle', 'Food', 'Clue', 'Treasure'];
  * so `produces` can exclude exactly this shape rather than double-counting
  * it, while still catching triggers that read a *different* resource and
  * cause the loss themselves (Sanguine Bond's "whenever you gain life"). */
-const DRAIN_TRIGGER_READS_LOSS = /\bwhenever (?:an? )?(?:opponent|player)s? (?:loses?|lose) life\b/i;
+const DRAIN_TRIGGER_READS_LOSS =
+  /\bwhenever (?:an? )?(?:opponent|player)s? (?:loses?|lose) life\b/i;
 
 /** A `cyclingDiscard` clause whose *trigger* is discarding/cycling itself
  * (Curator of Mysteries, Ivora, Rielle) — `rewards` only, the same
@@ -1255,7 +1258,10 @@ export const ARCHETYPES: ArchetypeDef[] = [
         /cast or copy an? instant or sorcery spell/i,
       ],
       // Demonstrate's own copy text ("you may copy it") is reminder-only.
-      amplifies: [/copy (?:it\.|that spell|the (?:target|next) instant or sorcery)/i, /\bdemonstrate\b/i],
+      amplifies: [
+        /copy (?:it\.|that spell|the (?:target|next) instant or sorcery)/i,
+        /\bdemonstrate\b/i,
+      ],
       // Cost reduction turns the engine on faster; it doesn't reward you for
       // having engaged with it. Alisaie Leveilleur's Dualcast ("the second
       // spell you cast each turn costs {2} less") and any "instant and
@@ -1324,7 +1330,9 @@ export const ARCHETYPES: ArchetypeDef[] = [
     weight: 20,
     qualifiable: 'permanentSubtype',
     roles: {
-      is: [(f: CardFacts) => f.permanentSubtypes.some((s) => ARTIFACT_ARCHETYPE_SUBTYPES.includes(s))],
+      is: [
+        (f: CardFacts) => f.permanentSubtypes.some((s) => ARTIFACT_ARCHETYPE_SUBTYPES.includes(s)),
+      ],
       produces: [
         /create[^.;]*(?:clue|food|treasure) tokens?/i,
         // Investigate's own "create a Clue token" is reminder-only.
@@ -1380,8 +1388,8 @@ export const ARCHETYPES: ArchetypeDef[] = [
     description:
       'Gaining life on purpose, and the payoffs that turn a life-gain event into more than padding — ' +
       'triggers off gaining life, thresholds on how much was gained this turn, and doublers. Granting ' +
-      'lifelink (not merely having it structurally) is production here — the format\'s dominant way to ' +
-      'gain life passively, and this archetype\'s own keyword shadow (docs/archetypes.md).',
+      "lifelink (not merely having it structurally) is production here — the format's dominant way to " +
+      "gain life passively, and this archetype's own keyword shadow (docs/archetypes.md).",
     weight: 20,
     roles: {
       produces: [
@@ -1419,7 +1427,7 @@ export const ARCHETYPES: ArchetypeDef[] = [
     label: 'Drain',
     description:
       'Life loss as a trigger, not damage — direct effects that make an opponent lose life (often ' +
-      'alongside you gaining it), and the payoffs that read an opponent\'s life loss for more value. ' +
+      "alongside you gaining it), and the payoffs that read an opponent's life loss for more value. " +
       'Sanguine Bond and Vito, Thorn of the Dusk Rose are the bridge cards to Lifegain: they read a ' +
       "gain-life event and turn it straight into an opponent's loss.",
     weight: 20,
@@ -1487,7 +1495,9 @@ export const ARCHETYPES: ArchetypeDef[] = [
         (f: CardFacts) =>
           clauses(f.text).some(
             (c) =>
-              /\bdiscards? (?:a|an|\d+|x|that many|two|three|your|their) (?:cards?|hand)\b/i.test(c) &&
+              /\bdiscards? (?:a|an|\d+|x|that many|two|three|your|their) (?:cards?|hand)\b/i.test(
+                c,
+              ) &&
               !CYCLING_DISCARD_TRIGGER_READS_DISCARD.test(c) &&
               !/(?:opponent|target player|defending player)s? discards?/i.test(c),
           ),
@@ -1507,9 +1517,9 @@ export const ARCHETYPES: ArchetypeDef[] = [
     description:
       'Delayed-cost effects — reanimating, blinking, or copying something with a built-in ' +
       '"sacrifice/exile/return it at the beginning of the next end step" cleanup — and the enablers ' +
-      "that end the turn early to erase that cleanup before it ever fires, turning a loan into a " +
+      'that end the turn early to erase that cleanup before it ever fires, turning a loan into a ' +
       'keeper. Obeka herself is one of the enablers, not a payoff for the produces side — nothing in ' +
-      "her text says \"temporary,\" she just makes other cards' temporary effects never end.",
+      'her text says "temporary," she just makes other cards\' temporary effects never end.',
     weight: 20,
     // The identity here is the erasers, not the (much more common, often
     // incidental) delayed-cost cards themselves — "three cards... are the
@@ -1551,9 +1561,9 @@ export const ARCHETYPES: ArchetypeDef[] = [
     description:
       'The same body coming back from the graveyard, again and again — Persist/Undying, "you may ' +
       'cast this card from your graveyard" engines, and self-triggering "return this card to the ' +
-      "battlefield\" effects — distinct from Reanimator's one-shot cheat of something big into play. " +
+      'battlefield" effects — distinct from Reanimator\'s one-shot cheat of something big into play. ' +
       "Also covers the loop's own enabler: a card that puts a +1/+1 counter on an entering creature " +
-      "cancels the -1/-1 counter Persist leaves behind (CR 704.5q), letting the loop repeat instead " +
+      'cancels the -1/-1 counter Persist leaves behind (CR 704.5q), letting the loop repeat instead ' +
       'of ending after one return.',
     weight: 20,
     // No separate payoff role, the same shape as drain/cyclingDiscard/
@@ -1666,7 +1676,11 @@ export const ARCHETYPES: ArchetypeDef[] = [
             if (CARD_DRAW_TRIGGER_READS_DRAW.test(c) || CARD_DRAW_REPLACEMENT.test(c)) {
               return false;
             }
-            if (/\bdraw (?:a|an|\d+|x|that many|two|three|four|five|six|additional|extra) cards?\b/i.test(c)) {
+            if (
+              /\bdraw (?:a|an|\d+|x|that many|two|three|four|five|six|additional|extra) cards?\b/i.test(
+                c,
+              )
+            ) {
               return true;
             }
             return /\b(?:each|all|every) players? draws? (?:a|an|\d+|x|that many|two|three|four|five|six|additional|extra) cards?\b/i.test(
@@ -1904,8 +1918,8 @@ export const ARCHETYPES: ArchetypeDef[] = [
     key: 'monoColorDevotion',
     label: 'Mono-Color Devotion',
     description:
-      "Payoffs that read your devotion to a single color (CR 700.6: the number of mana symbols of " +
-      "that color among the mana costs of permanents you control) — token counts, damage, life " +
+      'Payoffs that read your devotion to a single color (CR 700.6: the number of mana symbols of ' +
+      'that color among the mana costs of permanents you control) — token counts, damage, life ' +
       "gain, or a God's own threshold for being a creature at all, all scaled by one color's pip " +
       'count.',
     weight: 18,
@@ -1933,7 +1947,7 @@ export const ARCHETYPES: ArchetypeDef[] = [
     label: 'Alternate Win Condition',
     description:
       'A genuine "you win the game" outcome from the card\'s own text, not merely a symmetric ' +
-      "prevention effect (\"can't lose\"/\"can't win\") granted to something else.",
+      'prevention effect ("can\'t lose"/"can\'t win") granted to something else.',
     weight: 20,
     // No separate payoff role — the win condition itself is the identity,
     // the same shape as freeSpells/drain: there is no separate "reward"
@@ -2062,7 +2076,9 @@ export const ARCHETYPES: ArchetypeDef[] = [
         // Excludes Kalamax and Dragonsguard Elite: a card whose only +1/+1
         // clause targets itself is bookkeeping for another ability (a copy
         // trigger, Magecraft), not production for a Counters deck.
-        (f) => !f.growsItself && /put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i.test(f.text),
+        (f) =>
+          !f.growsItself &&
+          /put (?:a|an|one|two|three|x|\d+)[^.;]*\+1\/\+1 counters?/i.test(f.text),
         // "Enters with N +1/+1 counters" never says "put" — Faithful
         // Watchdog, Wildwood Scourge, District Mascot, Giada.
         (f) => !f.growsItself && /enters with[^.;]*\+1\/\+1 counters?/i.test(f.text),
@@ -2359,7 +2375,8 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
       // not register as consuming Dogs merely because "Dog" appears in the
       // effect. Tap/discard/exile aren't restricted the same way; nothing
       // in the corpus needed it and widening them isn't this fix's job.
-      const consumesType = sacrificesKind(clause, type) || /\btap\b|\bdiscard\b|\bexile\b/i.test(clause);
+      const consumesType =
+        sacrificesKind(clause, type) || /\btap\b|\bdiscard\b|\bexile\b/i.test(clause);
       if (consumesType) {
         roles.push('consumes');
         // An activated ability is "cost: effect", so a clause that spends the
@@ -2510,7 +2527,8 @@ function detectKindred(facts: CardFacts, vocab: Vocabulary): SignalMatch[] {
     out.push({
       archetype: 'kindred',
       label: 'Kindred (every type)',
-      description: 'Changeling: this card is every creature type, and supports every kindred theme in the deck.',
+      description:
+        'Changeling: this card is every creature type, and supports every kindred theme in the deck.',
       weight: 15,
       qualifier: undefined,
       qualifierKind: undefined,
@@ -2670,7 +2688,10 @@ function candidateKeywords(facts: CardFacts, vocab: Vocabulary): string[] {
  * possession is real evidence on its own; `qualifier` is only ever read for
  * that one carve-out, and only `keywordCare` signals set it to a keyword name.
  */
-export function definingRequirement(archetype: string, qualifier?: string): { role: Role; minimum: number } {
+export function definingRequirement(
+  archetype: string,
+  qualifier?: string,
+): { role: Role; minimum: number } {
   if (archetype === 'kindred') {
     // "Ten Wizards plus one incidental pump is not a Wizard deck" — see
     // archetypes.md. Membership is structural and free to claim, so kindred

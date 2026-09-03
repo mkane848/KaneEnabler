@@ -1,10 +1,9 @@
-.app-shell {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: max(3rem, calc(env(safe-area-inset-top) + 1.5rem))
-    max(1.5rem, env(safe-area-inset-right)) max(4rem, calc(env(safe-area-inset-bottom) + 2rem))
-    max(1.5rem, env(safe-area-inset-left));
-}
+/* .app-shell, .app-title and .app-subtitle used to live here. They were
+   byte-for-byte what the platform theme now calls .mtg-page-main /
+   .mtg-page-title / .mtg-page-subtitle (@mtg/ui/theme.css) — this app's
+   measure and gutters were the ones the platform adopted — so the markup
+   uses those directly and only the differences remain below. Likewise
+   .app-footer, now @mtg/ui's SiteFooter. */
 
 .app-nav-link {
   font-family: var(--font-body);
@@ -13,7 +12,7 @@
   color: var(--text-primary);
   background: transparent;
   border: 1px solid var(--ink-border);
-  border-radius: 8px;
+  border-radius: var(--mtg-radius-sm);
   padding: 0.4rem 0.9rem;
   cursor: pointer;
   transition: border-color 0.15s ease;
@@ -23,41 +22,22 @@
   border-color: var(--brass);
 }
 
-.app-header {
-  border-bottom: 1px solid var(--ink-border);
-  padding-bottom: 2rem;
-  margin-bottom: 2.5rem;
-}
-
-.app-title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(1.9rem, 4vw, 2.75rem);
-  line-height: 1.15;
-  margin: 0 0 0.9rem;
-  max-width: 20ch;
-}
-
-.app-subtitle {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--text-muted);
-  max-width: 52ch;
-  margin: 0;
-}
-
 .app-main {
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
 }
 
-.app-footer {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--ink-border);
-  font-size: 0.8rem;
-  color: var(--text-muted);
+.app-header {
+  border-bottom: 1px solid var(--ink-border);
+  padding-bottom: 2rem;
+}
+
+/* The headline is the one place this app departs from the platform's
+   title: a 20ch cap keeps it to the two lines the hero was composed
+   around, rather than running the full measure. */
+.app-title {
+  max-width: 20ch;
 }
 
 /* Matches NavBar.css's own mobile breakpoint, so the chrome and the hero
@@ -65,15 +45,12 @@
    run before CardListUpload and stops the headline's clamp floor from
    wrapping to three lines inside a 20ch cap on a narrow phone. */
 @media (max-width: 640px) {
-  .app-shell {
-    padding: max(1.5rem, calc(env(safe-area-inset-top) + 1rem))
-      max(1.5rem, env(safe-area-inset-right)) max(2rem, calc(env(safe-area-inset-bottom) + 1rem))
-      max(1.5rem, env(safe-area-inset-left));
+  .app-main {
+    gap: 1.5rem;
   }
 
   .app-header {
     padding-bottom: 1.25rem;
-    margin-bottom: 1.5rem;
   }
 
   .app-title {

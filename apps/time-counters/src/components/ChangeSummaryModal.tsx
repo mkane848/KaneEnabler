@@ -42,7 +42,7 @@ export default function ChangeSummaryModal({
           <h2 className={styles.title}>Turn {turn}</h2>
         </ModalTitle>
         <ModalClose asChild>
-          <button type="button" className="btn btn-ghost btn-sm">
+          <button type="button" className="mtg-btn mtg-btn-ghost mtg-btn-sm">
             Done
           </button>
         </ModalClose>
@@ -86,7 +86,7 @@ export default function ChangeSummaryModal({
                   {c.hitTarget && (
                     <button
                       type="button"
-                      className="btn btn-sm btn-ghost"
+                      className="mtg-btn mtg-btn-sm mtg-btn-ghost"
                       onClick={() => onResolve(c.instanceId)}
                     >
                       Done

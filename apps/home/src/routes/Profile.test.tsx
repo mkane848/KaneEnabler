@@ -237,4 +237,106 @@ describe('Profile', () => {
     render(<Profile />);
     expect(screen.getByText('Could not reach the server.')).toBeInTheDocument();
   });
+
+  describe('card lenses', () => {
+    // A liked, jank-tagged commander belongs to all three lenses at once —
+    // the exact overlap that made seven stacked lists the wrong shape.
+    const JANK_COMMANDER = {
+      ...CARD_PREFERENCE,
+      id: 'pref-2',
+      oracleId: 'oracle-kenrith',
+      tags: ['jank'],
+    };
+    const KENRITH: ResolvedCard = {
+      ...RESOLVED_CARD,
+      oracleId: 'oracle-kenrith',
+      name: 'Kenrith, the Returned King',
+      isCommanderEligible: true,
+    };
+    const DISLIKED_COMMANDER = {
+      ...CARD_PREFERENCE,
+      id: 'pref-3',
+      oracleId: 'oracle-golos',
+      sentiment: 'dislike' as const,
+    };
+    const GOLOS: ResolvedCard = {
+      ...RESOLVED_CARD,
+      oracleId: 'oracle-golos',
+      name: 'Golos, Tireless Pilgrim',
+      isCommanderEligible: true,
+    };
+
+    beforeEach(() => {
+      useAuth.mockReturnValue({ user: { id: 'user-1' }, loading: false, configured: true });
+      useCardPreferences.mockReturnValue({
+        data: [CARD_PREFERENCE, JANK_COMMANDER, DISLIKED_COMMANDER],
+      });
+      useResolvedCards.mockReturnValue({
+        data: [RESOLVED_CARD, KENRITH, GOLOS],
+        isLoading: false,
+        isError: false,
+        error: null,
+      });
+    });
+
+    it('shows every saved card under the default lens, each exactly once', () => {
+      render(<Profile />);
+      expect(screen.getByRole('heading', { name: 'Liked cards' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Disliked cards' })).toBeInTheDocument();
+      expect(screen.getAllByText('Kenrith, the Returned King')).toHaveLength(1);
+      expect(screen.getByText('Sol Ring')).toBeInTheDocument();
+      expect(screen.getByText('Golos, Tireless Pilgrim')).toBeInTheDocument();
+    });
+
+    it('counts each lens across both sentiments', () => {
+      render(<Profile />);
+      // 3 saved cards; 2 are commander-eligible; 1 is tagged jank.
+      expect(screen.getByRole('button', { name: /Everything/ })).toHaveTextContent('3');
+      expect(screen.getByRole('button', { name: /Commanders/ })).toHaveTextContent('2');
+      expect(screen.getByRole('button', { name: /Jank/ })).toHaveTextContent('1');
+    });
+
+    it('narrows to commanders, splitting them by sentiment', () => {
+      render(<Profile />);
+      fireEvent.click(screen.getByRole('button', { name: /Commanders/ }));
+
+      expect(screen.getByRole('heading', { name: 'Favourite commanders' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Disliked commanders' })).toBeInTheDocument();
+      expect(screen.getByText('Kenrith, the Returned King')).toBeInTheDocument();
+      expect(screen.getByText('Golos, Tireless Pilgrim')).toBeInTheDocument();
+      // Sol Ring is liked but not commander-eligible.
+      expect(screen.queryByText('Sol Ring')).toBeNull();
+    });
+
+    it('narrows to jank by tag, not by sentiment or eligibility', () => {
+      render(<Profile />);
+      fireEvent.click(screen.getByRole('button', { name: /Jank/ }));
+
+      expect(screen.getByRole('heading', { name: 'Favourite jank cards' })).toBeInTheDocument();
+      expect(screen.getByText('Kenrith, the Returned King')).toBeInTheDocument();
+      expect(screen.queryByText('Sol Ring')).toBeNull();
+      expect(screen.queryByText('Golos, Tireless Pilgrim')).toBeNull();
+    });
+
+    it('marks the active lens for assistive tech', () => {
+      render(<Profile />);
+      expect(screen.getByRole('button', { name: /Everything/ })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      fireEvent.click(screen.getByRole('button', { name: /Jank/ }));
+      expect(screen.getByRole('button', { name: /Jank/ })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: /Everything/ })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+    });
+
+    it('keeps the combo sections outside the card lens', () => {
+      useComboPreferences.mockReturnValue({ data: [COMBO_PREFERENCE] });
+      render(<Profile />);
+      fireEvent.click(screen.getByRole('button', { name: /Commanders/ }));
+      expect(screen.getByText('Thassa + Consuming Aberration')).toBeInTheDocument();
+    });
+  });
 });

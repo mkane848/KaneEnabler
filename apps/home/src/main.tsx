@@ -6,6 +6,9 @@ import { ErrorBoundary } from '@mtg/ui';
 import ErrorFallback from './components/ErrorFallback';
 import { router } from './router';
 import { AuthProvider } from '@mtg/profile';
+// Platform theme first: it defines the --mtg-* tokens every stylesheet
+// below reads, and its reset must lose to anything an app sets itself.
+import '@mtg/ui/theme.css';
 import '@mtg/ui/NavBar.css';
 import '@mtg/profile/AccountMenu.css';
 import '@mtg/profile/AuthDialog.css';

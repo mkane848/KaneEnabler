@@ -36,11 +36,11 @@ lookups, batched writes, and one shared wake-retry fetch helper. Details in sect
 
 ### Apps
 
-| App | Stack | Role |
-|---|---|---|
-| `apps/commander-recommender` | React/Vite client + Express + better-sqlite3 server | Commander recommendations from a pasted card pool; combo lookup via Commander Spellbook |
-| `apps/time-counters` | React/Vite SPA | In-game counter companion for one specific Doctor Who deck; fully migrated onto shared packages |
-| `apps/home` | React/Vite SPA | Platform landing page + `/profile` browse page over the preference tables |
+| App                          | Stack                                               | Role                                                                                            |
+| ---------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `apps/commander-recommender` | React/Vite client + Express + better-sqlite3 server | Commander recommendations from a pasted card pool; combo lookup via Commander Spellbook         |
+| `apps/time-counters`         | React/Vite SPA                                      | In-game counter companion for one specific Doctor Who deck; fully migrated onto shared packages |
+| `apps/home`                  | React/Vite SPA                                      | Platform landing page + `/profile` browse page over the preference tables                       |
 
 ### Shared packages
 
@@ -88,7 +88,7 @@ Request path (`apps/commander-recommender/server/src/routes/recommend.ts`):
    happens at import time (`import-scryfall.ts` during `prepare-data`, i.e. per deploy).
 4. `scoreCommanders` -> `analyzeDeck` -> `findCardsBySignals` (`db.ts:246`, one JOIN per
    required archetype) -> `buildCoverage` (`server/src/services/coverage.ts`): a dedicated tier
-   that guarantees every submitted card gets *some* commander recommended, even when it clears
+   that guarantees every submitted card gets _some_ commander recommended, even when it clears
    no synergy bar (see `docs/recommendation-coverage.md` for the bug this fixed).
 
 ### Signal engine status (`docs/signals-rework.md`)
@@ -112,11 +112,11 @@ statements that degrade for stale local databases (`hasSignalsTable`,
 
 - Supabase project "kaneenabler", email/password auth only (deliberate v1 scope per
   `docs/handoff.md` Phase 7). RLS verified via impersonated-role SQL tests; the live browser
-  sign-up flow is documented as *not* verified (sandbox egress blocks Supabase).
+  sign-up flow is documented as _not_ verified (sandbox egress blocks Supabase).
 - `card_preferences (user_id, oracle_id, sentiment, tags[], note, created_at)` - unique per
   (user, card); keyed on `oracle_id`, not printing id (an explicit `@mtg/card-model` decision).
 - `combo_preferences (user_id, combo_key, sentiment, spellbook_id?, snapshot jsonb,
-  fetched_at, created_at)` - `combo_key` is FNV-1a over sorted, lowercased card names
+fetched_at, created_at)` - `combo_key` is FNV-1a over sorted, lowercased card names
   (`packages/profile/src/comboKey.ts`), chosen because Spellbook's own id is nullable and its
   contract unverified. The `snapshot` is the whole combo DTO as shown; **favouriting never
   re-queries Commander Spellbook** - a requirement from both Phase 7 and `api-policy.md`, with
@@ -143,7 +143,7 @@ statements that degrade for stale local databases (`hasSignalsTable`,
 
 ### Separate, deliberately
 
-`usePreferencesStore.ts` (zustand + localStorage) holds only `combosPerPage` - durable *UI*
+`usePreferencesStore.ts` (zustand + localStorage) holds only `combosPerPage` - durable _UI_
 prefs, session state stays unpersisted, and `suggestionsPerPage` was removed with a versioned
 migration when the suggestion grid virtualized. This split is documented and clean.
 
@@ -153,7 +153,12 @@ migration when the suggestion grid virtualized. This split is documented and cle
 
 Ordered by weight. Each cites where it was observed.
 
-**F1. Dislikes are decorative (documented deferral, but the gap is real).**
+**F1. Dislikes are decorative (documented deferral, but the gap is real).** — **CLOSED 2026-09-03.**
+A persistent dislike now hides the commander from the results grid, with a "N disliked / Show"
+control beside the dismissal count and a Partner pair hiding only when both halves are disliked
+(`client/src/lib/disliked.ts`). It stays on the filter side of Phase 7's "filter and annotate only"
+decision — `sort.ts` and the server's ranking are untouched. Original finding follows.
+
 Nothing filters or demotes a disliked commander anywhere in client or server
 (`git grep -n dislike origin/main -- apps/commander-recommender` finds only UI annotation).
 `docs/handoff.md` Phase 7 records this as deliberate: "'Hidden or demoted' landed as annotated
@@ -161,7 +166,11 @@ only ... wiring a persistent dislike into that same behavior, or into `sort.ts`,
 follow-up." The follow-up was never scheduled into a later phase. This is currently the
 largest gap between what "user preferences" implies and what the product does.
 
-**F2. The profile page implements four of its seven promised views.**
+**F2. The profile page implements four of its seven promised views.** — **CLOSED 2026-09-03.**
+All seven ship, as an "Everything / Commanders / Jank" filter over the two card sections rather
+than seven stacked lists: the sets overlap (a liked, jank-tagged commander is in three at once), so
+stacking would have rendered the same card three times on one page. Original finding follows.
+
 `Profile.tsx`'s own docstring describes seven lists as views over the two tables; the page
 renders four sections. Jank is a per-row toggle in `CardPreferenceRow.tsx` and commanders get
 a badge - but there is no "favourite jank cards" list, no "favourite commanders" list, no
@@ -175,7 +184,7 @@ once per suggestion/combo row, so a results view holds N independent auth subscr
 all agree with each other.
 
 **F4. Preference lookups are rebuilt per row, per render.**
-`LikeDislikeButtons.tsx` builds a fresh `Map` over *all* of the user's preferences inside every
+`LikeDislikeButtons.tsx` builds a fresh `Map` over _all_ of the user's preferences inside every
 suggestion card; `ComboFavoriteButton.tsx` does a linear `.find` per combo row. With the
 virtualized grid this is bounded by visible rows, but it's NxM work on every render for no
 reason - the data arrives once via one shared react-query key.
@@ -187,6 +196,7 @@ array-upsert (or `.in('oracle_id', ...)` delete) would halve the round trips and
 two-card write atomic.
 
 **F6. Docs and repo artifacts disagree with reality.**
+
 - `TODO.md` still lists "retire the three superseded static sites" as unchecked, while root
   `render.yaml`'s comment says they "have been retired from the Render dashboard and removed
   from this file."
@@ -209,7 +219,9 @@ accounts exist" - accounts now exist.
 It works (and `@mtg/rules` even dual-builds CJS for the bare-Node server), but it's a quiet
 contributor to "two projects joined later" feel, and it opts those packages out of typechecking.
 
-**F9. time-counters' `src/utils/counters.ts` is a deliberate-looking but undocumented split.**
+**F9. time-counters' `src/utils/counters.ts` is a deliberate-looking but undocumented split.** —
+**CLOSED** (documented in `cf2d0e5`). Original finding follows.
+
 Rules predicates moved to `@mtg/rules` (`commanderTax`, `usesTimeCounters`,
 `turnStepForMechanic`), while presentation constants stayed local (`MECHANIC_COLOR`,
 `MECHANIC_LABEL`, `chapterRoman`, `triggerLabel`, `hasHitTarget` - imported by 6+ files).
@@ -224,8 +236,8 @@ or a type guard in `@mtg/profile` would make the blob honest.
 **F11. `/profile` is coupled to the recommender server being awake.**
 Rendering your own saved cards requires the free-tier API to cold-start
 (`apps/home/src/api/cards.ts` carries the same 75s wake-budget retry loop as the recommender's
-own client). Architecturally fine - it reuses `cardDTO.ts` - but it means the *platform's*
-profile page inherits the *recommender's* availability and its sleep cycle.
+own client). Architecturally fine - it reuses `cardDTO.ts` - but it means the _platform's_
+profile page inherits the _recommender's_ availability and its sleep cycle.
 
 **F12. Five overlapping instruction/governance surfaces.**
 Root `CLAUDE.md`, two app-level `CLAUDE.md`s, `AGENTS.md`, `docs/handoff.md`, `TODO.md` -
@@ -233,6 +245,37 @@ individually good, collectively drifting (F6 is the proof). A short "where truth
 section in the root file, with the others pointing inward, would stop the decay.
 
 ---
+
+## 5a. Follow-up: UI/UX consistency pass (2026-09-03)
+
+The audit above is an architecture audit and treats the three apps' unrelated palettes only
+obliquely (F12's "collectively drifting"). A separate pass at the repo owner's request took the
+visual side directly, on the brief that _the Doctor Who skin should be the time-counters module's
+only difference from the rest of the site_. What it found, and did:
+
+- **Three unrelated palettes and two type systems.** apps/home was violet on near-black, the
+  recommender brass on ink, time-counters TARDIS blue (default) or navy-and-gold. Each defined a
+  palette from scratch and mapped it _outward_ onto the `--mtg-*` tokens the shared chrome reads,
+  so the three agreed on the NavBar and nothing else. Now inverted: `@mtg/ui/theme.css` holds the
+  palette (the recommender's, per the owner's pick) and each app aliases its local names inward.
+- **The Doctor Who skin was the default,** with the app's original styling offered as an equal
+  alternative — the single largest reason that tool read as a separate product. Now the platform
+  theme is the default and the skin is a labelled switch; the retired `claude` theme value migrates
+  to the platform theme so nobody is flipped _into_ the skin on upgrade.
+- **Duplicated frame.** Reset, focus ring, reduced-motion block, page measure/gutters, button and
+  input primitives, and the footer were reimplemented per app (time-counters' footer was inline
+  styles on a bare `<footer>`). All now shared; per-app copies deleted.
+- **A second brand line.** time-counters printed "Commander companion / Time Counters" directly
+  under the NavBar's own "Time Counters". Replaced by a visually-hidden `<h1>` for the outline.
+- **Two real defects surfaced by the sweep**, both pre-existing: the recommender drew a disliked
+  commander's ✕ in `--danger`, a fill colour at roughly 1.5:1 against its own background; and three
+  `.btn` rules written inside time-counters CSS Modules were scoped-and-hashed, so they had never
+  matched the global `btn` class in the markup and had silently never applied.
+
+Not attempted: converting the recommender's ~2,300 lines of bespoke control CSS onto the shared
+`.mtg-btn`/`.mtg-input` primitives. Its buttons now read from shared tokens and so match in colour
+and radius, but they are still its own rules. That is the largest remaining piece of visual
+duplication and the obvious next increment.
 
 ## 6. Easy optimization wins, ranked
 
@@ -295,14 +338,21 @@ Credit where due - these are load-bearing and correct:
 
 ## 8. Open questions for the owner
 
-1. Should dislikes filter or demote recommendations (the Phase 7 follow-up)? If yes: same
-   behavior as session dismiss, or a score penalty in `sort.ts`?
-2. Finish the `/profile` grouped views (jank, commander lists), or narrow the "seven lists"
-   language in the docs to the four that exist?
+1. ~~Should dislikes filter or demote recommendations (the Phase 7 follow-up)? If yes: same
+   behavior as session dismiss, or a score penalty in `sort.ts`?~~ **Answered 2026-09-03: same
+   behavior as session dismiss.** Shipped; see F1.
+2. ~~Finish the `/profile` grouped views (jank, commander lists), or narrow the "seven lists"
+   language in the docs to the four that exist?~~ **Answered 2026-09-03: finish them.** Shipped as
+   a filter rather than stacked lists; see F2.
 3. Delete `apps/home/render.yaml`, or is a standalone home deploy still a supported path?
+   (Deleted in `cf2d0e5`; left here in case the standalone path is wanted back.)
 4. Port `@mtg/scryfall` + `@mtg/card-model` to TypeScript, or bless the `.js`?
-5. Is the time-counters presentation/rules split (F9) the intended end state? A one-line
-   comment at the top of `utils/counters.ts` would settle it permanently.
+5. ~~Is the time-counters presentation/rules split (F9) the intended end state?~~ **Answered:
+   yes**, documented at the top of `utils/counters.ts` in `cf2d0e5`.
+6. **New:** should the recommender's bespoke control CSS move onto the shared `.mtg-btn`/
+   `.mtg-input` primitives? It's the last large piece of visual duplication (see section 5a), but
+   it's a wide diff across ~2,300 lines of styles with real regression risk, so it wasn't taken
+   without a decision.
 
 ---
 

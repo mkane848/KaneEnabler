@@ -263,6 +263,6 @@
   line-height: 1.35;
 }
 
-.resolveBox .btn {
+.resolveBox :global(.mtg-btn) {
   align-self: flex-end;
 }

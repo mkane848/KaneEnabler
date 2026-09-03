@@ -29,7 +29,7 @@ before starting C2). All three archetypes landed:
   is the identity itself, same shape as `selfMill`/`opponentMill`). Reads `alternativeCost` plus
   Cascade/Discover/Suspend/Plot/Rebound from the bare keyword alone (their own reminder text is the
   only place any of them says "without paying its mana cost", and reminder text is stripped), plus a
-  broader, non-self-referential pattern for cards that grant a free cast to *something else* (Rashmi,
+  broader, non-self-referential pattern for cards that grant a free cast to _something else_ (Rashmi,
   Mindclaw Shaman). Verified against the full 20-deck corpus: Y'shtola's deck —
   `alternativeCost`'s own motivating example (Fierce Guardianship, Dismember, Snuff Out) — finally
   reports `Free Spells` as a theme, closing the loop from Phase B part 4.
@@ -76,7 +76,7 @@ life you('ve) gained` family covers both trigger-per-event and end-of-turn-thres
 `you` only so an opponent-facing lifegain-denial effect (Tainted Remedy: `"If an opponent would gain
 life, that player loses that much life instead"`) doesn't register as an amplifier for this deck's
 own plan. Checked against the full card pool, not just the corpus, for the same false-positive shape
-`artifacts`' Cranial Plating fix found: a card that merely *selects* creatures already having
+`artifacts`' Cranial Plating fix found: a card that merely _selects_ creatures already having
 lifelink (Duskfang Mentor's `"Put a +1/+1 counter on each creature you control with lifelink"`) must
 not register as granting it — see archetypes.md's "Behaviours verified as correct". This resolves
 the keyword-shadow rule's own Bre example (archetypes.md's "the rules that are settled" table): her
@@ -91,7 +91,7 @@ unqualified. `definingRole: produces`, the same shape as `freeSpells`: causing a
 loss is the identity itself, not a means to some other reward. Covers the direct devotion/X-drain
 template (Gray Merchant of Asphodel, Exsanguinate, Debt to the Deathless), aristocrats-style death
 triggers (Zulaport Cutthroat, Blood Artist), and Sanguine Bond/Vito's own `"whenever you gain life,
-opponent loses that much life"` — their trigger reads a *different* resource (lifegain), so the loss
+opponent loses that much life"` — their trigger reads a _different_ resource (lifegain), so the loss
 they cause is still `produces`, not a reward for something drain itself already produced. One real
 precision issue found and fixed before shipping, checked against the full card pool rather than just
 the corpus: a first-draft `produces` matcher was a bare `"opponent/player/controller ... loses ...
@@ -111,7 +111,7 @@ resource: Cycling, "draw N then discard N" loot effects, discard as an additiona
 payoffs that trigger off cycling or discarding. Also unqualified, `definingRole: produces`, the same
 shape as `drain`. Deliberately overlaps `selfMill` rather than replacing its existing discard-catching
 — a discarded card genuinely still fills the graveyard, that wasn't wrong; what was missing was the
-*other* identity these decks have that `selfMill` has no matchers for at all (Curator of Mysteries'
+_other_ identity these decks have that `selfMill` has no matchers for at all (Curator of Mysteries'
 scry, Ivora's counter, Rielle's extra draw). Same causes-vs-reads split as `drain`, with
 `CYCLING_DISCARD_TRIGGER_READS_DISCARD` playing `DRAIN_TRIGGER_READS_LOSS`'s role: Ivora and Rielle's
 own triggers ARE discarding itself, so `produces` excludes any clause that pattern already claims —
@@ -133,7 +133,7 @@ in many decks regardless of plan, but the enablers that erase that cleanup trigg
 (Obeka, Sundial of the Infinite, Glorious End: `"end the turn"`, CR's own rules action, distinct from
 the unrelated "until end of turn" duration) are the actual, rare identity — "those three are the
 deck" per archetypes.md's own framing. One real gap found and fixed before shipping, checked against
-the full card pool: Unearth, Encore, Dash, Blitz, Mobilize, and Warp all hide their *entire* cleanup
+the full card pool: Unearth, Encore, Dash, Blitz, Mobilize, and Warp all hide their _entire_ cleanup
 template inside their own reminder text (Unearth's real oracle text has every word of what it does
 inside the parenthetical `stripReminderText` deletes), the identical problem Cascade/Suspend forced on
 `freeSpells` — a Kathari Bomber-style Unearth creature registered zero signal at all until `produces`
@@ -160,7 +160,7 @@ distinguishes a one-shot use from a repeatable loop lives in the same parentheti
 confirm the pattern actually excludes them (354 raw matches for the cast-from-graveyard phrase dropped
 to 35 real ones post-strip, none of them Flashback/Escape/Unearth). `amplifies` covers the archetype's
 own combo enabler, per the repo owner's own clarification: Isilu's granted Persist creature returns
-with a -1/-1 counter, and a card that puts a +1/+1 counter on that *same entering creature* (Cathars'
+with a -1/-1 counter, and a card that puts a +1/+1 counter on that _same entering creature_ (Cathars'
 Crusade: `"on each creature you control"`) cancels it under **CR 704.5q**, letting Persist trigger
 again on the next death instead of only once — narrow enough to exclude a card that only buffs itself
 (Hulkling, Burgeoning Bruiser), which never touches the counter on a different creature and so can't
@@ -173,7 +173,7 @@ archetype's own correctness. Re-measured after shipping: **770 of 4,049 commande
 produce zero active signals**, down from 777.
 
 **`tapForValue` is shipped, completing Phase C2.** The seventh and last archetype in the tier: tapping
-and untapping your own permanents as a resource, and where combo *ingredients* get classified — per
+and untapping your own permanents as a resource, and where combo _ingredients_ get classified — per
 the "flag ingredients, do not detect loops" rule above, this catalogs the parts (an untapper, a mana
 producer that taps), not the combo itself, which stays Commander Spellbook's job. Also unqualified,
 `definingRole: produces` — the same shape as `drain`/`cyclingDiscard`/`recursion`/`freeSpells`. Like
@@ -181,7 +181,7 @@ producer that taps), not the combo itself, which stays Commander Spellbook's job
 the six mana-tap enablers the `enables`/`protects` section above already names by card (Springleaf
 Drum, Holdout Settlement, Survivors' Encampment, Gene Pollinator, Relic of Legends, Honor-Worn Shaku)
 as the reason `enables` needed to exist in the first place — shipped on that grounding alone rather
-than inventing a second deck. `produces` covers tapping a *different* permanent you control as a cost
+than inventing a second deck. `produces` covers tapping a _different_ permanent you control as a cost
 for something else (never a card's own bare `{T}:` ability, which is ubiquitous and not itself
 evidence of anything), and untapping your own permanents for free (Seedborn Muse). Kalamax herself
 doesn't register — her text only reads `"if Kalamax is tapped"` as a condition; she's the beneficiary
@@ -277,7 +277,7 @@ number of mana symbols of that color among the mana costs of permanents you cont
 against the full legal card pool alone, since there is no grounding deck to check it against. Gains a
 genuinely new `QualifierKind`: `'color'`, the five WUBRG names — see `archetypes.md`'s own entry for
 the full account, including why a two-color devotion threshold (six real Theros gods) is deliberately
-excluded rather than folded in, and why Nykthos, Shrine to Nyx's "devotion to *that* color" is a known,
+excluded rather than folded in, and why Nykthos, Shrine to Nyx's "devotion to _that_ color" is a known,
 accepted gap rather than a bug. Re-measured with Phase F's coverage report: **564 of 4,049**
 commander-eligible cards now produce zero active signals, down from 566 — 2 rescued by
 `monoColorDevotion` alone (Thassa, Deep-Dwelling; Thassa, God of the Sea), and every one of the 45
@@ -572,8 +572,8 @@ what "keep the active-role requirement" already meant before this phase.
 The re-measurement this phase's own text calls for caught something the original design sketch
 didn't anticipate. The sketch assumed that once a dedicated archetype reads a keyword by name
 (`f.keywords.includes(...)`), a parallel `keywordCare` theme for the same keyword is pure
-duplication — but `f.keywords` only ever reflects a card's *own* printed keyword, never a keyword it
-*grants* to something else, and most of the archetypes shipped in Phase C only check the former.
+duplication — but `f.keywords` only ever reflects a card's _own_ printed keyword, never a keyword it
+_grants_ to something else, and most of the archetypes shipped in Phase C only check the former.
 Building the full three-bucket split on that assumption and then re-measuring against the real card
 pool with the same before/after "zero active signals" coverage-report methodology every archetype in
 this catalog uses caught 14 real commanders dropping to zero active signals: Jhoira of the Ghitu and
@@ -582,7 +582,7 @@ Brown grants Convoke; Wildsear, Yidris, and Zhulodok grant Cascade; Glorfindel, 
 care about Scry, which turned out to be covered by no dedicated archetype at all; Okaun, Tanazir
 Quandrix, The Thing, and Vorel of the Hull Clade all key off the generic, cross-resource "Double"
 ability-word tag, likewise uncovered elsewhere. Two keywords survived the corrected, line-by-line
-check for a *separate* granting-shaped matcher rather than just a structural one: Lifelink
+check for a _separate_ granting-shaped matcher rather than just a structural one: Lifelink
 (`lifegain`'s own granting regex) and Persist/Undying (`recursion`'s own grant pattern, verified
 against Isilu, Carrier of Twilight and Mikaeus, the Unhallowed) — plus Crew and Treasure, safe for a
 different reason: `artifacts`'s `is` role reads the type line's own printed subtype directly, a
@@ -595,7 +595,7 @@ section's own original `IGNORED_KEYWORDS` example list, turned out to be wrong c
 `MECHANIC_KEYWORDS` shipped at two entries: Flashback and Escape, both genuine "cast from the
 graveyard as a resource, without returning it to hand" mechanics deliberately excluded from
 `recursion`'s own pattern as "a different plan" that was never actually built. Membership-counting
-only relaxes the *supporter*-counting gate (a submitted list's own cards), not the gate a candidate
+only relaxes the _supporter_-counting gate (a submitted list's own cards), not the gate a candidate
 commander's own signal must clear to be suggested at all (`hasActiveRole`, unconditional and
 archetype-agnostic by design, per `synergy.ts`'s own "cares, not shares" comment) — so unlike a Phase
 C archetype, this phase was never expected to rescue a zero-signal commander, only to redistribute
@@ -628,7 +628,7 @@ sequence and every conditional phase alike.**
   Manaweft Sliver, Sliver Hive); `"Affinity for [Type]"` is cost reduction and `enables`, needing its
   own check since it's a keyword ability rather than the wildcard branch's `"cost {N} less to cast"`
   text pattern (Thrumming Hivepool); `"search your library for a [Type] card"` is `produces`
-  (Sliver Overlord). Card selection scoped to a *named* type — the per-type counterpart of the
+  (Sliver Overlord). Card selection scoped to a _named_ type — the per-type counterpart of the
   wildcard's own "look at the top card" — wasn't found anywhere in the corpus, so it's left
   uncovered rather than invented.
 
@@ -641,6 +641,7 @@ sequence and every conditional phase alike.**
   untouched `rewards` role also counting it toward "Lords & anthems"). Re-measured with Phase F's
   coverage report: **761 of 4,049** commander-eligible cards now produce zero active signals, down
   from 763 — the new `enables`/`produces` checks are active roles, unlike kindred's own `is`.
+
 - **Wildcard kindred (`*`) — shipped.** Emits `{ archetype: 'kindred', qualifier: '*' }` for
   `"choose a creature type"` cards (Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree
   City, Secluded Courtyard, Unclaimed Territory, Realmwalker) and for Path of Ancestry's dynamic
@@ -649,7 +650,7 @@ sequence and every conditional phase alike.**
   existing unqualified case, which fixes both `supporterMatches` and `playsDefiningRole` for free —
   they share that one helper. `groupByTheme` (deckAnalysis.ts) folds `kindred:*`'s participants into
   every other kindred group the same way it already folds unqualified groups, then drops the `kindred:
-  *` group itself. `findCardsBySignals` (db.ts) does the equivalent join in SQL, since it's the
+*` group itself. `findCardsBySignals` (db.ts) does the equivalent join in SQL, since it's the
   candidate-lookup path rather than the in-memory analysis path.
 
   All three needed to accept the wildcard; two of the three also needed a depth gate the plan above
@@ -659,7 +660,7 @@ sequence and every conditional phase alike.**
   Shapeshifter type, Sliver Overlord's printed Mutant type, Forbidden Orchard's opponent-facing Spirit
   token) as real membership and let the 8 wildcard cards inflate each into a full phantom theme.
   Worse, `ownSignalContains`'s wildcard acceptance alone — with no bucket-level view of how deep any
-  given qualifier actually is — let those same 8 cards back *every* kindred-caring commander in the
+  given qualifier actually is — let those same 8 cards back _every_ kindred-caring commander in the
   whole candidate pool at the scoring layer, not just this deck's real themes: commanders for types
   the list owned zero real cards of (Kithkin, Ooze, Mercenary, Archer, dozens more) each scored "8
   supporting cards", drowning out the deck's one genuine 56-card Sliver signal. Both fixed with the
@@ -667,7 +668,7 @@ sequence and every conditional phase alike.**
   that qualifier already has real (non-wildcard) structural depth of its own —
   `groupByTheme`'s fold gates on `MIN_THEME_CARDS` worth of `is`-role bodies before it runs;
   `gateWildcardKindredSupporters` (synergy.ts, new) gates `scoreCommanders`'s supporter bucket the
-  same way, exempting only the rare commander whose own signal genuinely *is* the wildcard (Kolvori,
+  same way, exempting only the rare commander whose own signal genuinely _is_ the wildcard (Kolvori,
   God of Kinship; Morophon, the Boundless). `findCardsBySignals`'s SQL join needed no equivalent gate:
   its only kindred caller (`packages.ts`'s `requiredSignalKeys`) only ever asks for a qualifier that
   is already a reported `DeckTheme`, i.e. one that already cleared `groupByTheme`'s gate — see the
@@ -678,6 +679,7 @@ sequence and every conditional phase alike.**
   commanders. This catalog's original claim was ten wildcard cards; only eight were confirmed by
   direct database search — see `archetypes.md`'s "Known tensions" for that gap. Re-measured after
   shipping: **763 of 4,049** commander-eligible cards now produce zero active signals, down from 764.
+
 - **Changeling → `@mtg/rules` — shipped** (hard rule 2). New `hasChangeling` primitive citing **CR
   702.73a** alongside `parseCreatureTypes`, reading Scryfall's own `keywords` array rather than
   parsing text — Changeling's reminder ("This card is every creature type.") names no type words for
@@ -687,15 +689,15 @@ sequence and every conditional phase alike.**
   `candidateTypes`' own performance optimisation (proportional to a card's own text, not to Magic's
   type list) for every changeling printing.
 
-  `detectKindred` honours the flag by pushing exactly one *unqualified* `kindred[is]` signal
+  `detectKindred` honours the flag by pushing exactly one _unqualified_ `kindred[is]` signal
   (`qualifier: undefined`, never `'*'`) rather than enumerating types. That single choice is what
   makes `supporterMatches` need no direct edit at all: `ownSignalContains`'s `s.qualifier ===
-  undefined` branch has existed since Phase B for the unqualified-reanimator case, so a changeling
-  card is accepted as support for *any* kindred qualifier the instant `detectKindred` emits the
+undefined` branch has existed since Phase B for the unqualified-reanimator case, so a changeling
+  card is accepted as support for _any_ kindred qualifier the instant `detectKindred` emits the
   signal — the same "for free" fix wildcard kindred got from the same shared helper. `groupByTheme`
   needed no change either, for the same reason: an unqualified `kindred` group already folds into
-  every qualified sibling via Phase B's pre-existing, deliberately ungated fold. Deliberately *not*
-  the wildcard's `qualifier: '*'` treatment, and deliberately *not* gated the way
+  every qualified sibling via Phase B's pre-existing, deliberately ungated fold. Deliberately _not_
+  the wildcard's `qualifier: '*'` treatment, and deliberately _not_ gated the way
   `gateWildcardKindredSupporters` gates the wildcard: crediting a wildcard card to a specific type is
   a guess about a future player choice, so it needs real depth in that type first; crediting a
   Changeling card is not a guess — CR 702.73a makes it unconditionally true of the printed card,
@@ -729,7 +731,7 @@ that concrete: a real, legal, played commander that no input can ever return**, 
 `scoreCommanders` skips any unit with no active signal.
 
 `import-scryfall.ts` now prints, alongside its existing signal count, **how many commander-eligible
-cards produced zero *active* signals**, with a sample — not merely zero rows in `card_signals`.
+cards produced zero _active_ signals**, with a sample — not merely zero rows in `card_signals`.
 Obeka herself has two: `kindred:Ogre[is]` and `kindred:Wizard[is]`, both structural and neither in
 `ACTIVE_ROLES`, so she'd have looked covered under a naive "any row exists" check while
 `scoreCommanders` still skips her exactly as before. Tracked via `hasActiveRole` during the same pass

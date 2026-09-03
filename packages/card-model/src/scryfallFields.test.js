@@ -158,7 +158,7 @@ describe('frontFaceField', () => {
     expect(frontFaceField(singleFacedCard({ mana_cost: undefined }), 'mana_cost')).toBeUndefined();
   });
 
-  it('reads a split card\'s combined top-level mana cost — both halves are real outside the stack', () => {
+  it("reads a split card's combined top-level mana cost — both halves are real outside the stack", () => {
     expect(frontFaceField(splitCard(), 'mana_cost')).toBe('{1}{R} // {1}{U}');
   });
 

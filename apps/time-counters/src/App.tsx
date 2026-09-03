@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { NavBar, type NavBarLink } from '@mtg/ui';
+import { NavBar, SiteFooter, type NavBarLink } from '@mtg/ui';
 import { AccountMenu } from '@mtg/profile';
 import AboutModal from './components/AboutModal';
 import AddCardPanel from './components/AddCardPanel';
@@ -75,7 +75,7 @@ export default function App() {
   );
 
   return (
-    <>
+    <div className="mtg-page">
       <NavBar
         brand={{ label: 'KaneEnabler', href: '/' }}
         links={NAV_LINKS}
@@ -104,17 +104,7 @@ export default function App() {
           onReturnCommanderToCommandZone={returnCommanderToCommandZone}
         />
       </main>
-      <footer
-        style={{
-          textAlign: 'center',
-          fontSize: '0.72rem',
-          color: 'var(--color-text-faint)',
-          padding:
-            '0 max(1rem, env(safe-area-inset-right)) max(2rem, calc(env(safe-area-inset-bottom) + 1rem)) max(1rem, env(safe-area-inset-left))',
-        }}
-      >
-        Card data via Scryfall. Magic: The Gathering is © Wizards of the Coast.
-      </footer>
+      <SiteFooter />
       {lastUpkeep && lastUpkeep.length > 0 && (
         <ChangeSummaryModal
           changes={lastUpkeep}
@@ -167,6 +157,6 @@ export default function App() {
           onDismiss={dismissLastRemoved}
         />
       )}
-    </>
+    </div>
   );
 }

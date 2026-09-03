@@ -8,7 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 monorepo holding:
 
 - `apps/commander-recommender` — Commander recommender (React + Vite client, Express + SQLite server)
-- `apps/time-counters` — in-game counter companion for one specific Doctor Who deck
+- `apps/time-counters` — in-game counter companion for one specific Doctor Who deck. It wears the
+  same platform theme as the other two by default; **the opt-in Doctor Who skin is meant to be its
+  only visual difference from the rest of the site**, so treat a new app-local palette, type stack
+  or page frame here as a bug rather than a feature
 - `apps/home` — shared platform landing page: links to both tools, the one sign-in menu shared
   across them (`@mtg/profile`, same Supabase project as the recommender's own account menu), and
   `/profile` — a page over the same `card_preferences`/`combo_preferences` data (liked/disliked
@@ -41,12 +44,19 @@ monorepo holding:
   time-counters' five panels use it, commander-recommender's own Dialog usages are unmigrated (see
   that package's own file for why). `ErrorBoundary`, a class component all three apps wrap their
   root in — `fallback` is a render prop so each app supplies its own themed recovery screen rather
-  than a fixed look, matching `Modal`'s className-hook approach. And `NavBar`, the site chrome
+  than a fixed look, matching `Modal`'s className-hook approach. `NavBar`, the site chrome
   (brand, cross-app links, wherever the app plugs in its account menu/theme toggle) every app
-  renders at its root — styled through the `--mtg-*` platform tokens each app's own
-  tokens.css/App.css/index.css defines (additively, on top of that app's existing tokens), so one
-  component re-themes per app, and live with time-counters' Doctor Who/Claude toggle, with no
-  per-app CSS overrides
+  renders at its root, and `SiteFooter`, the attribution line every app closes with. And
+  **`theme.css` — the platform theme, and the single place a platform colour, font, radius or
+  shadow is defined.** Every app imports it first (see each `main.tsx`) and aliases its own
+  long-standing local token names to the `--mtg-*` ones rather than defining a palette of its own:
+  `--ink`/`--brass` in the recommender, `--bg`/`--accent` in apps/home, `--color-*` in
+  time-counters. That direction matters — it used to run the other way, with three unrelated
+  palettes each mapping outward onto `--mtg-*`, which is why the three tools looked like three
+  websites. It also carries the shared reset, page shell (`.mtg-page`, `.mtg-page-main`,
+  `.mtg-page-title`), controls (`.mtg-btn`, `.mtg-input`) and `.mtg-visually-hidden`. The one
+  sanctioned override is time-counters' Doctor Who skin, which redefines the same `--mtg-*` names
+  under `[data-theme='who']` — that is how one toggle reskins the shared chrome too
 - `packages/profile` (`@mtg/profile`) — shared by all three apps: a Supabase client, `useAuth`, the
   `AccountMenu`/`AuthDialog` every app's `NavBar` renders (one implementation now, not three
   per-app copies), and RLS-scoped hooks over `card_preferences`/`combo_preferences` (like/dislike,

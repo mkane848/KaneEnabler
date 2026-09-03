@@ -1,76 +1,32 @@
+/* This app's own token names, aliased to the platform theme
+   (@mtg/ui/theme.css, imported ahead of this file in main.tsx).
+
+   This page used to carry a violet palette of its own, which made the
+   landing page look like a different product from the two tools it links
+   to. The platform look is brass-and-parchment now; keeping the local
+   names below means the rules further down this file didn't have to be
+   rewritten to follow it.
+
+   The reset, page shell (.page/.page-main/.page-title/.page-subtitle) and
+   focus ring that used to live here are the platform's now — see
+   theme.css's .mtg-page* classes, which this app's markup uses directly. */
 :root {
-  --bg: #14131f;
-  --bg-raised: #1c1b2c;
-  --border: #2e2c44;
-  --text: #f2f1fa;
-  --text-muted: #a7a4c2;
-  --accent: #8b7fe8;
-  --accent-hover: #a89cff;
-  --danger: #ff8080;
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-
-  /* Platform tokens — read by shared components from @mtg/ui/@mtg/profile
-     (NavBar, AccountMenu, AuthDialog) so they re-theme per app without
-     per-app overrides. Mapped from this app's own tokens above; nothing
-     above is renamed or removed. */
-  --mtg-color-bg: var(--bg);
-  --mtg-color-surface: var(--bg-raised);
-  --mtg-color-border: var(--border);
-  --mtg-color-text: var(--text);
-  --mtg-color-text-muted: var(--text-muted);
-  --mtg-color-accent: var(--accent);
-  --mtg-color-accent-hover: var(--accent-hover);
-  --mtg-color-danger: var(--danger);
-  --mtg-font-display: var(--font-display);
-  --mtg-font-body: var(--font-body);
-  --mtg-font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+  --bg: var(--mtg-color-bg);
+  --bg-raised: var(--mtg-color-surface);
+  --border: var(--mtg-color-border);
+  --text: var(--mtg-color-text);
+  --text-muted: var(--mtg-color-text-muted);
+  --accent: var(--mtg-color-accent);
+  --accent-hover: var(--mtg-color-accent-hover);
+  /* Every use of --danger in this file is text on the page, never a fill,
+     so it maps to the legible-as-text red rather than the fill color. */
+  --danger: var(--mtg-color-danger-strong);
+  --font-display: var(--mtg-font-display);
+  --font-body: var(--mtg-font-body);
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-}
-
-button {
-  font-family: inherit;
-}
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.page-main {
-  flex: 1;
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 3rem 1.5rem 4rem;
-  width: 100%;
-}
-
-.page-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  margin: 0 0 0.5rem;
-}
-
-.page-subtitle {
-  color: var(--text-muted);
-  margin: 0 0 2.5rem;
-  font-size: 1.05rem;
+.mtg-page-subtitle {
+  margin-bottom: 2.5rem;
 }
 
 .tool-grid {
@@ -85,7 +41,7 @@ button {
   gap: 0.5rem;
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--mtg-radius-md);
   padding: 1.5rem;
   text-decoration: none;
   color: inherit;
@@ -180,14 +136,14 @@ button {
   gap: 1rem;
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--mtg-radius-md);
   padding: 1rem;
 }
 
 .profile-card-thumb {
   width: 4.5rem;
   height: auto;
-  border-radius: 0.5rem;
+  border-radius: var(--mtg-radius-sm);
   flex-shrink: 0;
 }
 
@@ -242,7 +198,7 @@ button {
   resize: vertical;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 0.4rem;
+  border-radius: var(--mtg-radius-sm);
   color: var(--text);
   font-family: inherit;
   font-size: 0.9rem;
@@ -262,7 +218,7 @@ button {
 .profile-combo-row {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--mtg-radius-md);
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -288,4 +244,47 @@ button {
   color: var(--accent-hover);
   font-size: 0.85rem;
   align-self: flex-start;
+}
+
+.profile-lenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.profile-lens {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.profile-lens:hover {
+  color: var(--text);
+}
+
+.profile-lens.is-active {
+  color: var(--accent-hover);
+  border-color: var(--accent);
+}
+
+.profile-lens-count {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.profile-lens.is-active .profile-lens-count {
+  color: var(--accent-hover);
 }

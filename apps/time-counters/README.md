@@ -88,9 +88,10 @@ time from Scryfall's bulk data, and game state lives in your browser's
   you pull up and dismiss rather than a fixed pane. It persists with the
   rest of the game state, so it survives a reload and only clears on New
   Game.
-- **Two visual themes** — a Doctor Who–skinned look (the default) and the
-  app's original styling, kept as a "Claude" option. Switch anytime with the
-  "Theme:" button in the header; see [Themes](#themes) below.
+- **An optional Doctor Who skin** — off by default, so the app looks like the
+  rest of the KaneEnabler site until you want otherwise. Turn it on with the
+  "Doctor Who theme" switch in the navigation bar; see [Themes](#themes)
+  below.
 - **About** (in the header) shows the current version, credits, and links to
   the source repo and the [changelog](CHANGELOG.md). The app follows
   [Semantic Versioning](https://semver.org/) starting at v1.0.0.
@@ -170,7 +171,7 @@ src/components/ChangeSummaryModal.tsx  The Next Turn summary, grouped by upkeep 
 src/components/TimeTravelPanel.tsx     Walks through N passes of the Time Travel keyword action
 src/components/CommanderTaxModal.tsx   Per-commander tax tracker, opened from a portrait or field tile
 src/components/GameLogPanel.tsx        Slide-in game log, grouped by turn
-src/components/ThemeToggle.tsx         Switches between the two themes
+src/components/ThemeToggle.tsx         Turns the Doctor Who skin on and off
 src/components/AboutModal.tsx          Version, credits, and repo/changelog links
 ```
 
@@ -181,13 +182,21 @@ copy local to this app.
 
 ## Themes
 
-Two visual themes, switchable anytime from the header — the choice is a
-device preference (its own localStorage key), so New Game doesn't reset it:
+By default this app wears the **platform theme** — the shared
+brass-and-parchment palette and Fraunces/Inter/IBM Plex Mono type that every
+tool on the KaneEnabler site uses, defined once in `@mtg/ui`'s `theme.css`.
+That is deliberate: this is one of three tools on one site, and looking like
+a separate product was the main thing the monorepo consolidation left behind.
 
-- **Doctor Who** (default) — a TARDIS-blue palette with an electric-cyan
-  accent, and sci-fi/HUD typography: [Orbitron](https://fonts.google.com/specimen/Orbitron)
-  for headings, [Titillium Web](https://fonts.google.com/specimen/Titillium+Web)
-  for body text, [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)
+On top of that sits the app's one deliberate difference, switchable anytime
+from the navigation bar. The choice is a device preference (its own
+localStorage key), so New Game doesn't reset it:
+
+- **Doctor Who** (off by default) — a TARDIS-blue palette with an
+  electric-cyan accent, and sci-fi/HUD typography:
+  [Orbitron](https://fonts.google.com/specimen/Orbitron) for headings,
+  [Titillium Web](https://fonts.google.com/specimen/Titillium+Web) for body
+  text, [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)
   for numbers and counts. All three are free/open (SIL OFL or Apache 2.0),
   loaded the same non-render-blocking way the app's other fonts already are.
 
@@ -199,9 +208,13 @@ device preference (its own localStorage key), so New Game doesn't reset it:
   the community-standard [mana-font](https://github.com/andrewgioia/mana)
   project for its MTG identity.
 
-- **Claude** — the app's original styling (the dark "exile zone at night"
-  palette with an amber accent, Fraunces/Inter/IBM Plex Mono), kept exactly
-  as-is and selectable rather than replaced.
+  Turning it on reskins the whole page, including the shared navigation bar
+  and account menu — it overrides the platform's own `--mtg-*` tokens, not
+  just this app's local ones.
+
+There used to be a third option, **Claude**, holding the app's original
+"exile zone at night" styling; the platform theme is its descendant, and a
+stored preference naming it now loads the platform theme instead.
 
 A few colors are deliberately **not** themed, because they carry functional
 meaning that shouldn't change with the skin: mana pip colors always match
@@ -214,8 +227,8 @@ Switching applies instantly — every component reads color and font values
 from CSS custom properties (`--color-*`, `--font-*`) rather than hardcoding
 them, so the whole app reskins from one attribute change
 (`<html data-theme="...">`). A small inline script in `index.html` applies
-the stored preference before React mounts, so a returning visitor who picked
-Claude doesn't see a flash of the Doctor Who default first.
+the stored preference before React mounts, so a returning visitor who turned
+the skin on doesn't see a flash of the platform default first.
 
 ## Counter mechanics
 

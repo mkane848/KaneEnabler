@@ -32,9 +32,11 @@ const TOOLS: Tool[] = [
 
 export default function Landing() {
   return (
-    <main className="page-main">
-      <h1 className="page-title">Magic: The Gathering tools</h1>
-      <p className="page-subtitle">Pick a tool to get started. One account works across both.</p>
+    <main className="mtg-page-main">
+      <h1 className="mtg-page-title">Magic: The Gathering tools</h1>
+      <p className="mtg-page-subtitle">
+        Pick a tool to get started. One account works across both.
+      </p>
 
       <div className="tool-grid">
         {TOOLS.map((tool) => (

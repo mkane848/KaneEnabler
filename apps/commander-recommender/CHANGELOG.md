@@ -7,16 +7,47 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [1.13.0] — 2026-09-03
+
+### Added
+
+- **Disliking a commander now hides it from the results,** rather than only annotating it. This is
+  the Phase 7 follow-up recorded in `docs/handoff.md` and left open as finding F1 in
+  `docs/KimiAudit.md`: a persistent dislike behaves like a session dismissal, except that it
+  survives a new list and a browser restart, because it is a statement about the card rather than
+  about these results. A "N disliked / Show" control sits beside the existing dismissal count, so
+  nothing is hidden without saying so, and the hiding is reversible in one click. A Partner or
+  Background pair only hides when _both_ halves are disliked — the same "unit agrees" rule the
+  like/dislike buttons already use to decide whether to light up. This stays on the filter side of
+  Phase 7's "preferences filter and annotate only — no scoring change" decision: the server's
+  ranking is untouched.
+
+### Changed
+
+- **The whole site now shares one palette, type scale, and page frame** (`@mtg/ui`'s new
+  `theme.css`). This app's brass-and-parchment look is the one that became the platform's, so
+  nothing here changes colour; what changed is the direction of the wiring — the palette is defined
+  once in `@mtg/ui` and this app's own token names (`--ink`, `--brass`, …) now alias it, instead of
+  each app defining a palette of its own and mapping it outward. The page shell, reset, focus ring
+  and footer are likewise shared (`.mtg-page*`, `SiteFooter`), so the measure and gutters no longer
+  shift as you move between tools.
+
+### Fixed
+
+- **A disliked commander's ✕ button was nearly illegible.** It drew its label in `--danger`, a fill
+  colour that lands at roughly 1.5:1 against this app's background, so the "disliked" state read as
+  greyed-out rather than marked. It now uses a red pitched to be legible as text.
+
 ## [1.12.1] — 2026-08-25
 
 ### Fixed
 
 - **A `produces`-only pool card no longer counts as generic backup for a qualified signal, whether
   the qualifier was borrowed or read directly off the commander's own text.** The previous fix's
-  borrowing mechanism only covered the *commander's own* produces-only match; walking a second real
+  borrowing mechanism only covered the _commander's own_ produces-only match; walking a second real
   user's citation list card by card (Kratos, Stoic Father, whose "Aristocrats (God)" is
   text-qualified — his own text names "God" directly) surfaced the same false-citation shape from
-  the *supporter* side instead: three cited cards (Kavaron Harrier, Goro-Goro Disciple of Ryusei,
+  the _supporter_ side instead: three cited cards (Kavaron Harrier, Goro-Goro Disciple of Ryusei,
   Young Pyromancer) are `produces`-only and each make a fixed, non-God token, cited purely because
   the old "unqualified own signal still counts" fallback never checked which role a pool card
   played, only whether it belonged to the archetype at all. `produces` makes something fixed by the
@@ -36,12 +67,12 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   creature type, and a function matcher would have silently broken that for every already-qualified
   card (Ajani's Cats, Wilhelt's Zombies included).
 - **Two sacrifice-cost false positives, same review.** Blood Hypnotist's `"Whenever you sacrifice
-  one or more Blood tokens, target creature can't block this turn"` never sacrifices a creature at
-  all — the old unbounded cost-side scan credited it anyway, reading the unrelated *later*
+one or more Blood tokens, target creature can't block this turn"` never sacrifices a creature at
+  all — the old unbounded cost-side scan credited it anyway, reading the unrelated _later_
   "creature" (the effect's own target, past the comma) as the sacrificed object; the same shape
   recurs whenever the sacrificed thing isn't a creature but "creature" appears later in the
   sentence for an unrelated reason. Greater Gargadon's `"Sacrifice an artifact, creature, or
-  land"` lists creature as one of three co-equal, fungible options with no preference toward it —
+land"` lists creature as one of three co-equal, fungible options with no preference toward it —
   not the creature-specific plan Aristocrats' own description requires, and the single most common
   shape among the cards this fix now correctly excludes. Both changes verified against the entire
   legal card pool via a live-vs-precomputed before/after diff (276 cards changed, 0 gained a false
@@ -64,7 +95,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   never reads as a restriction (Gothmog's `amass Orcs 1` is genuine go-wide production
   regardless of the type it happens to create, not a restriction to it), so he surfaced as an
   unqualified "Go-Wide Combat" match and cited any token-maker in a submitted list, Cat or not.
-  He independently earns an active `kindred:Cat` signal from a *different* clause ("Whenever
+  He independently earns an active `kindred:Cat` signal from a _different_ clause ("Whenever
   one or more other Cats you control die..."), and the signal engine now borrows that type as
   `goWide`'s qualifier when its own match is produces-only and exactly one such kindred type
   qualifies — never guessing when zero or several types would fit. Citation for a borrowed
@@ -172,7 +203,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   a plain intersection let through (an Abzan commander no longer shows up
   under an R+G filter). A colourless commander survives any colour include,
   since the empty identity is a subset of anything; the existing `colorless`
-  chip is still how you ask for *only* those. This briefly shipped as
+  chip is still how you ask for _only_ those. This briefly shipped as
   "touches this colour" instead, to work around narrow-identity commanders
   disappearing from a rainbow pool's results the moment you filtered by
   their colour — that workaround is no longer needed now that the "Also
@@ -184,7 +215,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
 
 - **A `FlavourName - RealName` export line (e.g. "Dracula the Voyager - Edgar,
   Charmed Groom") failed to resolve and silently landed in "not found."** Name
-  resolution gains a fourth rung: split on ` - ` and retry each half through
+  resolution gains a fourth rung: split on `-` and retry each half through
   the existing exact/face/flavour lookups. No real card name contains a
   space-hyphen-space (Magic uses an em dash), so this is safe as a last
   resort.
@@ -209,7 +240,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     archetype-scoped or every generic hexproof/indestructible effect
     becomes a candidate for everything. Kindred detection now recognizes a
     lord that grants indestructible/hexproof/protection/ward/shroud
-    *to its own type by name* (Sliver Hivelord: "Sliver creatures you
+    _to its own type by name_ (Sliver Hivelord: "Sliver creatures you
     control have indestructible") as a protector for that kindred
     specifically; a spell that merely grants hexproof to "target creature"
     (Snakeskin Veil) is deliberately left unmatched — it names no type, so
@@ -223,7 +254,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   api-policy-gated change). `synergy.ts`'s `supporterMatches` narrows by
   both the same way it already narrows by `creatureType`/`keyword`. Neither
   has a consuming archetype yet — that's Phase C1's `copyEffects`
-  (Kalamax copies *instants*, not sorceries) and `artifacts` (Miles's
+  (Kalamax copies _instants_, not sorceries) and `artifacts` (Miles's
   Vehicles, Sophia's Food) — so this is plumbing ahead of its first user,
   exercised directly in tests rather than through a real signal.
 - **Signal engine, Phase B (part 3) — `counterType` qualifier, and
@@ -252,14 +283,14 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     gets `Counters (time)` for its ~25 Suspend/Vanishing cards.
 - **Signal engine, Phase B (part 4) — the card-property layer.** `CardFacts`
   gains `cmc`, `alternativeCost`, `modified`, and `alternateWin` —
-  properties a card *is*, which an archetype can read, rather than roles of
+  properties a card _is_, which an archetype can read, rather than roles of
   their own (docs/archetypes.md's "Card properties"). Verified against the
   real seeded database:
   - **`alternativeCost`** — Phyrexian mana pips (Dismember), the
     self-referential "cast this spell without paying its mana cost"
     template (Fierce Guardianship's commander clause), "rather than pay
     this spell's mana cost" (Snuff Out), and Evoke/Cleave/Delve/Convoke.
-    Deliberately scoped to a card's cost for *itself* — Nissa, Worldsoul
+    Deliberately scoped to a card's cost for _itself_ — Nissa, Worldsoul
     Speaker reduces the cost of other permanent spells, which is `enables`
     (`reducesCostOf`), not this property.
   - **`modified`** — the CR umbrella term for a permanent with a counter on
@@ -270,7 +301,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   - **`alternateWin`** — an actual "you win the game" outcome (Knuckles the
     Echidna, Approach of the Second Sun), not a mere "can't lose/win"
     prevention effect. Checking The Book of Exalted Deeds against the real
-    database found it doesn't qualify — its own text only ever *grants* an
+    database found it doesn't qualify — its own text only ever _grants_ an
     Angel "you can't lose the game and your opponents can't win the game",
     a symmetric protection clause, not a win condition for its own
     controller. archetypes.md named it as an `alternateWin` example; that
@@ -279,6 +310,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   None of the three has a consuming archetype yet — `alternativeCost` is
   `freeSpells`'s job (Phase C1); `modified`/`alternateWin` are exercised
   directly in tests, same as `cardType`/`permanentSubtype` before them.
+
 - **Signal engine, Phase B (part 5) — the signal containment merge:
   unqualified supports qualified, never the reverse.** `groupByTheme`
   (deckAnalysis.ts) and `supporterMatches` (synergy.ts) used to treat, say,
@@ -290,7 +322,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   groups (1 and 2, both under `MIN_THEME_CARDS`), reporting no reanimation
   theme at all despite the deck plainly reanimating.
   - `groupByTheme` now folds every unqualified group's participants into
-    every qualified group of the *same* archetype after building them —
+    every qualified group of the _same_ archetype after building them —
     the unqualified group's own count is untouched, since the relation
     runs one way only. Verified against the real Wilhelt fixture: the three
     cards above now report as one `Reanimator (Zombie)` theme.
@@ -303,14 +335,14 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     unrelated imprecision in `findQualifier` (Angel of Glory's Rise
     mis-qualifies as `reanimator:Zombie` instead of `reanimator:Human`,
     because it scans the whole clause for the first known type word rather
-    than the one the payoff verb actually restricts) — newly *visible*
+    than the one the payoff verb actually restricts) — newly _visible_
     because the merge pushed that group over threshold, not caused by it.
     Recorded as a new "Known tension" in `docs/archetypes.md` rather than
     fixed here, since it's a different bug than this phase scopes.
 - **Signal engine, Phase C1 — `copyEffects` archetype.** See
   `docs/signals-rework.md` Phase C. Copying spells, abilities, and
   permanents for extra value out of a single card, `qualifiable: cardType`
-  (Kalamax copies *instants* only, so suggesting sorceries for him would be
+  (Kalamax copies _instants_ only, so suggesting sorceries for him would be
   wrong):
   - Spells — Kalamax's own trigger ("copy that spell") and the common
     activated-ability copy template ("copy target ... spell") shared by
@@ -327,8 +359,8 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     is never itself a card type, so a nearby type word describes something
     else entirely. Verified against the real seeded database: Echo,
     Perceptive Prodigy and Weaver of Harmony's ability-copy clauses name
-    their ability's *source* ("... from a creature/enchantment source"),
-    and Agrus Kos, Eternal Soldier's names the copies' *targets* ("for each
+    their ability's _source_ ("... from a creature/enchantment source"),
+    and Agrus Kos, Eternal Soldier's names the copies' _targets_ ("for each
     other creature you control") — all three correctly stay unqualified
     rather than becoming `copyEffects:Creature`/`copyEffects:Enchantment`.
   - Verified against the real seeded database and the full 20-deck corpus:
@@ -343,10 +375,10 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   - Reads `alternativeCost` (Fierce Guardianship, Dismember — Phase B part
     4), plus a new `FREE_CAST_KEYWORDS` list (Cascade, Discover, Suspend,
     Plot, Rebound) checked against the bare keyword alone, since each of
-    these keywords' own reminder text is the *only* place it says "without
+    these keywords' own reminder text is the _only_ place it says "without
     paying its mana cost", and reminder text is stripped.
   - A broader, non-self-referential "without paying its mana cost" pattern
-    also catches a card that grants a free cast to *something else*
+    also catches a card that grants a free cast to _something else_
     (Rashmi, Eternities Crafter, Mindclaw Shaman) rather than casting
     itself for less.
   - Verified against the real seeded database and the full 20-deck corpus:
@@ -393,7 +425,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   as the re-measurement checkpoint between Phase C1 and C2 that
   `docs/signals-rework.md`'s own sequencing calls for.
   `import-scryfall.ts` now prints how many commander-eligible cards
-  produce zero *active* signals, with a sample — the number Obeka's own
+  produce zero _active_ signals, with a sample — the number Obeka's own
   gap (`scoreCommanders` skips any unit with no active signal) had been
   an opinion about until now. Tracked via `hasActiveRole` during the same
   pass that inserts `card_signals`, not a naive "zero rows" check — Obeka
@@ -437,22 +469,22 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     granting lifelink to something else (equipment, auras, tokens,
     animation) — matched by a granting-verb-governs-`lifelink` regex
     (`has`/`have`/`gains`/`gets`/`grants`/`creates`/`becomes`) rather than
-    a bare `"lifelink"` mention, since a card can *select* creatures that
+    a bare `"lifelink"` mention, since a card can _select_ creatures that
     already have lifelink for a payoff without granting it itself.
   - `rewards`: `"whenever you gain life"` triggers, both the
     exact-threshold (`"if you gained 3 or more life this turn"`) and
     bare-conditional (`"if you gained life this turn"`) end-step
     templates, and X-scaling payoffs reading `"the amount of life you
-    gained"`.
+gained"`.
   - `amplifies`: `"if you would gain life ... instead"` doublers, scoped
     to `you` only so an opponent-facing lifegain-denial effect (Tainted
     Remedy: `"If an opponent would gain life, that player loses that much
-    life instead"`) doesn't register as an amplifier for this deck's own
+life instead"`) doesn't register as an amplifier for this deck's own
     plan.
   - Checked against the full card pool, not just the corpus, for the same
     false-positive shape the `artifacts` archetype's Cranial Plating fix
     found: Duskfang Mentor's `"Put a +1/+1 counter on each creature you
-    control with lifelink"` selects existing lifelink creatures for a
+control with lifelink"` selects existing lifelink creatures for a
     payoff rather than granting it, and correctly stays unmatched.
   - Resolves the keyword-shadow rule's own Bre example
     (`docs/archetypes.md`'s "the rules that are settled"): her deck now
@@ -466,17 +498,17 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
 - **Signal engine, Phase C2 — `drain` archetype.** See
   `docs/signals-rework.md` Phase C. Life loss as a trigger, not damage.
   No qualifier, the same reasoning as `lifegain`. `definingRole:
-  produces` — no separate payoff role, the same shape as `freeSpells`:
-  causing the life loss *is* the identity, not a means to some other
+produces` — no separate payoff role, the same shape as `freeSpells`:
+  causing the life loss _is_ the identity, not a means to some other
   reward.
   - `produces`: the direct devotion/X-drain template (Gray Merchant of
     Asphodel, Exsanguinate, Debt to the Deathless), aristocrats-style
     death triggers (Zulaport Cutthroat, Blood Artist), and Sanguine
     Bond/Vito's own `"whenever you gain life, opponent loses that much
-    life"` — their trigger reads a *different* resource (lifegain), so
+life"` — their trigger reads a _different_ resource (lifegain), so
     the loss they cause is still this archetype's own production.
   - `rewards`: a trigger that reads an opponent's life loss — this
-    archetype's own resource — as the condition for a *different*
+    archetype's own resource — as the condition for a _different_
     payoff (Exquisite Blood, Bloodthirsty Conqueror). Deliberately
     excludes `"whenever you lose life"` self-referential triggers
     (Vampire Scrivener) — a life-as-a-resource theme of its own, not
@@ -484,7 +516,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   - One precision issue found and fixed before shipping, checked against
     the full card pool rather than just the corpus: a first-draft
     `produces` matcher was a bare `"opponent/player/controller ... loses
-    ... life"` scan, and Exquisite Blood matched it directly even though
+... life"` scan, and Exquisite Blood matched it directly even though
     the card never causes a loss itself, it only reads one from any
     source. `produces` now excludes any clause a shared
     `DRAIN_TRIGGER_READS_LOSS` pattern already claims (also `rewards`'s
@@ -514,8 +546,8 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     extra draw, Marauding Mako's counters, Glint-Horn's damage).
   - Deliberately overlaps `selfMill` rather than replacing its existing
     discard-catching (`"Discarding is filling your own graveyard by
-    another name"`) — a discarded card genuinely still fills the
-    graveyard, that wasn't wrong; what was missing was the *other*
+another name"`) — a discarded card genuinely still fills the
+    graveyard, that wasn't wrong; what was missing was the _other_
     identity these decks have that `selfMill` has no matchers for at
     all. Same causes-vs-reads split as `drain`: Ivora and Rielle's own
     triggers ARE discarding itself, so `produces` excludes any clause a
@@ -540,7 +572,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   rather than `produces` this time: the delayed-cost cards themselves
   are common, often-incidental staples across many decks, but the
   enablers (Obeka, Sundial of the Infinite, Glorious End: `"end the
-  turn"`) are the actual, rare identity — "those three are the deck"
+turn"`) are the actual, rare identity — "those three are the deck"
   per `docs/archetypes.md`'s own framing of why the `enables` role
   exists in the first place.
   - `produces`: the bare `"at the beginning of the next end step"`
@@ -563,8 +595,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     (27 cards, matching `docs/archetypes.md`'s own "~25" estimate
     almost exactly), and no other deck in the corpus false-positives on
     it. Re-measured with Phase F's coverage report: 777 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    793.
+    commander-eligible cards now produce zero active signals, down from 793.
 - **Signal engine, Phase C2 — `recursion` archetype.** See
   `docs/signals-rework.md` Phase C. The same body coming back from the
   graveyard, again and again — distinct from Reanimator's one-shot
@@ -609,10 +640,10 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
 - **Signal engine, Phase C2 — `tapForValue` archetype, completing
   Phase C2.** See `docs/signals-rework.md` Phase C. Tapping and
   untapping your own permanents as a resource, and where combo
-  *ingredients* get classified — the engine flags the parts (an
+  _ingredients_ get classified — the engine flags the parts (an
   untapper, a mana producer that taps), not the loop itself, which
   stays Commander Spellbook's job. No qualifier, `definingRole:
-  produces` — the same shape as `drain`/`cyclingDiscard`/`recursion`/
+produces` — the same shape as `drain`/`cyclingDiscard`/`recursion`/
   `freeSpells`. Like `recursion`, only one of the tier table's two
   decks has confirmed textual backing: kalamax.txt, via the six
   mana-tap enablers `docs/archetypes.md`'s own `enables` section
@@ -620,7 +651,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   Survivors' Encampment, Gene Pollinator, Relic of Legends, Honor-Worn
   Shaku) as the reason `enables` needed to exist in the first place —
   shipped on that grounding alone rather than inventing a second deck.
-  - `produces`: tapping a *different* permanent you control as a cost
+  - `produces`: tapping a _different_ permanent you control as a cost
     for something else (never a card's own bare `{T}:` ability, which
     is ubiquitous and not itself evidence of anything), and untapping
     your own permanents for free (Seedborn Muse).
@@ -637,10 +668,10 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     merged.
 - **Signal engine, Phase E (part 1) — wildcard kindred (`*`).** See
   `docs/signals-rework.md` Phase E. Cards reading `"choose a creature
-  type"` (Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree
+type"` (Herald's Horn, Vanquisher's Banner, Gathering Stone, Three Tree
   City, Secluded Courtyard, Unclaimed Territory, Realmwalker) or the
   dynamic equivalent (Path of Ancestry's `"shares a creature type with
-  your commander"`) now support *every* kindred theme in the list instead
+your commander"`) now support _every_ kindred theme in the list instead
   of registering as nothing. `ownSignalContains` (synergy.ts) accepts
   `qualifier === '*'` alongside its existing unqualified case, fixing
   `supporterMatches` and `playsDefiningRole` together; `groupByTheme`
@@ -664,13 +695,13 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   `creature_types` into Magic's ~300-type catalog per changeling card,
   which would undo `candidateTypes`'s own performance optimisation for
   every changeling printing.
-  - `detectKindred` honours the flag by pushing one *unqualified*
+  - `detectKindred` honours the flag by pushing one _unqualified_
     `kindred[is]` signal (never `qualifier: '*'`) rather than enumerating
     types — which means `supporterMatches` needed no direct edit at all:
     `ownSignalContains`'s existing `s.qualifier === undefined` branch
     (Phase B, for the unqualified-reanimator case) already accepts it as
     support for any kindred qualifier, and `groupByTheme` already folds an
-    unqualified group into every qualified sibling. Deliberately *not*
+    unqualified group into every qualified sibling. Deliberately _not_
     gated the way the wildcard fold is: crediting a wildcard card to a
     type is a guess about a future player choice, but Changeling makes a
     card unconditionally, always every type — the same unconditional
@@ -716,8 +747,8 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     honestly labelled rather than narrowly "Tutors": `produces` already
     meant "makes a token of the type" (Krenko's Command) before this
     landed, and a tutor scoped to the type (`"search your library for a
-    Sliver card"` — Sliver Overlord, newly detected) is the same role,
-    not a new one. Card selection scoped to a *named* type — the
+Sliver card"` — Sliver Overlord, newly detected) is the same role,
+    not a new one. Card selection scoped to a _named_ type — the
     per-type counterpart of the wildcard's own "look at the top card" —
     wasn't found anywhere in the corpus, so it's left uncovered rather
     than invented.
@@ -735,8 +766,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     sharing one role; a tutor's pre-existing, untouched `rewards` role
     also counting it toward "Lords & anthems").
   - Re-measured with Phase F's coverage report: 761 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    763.
+    commander-eligible cards now produce zero active signals, down from 763.
   - **This completes Phase E** — all three sub-items (wildcard kindred,
     Changeling, and this lifecycle) shipped and merged.
 - **Signal engine, Phase C3 — `cardDraw` archetype, and a documentation
@@ -780,7 +810,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   own confirmed axes name it directly ("Copy, burn, power-into-damage,
   go-wide" — `copyEffects` and `goWide` already cover the other two). No
   separate payoff role, the same shape as `drain`/`cyclingDiscard` — dealing
-  the damage *is* the identity.
+  the damage _is_ the identity.
   - `produces` requires a quantifier right after "deals" — a fixed number
     (Guttersnipe), X (Comet Storm), "that much damage" (a reflect effect
     reading an unrelated damage event, Donna Noble), or "damage equal to"
@@ -833,8 +863,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     Eternal Glory, Thran Dynamo) and three `graveyardToolbox` cards (Codex
     Shredder, Takenuma, Trazyn the Infinite) all tag `produces`.
   - Re-measured with Phase F's coverage report: 576 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    591.
+    commander-eligible cards now produce zero active signals, down from 591.
 - **Signal engine, Phase C3 — `powerMatters` archetype.** See
   `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
   One deck, radagast.txt, whose own corpus note names four cards by hand
@@ -859,8 +888,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     Bridge, Outcaster Trailblazer, Return of the Wildspeaker) all tag
     correctly.
   - Re-measured with Phase F's coverage report: 568 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    576.
+    commander-eligible cards now produce zero active signals, down from 576.
 - **Signal engine, Phase C3 — `pillowfort` archetype.** See
   `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
   One deck, yshtola.txt, whose own confirmed axes name it directly, and
@@ -884,8 +912,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     `pillowfort` cards (Ghostly Prison, Norn's Annex, Propaganda) all tag
     `produces`.
   - Re-measured with Phase F's coverage report: 566 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    568. This completes Phase C3's grounded archetypes — only
+    commander-eligible cards now produce zero active signals, down from 568. This completes Phase C3's grounded archetypes — only
     `monoColorDevotion`, the tier's one genuinely Inferred entry, remains.
 - **Signal engine, Phase C3 — `monoColorDevotion` archetype, and a new
   `color` qualifier kind.** See `docs/signals-rework.md` Phase C and
@@ -911,13 +938,12 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     whole pool, every one a real Theros-block devotion payoff correctly
     qualified by color, and 2 previously zero-active-signal commanders
     rescued (Thassa, Deep-Dwelling; Thassa, God of the Sea) — no false
-    positive found. Nykthos, Shrine to Nyx's "devotion to *that* color"
+    positive found. Nykthos, Shrine to Nyx's "devotion to _that_ color"
     (the color an activated ability chooses, not one its own text names)
     is a known, accepted gap, not a bug — nothing in its text for the
     qualifier to key on.
   - Re-measured with Phase F's coverage report: 564 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    566. **This completes Phase C3.**
+    commander-eligible cards now produce zero active signals, down from 566. **This completes Phase C3.**
 - **Signal engine, Phase C4 — `alternateWin` archetype.** See
   `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
   Phase C4's first archetype, one deck: shadow.txt's own corpus note names
@@ -939,8 +965,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     an outright win condition is one of the rarest, most heavily-costed
     effects in the game by design.
   - Re-measured with Phase F's coverage report: 563 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    564.
+    commander-eligible cards now produce zero active signals, down from 564.
 - **Signal engine, Phase C4 — `politics` archetype, the catalog's own
   flagged-fuzziest concept, kept crisp rather than dropped.** See
   `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
@@ -967,8 +992,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     `politics` cards (Crown of Doom, Eye of Nidhogg, Keen Duelist, Parker
     Luck) all tag `produces`.
   - Re-measured with Phase F's coverage report: 560 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    563.
+    commander-eligible cards now produce zero active signals, down from 563.
 - **Signal engine, Phase C4 — `storm` archetype, completing the mandatory
   and conditional sequence (A through C4, E, F).** See
   `docs/signals-rework.md` Phase C and `docs/archetypes.md`'s own entry.
@@ -993,8 +1017,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     payoffs, none of them cost reduction. 1 previously zero-active-signal
     commander rescued (Hurkyl, Master Wizard) — no false positive found.
   - Re-measured with Phase F's coverage report: 559 of 4,049
-    commander-eligible cards now produce zero active signals, down from
-    560.
+    commander-eligible cards now produce zero active signals, down from 560.
   - **This completes Phase C4 — and the entire A → B → C1 → C2 → C3 → C4
     → E → F signal-engine rework plan.**
 - **Signal engine, Phase D — keyword buckets, the deferred, conditional
@@ -1046,7 +1069,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     grammatical distinction rather than a distance- or player-name-based
     heuristic, neither of which survives Vendilion Clique's subject and
     verb sitting on opposite ends of a three-verb sentence.
-  - A *replacement* effect ("if/when \[someone\] would draw a card,
+  - A _replacement_ effect ("if/when \[someone\] would draw a card,
     \[something else happens\] instead") never causes a draw at all,
     whoever its subject is — Eruth, Tormented Prophet turns your own
     draws into a different kind of card access entirely, and Urabrask,
@@ -1066,8 +1089,8 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
 - **Signal engine — `burn`'s doubler exclusion wrongly stripped `produces`
   from a real reflect-effect commander.** "It deals that much damage"
   appears in two different constructions: a damage doubler's redirect
-  ("if a source *would* deal damage ..., it deals that much damage plus N
-  ... *instead*" — Torbran, Thane of Red Fell), which produces nothing of
+  ("if a source _would_ deal damage ..., it deals that much damage plus N
+  ... _instead_" — Torbran, Thane of Red Fell), which produces nothing of
   its own, and a reflect effect's brand-new instance of damage to a
   brand-new target ("whenever Donna Noble ... is dealt damage, Donna Noble
   deals that much damage to target opponent" — no replacement structure at
@@ -1119,11 +1142,11 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     Forbidden Orchard's opponent-facing Spirit token) as real membership,
     then let the deck's 8 wildcard cards inflate each into a full phantom
     theme — `Shapeshifter Kindred (8)`, `Mutant Kindred (9)`, `Spirit
-    Kindred (9)` — out of one incidental card apiece that nobody actually
+Kindred (9)` — out of one incidental card apiece that nobody actually
     built around.
   - **Commander scoring (`scoreCommanders`, synergy.ts) — more severe.**
     With no bucket-level view of how deep any given qualifier actually is,
-    the same 8 cards backed *every* kindred-caring commander in the whole
+    the same 8 cards backed _every_ kindred-caring commander in the whole
     candidate pool: commanders for types the list owned zero real cards of
     (Kithkin, Ooze, Mercenary, Archer, dozens more) each scored "8
     supporting cards", drowning out the deck's one genuine 56-card Sliver
@@ -1132,14 +1155,14 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     wildcard card only counts toward a qualifier once that qualifier
     already has real, non-wildcard structural depth of its own. New
     `gateWildcardKindredSupporters` (synergy.ts) does this for scoring,
-    exempting only the rare commander whose own signal genuinely *is* the
+    exempting only the rare commander whose own signal genuinely _is_ the
     wildcard (Kolvori, God of Kinship; Morophon, the Boundless).
 - **Signal engine — `gameState`'s initiative reward matcher missed its own
   motivating card.** Found verifying the `gameState` archetype above:
   the first draft matched only `"if you've"`/`"if you have" the
-  initiative`, but Undercellar Sweep's real wording is third-person and
+initiative`, but Undercellar Sweep's real wording is third-person and
   doesn't even keep "you" as the sole subject — `"if you or a player
-  you're attacking has the initiative"` — so it produced only `produces`,
+you're attacking has the initiative"` — so it produced only `produces`,
   never `rewards`. Widened to `/\b(?:has|have|'ve) the initiative\b/i`.
 
 - **Signal engine — `findQualifier` ties the candidate type word to the
@@ -1200,7 +1223,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     side and accepting a named creature type as well as the bare word
     "creature". Fixes two opposite misreadings of the same shape: Wilhelt's
     "you may sacrifice a Zombie" is now recognised as both a Zombie consumer
-    *and* an Aristocrats outlet (it required the literal word "creature"
+    _and_ an Aristocrats outlet (it required the literal word "creature"
     before); Sophia's "Sacrifice an artifact token: Put a +1/+1 counter on
     each Dog you control" no longer reads as consuming Dogs, because the
     fix stops reading past the ':' into the effect. Krenko's own outlets
@@ -1212,7 +1235,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     explain their operative text only in a parenthetical that's already
     stripped by the time matchers run; each now has a matcher on its own
     printed name, in the archetype its mechanic actually belongs to. Amass
-    also produces the named creature type *and* Army through the existing
+    also produces the named creature type _and_ Army through the existing
     kindred/token-production machinery, matching real templating ("amass
     Orcs 1" makes a card both an Orc and an Army).
   - **Lord-wording normalisation.** "All Sliver creatures get +1/+1" and
@@ -1229,7 +1252,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     "mill N cards, then ..." with a comma rather than a period (Incarnation
     Technique), and discarding your own cards (Faithless Looting, Thrill of
     Possibility, Windfall, Fact or Fiction, Ideas Unbound) — excluding
-    making an *opponent* discard, which stays Mill (Opponents)' territory.
+    making an _opponent_ discard, which stays Mill (Opponents)' territory.
   - **Reanimator widened** past "from your/a graveyard" to "from an
     opponent's graveyard" (Gruesome Encore, Puppeteer Clique), and past the
     literal word "creature" to "permanent" (Sun Titan's own "return target
@@ -1248,7 +1271,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     Proliferate as production.
   - **Two token-descriptor bugs fixed together**: under-reached at one
     intervening word, so "Necron Warrior artifact creature tokens" wasn't
-    fully stripped and Their Number Is Legion read as a Necron *payoff*
+    fully stripped and Their Number Is Legion read as a Necron _payoff_
     rather than just a producer; over-reached by stripping everywhere
     instead of only inside a "create ... token" clause, erasing Gleaming
     Overseer's, Eternal Skylord's, and Dreadhorde Invasion's real
@@ -1263,7 +1286,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     unresolved on purpose — they're `enables`, not `rewards` (Phase B).
 - **A double-faced commander's back face could leak into signal detection
   through the stored `type_line`.** `import-scryfall.ts` stored Scryfall's
-  *joined* `type_line` ("Legendary Creature — God // Legendary Artifact —
+  _joined_ `type_line` ("Legendary Creature — God // Legendary Artifact —
   Equipment" for Halvar, God of Battle // Sword of the Realms) rather than
   the front face alone, even though the very same function already computes
   the correct front-face-only reading (`frontFaceCharacteristics`) for
@@ -1323,8 +1346,8 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   uses, before this phase ever shipped. The original design assumed that
   once an archetype reads a keyword by name (`f.keywords.includes(...)`),
   a parallel `keywordCare` theme for it is pure duplication — but
-  `f.keywords` only reflects a card's *own* printed keyword, never one it
-  *grants* to something else, and most archetypes only check the former.
+  `f.keywords` only reflects a card's _own_ printed keyword, never one it
+  _grants_ to something else, and most archetypes only check the former.
   An early version of `IGNORED_KEYWORDS` moved every keyword any archetype
   read by name into it and re-importing against the real Scryfall snapshot
   dropped Jhoira of the Ghitu and Kang Prime (grant Suspend), Prismari,
@@ -1334,7 +1357,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
   Quandrix/The Thing/Vorel (the generic "Double" ability-word tag,
   likewise uncovered elsewhere) to zero active signals. Fixed by shrinking
   `IGNORED_KEYWORDS` to only the keywords checked, line by line, to have a
-  *separate* granting-shaped matcher — not just a structural one — leaving
+  _separate_ granting-shaped matcher — not just a structural one — leaving
   it five entries beyond the Partner family rather than the dozens first
   assumed safe; re-verified with the coverage report back to 559 of 4,049,
   identical to the pre-Phase-D baseline.

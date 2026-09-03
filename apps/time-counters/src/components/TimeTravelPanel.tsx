@@ -138,7 +138,7 @@ export default function TimeTravelPanel({
               <h2 className={styles.title}>Time Travel</h2>
             </ModalTitle>
             <ModalClose asChild>
-              <button type="button" className="btn btn-ghost btn-sm">
+              <button type="button" className="mtg-btn mtg-btn-ghost mtg-btn-sm">
                 Cancel
               </button>
             </ModalClose>
@@ -153,7 +153,7 @@ export default function TimeTravelPanel({
           <input
             id="times-count"
             autoFocus
-            className="input"
+            className="mtg-input"
             type="number"
             min={1}
             inputMode="numeric"
@@ -161,7 +161,7 @@ export default function TimeTravelPanel({
             onChange={(e) => setTimesDraft(e.target.value)}
           />
           <div className={styles.actions}>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="mtg-btn mtg-btn-primary">
               Start
             </button>
           </div>
@@ -175,7 +175,7 @@ export default function TimeTravelPanel({
               </h2>
             </ModalTitle>
             <ModalClose asChild>
-              <button type="button" className="btn btn-ghost btn-sm">
+              <button type="button" className="mtg-btn mtg-btn-ghost mtg-btn-sm">
                 Stop here
               </button>
             </ModalClose>
@@ -253,7 +253,7 @@ export default function TimeTravelPanel({
           </div>
 
           <div className={styles.actions}>
-            <button type="button" className="btn btn-primary" onClick={commitPass}>
+            <button type="button" className="mtg-btn mtg-btn-primary" onClick={commitPass}>
               {isLastPass ? 'Finish' : `Continue to pass ${currentPass + 1} of ${totalPasses}`}
             </button>
           </div>

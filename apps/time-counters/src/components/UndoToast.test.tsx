@@ -13,7 +13,9 @@ describe('UndoToast', () => {
 
   it('auto-dismisses after 6 seconds', () => {
     const onDismiss = vi.fn();
-    render(<UndoToast instanceId="a" cardName="Test Card" onUndo={vi.fn()} onDismiss={onDismiss} />);
+    render(
+      <UndoToast instanceId="a" cardName="Test Card" onUndo={vi.fn()} onDismiss={onDismiss} />,
+    );
 
     vi.advanceTimersByTime(5999);
     expect(onDismiss).not.toHaveBeenCalled();
@@ -27,12 +29,22 @@ describe('UndoToast', () => {
     // already-running timer would cut the second toast's window short.
     const onDismiss = vi.fn();
     const { rerender } = render(
-      <UndoToast instanceId="a" cardName="Suspended Spell" onUndo={vi.fn()} onDismiss={onDismiss} />,
+      <UndoToast
+        instanceId="a"
+        cardName="Suspended Spell"
+        onUndo={vi.fn()}
+        onDismiss={onDismiss}
+      />,
     );
 
     vi.advanceTimersByTime(5000);
     rerender(
-      <UndoToast instanceId="b" cardName="Suspended Spell" onUndo={vi.fn()} onDismiss={onDismiss} />,
+      <UndoToast
+        instanceId="b"
+        cardName="Suspended Spell"
+        onUndo={vi.fn()}
+        onDismiss={onDismiss}
+      />,
     );
 
     // The first timer's original 6s deadline (1s from now) has passed, but
@@ -44,7 +56,7 @@ describe('UndoToast', () => {
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 
-  it('shows the current removal\'s card name', () => {
+  it("shows the current removal's card name", () => {
     render(<UndoToast instanceId="a" cardName="Test Card" onUndo={vi.fn()} onDismiss={vi.fn()} />);
     expect(screen.getByText('Test Card removed')).toBeInTheDocument();
   });

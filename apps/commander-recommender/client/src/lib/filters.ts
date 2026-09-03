@@ -227,7 +227,10 @@ interface QualifiableEntry {
 }
 
 function groupFacetOptions(entries: QualifiableEntry[]): ThemeFacetOption[] {
-  const byArchetype = new Map<string, { archetypeLabel: string; entries: Map<string, QualifiableEntry> }>();
+  const byArchetype = new Map<
+    string,
+    { archetypeLabel: string; entries: Map<string, QualifiableEntry> }
+  >();
   for (const entry of entries) {
     let group = byArchetype.get(entry.archetype);
     if (!group) {

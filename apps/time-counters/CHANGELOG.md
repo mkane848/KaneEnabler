@@ -4,13 +4,41 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-09-03
+
+### Changed
+
+- **The Doctor Who skin is now a toggle rather than the default.** This app wears the same
+  brass-and-parchment look as the rest of the site until you turn the skin on, and the navigation
+  bar carries a "Doctor Who theme" switch to do that. Previously the skin was the default and the
+  app's original styling was offered as an equal alternative, which is the main reason this tool
+  read as a separate site rather than one of three on a platform. The skin itself is unchanged, and
+  still reskins the whole page including the shared chrome.
+- **The retired "Claude" theme is gone,** replaced by the platform theme it was an ancestor of.
+  Anyone whose stored preference still names it is migrated to the platform theme on next load —
+  they had chosen "not the Doctor Who skin", and that is what they still get.
+- **The app's own header no longer repeats the site branding.** The navigation bar directly above it
+  already names the page, so the bar now shows game state — the commanders and the turn — instead
+  of printing "Time Counters" a second line below "Time Counters".
+- **Buttons, fields and the page footer are now the shared platform components** (`@mtg/ui`'s
+  `theme.css` and `SiteFooter`), not this app's local copies. The footer in particular was inline
+  styles on a bare `<footer>`, which is how it and the recommender's ended up looking nothing alike.
+
+### Fixed
+
+- **Three layout rules had silently never applied.** `.actions .btn` (in the add-card and time-travel
+  panels) and `.resolveBox .btn` (on a card tile) were written inside CSS Modules, where a class
+  selector is scoped and hashed — so they could never match the global `btn` class the markup
+  actually carried. The action buttons in those two panels now share the row width evenly, and the
+  resolve button aligns to the end of its box, as was always intended.
+
 ## [1.5.1] - 2026-08-21
 
 ### Fixed
 
 - **The undo toast could dismiss early if you removed two same-named cards in
   quick succession.** Its auto-dismiss timer restarted only when the removed
-  card's *name* changed, not on each removal — two copies of the same card
+  card's _name_ changed, not on each removal — two copies of the same card
   (or two same-named tokens) removed within the 6-second window shared one
   timer, cutting the second toast's undo window short. Now keyed on the
   removed card's own instance instead.

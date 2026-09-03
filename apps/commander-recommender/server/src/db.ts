@@ -178,7 +178,8 @@ const hasSignalsTable = tableExists('card_signals');
 // card_signals but not this column — degrades to every qualifier reading as
 // text-derived (the pre-existing behavior) rather than a raw SQL error on
 // `SELECT qualifier_source` against an old schema.
-const hasQualifierSourceColumn = hasSignalsTable && columnExists('card_signals', 'qualifier_source');
+const hasQualifierSourceColumn =
+  hasSignalsTable && columnExists('card_signals', 'qualifier_source');
 
 /**
  * The archetypes each of these cards participates in, and in what capacity.
