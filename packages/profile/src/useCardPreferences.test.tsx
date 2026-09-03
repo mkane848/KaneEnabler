@@ -7,6 +7,7 @@ const select = vi.fn();
 const upsert = vi.fn();
 const deleteEq1 = vi.fn();
 const deleteEq2 = vi.fn();
+const deleteIn = vi.fn();
 const from = vi.fn();
 
 vi.mock('./client', () => ({ supabase: null }));
@@ -15,7 +16,9 @@ import * as clientModule from './client';
 import {
   useCardPreferences,
   useRemoveCardPreference,
+  useRemoveCardPreferences,
   useSetCardPreference,
+  useSetCardPreferences,
 } from './useCardPreferences';
 import type { CardPreferenceRow } from './rows';
 
@@ -34,6 +37,7 @@ beforeEach(() => {
   upsert.mockReset();
   deleteEq1.mockReset();
   deleteEq2.mockReset();
+  deleteIn.mockReset();
   vi.mocked(clientModule).supabase = FAKE_SUPABASE;
 
   // .from(table).select(...) — awaited directly.
@@ -44,7 +48,7 @@ beforeEach(() => {
     upsert,
     delete: () => ({ eq: deleteEq1 }),
   }));
-  deleteEq1.mockImplementation(() => ({ eq: deleteEq2 }));
+  deleteEq1.mockImplementation(() => ({ eq: deleteEq2, in: deleteIn }));
 });
 
 const ROW: CardPreferenceRow = {
@@ -176,6 +180,87 @@ describe('useRemoveCardPreference', () => {
 
     result.current.mutate({ userId: 'user-1', oracleId: 'oracle-1' });
 
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.message).toBe('Profiles are not configured for this deployment.');
+  });
+
+  it('deletes one card via .eq for the single-row path', async () => {
+    deleteEq2.mockResolvedValue({ error: null });
+    const { result } = renderHook(() => useRemoveCardPreference(), { wrapper });
+
+    result.current.mutate({ userId: 'user-1', oracleId: 'oracle-1' });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(deleteEq1).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(deleteEq2).toHaveBeenCalledWith('oracle_id', 'oracle-1');
+  });
+});
+
+describe('useSetCardPreferences', () => {
+  it('upserts several cards as a single array in one request', async () => {
+    upsert.mockResolvedValue({ error: null });
+    const { result } = renderHook(() => useSetCardPreferences(), { wrapper });
+
+    result.current.mutate({
+      userId: 'user-1',
+      inputs: [
+        { oracleId: 'a', sentiment: 'like' },
+        { oracleId: 'b', sentiment: 'like' },
+      ],
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(from).toHaveBeenCalledWith('card_preferences');
+    expect(upsert).toHaveBeenCalledTimes(1);
+    expect(upsert).toHaveBeenCalledWith(
+      [
+        { user_id: 'user-1', oracle_id: 'a', sentiment: 'like', tags: [], note: null },
+        { user_id: 'user-1', oracle_id: 'b', sentiment: 'like', tags: [], note: null },
+      ],
+      { onConflict: 'user_id,oracle_id' },
+    );
+  });
+
+  it('is a no-op for an empty input list', async () => {
+    const { result } = renderHook(() => useSetCardPreferences(), { wrapper });
+    result.current.mutate({ userId: 'user-1', inputs: [] });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('throws when Supabase is not configured', async () => {
+    vi.mocked(clientModule).supabase = null;
+    const { result } = renderHook(() => useSetCardPreferences(), { wrapper });
+    result.current.mutate({ userId: 'user-1', inputs: [{ oracleId: 'a', sentiment: 'like' }] });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.message).toBe('Profiles are not configured for this deployment.');
+  });
+});
+
+describe('useRemoveCardPreferences', () => {
+  it('deletes several cards in one request via .in(oracle_id, ids)', async () => {
+    deleteIn.mockResolvedValue({ error: null });
+    const { result } = renderHook(() => useRemoveCardPreferences(), { wrapper });
+
+    result.current.mutate({ userId: 'user-1', oracleIds: ['a', 'b'] });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(from).toHaveBeenCalledWith('card_preferences');
+    expect(deleteEq1).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(deleteIn).toHaveBeenCalledWith('oracle_id', ['a', 'b']);
+  });
+
+  it('is a no-op for an empty id list', async () => {
+    const { result } = renderHook(() => useRemoveCardPreferences(), { wrapper });
+    result.current.mutate({ userId: 'user-1', oracleIds: [] });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('throws when Supabase is not configured', async () => {
+    vi.mocked(clientModule).supabase = null;
+    const { result } = renderHook(() => useRemoveCardPreferences(), { wrapper });
+    result.current.mutate({ userId: 'user-1', oracleIds: ['a'] });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe('Profiles are not configured for this deployment.');
   });

@@ -1,7 +1,7 @@
 {
   "name": "mtg-recommender-server",
   "private": true,
-  "version": "1.11.1",
+  "version": "1.12.1",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "prebuild": "pnpm --filter @mtg/rules build",
+    "prebuild": "node scripts/write-version.mjs && pnpm --filter @mtg/rules build",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc",
     "lint": "eslint .",

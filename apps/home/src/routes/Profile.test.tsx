@@ -215,10 +215,7 @@ describe('Profile', () => {
       data: [
         {
           ...COMBO_PREFERENCE,
-          snapshot: {
-            ...(COMBO_PREFERENCE.snapshot as Record<string, unknown>),
-            permalink: 'javascript:alert(1)',
-          },
+          snapshot: { ...COMBO_PREFERENCE.snapshot, permalink: 'javascript:alert(1)' },
         },
       ],
     });

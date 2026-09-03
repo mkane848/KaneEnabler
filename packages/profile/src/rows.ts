@@ -1,4 +1,5 @@
 import type { CardPreference, ComboPreference } from './types';
+import { parseComboSnapshot } from './comboSnapshot';
 
 /** Raw shapes as Postgres/PostgREST returns them (snake_case) — see the migration in Supabase. */
 export interface CardPreferenceRow {
@@ -41,7 +42,7 @@ export function fromComboRow(row: ComboPreferenceRow): ComboPreference {
     comboKey: row.combo_key,
     sentiment: row.sentiment,
     spellbookId: row.spellbook_id,
-    snapshot: row.snapshot,
+    snapshot: parseComboSnapshot(row.snapshot),
     fetchedAt: row.fetched_at,
     createdAt: row.created_at,
   };

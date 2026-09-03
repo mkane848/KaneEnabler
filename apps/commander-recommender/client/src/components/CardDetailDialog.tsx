@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
-import { useAuth, useCardPreferences, useSetCardPreference } from '@mtg/profile';
+import { useAuth, useCardPreferencesIndex, useSetCardPreference } from '@mtg/profile';
 import { identityName, sortWubrg } from '../lib/mtg';
 import { ManaSymbol } from './ManaSymbol';
 import { ManaCost } from './ManaCost';
@@ -14,11 +14,11 @@ import type { BracketEstimateDTO, CommanderCardDTO } from '../types';
  */
 function JankToggle({ oracleId }: { oracleId: string }) {
   const { user } = useAuth();
-  const { data: preferences } = useCardPreferences(user?.id ?? null);
+  const byOracleId = useCardPreferencesIndex();
   const setPreference = useSetCardPreference();
 
   if (!user) return null;
-  const preference = preferences?.find((p) => p.oracleId === oracleId);
+  const preference = byOracleId.get(oracleId);
   if (preference?.sentiment !== 'like') return null;
 
   const isJank = preference.tags.includes('jank');

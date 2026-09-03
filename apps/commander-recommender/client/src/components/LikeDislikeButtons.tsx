@@ -1,8 +1,8 @@
 import {
   useAuth,
-  useCardPreferences,
-  useRemoveCardPreference,
-  useSetCardPreference,
+  useCardPreferencesIndex,
+  useRemoveCardPreferences,
+  useSetCardPreferences,
 } from '@mtg/profile';
 import type { Sentiment } from '@mtg/profile';
 
@@ -19,13 +19,12 @@ import type { Sentiment } from '@mtg/profile';
  */
 export function LikeDislikeButtons({ oracleIds }: { oracleIds: string[] }) {
   const { user } = useAuth();
-  const { data: preferences } = useCardPreferences(user?.id ?? null);
-  const setPreference = useSetCardPreference();
-  const removePreference = useRemoveCardPreference();
+  const byOracleId = useCardPreferencesIndex();
+  const setPreferences = useSetCardPreferences();
+  const removePreferences = useRemoveCardPreferences();
 
   if (!user) return null;
 
-  const byOracleId = new Map((preferences ?? []).map((p) => [p.oracleId, p]));
   const sentiments = oracleIds.map((id) => byOracleId.get(id)?.sentiment);
   // Only shown as active when every card in the unit agrees — a pair split
   // between like and dislike (e.g. after only one half was ever tagged)
@@ -39,14 +38,13 @@ export function LikeDislikeButtons({ oracleIds }: { oracleIds: string[] }) {
   function toggle(sentiment: Sentiment) {
     if (!user) return;
     if (current === sentiment) {
-      for (const oracleId of oracleIds) {
-        removePreference.mutate({ userId: user.id, oracleId });
-      }
+      removePreferences.mutate({ userId: user.id, oracleIds });
       return;
     }
-    for (const oracleId of oracleIds) {
-      setPreference.mutate({ userId: user.id, input: { oracleId, sentiment } });
-    }
+    setPreferences.mutate({
+      userId: user.id,
+      inputs: oracleIds.map((oracleId) => ({ oracleId, sentiment })),
+    });
   }
 
   return (

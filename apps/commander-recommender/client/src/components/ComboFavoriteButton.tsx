@@ -1,7 +1,7 @@
 import {
   comboKey,
   useAuth,
-  useComboPreferences,
+  useComboPreferencesIndex,
   useRemoveComboPreference,
   useSetComboPreference,
 } from '@mtg/profile';
@@ -18,13 +18,13 @@ import type { ComboDTO } from '../types';
 export function ComboFavoriteButton({ combo }: { combo: ComboDTO }) {
   const { user } = useAuth();
   const key = comboKey(combo.cards);
-  const { data: preferences } = useComboPreferences(user?.id ?? null);
+  const comboIndex = useComboPreferencesIndex();
   const setPreference = useSetComboPreference();
   const removePreference = useRemoveComboPreference();
 
   if (!user) return null;
 
-  const current = preferences?.find((p) => p.comboKey === key)?.sentiment ?? null;
+  const current = comboIndex.get(key)?.sentiment ?? null;
 
   function toggle(sentiment: Sentiment) {
     if (!user) return;

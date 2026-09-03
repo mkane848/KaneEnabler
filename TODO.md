@@ -5,12 +5,12 @@ elsewhere. Delete items as you do them.
 
 ## Render
 
-- [ ] **Retire the three superseded static sites** now that `kaneenabler-platform` is live and
+- [x] **Retire the three superseded static sites** now that `kaneenabler-platform` is live and
       verified: `kaneenabler-home`, `mtg-recommender-client`, `drwho-companion-edh`. There's no
-      Render API to delete a service, so this is dashboard-only. Do this *before* removing their
+      Render API to delete a service, so this is dashboard-only. Do this _before_ removing their
       entries from `render.yaml` (see that file's top comment) — otherwise Render just leaves them
       running unmanaged.
-- [ ] Once retired, remove their service blocks from `render.yaml` (root) so the blueprint matches
+- [x] Once retired, remove their service blocks from `render.yaml` (root) so the blueprint matches
       reality again.
 
 ## Sandbox egress (optional, makes future sessions more self-sufficient)

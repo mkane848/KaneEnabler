@@ -1,3 +1,13 @@
+/**
+ * Mechanics detection and presentation for the counter companion.
+ *
+ * The boundary is deliberate and settled, not an unfinished extraction: the
+ * actual *rules* live in `@mtg/rules` (`commanderTax`, `usesTimeCounters`,
+ * `turnStepForMechanic`, `parseCreatureTypes`, `hasChangeling`), while the
+ * *presentation* constants below (`MECHANIC_COLOR`, `MECHANIC_LABEL`,
+ * `chapterRoman`, `triggerLabel`, `hasHitTarget`) stay local — they describe
+ * how this app renders a mechanic, not a Magic rule to be shared.
+ */
 import type { Direction, Mechanic, TrackedCard } from '../types';
 
 const WORD_NUMBERS: Record<string, number> = {

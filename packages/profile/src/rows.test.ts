@@ -58,7 +58,7 @@ describe('fromComboRow', () => {
       comboKey: 'combo-key-1',
       sentiment: 'like',
       spellbookId: 'spellbook-1',
-      snapshot: { cards: ['A', 'B'] },
+      snapshot: { permalink: null, cards: ['A', 'B'], produces: [], description: null },
       fetchedAt: '2026-01-01T00:00:00Z',
       createdAt: '2026-01-01T00:00:00Z',
     });
@@ -79,7 +79,28 @@ describe('fromComboRow', () => {
     expect(fromComboRow(row).spellbookId).toBeNull();
   });
 
-  it('passes the snapshot through opaquely, whatever shape it is', () => {
+  it('parses a known snapshot shape at the boundary, dropping unknown fields', () => {
+    const snapshot = { cards: ['A', 'B'], produces: ['Infinite mana'], arbitrary: 'shape' };
+    const row: ComboPreferenceRow = {
+      id: 'row-1',
+      user_id: 'user-1',
+      combo_key: 'combo-key-1',
+      sentiment: 'like',
+      spellbook_id: null,
+      snapshot: snapshot as ComboPreferenceRow['snapshot'],
+      fetched_at: '2026-01-01T00:00:00Z',
+      created_at: '2026-01-01T00:00:00Z',
+    };
+
+    expect(fromComboRow(row).snapshot).toEqual({
+      permalink: null,
+      cards: ['A', 'B'],
+      produces: ['Infinite mana'],
+      description: null,
+    });
+  });
+
+  it('degrades a malformed snapshot to a safe empty shape rather than crashing', () => {
     const snapshot = { arbitrary: 'shape', nested: { count: 3 } };
     const row: ComboPreferenceRow = {
       id: 'row-1',
@@ -87,11 +108,16 @@ describe('fromComboRow', () => {
       combo_key: 'combo-key-1',
       sentiment: 'like',
       spellbook_id: null,
-      snapshot,
+      snapshot: snapshot as ComboPreferenceRow['snapshot'],
       fetched_at: '2026-01-01T00:00:00Z',
       created_at: '2026-01-01T00:00:00Z',
     };
 
-    expect(fromComboRow(row).snapshot).toBe(snapshot);
+    expect(fromComboRow(row).snapshot).toEqual({
+      permalink: null,
+      cards: [],
+      produces: [],
+      description: null,
+    });
   });
 });
