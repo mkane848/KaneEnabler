@@ -4,14 +4,14 @@ import { ComboFavoriteButton } from './ComboFavoriteButton';
 import type { ComboDTO } from '../types';
 
 const useAuth = vi.fn();
-const useComboPreferences = vi.fn();
+const useComboPreferencesIndex = vi.fn();
 const setMutate = vi.fn();
 const removeMutate = vi.fn();
 
 vi.mock('@mtg/profile', () => ({
   comboKey: (cards: string[]) => [...cards].sort().join('|'),
   useAuth: () => useAuth(),
-  useComboPreferences: (userId: string | null) => useComboPreferences(userId),
+  useComboPreferencesIndex: () => useComboPreferencesIndex(),
   useSetComboPreference: () => ({ mutate: setMutate }),
   useRemoveComboPreference: () => ({ mutate: removeMutate }),
 }));
@@ -42,8 +42,11 @@ describe('ComboFavoriteButton — renders from stored snapshot, network blocked'
     setMutate.mockClear();
     removeMutate.mockClear();
     useAuth.mockReturnValue({ user: USER });
+    useComboPreferencesIndex.mockReturnValue(new Map());
     global.fetch = vi.fn(() => {
-      throw new Error('network access attempted — favourite rendering must use the stored snapshot');
+      throw new Error(
+        'network access attempted — favourite rendering must use the stored snapshot',
+      );
     }) as unknown as typeof fetch;
   });
 
@@ -52,16 +55,14 @@ describe('ComboFavoriteButton — renders from stored snapshot, network blocked'
   });
 
   it('shows the favourited (liked) state from a stored preference alone', () => {
-    useComboPreferences.mockReturnValue({
-      data: [
-        {
-          comboKey: 'Kiki-Jiki, Mirror Breaker|Zealous Conscripts',
-          sentiment: 'like',
-          spellbookId: 'spellbook-1',
-          snapshot: COMBO,
-        },
-      ],
-    });
+    useComboPreferencesIndex.mockReturnValue(
+      new Map([
+        [
+          'Kiki-Jiki, Mirror Breaker|Zealous Conscripts',
+          { comboKey: 'Kiki-Jiki, Mirror Breaker|Zealous Conscripts', sentiment: 'like' },
+        ],
+      ]),
+    );
 
     render(<ComboFavoriteButton combo={COMBO} />);
 
@@ -70,11 +71,13 @@ describe('ComboFavoriteButton — renders from stored snapshot, network blocked'
   });
 
   it('shows neither state when the combo has no stored preference yet', () => {
-    useComboPreferences.mockReturnValue({ data: [] });
+    useComboPreferencesIndex.mockReturnValue(new Map());
 
     render(<ComboFavoriteButton combo={COMBO} />);
 
-    expect(screen.getByRole('button', { name: 'Favourite this combo' })).not.toHaveClass('is-liked');
+    expect(screen.getByRole('button', { name: 'Favourite this combo' })).not.toHaveClass(
+      'is-liked',
+    );
     expect(screen.getByRole('button', { name: 'Mark as a combo you hate' })).not.toHaveClass(
       'is-disliked',
     );
@@ -83,7 +86,7 @@ describe('ComboFavoriteButton — renders from stored snapshot, network blocked'
 
   it('renders nothing when signed out, still without touching the network', () => {
     useAuth.mockReturnValue({ user: null });
-    useComboPreferences.mockReturnValue({ data: [] });
+    useComboPreferencesIndex.mockReturnValue(new Map());
 
     const { container } = render(<ComboFavoriteButton combo={COMBO} />);
 

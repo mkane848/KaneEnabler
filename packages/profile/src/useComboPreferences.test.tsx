@@ -80,7 +80,12 @@ describe('useComboPreferences', () => {
         comboKey: 'combo-key-1',
         sentiment: 'like',
         spellbookId: 'spellbook-1',
-        snapshot: { cards: ['Kiki-Jiki, Mirror Breaker', 'Zealous Conscripts'] },
+        snapshot: {
+          permalink: null,
+          cards: ['Kiki-Jiki, Mirror Breaker', 'Zealous Conscripts'],
+          produces: [],
+          description: null,
+        },
         fetchedAt: '2026-01-01T00:00:00Z',
         createdAt: '2026-01-01T00:00:00Z',
       },

@@ -154,6 +154,14 @@ Two workflows in `.github/workflows/`:
 | [`docs/color-filter-semantics.md`](./docs/color-filter-semantics.md)   | Implementation brief for returning the recommender's colour pips to subset ("fits inside these colours") semantics, and why that reverses the decision recorded in `recommendation-coverage.md` (approved, not started) |
 | [`docs/api-policy.md`](./docs/api-policy.md)                           | **Hard rule.** External API limits and etiquette                                                                                                                                                                        |
 
+**Where truth lives.** [`docs/handoff.md`](./docs/handoff.md) is the phase plan and the canonical
+record of what has landed vs. what is deferred; [`docs/api-policy.md`](./docs/api-policy.md) is the
+hard rule for external calls; [`docs/signals-rework.md`](./docs/signals-rework.md) tracks the
+recommender engine rework; and [`TODO.md`](./TODO.md) carries the remaining manual/dashboard-only
+tasks. When these disagree with each other or with a stale comment, the code wins, but these four
+are where a fresh session should look _first_ — the per-app `CLAUDE.md` files and this file point
+inward to them rather than restating their contents.
+
 ## Hard rules
 
 1. **Respect external API limits.** Read [`docs/api-policy.md`](./docs/api-policy.md) before

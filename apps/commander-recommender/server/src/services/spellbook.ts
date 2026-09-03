@@ -21,18 +21,12 @@ const REQUEST_TIMEOUT_MS = 12_000;
 const CACHE_TTL_MS = 60 * 60 * 1000; // an hour; combo data changes slowly
 const MAX_CARDS = 250; // a Commander deck is 100; this is a sanity bound
 
-// Not read from package.json: that file sits outside src/'s rootDir (see the
-// note in tsconfig.build.json), so importing it here would reintroduce the
-// same __dirname/rootDir mismatch that already broke a deploy once.
-// fetch-scryfall.ts (in scripts/, outside that rootDir) reads its own
-// version from package.json via @mtg/scryfall's buildUserAgent — this one
-// can't do the same and still needs bumping by hand when package.json's
-// version changes.
+import { APP_VERSION } from '../version.generated';
+
 const HEADERS = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
-  'User-Agent':
-    'CommanderIHardlyKnowEr/1.11.0 (hobby project; https://github.com/mkane848/KaneEnabler)',
+  'User-Agent': `CommanderIHardlyKnowEr/${APP_VERSION} (hobby project; https://github.com/mkane848/KaneEnabler)`,
 };
 
 export interface ComboResult {

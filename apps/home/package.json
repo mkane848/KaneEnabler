@@ -17,6 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@mtg/api-client": "workspace:*",
     "@mtg/profile": "workspace:*",
     "@mtg/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",

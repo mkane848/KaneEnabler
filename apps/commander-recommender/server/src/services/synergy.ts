@@ -146,7 +146,23 @@ export function toSupportingCard({ row, quantity }: OwnedCard): SupportingCard {
   };
 }
 
-export function buildCollectionProfile(owned: OwnedCard[]): CollectionProfile {
+/**
+ * The per-request half of the signal engine: re-deriving signals for the
+ * submitted collection on every call. It's deterministic for a given list
+ * (same cards, same order, same quantities → same profile), and users
+ * re-paste a list with one card changed constantly. A small in-memory LRU
+ * keyed on the ordered (oracle_id, quantity) sequence removes the expensive
+ * repeat work without any infrastructure — single process, bounded memory.
+ *
+ * The cache returns the *same* `CollectionProfile` instance on a hit, so
+ * nothing downstream may mutate it. That invariant already holds: the
+ * scorers (`scoreCommanders`, `analyzeDeck`, `buildCoverage`) read it, and
+ * the only mutation happens here, during construction.
+ */
+const PROFILE_CACHE_MAX = 100;
+const profileCache = new Map<string, CollectionProfile>();
+
+function buildCollectionProfileUncached(owned: OwnedCard[]): CollectionProfile {
   const colorCounts: Record<string, number> = {};
   const creatureTypeSet = new Set<string>();
   const keywordSet = new Set<string>();
@@ -199,6 +215,33 @@ export function buildCollectionProfile(owned: OwnedCard[]): CollectionProfile {
     signalsByCard,
     totalCards,
   };
+}
+
+export function buildCollectionProfile(owned: OwnedCard[]): CollectionProfile {
+  // Key on the full row content, not just oracle_id: the profile reads the
+  // row's colors, text, types and keywords, and two lists sharing oracle_ids
+  // but differing in any of those must not collide. In production the row is
+  // resolved from SQLite by oracle_id (so oracle_id does determine the row),
+  // but keying on the whole row also keeps the cache honest under test
+  // fixtures that reuse a bare id with different bodies.
+  const key = JSON.stringify(owned.map((entry) => ({ row: entry.row, quantity: entry.quantity })));
+  const cached = profileCache.get(key);
+  if (cached) {
+    // Refresh LRU ordering so the cache keeps the most-recently-used entries.
+    profileCache.delete(key);
+    profileCache.set(key, cached);
+    return cached;
+  }
+
+  const profile = buildCollectionProfileUncached(owned);
+  profileCache.set(key, profile);
+  if (profileCache.size > PROFILE_CACHE_MAX) {
+    // Drop the least-recently-used entry. Map iteration order is insertion
+    // order, so the first key is the oldest.
+    const oldest = profileCache.keys().next().value as string | undefined;
+    if (oldest !== undefined) profileCache.delete(oldest);
+  }
+  return profile;
 }
 
 // A commander unit is jointly "the commander" (702.124e), so signals are
@@ -324,9 +367,7 @@ export function supporterMatches(
   if (!signal.qualifier) return true;
   const hasOwnSupport =
     signal.qualifierSource === 'kindred'
-      ? ownSignals.some(
-          (s) => s.archetype === signal.archetype && s.qualifier === signal.qualifier,
-        )
+      ? ownSignals.some((s) => s.archetype === signal.archetype && s.qualifier === signal.qualifier)
       : (() => {
           const own = ownSignalContains(ownSignals, signal.archetype, signal.qualifier);
           if (!own) return false;

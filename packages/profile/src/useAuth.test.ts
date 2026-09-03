@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createElement, type ReactNode } from 'react';
 
 const getSession = vi.fn();
 const onAuthStateChange = vi.fn();
@@ -15,7 +16,7 @@ const unsubscribe = vi.fn();
 vi.mock('./client', () => ({ supabase: null }));
 
 import * as clientModule from './client';
-import { useAuth } from './useAuth';
+import { AuthProvider, useAuth } from './useAuth';
 
 const FAKE_SUPABASE = {
   auth: { getSession, onAuthStateChange, signUp, signInWithPassword, signOut },
@@ -33,7 +34,7 @@ beforeEach(() => {
 describe('useAuth — not configured', () => {
   it('reports configured: false and never calls Supabase', () => {
     vi.mocked(clientModule).supabase = null;
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     expect(result.current.configured).toBe(false);
     expect(result.current.loading).toBe(false);
     expect(result.current.user).toBeNull();
@@ -42,7 +43,7 @@ describe('useAuth — not configured', () => {
 
   it('signIn/signUp resolve with a "not configured" error instead of throwing', async () => {
     vi.mocked(clientModule).supabase = null;
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await expect(result.current.signIn('a@b.com', 'pw')).resolves.toEqual({
       error: 'Profiles are not configured for this deployment.',
     });
@@ -55,7 +56,7 @@ describe('useAuth — not configured', () => {
 
   it('signOut is a silent no-op', async () => {
     vi.mocked(clientModule).supabase = null;
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await expect(result.current.signOut()).resolves.toBeUndefined();
     expect(signOut).not.toHaveBeenCalled();
   });
@@ -70,7 +71,7 @@ describe('useAuth — configured', () => {
 
   it('starts loading, then resolves the initial session', async () => {
     getSession.mockResolvedValue({ data: { session: { user: USER } } });
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
     expect(result.current.loading).toBe(true);
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -80,7 +81,7 @@ describe('useAuth — configured', () => {
 
   it('has no session initially when none exists', async () => {
     getSession.mockResolvedValue({ data: { session: null } });
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.user).toBeNull();
   });
@@ -91,7 +92,7 @@ describe('useAuth — configured', () => {
     // consumer gates its render on `loading`, so a missing .catch here would
     // hide the sign-in UI forever instead of degrading to signed-out.
     getSession.mockRejectedValue(new TypeError('Failed to fetch'));
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.user).toBeNull();
   });
@@ -104,7 +105,7 @@ describe('useAuth — configured', () => {
       return { data: { subscription: { unsubscribe } } };
     });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.user).toBeNull();
 
@@ -121,7 +122,7 @@ describe('useAuth — configured', () => {
 
   it('unsubscribes on unmount', async () => {
     getSession.mockResolvedValue({ data: { session: null } });
-    const { unmount, result } = renderHook(() => useAuth());
+    const { unmount, result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await waitFor(() => expect(result.current.loading).toBe(false));
     unmount();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
@@ -129,7 +130,7 @@ describe('useAuth — configured', () => {
 
   it('signIn calls signInWithPassword and reports no error on success', async () => {
     signInWithPassword.mockResolvedValue({ error: null });
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     const outcome = await result.current.signIn('a@b.com', 'hunter2');
     expect(signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.com', password: 'hunter2' });
     expect(outcome).toEqual({ error: null });
@@ -137,14 +138,14 @@ describe('useAuth — configured', () => {
 
   it('signIn surfaces a Supabase error message', async () => {
     signInWithPassword.mockResolvedValue({ error: { message: 'Invalid login credentials' } });
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     const outcome = await result.current.signIn('a@b.com', 'wrong');
     expect(outcome).toEqual({ error: 'Invalid login credentials' });
   });
 
   it('signUp calls supabase.auth.signUp with the confirmation redirect', async () => {
     signUp.mockResolvedValue({ error: null });
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     const outcome = await result.current.signUp('new@b.com', 'hunter2');
     expect(signUp).toHaveBeenCalledWith({
       email: 'new@b.com',
@@ -156,8 +157,48 @@ describe('useAuth — configured', () => {
 
   it('signOut calls supabase.auth.signOut', async () => {
     signOut.mockResolvedValue({ error: null });
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await result.current.signOut();
     expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('subscribes once, regardless of how many consumers read the context', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe } } });
+
+    function Probe({ children }: { children: ReactNode }) {
+      useAuth();
+      useAuth();
+      useAuth();
+      return createElement('div', null, children);
+    }
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) =>
+        createElement(AuthProvider, null, createElement(Probe, null, children)),
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(getSession).toHaveBeenCalledTimes(1);
+    expect(onAuthStateChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useAuth — outside a provider', () => {
+  it('degrades to the not-configured sentinel, with usable no-op actions', async () => {
+    // No AuthProvider in the tree (and supabase left whatever it was) — the
+    // context fallback returns NOT_CONFIGURED_STATE, whose signIn/signUp/
+    // signOut never touch Supabase.
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current.configured).toBe(false);
+    expect(result.current.user).toBeNull();
+    await expect(result.current.signIn('a@b.com', 'pw')).resolves.toEqual({
+      error: 'Profiles are not configured for this deployment.',
+    });
+    await expect(result.current.signUp('a@b.com', 'pw')).resolves.toEqual({
+      error: 'Profiles are not configured for this deployment.',
+    });
+    await expect(result.current.signOut()).resolves.toBeUndefined();
   });
 });

@@ -44,6 +44,36 @@ export function useSetCardPreference() {
   });
 }
 
+/**
+ * Upserts several card preferences in one request. A Partner/Background
+ * pair is liked or disliked as a unit, and the single-row writer looped
+ * one mutation per card — halving the round trips and making the two-card
+ * write atomic here instead.
+ */
+export function useSetCardPreferences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, inputs }: { userId: string; inputs: CardPreferenceInput[] }) => {
+      if (!supabase) throw new Error('Profiles are not configured for this deployment.');
+      if (inputs.length === 0) return;
+      const { error } = await supabase.from('card_preferences').upsert(
+        inputs.map((input) => ({
+          user_id: userId,
+          oracle_id: input.oracleId,
+          sentiment: input.sentiment,
+          tags: input.tags ?? [],
+          note: input.note ?? null,
+        })),
+        { onConflict: 'user_id,oracle_id' },
+      );
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_data, { userId }) => {
+      void queryClient.invalidateQueries({ queryKey: [QUERY_KEY, userId] });
+    },
+  });
+}
+
 /** Clears a card's preference entirely (not the same as setting it to neither like nor dislike — there is no such state, so removal is the only way back to neutral). */
 export function useRemoveCardPreference() {
   const queryClient = useQueryClient();
@@ -55,6 +85,30 @@ export function useRemoveCardPreference() {
         .delete()
         .eq('user_id', userId)
         .eq('oracle_id', oracleId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_data, { userId }) => {
+      void queryClient.invalidateQueries({ queryKey: [QUERY_KEY, userId] });
+    },
+  });
+}
+
+/**
+ * Clears several card preferences in one request — the batch counterpart to
+ * `useSetCardPreferences`, used when a liked/disliked unit is toggled back
+ * to neutral.
+ */
+export function useRemoveCardPreferences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, oracleIds }: { userId: string; oracleIds: string[] }) => {
+      if (!supabase) throw new Error('Profiles are not configured for this deployment.');
+      if (oracleIds.length === 0) return;
+      const { error } = await supabase
+        .from('card_preferences')
+        .delete()
+        .eq('user_id', userId)
+        .in('oracle_id', oracleIds);
       if (error) throw new Error(error.message);
     },
     onSuccess: (_data, { userId }) => {

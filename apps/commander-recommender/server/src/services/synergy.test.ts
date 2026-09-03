@@ -124,6 +124,24 @@ describe('buildCollectionProfile', () => {
     assert.ok(profile.keywords.includes('Flying'));
   });
 
+  it('memoizes: the same list returns the same profile instance, and any change in a row differs', () => {
+    const cardA = makeCard({ name: 'Memo A', color_identity: JSON.stringify(['B']) });
+    const cardB = makeCard({ name: 'Memo B', color_identity: JSON.stringify(['B']) });
+    const entries = [owned(cardA), owned(cardB)];
+
+    const first = buildCollectionProfile(entries);
+    const second = buildCollectionProfile(entries);
+    assert.strictEqual(first, second);
+
+    // A different body under the same oracle_id must not collide with the
+    // cached entry — the key covers the full row, not just its id.
+    const changed = buildCollectionProfile([
+      owned({ ...cardA, oracle_text: 'Draw a card.' }),
+      owned(cardB),
+    ]);
+    assert.notStrictEqual(changed, first);
+  });
+
   it('Partner-family keywords are not treated as thematic signals', () => {
     // They say who can be your commander, not what the deck wants to do.
     const partnerCards = Array.from({ length: 4 }, (_, i) =>
@@ -906,7 +924,8 @@ describe('qualifiers', () => {
     const flexibleRewarder = makeCard({
       name: 'Flexible Rewarder',
       color_identity: JSON.stringify(['R']),
-      oracle_text: 'Whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.',
+      oracle_text:
+        'Whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.',
     });
     const bystander = makeCard({
       name: 'Bystander',

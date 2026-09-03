@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './client';
 
@@ -19,7 +19,25 @@ export interface AuthState {
   signOut: () => Promise<void>;
 }
 
-export function useAuth(): AuthState {
+const NOT_CONFIGURED_STATE: AuthState = {
+  user: null,
+  loading: false,
+  configured: false,
+  signUp: async () => ({ error: NOT_CONFIGURED }),
+  signIn: async () => ({ error: NOT_CONFIGURED }),
+  signOut: async () => {},
+};
+
+const AuthContext = createContext<AuthState>(NOT_CONFIGURED_STATE);
+
+/**
+ * One `getSession` + one `onAuthStateChange` subscription for the whole app,
+ * regardless of how many components read it. `useAuth` pulls from this
+ * context rather than each caller running its own Supabase session — a
+ * virtualized results grid renders one button per row, and N independent
+ * subscriptions all agreeing with each other is pure waste.
+ */
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(supabase != null);
 
@@ -77,5 +95,20 @@ export function useAuth(): AuthState {
     await supabase.auth.signOut();
   }
 
-  return { user, loading, configured: supabase != null, signUp, signIn, signOut };
+  return (
+    <AuthContext.Provider
+      value={{ user, loading, configured: supabase != null, signUp, signIn, signOut }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+/**
+ * Reads the shared auth state. When used outside an `AuthProvider` it
+ * degrades to the not-configured sentinel (no thrown error), so individual
+ * tests and any future consumer don't require the provider to be mounted.
+ */
+export function useAuth(): AuthState {
+  return useContext(AuthContext);
 }

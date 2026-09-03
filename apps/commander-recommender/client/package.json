@@ -15,6 +15,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@mtg/api-client": "workspace:*",
     "@mtg/mana": "workspace:*",
     "@mtg/profile": "workspace:*",
     "@mtg/rules": "workspace:*",

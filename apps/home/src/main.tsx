@@ -5,6 +5,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { ErrorBoundary } from '@mtg/ui';
 import ErrorFallback from './components/ErrorFallback';
 import { router } from './router';
+import { AuthProvider } from '@mtg/profile';
 import '@mtg/ui/NavBar.css';
 import '@mtg/profile/AccountMenu.css';
 import '@mtg/profile/AuthDialog.css';
@@ -37,7 +38,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       onError={(error) => console.error('Uncaught render error:', error)}
     >
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>,

@@ -1,3 +1,5 @@
+import type { ComboSnapshot } from './comboSnapshot';
+
 export type Sentiment = 'like' | 'dislike';
 
 /**
@@ -33,10 +35,18 @@ export interface ComboPreference {
   comboKey: string;
   sentiment: Sentiment;
   spellbookId: string | null;
-  snapshot: unknown;
+  snapshot: ComboSnapshot;
   fetchedAt: string;
   createdAt: string;
 }
 
-export type ComboPreferenceInput = Pick<ComboPreference, 'comboKey' | 'sentiment' | 'snapshot'> &
-  Partial<Pick<ComboPreference, 'spellbookId'>>;
+export type ComboPreferenceInput = Pick<ComboPreference, 'comboKey' | 'sentiment'> &
+  Partial<Pick<ComboPreference, 'spellbookId'>> & {
+    /**
+     * The combo DTO as shown at favourite time — written to jsonb exactly as
+     * given. Deliberately `unknown` at the write boundary (the caller hands us
+     * any combo-shaped object); it is validated into a `ComboSnapshot` at the
+     * read boundary in `fromComboRow`.
+     */
+    snapshot: unknown;
+  };
