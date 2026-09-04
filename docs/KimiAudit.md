@@ -272,10 +272,14 @@ only difference from the rest of the site_. What it found, and did:
   `.btn` rules written inside time-counters CSS Modules were scoped-and-hashed, so they had never
   matched the global `btn` class in the markup and had silently never applied.
 
-Not attempted: converting the recommender's ~2,300 lines of bespoke control CSS onto the shared
-`.mtg-btn`/`.mtg-input` primitives. Its buttons now read from shared tokens and so match in colour
-and radius, but they are still its own rules. That is the largest remaining piece of visual
-duplication and the obvious next increment.
+Not attempted: converting the recommender's bespoke control CSS onto the shared `.mtg-btn`/
+`.mtg-input` primitives. Its buttons now read from shared tokens and so match in colour and radius,
+but they are still its own rules. **Scoped and approved since, as
+[`control-primitives-migration.md`](./control-primitives-migration.md)** — and the survey behind it
+shrank the job considerably: this section originally called it "~2,300 lines", but only eight
+controls are actually migratable. The recommender is a two-palette app, and the platform models only
+the dark page, so most of its controls stay local by design rather than by neglect. Recording _why_
+they stay is now as much of the deliverable as the deletion.
 
 ## 6. Easy optimization wins, ranked
 
@@ -349,10 +353,18 @@ Credit where due - these are load-bearing and correct:
 4. Port `@mtg/scryfall` + `@mtg/card-model` to TypeScript, or bless the `.js`?
 5. ~~Is the time-counters presentation/rules split (F9) the intended end state?~~ **Answered:
    yes**, documented at the top of `utils/counters.ts` in `cf2d0e5`.
-6. **New:** should the recommender's bespoke control CSS move onto the shared `.mtg-btn`/
-   `.mtg-input` primitives? It's the last large piece of visual duplication (see section 5a), but
-   it's a wide diff across ~2,300 lines of styles with real regression risk, so it wasn't taken
-   without a decision.
+6. ~~**New:** should the recommender's bespoke control CSS move onto the shared `.mtg-btn`/
+   `.mtg-input` primitives?~~ **Answered 2026-09-04: yes, for the eight controls that can.** The
+   survey behind that answer corrected this question's own premise — see
+   [`control-primitives-migration.md`](./control-primitives-migration.md), which is the execution
+   brief. In short: the recommender is a **two-palette app** (light parchment cards and dialogs on a
+   dark page), and the platform primitives are authored for the dark page only, so roughly half its
+   controls have nothing to share with; most of the rest are genuinely not the platform button
+   (icon-only toggles, inline text links, a colour-pip cycler, tri-state filter pills). Eight
+   controls migrate, not thirty. The survey also found two defects in the platform theme itself:
+   `.mtg-btn-primary` carries time-counters' hover direction rather than the recommender's, whose
+   look was the one adopted; and there is no solid-fill danger variant for the one the recommender
+   actually ships.
 
 ---
 
