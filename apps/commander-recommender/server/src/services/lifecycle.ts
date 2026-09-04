@@ -74,7 +74,8 @@ export const LIFECYCLES: LifecycleSpec[] = [
       {
         key: 'bodies',
         label: 'Bodies',
-        description: 'Actual members of the tribe — the creatures a tribal payoff has to work with.',
+        description:
+          'Actual members of the tribe — the creatures a tribal payoff has to work with.',
         roles: ['is'],
         minimum: 8,
       },
@@ -91,7 +92,8 @@ export const LIFECYCLES: LifecycleSpec[] = [
       {
         key: 'engine',
         label: 'Tribal engine',
-        description: 'Mana, cost reduction, or spending restricted to the tribe — what turns it on.',
+        description:
+          'Mana, cost reduction, or spending restricted to the tribe — what turns it on.',
         roles: ['enables'],
         minimum: 1,
         commonlyMissing: true,
@@ -107,7 +109,8 @@ export const LIFECYCLES: LifecycleSpec[] = [
         // specific member of the tribe when it needs one?
         key: 'toolbox',
         label: 'Toolbox',
-        description: 'Ways to get a specific member of the tribe when you need it — tutors, or tokens.',
+        description:
+          'Ways to get a specific member of the tribe when you need it — tutors, or tokens.',
         roles: ['produces'],
         minimum: 1,
       },
@@ -304,7 +307,8 @@ export const LIFECYCLES: LifecycleSpec[] = [
       {
         key: 'multiplier',
         label: 'Multipliers',
-        description: 'Effects that double every draw outright. Optional, but the ceiling of the deck.',
+        description:
+          'Effects that double every draw outright. Optional, but the ceiling of the deck.',
         roles: ['amplifies'],
         minimum: 1,
       },

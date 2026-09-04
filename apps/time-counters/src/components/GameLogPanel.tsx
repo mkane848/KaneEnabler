@@ -49,7 +49,7 @@ export default function GameLogPanel({ log, currentTurn, onClose }: GameLogPanel
           <h2 className={styles.title}>Game Log</h2>
         </ModalTitle>
         <ModalClose asChild>
-          <button type="button" className="btn btn-ghost btn-sm">
+          <button type="button" className="mtg-btn mtg-btn-ghost mtg-btn-sm">
             Close
           </button>
         </ModalClose>

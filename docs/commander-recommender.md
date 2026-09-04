@@ -247,6 +247,13 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
     test-rehydrate.ts           wire-response -> card-object rehydration cases (see rehydrate.ts)
   src/lib/rehydrate.ts        swaps the wire response's cardIndex positions back for full card
                                objects at the API boundary — see cardIndex.ts below
+  src/lib/disliked.ts         partitions out commanders the signed-in user has disliked, so a
+                               persistent dislike hides a suggestion the way a session dismissal
+                               does (RecommendationResults.tsx applies it to both the confident
+                               grid and the coverage tier). A Partner/Background pair hides only
+                               when both halves are disliked, matching LikeDislikeButtons' rule.
+                               Filter only — never touches sort.ts or the server's ranking, per
+                               Phase 7's "filter and annotate only" decision
   src/components/
     DeckSummary.tsx            renders deckAnalysis.ts's themes/lifecycle output: what the list is
                                 trying to do and what's missing, independent of any commander
@@ -622,7 +629,7 @@ create ... creature token` means Krenko, Mob Boss reads as an Aristocrats
   rather than ones tied to the commander's actual restriction (whether the
   qualifier was borrowed from the commander's own kindred signal, or read
   directly off its text — Wilhelt-style), plus a `produces`-only pool card
-  no longer counting as generic backup for *any* qualified signal it
+  no longer counting as generic backup for _any_ qualified signal it
   shares — are covered in [`archetypes.md`](./archetypes.md)'s "A
   produces-only match can borrow from this same card's own kindred signal"
   and "A produces-only SUPPORTER doesn't back a qualified signal either,

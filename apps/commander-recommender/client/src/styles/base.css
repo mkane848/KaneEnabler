@@ -1,40 +1,4 @@
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  background: var(--ink);
-  background-image:
-    radial-gradient(circle at 20% -10%, #2a2418 0%, transparent 45%),
-    radial-gradient(circle at 90% 10%, #241f17 0%, transparent 40%);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-}
-
-:focus-visible {
-  outline: 2px solid var(--brass-bright);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Safe-area insets keep the top of the page out from under a mobile URL bar
-   or notch, and the bottom clear of the home indicator. The max() means the
-   normal desktop padding still applies where the insets are zero. */
+/* The reset, focus ring, page art, and reduced-motion block that used to
+   live here are all in the platform theme now (@mtg/ui/theme.css, imported
+   ahead of index.css in main.tsx) — all three apps carried near-identical
+   copies, and the brass page wash this app defined is the platform's. */

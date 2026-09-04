@@ -247,7 +247,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
           <>
             <input
               autoFocus
-              className="input"
+              className="mtg-input"
               type="text"
               placeholder={catalogLoading ? 'Loading card catalog…' : 'Search any Jeskai card…'}
               value={query}
@@ -310,13 +310,13 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               <input
                 id="manual-name"
                 autoFocus
-                className="input"
+                className="mtg-input"
                 type="text"
                 placeholder={creatingToken ? 'e.g. Human Noble' : 'e.g. Ancestral Vision'}
                 value={manualName}
                 onChange={(e) => setManualName(e.target.value)}
               />
-              <button type="submit" className="btn btn-primary btn-sm">
+              <button type="submit" className="mtg-btn mtg-btn-primary mtg-btn-sm">
                 Next
               </button>
             </div>
@@ -400,7 +400,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                           {(field) => (
                             <input
                               id="custom-label"
-                              className="input"
+                              className="mtg-input"
                               type="text"
                               placeholder="e.g. Age counter"
                               value={field.state.value}
@@ -449,7 +449,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                                 {(chapterField) => (
                                   <div className={styles.manualRow}>
                                     <input
-                                      className="input"
+                                      className="mtg-input"
                                       type="text"
                                       placeholder={`Chapter ${chapterRoman(i + 1)} — what happens`}
                                       value={chapterField.state.value}
@@ -493,7 +493,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                         {(field) => (
                           <input
                             id="starting-count"
-                            className="input"
+                            className="mtg-input"
                             type="number"
                             min={0}
                             inputMode="numeric"
@@ -513,7 +513,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                           {(field) => (
                             <input
                               id="target-count"
-                              className="input"
+                              className="mtg-input"
                               type="number"
                               min={1}
                               inputMode="numeric"
@@ -558,7 +558,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                         {(field) => (
                           <textarea
                             id="resolve-note"
-                            className="input"
+                            className="mtg-input"
                             rows={2}
                             value={field.state.value}
                             onChange={(e) => field.handleChange(e.target.value)}
@@ -569,12 +569,12 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                   )}
 
                   <div className={styles.actions}>
-                    <button type="button" className="btn btn-ghost" onClick={resetAll}>
+                    <button type="button" className="mtg-btn mtg-btn-ghost" onClick={resetAll}>
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="btn btn-primary"
+                      className="mtg-btn mtg-btn-primary"
                       disabled={
                         values.mechanic === 'saga' &&
                         values.chapters.some((c) => c.trim().length === 0)

@@ -50,8 +50,12 @@ export default function Header({
     <header className={styles.header}>
       <div className={styles.top}>
         <div className={styles.titleBlock}>
-          <span className={styles.eyebrow}>Commander companion</span>
-          <h1 className={styles.title}>Time Counters</h1>
+          {/* Kept for the document outline, not shown: the NavBar directly
+              above already brands the page ("KaneEnabler" / "Time Counters"),
+              and printing the app name a second time under it was the most
+              visible way this tool read as its own separate site. What the
+              bar shows instead is game state — the commanders, the turn. */}
+          <h1 className="mtg-visually-hidden">Time Counters</h1>
           <CommanderBanner onOpenCommander={onOpenCommander} />
         </div>
         <div className={styles.topActions}>
@@ -98,7 +102,7 @@ export default function Header({
           )}
         </div>
 
-        <button type="button" className="btn btn-primary" onClick={onNextTurn}>
+        <button type="button" className="mtg-btn mtg-btn-primary" onClick={onNextTurn}>
           Next turn →
         </button>
       </div>

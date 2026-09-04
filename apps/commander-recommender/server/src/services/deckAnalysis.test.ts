@@ -161,10 +161,11 @@ describe('analyzeDeck', () => {
     assert.strictEqual(themes.length, 1);
     assert.strictEqual(themes[0]!.label, 'reanimator (Zombie)');
     assert.strictEqual(themes[0]!.cardCount, 3);
-    assert.deepStrictEqual(
-      themes[0]!.cards.map((c) => c.name).sort(),
-      ['Generic Reanimation', 'Zombie Reanimation 1', 'Zombie Reanimation 2'],
-    );
+    assert.deepStrictEqual(themes[0]!.cards.map((c) => c.name).sort(), [
+      'Generic Reanimation',
+      'Zombie Reanimation 1',
+      'Zombie Reanimation 2',
+    ]);
   });
 
   it('folds into every qualified group of the same archetype, not just one', () => {

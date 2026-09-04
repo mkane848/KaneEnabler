@@ -32,8 +32,11 @@
   background: rgba(198, 54, 42, 0.15);
 }
 
+/* --danger is a fill color; as label text over this tinted background it
+   lands near 1.5:1 against the page, which read as "greyed out" rather
+   than "disliked". --danger-strong is the same red pitched to be legible. */
 .like-dislike-btn.is-disliked {
-  color: var(--danger);
+  color: var(--danger-strong);
   border-color: var(--danger);
   background: rgba(140, 47, 47, 0.15);
 }

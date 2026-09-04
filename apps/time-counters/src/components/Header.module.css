@@ -28,22 +28,6 @@
   min-width: 0;
 }
 
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-faint);
-}
-
-.title {
-  font-size: 1.05rem;
-  color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .topActions {
   display: flex;
   align-items: baseline;

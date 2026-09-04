@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from '@tanstack/react-router';
-import { NavBar, type NavBarLink } from '@mtg/ui';
+import { NavBar, SiteFooter, type NavBarLink } from '@mtg/ui';
 import { AccountMenu, useAuth } from '@mtg/profile';
 
 /**
@@ -24,13 +24,14 @@ export default function RootLayout() {
   }
 
   return (
-    <div className="page">
+    <div className="mtg-page">
       <NavBar
         brand={{ label: 'KaneEnabler', href: '/' }}
         links={links}
         accountSlot={<AccountMenu />}
       />
       <Outlet />
+      <SiteFooter />
     </div>
   );
 }

@@ -131,7 +131,7 @@ describe('names are never evidence', () => {
       type_line: 'Creature — Giant // Instant — Adventure',
       back_name: null,
       oracle_text:
-        "Whenever this creature becomes the target of a spell, this creature deals 2 damage to " +
+        'Whenever this creature becomes the target of a spell, this creature deals 2 damage to ' +
         "that spell's controller.\n" +
         "Damage can't be prevented this turn. Stomp deals 2 damage to any target.",
     });
@@ -294,7 +294,7 @@ describe('kindred\'s own wildcard: "choose a creature type" supports every theme
     assert.deepStrictEqual(rolesOf(signalsFor(path), 'kindred', '*'), ['rewards']);
   });
 
-  it("a printed type and the wildcard are independent signals on the same card", () => {
+  it('a printed type and the wildcard are independent signals on the same card', () => {
     // Realmwalker — real oracle text. It is itself a Shapeshifter (`is`) and
     // separately supports every other kindred theme in the deck (`*`,
     // `produces` — casting from the top of the library scoped to the chosen
@@ -585,7 +585,10 @@ describe('Phase D: keyword buckets replace the single EXCLUDED_KEYWORDS set', ()
     });
     const signals = signalsFor(thinkTwice, [], ['Flashback']);
     assert.deepStrictEqual(rolesOf(signals, 'keywordCare', 'Flashback'), ['is']);
-    assert.deepStrictEqual(definingRequirement('keywordCare', 'Flashback'), { role: 'is', minimum: 1 });
+    assert.deepStrictEqual(definingRequirement('keywordCare', 'Flashback'), {
+      role: 'is',
+      minimum: 1,
+    });
   });
 
   it('Escape is a mechanic keyword too, for the same reason', () => {
@@ -601,11 +604,17 @@ describe('Phase D: keyword buckets replace the single EXCLUDED_KEYWORDS set', ()
     });
     const signals = signalsFor(glimpseOfFreedom, [], ['Escape']);
     assert.deepStrictEqual(rolesOf(signals, 'keywordCare', 'Escape'), ['is']);
-    assert.deepStrictEqual(definingRequirement('keywordCare', 'Escape'), { role: 'is', minimum: 1 });
+    assert.deepStrictEqual(definingRequirement('keywordCare', 'Escape'), {
+      role: 'is',
+      minimum: 1,
+    });
   });
 
   it('a combat keyword keeps requiring an active caring role, unchanged', () => {
-    assert.deepStrictEqual(definingRequirement('keywordCare', 'Flying'), { role: 'rewards', minimum: 1 });
+    assert.deepStrictEqual(definingRequirement('keywordCare', 'Flying'), {
+      role: 'rewards',
+      minimum: 1,
+    });
   });
 
   it('a keyword already covered by its own dedicated archetype produces no keywordCare signal at all', () => {
@@ -616,7 +625,8 @@ describe('Phase D: keyword buckets replace the single EXCLUDED_KEYWORDS set', ()
       name: 'Unicycle',
       type_line: 'Artifact — Equipment Vehicle',
       mana_cost: '{2}',
-      oracle_text: 'First strike, haste\nEquipped creature has first strike and haste.\nEquip {1}\nCrew 1',
+      oracle_text:
+        'First strike, haste\nEquipped creature has first strike and haste.\nEquip {1}\nCrew 1',
       keywords: JSON.stringify(['First strike', 'Haste', 'Equip', 'Crew']),
     });
     const signals = signalsFor(unicycle, [], ['Crew', 'First strike', 'Haste']);
@@ -718,7 +728,7 @@ describe('the right archetype for the right object', () => {
       oracle_text:
         'Whenever this creature or another Vampire you control enters, this creature fights up to one ' +
         'target creature an opponent controls.\n' +
-        'Whenever a creature dealt damage by this creature this turn dies, create a Blood token. (It\'s ' +
+        "Whenever a creature dealt damage by this creature this turn dies, create a Blood token. (It's " +
         'an artifact with "{1}, {T}, Discard a card, Sacrifice this token: Draw a card.")',
     });
     assert.strictEqual(find(signalsFor(markov, ['Vampire']), 'aristocrats'), undefined);
@@ -797,7 +807,7 @@ describe('qualifiers: a restricted payoff only pays off its own subtype', () => 
   });
 });
 
-describe('qualifier borrowing: a produces-only match can inherit this card\'s own kindred restriction', () => {
+describe("qualifier borrowing: a produces-only match can inherit this card's own kindred restriction", () => {
   /** Ajani, Nacatl Pariah // Ajani, Nacatl Avenger — real oracle text, both
    * faces joined (import-scryfall.ts's own behaviour for a transform card).
    * His only goWide-matching text is "create ... creature token" (produces)
@@ -950,12 +960,13 @@ describe('sacrificesACreature/sacrificesKind read the cost side only', () => {
       name: 'Goblin Grenade',
       type_line: 'Sorcery',
       oracle_text:
-        'As an additional cost to cast this spell, sacrifice a Goblin.\n' + 'Deals 5 damage to any target.',
+        'As an additional cost to cast this spell, sacrifice a Goblin.\n' +
+        'Deals 5 damage to any target.',
     });
     assert.ok(rolesOf(signalsFor(grenade, ['Goblin']), 'aristocrats').includes('consumes'));
   });
 
-  it("a kindred consumer is read from the cost, not wherever the type is mentioned", () => {
+  it('a kindred consumer is read from the cost, not wherever the type is mentioned', () => {
     // Wilhelt, the Rotcleaver — real oracle text. "You may sacrifice a
     // Zombie" is a real Zombie consumer and a real Aristocrats outlet, which
     // the old check missed entirely because it required the literal word
@@ -1006,7 +1017,7 @@ describe('sacrificesACreature/sacrificesKind read the cost side only', () => {
     assert.ok(!rolesOf(signalsFor(edict), 'aristocrats').includes('consumes'));
   });
 
-  it('a triggered ability\'s condition does not bleed into its unrelated effect across a comma', () => {
+  it("a triggered ability's condition does not bleed into its unrelated effect across a comma", () => {
     // Blood Hypnotist — real oracle text. Never sacrifices a creature at
     // all (Blood tokens are artifacts) — "target creature can't block" is
     // the unrelated effect half of the trigger, past the comma, not the
@@ -1145,7 +1156,7 @@ describe('reminder-only keywords get explicit matchers', () => {
         'Myriad (Whenever this creature attacks, for each opponent other than defending player, you may ' +
         "create a token copy that's tapped and attacking that player or a planeswalker they control. Exile " +
         'the tokens at end of combat.)\n' +
-        'Whenever this creature deals combat damage to a player, create a token that\'s a copy of this creature.',
+        "Whenever this creature deals combat damage to a player, create a token that's a copy of this creature.",
     });
     assert.ok(rolesOf(signalsFor(evangelist), 'goWide').includes('produces'));
   });
@@ -1160,7 +1171,9 @@ describe('lord wording is normalised onto one shape', () => {
       creature_types: JSON.stringify(['Sliver']),
       oracle_text: 'All Sliver creatures get +1/+1.',
     });
-    assert.ok(rolesOf(signalsFor(muscleSliver, ['Sliver']), 'goWide', 'Sliver').includes('rewards'));
+    assert.ok(
+      rolesOf(signalsFor(muscleSliver, ['Sliver']), 'goWide', 'Sliver').includes('rewards'),
+    );
   });
 
   it('"X you control get" (no "creatures") registers the same way', () => {
@@ -1202,14 +1215,16 @@ describe('graveyard filling beyond mill', () => {
     const buriedAlive = makeCard({
       name: 'Buried Alive',
       type_line: 'Sorcery',
-      oracle_text: 'Search your library for up to three creature cards, put them into your graveyard, then shuffle.',
+      oracle_text:
+        'Search your library for up to three creature cards, put them into your graveyard, then shuffle.',
     });
     assert.ok(rolesOf(signalsFor(buriedAlive), 'selfMill').includes('produces'));
 
     const unmarkedGrave = makeCard({
       name: 'Unmarked Grave',
       type_line: 'Sorcery',
-      oracle_text: 'Search your library for a nonlegendary card, put that card into your graveyard, then shuffle.',
+      oracle_text:
+        'Search your library for a nonlegendary card, put that card into your graveyard, then shuffle.',
     });
     assert.ok(rolesOf(signalsFor(unmarkedGrave), 'selfMill').includes('produces'));
   });
@@ -1219,7 +1234,8 @@ describe('graveyard filling beyond mill', () => {
     const technique = makeCard({
       name: 'Incarnation Technique',
       type_line: 'Sorcery',
-      oracle_text: 'Mill five cards, then return a creature card from your graveyard to the battlefield.',
+      oracle_text:
+        'Mill five cards, then return a creature card from your graveyard to the battlefield.',
     });
     assert.ok(rolesOf(signalsFor(technique), 'selfMill').includes('produces'));
   });
@@ -1263,7 +1279,7 @@ describe('graveyard filling beyond mill', () => {
 });
 
 describe('reanimation misses', () => {
-  it('reanimating from an opponent\'s graveyard still counts', () => {
+  it("reanimating from an opponent's graveyard still counts", () => {
     // Gruesome Encore, Puppeteer Clique — real oracle text.
     const gruesomeEncore = makeCard({
       name: 'Gruesome Encore',
@@ -1443,7 +1459,7 @@ describe('Counters: -1/-1, time, and stun are the same family as +1/+1', () => {
       keywords: JSON.stringify(['Flying', 'Persist']),
       oracle_text:
         'Flying\n' +
-        'When this creature enters, put target creature card from an opponent\'s graveyard onto the ' +
+        "When this creature enters, put target creature card from an opponent's graveyard onto the " +
         'battlefield under your control. It gains haste. At the beginning of your next end step, exile it.\n' +
         'Persist (When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield ' +
         "under its owner's control with a -1/-1 counter on it.)",
@@ -1459,7 +1475,7 @@ describe('Counters: -1/-1, time, and stun are the same family as +1/+1', () => {
       creature_types: JSON.stringify(['Kraken']),
       oracle_text:
         'The Watcher in the Water enters tapped with nine stun counters on it.\n' +
-        'Whenever you draw a card during an opponent\'s turn, create a 1/1 blue Tentacle creature token.\n' +
+        "Whenever you draw a card during an opponent's turn, create a 1/1 blue Tentacle creature token.\n" +
         'Whenever a Tentacle you control dies, untap up to one target Kraken and put a stun counter on up ' +
         'to one target nonland permanent.',
     });
@@ -1483,7 +1499,9 @@ describe('token descriptor stripping is scoped to token-creation clauses', () =>
         'the number of artifacts you control. Exile Their Number Is Legion.\n' +
         'You may cast this card from your graveyard.',
     });
-    assert.deepStrictEqual(rolesOf(signalsFor(theirNumber, ['Necron']), 'kindred', 'Necron'), ['produces']);
+    assert.deepStrictEqual(rolesOf(signalsFor(theirNumber, ['Necron']), 'kindred', 'Necron'), [
+      'produces',
+    ]);
   });
 
   it('a token-type mention OUTSIDE a create clause is not erased', () => {
@@ -1495,22 +1513,26 @@ describe('token descriptor stripping is scoped to token-creation clauses', () =>
       type_line: 'Creature — Zombie Wizard',
       creature_types: JSON.stringify(['Zombie', 'Wizard']),
       oracle_text:
-        'When this creature enters, amass Zombies 1. (Put a +1/+1 counter on an Army you control. It\'s ' +
+        "When this creature enters, amass Zombies 1. (Put a +1/+1 counter on an Army you control. It's " +
         "also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\n" +
         'Zombie tokens you control have hexproof and menace.',
     });
-    assert.ok(rolesOf(signalsFor(gleamingOverseer, ['Zombie']), 'kindred', 'Zombie').includes('rewards'));
+    assert.ok(
+      rolesOf(signalsFor(gleamingOverseer, ['Zombie']), 'kindred', 'Zombie').includes('rewards'),
+    );
 
     const eternalSkylord = makeCard({
       name: 'Eternal Skylord',
       type_line: 'Creature — Zombie Wizard',
       creature_types: JSON.stringify(['Zombie', 'Wizard']),
       oracle_text:
-        'When this creature enters, amass Zombies 2. (Put two +1/+1 counters on an Army you control. It\'s ' +
+        "When this creature enters, amass Zombies 2. (Put two +1/+1 counters on an Army you control. It's " +
         "also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\n" +
         'Zombie tokens you control have flying.',
     });
-    assert.ok(rolesOf(signalsFor(eternalSkylord, ['Zombie']), 'kindred', 'Zombie').includes('rewards'));
+    assert.ok(
+      rolesOf(signalsFor(eternalSkylord, ['Zombie']), 'kindred', 'Zombie').includes('rewards'),
+    );
 
     const dreadhordeInvasion = makeCard({
       name: 'Dreadhorde Invasion',
@@ -1556,9 +1578,12 @@ describe('keyword-care plurals', () => {
     const foodPayoff = makeCard({
       name: 'Test Food Payoff',
       keywords: JSON.stringify(['Food']),
-      oracle_text: 'Whenever one or more Foods enter the battlefield under your control, draw a card.',
+      oracle_text:
+        'Whenever one or more Foods enter the battlefield under your control, draw a card.',
     });
-    assert.ok(rolesOf(signalsFor(foodPayoff, [], ['Food']), 'keywordCare', 'Food').includes('rewards'));
+    assert.ok(
+      rolesOf(signalsFor(foodPayoff, [], ['Food']), 'keywordCare', 'Food').includes('rewards'),
+    );
   });
 });
 
@@ -1570,7 +1595,7 @@ describe('Voltron: a genuine reward beyond the deliberately-excluded shape', () 
       type_line: 'Legendary Creature — Dwarf Warrior',
       creature_types: JSON.stringify(['Dwarf', 'Warrior']),
       oracle_text:
-        "Whenever another nontoken creature you control dies, if it was enchanted or equipped, return it " +
+        'Whenever another nontoken creature you control dies, if it was enchanted or equipped, return it ' +
         "to its owner's hand.\n" +
         'Creature tokens you control that are enchanted or equipped get +1/+1.',
     });
@@ -1587,7 +1612,7 @@ describe('amass produces the named type and Army, though its own text is reminde
       type_line: 'Legendary Creature — Human Soldier',
       creature_types: JSON.stringify(['Human', 'Soldier']),
       oracle_text:
-        'When Gothmog enters, amass Orcs 1. (Put a +1/+1 counter on an Army you control. It\'s also an Orc. ' +
+        "When Gothmog enters, amass Orcs 1. (Put a +1/+1 counter on an Army you control. It's also an Orc. " +
         "If you don't control an Army, create a 0/0 black Orc Army creature token first.)\n" +
         'Creature tokens you control have deathtouch.',
     });
@@ -1613,7 +1638,8 @@ describe('enables: cost reduction and free-casting turn the engine on without re
     const danitha = makeCard({
       name: 'Danitha Capashen, Paragon',
       type_line: 'Legendary Creature — Human Knight',
-      oracle_text: 'First strike, vigilance, lifelink\nAura and Equipment spells you cast cost {1} less to cast.',
+      oracle_text:
+        'First strike, vigilance, lifelink\nAura and Equipment spells you cast cost {1} less to cast.',
     });
     const roles = rolesOf(signalsFor(danitha), 'voltron');
     assert.ok(roles.includes('enables'), JSON.stringify(roles));
@@ -1705,7 +1731,9 @@ describe('cardTypes and permanentSubtypes read off the type line', () => {
       name: 'Kalamax, the Stormsire',
       type_line: 'Legendary Creature — Elder Dragon',
     });
-    assert.deepStrictEqual(buildCardFacts(kalamax, buildVocabulary([], [])).cardTypes, ['Creature']);
+    assert.deepStrictEqual(buildCardFacts(kalamax, buildVocabulary([], [])).cardTypes, [
+      'Creature',
+    ]);
   });
 
   it('recognises a card with more than one type', () => {
@@ -1721,13 +1749,14 @@ describe('cardTypes and permanentSubtypes read off the type line', () => {
   it('reads permanent subtypes from the curated list, after the em dash', () => {
     // Smuggler's Copter, Long List of the Ents — real type lines.
     const copter = makeCard({ name: "Smuggler's Copter", type_line: 'Artifact — Vehicle' });
-    assert.deepStrictEqual(
-      buildCardFacts(copter, buildVocabulary([], [])).permanentSubtypes,
-      ['Vehicle'],
-    );
+    assert.deepStrictEqual(buildCardFacts(copter, buildVocabulary([], [])).permanentSubtypes, [
+      'Vehicle',
+    ]);
 
     const saga = makeCard({ name: 'Long List of the Ents', type_line: 'Enchantment — Saga' });
-    assert.deepStrictEqual(buildCardFacts(saga, buildVocabulary([], [])).permanentSubtypes, ['Saga']);
+    assert.deepStrictEqual(buildCardFacts(saga, buildVocabulary([], [])).permanentSubtypes, [
+      'Saga',
+    ]);
 
     const vanilla = makeCard({ name: 'Test Bear', type_line: 'Creature — Bear' });
     assert.deepStrictEqual(buildCardFacts(vanilla, buildVocabulary([], [])).permanentSubtypes, []);
@@ -1743,7 +1772,7 @@ describe('card properties: alternativeCost, modified, alternateWin', () => {
       cmc: 3,
       type_line: 'Instant',
       oracle_text:
-        "({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.",
+        '({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.',
     });
     assert.strictEqual(buildCardFacts(dismember, buildVocabulary([], [])).alternativeCost, true);
   });
@@ -1843,7 +1872,8 @@ describe('card properties: alternativeCost, modified, alternateWin', () => {
     const boosterBlitz = makeCard({
       name: 'Booster Blitz',
       type_line: 'Sorcery',
-      oracle_text: 'Start a series of Magic games with these modified rules: Players start at 5 life.',
+      oracle_text:
+        'Start a series of Magic games with these modified rules: Players start at 5 life.',
     });
     assert.strictEqual(buildCardFacts(boosterBlitz, buildVocabulary([], [])).modified, false);
   });
@@ -1931,7 +1961,7 @@ describe('Copy Effects: spells, abilities, and permanents', () => {
     assert.ok(find(signals, 'copyEffects', 'Instant'), 'expected an Instant-qualified copy signal');
   });
 
-  it('does not qualify an ability-copy payoff by its source permanent\'s type', () => {
+  it("does not qualify an ability-copy payoff by its source permanent's type", () => {
     // Weaver of Harmony — real oracle text: the ability copied isn't itself
     // an Enchantment just because it comes from one.
     const weaver = makeCard({
@@ -1998,7 +2028,8 @@ describe('Copy Effects: spells, abilities, and permanents', () => {
     const mirrorweave = makeCard({
       name: 'Mirrorweave',
       type_line: 'Instant',
-      oracle_text: 'Each other creature becomes a copy of target nonlegendary creature until end of turn.',
+      oracle_text:
+        'Each other creature becomes a copy of target nonlegendary creature until end of turn.',
     });
     assert.ok(find(signalsFor(mirrorweave), 'copyEffects', 'Creature'));
   });
@@ -2037,7 +2068,7 @@ describe('Free Spells: casting for less than the printed cost', () => {
       cmc: 3,
       type_line: 'Instant',
       oracle_text:
-        "({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.",
+        '({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.',
     });
     assert.ok(hasActiveRole(rolesOf(signalsFor(dismember), 'freeSpells')));
   });
@@ -2066,7 +2097,7 @@ describe('Free Spells: casting for less than the printed cost', () => {
       oracle_text:
         'Suspend 3—{0} (Rather than cast this card from your hand, pay {0} and exile it with ' +
         'three time counters on it. At the beginning of your upkeep, remove a time counter. When ' +
-        "the last is removed, cast it without paying its mana cost.)\nWhen Lotus Bloom enters, sacrifice it.\n{T}, Sacrifice Lotus Bloom: Add three mana of any one color.",
+        'the last is removed, cast it without paying its mana cost.)\nWhen Lotus Bloom enters, sacrifice it.\n{T}, Sacrifice Lotus Bloom: Add three mana of any one color.',
     });
     assert.ok(hasActiveRole(rolesOf(signalsFor(lotusBloom), 'freeSpells')));
 
@@ -2158,7 +2189,7 @@ describe('Artifacts: Vehicle, Food, Clue, and Treasure', () => {
       oracle_text:
         'Flying\nWhenever this Vehicle attacks or blocks, you may draw a card. If you do, discard ' +
         'a card.\nCrew 1 (Tap any number of creatures you control with total power 1 or more: ' +
-        "This Vehicle becomes an artifact creature until end of turn.)",
+        'This Vehicle becomes an artifact creature until end of turn.)',
     });
     const signals = signalsFor(smugglersCopter);
     assert.ok(find(signals, 'artifacts', 'Vehicle'));
@@ -2201,7 +2232,8 @@ describe('Artifacts: Vehicle, Food, Clue, and Treasure', () => {
     const academyManufactor = makeCard({
       name: 'Academy Manufactor',
       type_line: 'Artifact Creature — Assembly-Worker',
-      oracle_text: 'If you would create a Clue, Food, or Treasure token, instead create one of each.',
+      oracle_text:
+        'If you would create a Clue, Food, or Treasure token, instead create one of each.',
     });
     const signals = signalsFor(academyManufactor);
     assert.ok(hasActiveRole(rolesOf(signals, 'artifacts')));
@@ -2215,7 +2247,8 @@ describe('Artifacts: Vehicle, Food, Clue, and Treasure', () => {
     const monumentalCorruption = makeCard({
       name: 'Monumental Corruption',
       type_line: 'Sorcery',
-      oracle_text: 'Target player draws X cards and loses X life, where X is the number of artifacts you control.',
+      oracle_text:
+        'Target player draws X cards and loses X life, where X is the number of artifacts you control.',
     });
     assert.ok(find(signalsFor(monumentalCorruption), 'artifacts', undefined));
   });
@@ -2369,7 +2402,11 @@ describe('Game State: shared state read and written across control, not owned by
   });
 
   it('does not fire on a card with no game-state text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'gameState'), undefined);
   });
 });
@@ -2438,8 +2475,8 @@ describe('Lifegain: gaining life on purpose, and the payoffs that read it', () =
       type_line: 'Legendary Creature — Dwarf Berserker',
       oracle_text:
         '{1}{W}, {T}: Another target creature you control gains flying and lifelink until end of turn.\n' +
-        "At the beginning of your end step, if you gained life this turn, exile cards from the top of " +
-        "your library until you exile a nonland card. You may cast that card without paying its mana " +
+        'At the beginning of your end step, if you gained life this turn, exile cards from the top of ' +
+        'your library until you exile a nonland card. You may cast that card without paying its mana ' +
         "cost if the spell's mana value is less than or equal to the amount of life you gained this " +
         'turn. Otherwise, put it into your hand.',
     });
@@ -2488,7 +2525,11 @@ describe('Lifegain: gaining life on purpose, and the payoffs that read it', () =
   });
 
   it('does not fire on a card with no lifegain text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'lifegain'), undefined);
   });
 });
@@ -2561,13 +2602,18 @@ describe('Drain: life loss as a trigger, not damage', () => {
     const accursedMarauder = makeCard({
       name: 'Accursed Marauder',
       type_line: 'Creature — Zombie Warrior',
-      oracle_text: 'When this creature enters, each player sacrifices a nontoken creature of their choice.',
+      oracle_text:
+        'When this creature enters, each player sacrifices a nontoken creature of their choice.',
     });
     assert.strictEqual(find(signalsFor(accursedMarauder), 'drain'), undefined);
   });
 
   it('does not fire on a card with no drain text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'drain'), undefined);
   });
 });
@@ -2581,7 +2627,9 @@ describe('Cycling / Discard: discarding cards on purpose as a resource', () => {
       keywords: '["Cycling"]',
       oracle_text: 'Each land card in your hand has cycling {R}.\nCycling {2}',
     });
-    assert.deepStrictEqual(rolesOf(signalsFor(tectonicReformation), 'cyclingDiscard'), ['produces']);
+    assert.deepStrictEqual(rolesOf(signalsFor(tectonicReformation), 'cyclingDiscard'), [
+      'produces',
+    ]);
   });
 
   it('produces from a "draw N, then discard N" loot template', () => {
@@ -2604,7 +2652,9 @@ describe('Cycling / Discard: discarding cards on purpose as a resource', () => {
       type_line: 'Instant',
       oracle_text: 'As an additional cost to cast this spell, discard a card.\nDraw two cards.',
     });
-    assert.deepStrictEqual(rolesOf(signalsFor(thrillOfPossibility), 'cyclingDiscard'), ['produces']);
+    assert.deepStrictEqual(rolesOf(signalsFor(thrillOfPossibility), 'cyclingDiscard'), [
+      'produces',
+    ]);
   });
 
   it('produces from a symmetric "each player discards their hand" effect', () => {
@@ -2657,7 +2707,11 @@ describe('Cycling / Discard: discarding cards on purpose as a resource', () => {
   });
 
   it('does not fire on a card with no cycling/discard text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'cyclingDiscard'), undefined);
   });
 });
@@ -2677,7 +2731,7 @@ describe('Temporary Effects: delayed-cost cards and the enablers that erase the 
     assert.deepStrictEqual(rolesOf(signalsFor(obeka), 'temporaryEffects'), ['enables']);
   });
 
-  it('enables from Sundial of the Infinite, the archetype\'s other named eraser', () => {
+  it("enables from Sundial of the Infinite, the archetype's other named eraser", () => {
     // Sundial of the Infinite — real oracle text.
     const sundial = makeCard({
       name: 'Sundial of the Infinite',
@@ -2716,7 +2770,7 @@ describe('Temporary Effects: delayed-cost cards and the enablers that erase the 
         'Flying\nWhen this creature deals combat damage to a player, create two 1/1 red Goblin ' +
         'creature tokens and sacrifice this creature.\nUnearth {3}{B}{R} ({3}{B}{R}: Return this ' +
         'card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of ' +
-        "the next end step or if it would leave the battlefield. Unearth only as a sorcery.)",
+        'the next end step or if it would leave the battlefield. Unearth only as a sorcery.)',
     });
     assert.deepStrictEqual(rolesOf(signalsFor(kathariBomber), 'temporaryEffects'), ['produces']);
   });
@@ -2760,7 +2814,7 @@ describe('Temporary Effects: delayed-cost cards and the enablers that erase the 
       name: "Alchemist's Gambit",
       type_line: 'Sorcery',
       oracle_text:
-        "Cleave {4}{U}{U}{R} (You may cast this spell for its cleave cost. If you do, remove the " +
+        'Cleave {4}{U}{U}{R} (You may cast this spell for its cleave cost. If you do, remove the ' +
         'words in square brackets.)\nTake an extra turn after this one. During that turn, damage ' +
         "can't be prevented. [At the beginning of that turn's end step, you lose the game.]\nExile " +
         "Alchemist's Gambit.",
@@ -2769,7 +2823,11 @@ describe('Temporary Effects: delayed-cost cards and the enablers that erase the 
   });
 
   it('does not fire on a card with no temporary-effect text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'temporaryEffects'), undefined);
   });
 });
@@ -2827,7 +2885,8 @@ describe('Recursion: the same body coming back from the graveyard, again and aga
     const cathartsCrusade = makeCard({
       name: "Cathars' Crusade",
       type_line: 'Enchantment',
-      oracle_text: 'Whenever a creature you control enters, put a +1/+1 counter on each creature you control.',
+      oracle_text:
+        'Whenever a creature you control enters, put a +1/+1 counter on each creature you control.',
     });
     assert.deepStrictEqual(rolesOf(signalsFor(cathartsCrusade), 'recursion'), ['amplifies']);
   });
@@ -2863,7 +2922,11 @@ describe('Recursion: the same body coming back from the graveyard, again and aga
   });
 
   it('does not fire on a card with no recursion text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'recursion'), undefined);
   });
 });
@@ -2886,7 +2949,8 @@ describe('Tap for Value: tapping and untapping your own permanents as a resource
     const honorWornShaku = makeCard({
       name: 'Honor-Worn Shaku',
       type_line: 'Artifact',
-      oracle_text: '{T}: Add {C}.\nTap an untapped legendary permanent you control: Untap this artifact.',
+      oracle_text:
+        '{T}: Add {C}.\nTap an untapped legendary permanent you control: Untap this artifact.',
     });
     assert.deepStrictEqual(rolesOf(signalsFor(honorWornShaku), 'tapForValue'), ['produces']);
   });
@@ -2922,13 +2986,18 @@ describe('Tap for Value: tapping and untapping your own permanents as a resource
     const trainingCenter = makeCard({
       name: 'Training Center',
       type_line: 'Land',
-      oracle_text: 'This land enters tapped unless you have two or more opponents.\n{T}: Add {U} or {R}.',
+      oracle_text:
+        'This land enters tapped unless you have two or more opponents.\n{T}: Add {U} or {R}.',
     });
     assert.strictEqual(find(signalsFor(trainingCenter), 'tapForValue'), undefined);
   });
 
   it('does not fire on a card with no tap-for-value text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'tapForValue'), undefined);
   });
 });
@@ -2939,7 +3008,8 @@ describe('Card Draw: repeatable engines, the payoffs that read a draw, and the d
     const rhysticStudy = makeCard({
       name: 'Rhystic Study',
       type_line: 'Enchantment',
-      oracle_text: 'Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.',
+      oracle_text:
+        'Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.',
     });
     assert.deepStrictEqual(rolesOf(signalsFor(rhysticStudy), 'cardDraw'), ['produces']);
   });
@@ -2975,7 +3045,7 @@ describe('Card Draw: repeatable engines, the payoffs that read a draw, and the d
       type_line: 'Creature — Squid Horror',
       oracle_text:
         'Whenever you draw a card, put a +1/+1 counter on this creature.\n' +
-        "When this creature dies, create X 1/1 blue Squid creature tokens with islandwalk, where " +
+        'When this creature dies, create X 1/1 blue Squid creature tokens with islandwalk, where ' +
         'X is the number of +1/+1 counters on this creature.',
     });
     assert.deepStrictEqual(rolesOf(signalsFor(chasmSkulker), 'cardDraw'), ['rewards']);
@@ -2986,7 +3056,8 @@ describe('Card Draw: repeatable engines, the payoffs that read a draw, and the d
     const homunculusHorde = makeCard({
       name: 'Homunculus Horde',
       type_line: 'Creature — Homunculus',
-      oracle_text: 'Whenever you draw your second card each turn, create a token that\'s a copy of this creature.',
+      oracle_text:
+        "Whenever you draw your second card each turn, create a token that's a copy of this creature.",
     });
     assert.deepStrictEqual(rolesOf(signalsFor(homunculusHorde), 'cardDraw'), ['rewards']);
   });
@@ -3023,7 +3094,7 @@ describe('Card Draw: repeatable engines, the payoffs that read a draw, and the d
     assert.deepStrictEqual(rolesOf(signalsFor(teferisAgelessInsight), 'cardDraw'), ['amplifies']);
   });
 
-  it('a doubler that also doubles life gain earns both archetypes\' amplifies independently', () => {
+  it("a doubler that also doubles life gain earns both archetypes' amplifies independently", () => {
     // Alhammarret's Archive — real oracle text. docs/archetypes.md's own
     // corpus note calls this out by name: one card, two archetypes.
     const alhammarretsArchive = makeCard({
@@ -3045,7 +3116,8 @@ describe('Card Draw: repeatable engines, the payoffs that read a draw, and the d
     const ioreth = makeCard({
       name: 'Ioreth of the Healing House',
       type_line: 'Legendary Creature — Human Cleric',
-      oracle_text: '{T}: Untap another target permanent.\n{T}: Untap two other target legendary creatures.',
+      oracle_text:
+        '{T}: Untap another target permanent.\n{T}: Untap two other target legendary creatures.',
     });
     assert.strictEqual(find(signalsFor(ioreth), 'cardDraw'), undefined);
   });
@@ -3063,7 +3135,7 @@ describe('Card Draw: repeatable engines, the payoffs that read a draw, and the d
         "This spell can't be countered.\n" +
         'You have no maximum hand size.\n' +
         'Whenever an opponent casts a noncreature spell, draw a card.\n' +
-        "Discard three cards: Exile Nezahal. Return it to the battlefield tapped under its " +
+        'Discard three cards: Exile Nezahal. Return it to the battlefield tapped under its ' +
         "owner's control at the beginning of the next end step.",
     });
     assert.deepStrictEqual(rolesOf(signalsFor(nezahal), 'cardDraw'), ['produces']);
@@ -3149,7 +3221,8 @@ describe('Burn: damage dealt directly, not through combat', () => {
     const guttersnipe = makeCard({
       name: 'Guttersnipe',
       type_line: 'Creature — Goblin Shaman',
-      oracle_text: 'Whenever you cast an instant or sorcery spell, this creature deals 2 damage to each opponent.',
+      oracle_text:
+        'Whenever you cast an instant or sorcery spell, this creature deals 2 damage to each opponent.',
     });
     assert.deepStrictEqual(rolesOf(signalsFor(guttersnipe), 'burn'), ['produces']);
   });
@@ -3167,7 +3240,7 @@ describe('Burn: damage dealt directly, not through combat', () => {
     assert.deepStrictEqual(rolesOf(signalsFor(cometStorm), 'burn'), ['produces']);
   });
 
-  it("produces from the power-into-damage template", () => {
+  it('produces from the power-into-damage template', () => {
     // Fling and Soul's Fire — real oracle text.
     const fling = makeCard({
       name: 'Fling',
@@ -3254,11 +3327,11 @@ describe('Burn: damage dealt directly, not through combat', () => {
       name: 'Donna Noble',
       type_line: 'Legendary Creature — Human',
       oracle_text:
-        "Soulbond (You may pair this creature with another unpaired creature when either enters. " +
-        "They remain paired for as long as you control both of them.)\n" +
+        'Soulbond (You may pair this creature with another unpaired creature when either enters. ' +
+        'They remain paired for as long as you control both of them.)\n' +
         "Whenever Donna Noble or a creature it's paired with is dealt damage, Donna Noble deals that " +
         'much damage to target opponent.\n' +
-        'Doctor\'s companion (You can have two commanders if the other is the Doctor.)',
+        "Doctor's companion (You can have two commanders if the other is the Doctor.)",
     });
     assert.deepStrictEqual(rolesOf(signalsFor(donnaNoble), 'burn'), ['produces']);
   });
@@ -3298,7 +3371,11 @@ describe('Burn: damage dealt directly, not through combat', () => {
   });
 
   it('does not fire on a card with no burn text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'burn'), undefined);
   });
 });
@@ -3347,7 +3424,11 @@ describe('Big Mana: ramping toward an X spell or another huge-cost payoff', () =
 
   it('does not produce from a one- or two-mana rock, a format-wide staple rather than a big-mana plan', () => {
     // Sol Ring and Arcane Signet — real oracle text.
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'bigMana'), undefined);
 
     const arcaneSignet = makeCard({
@@ -3398,7 +3479,8 @@ describe('Graveyard Toolbox: flexible retrieval from the graveyard as a resource
     const mirranSafehouse = makeCard({
       name: 'Mirran Safehouse',
       type_line: 'Artifact',
-      oracle_text: 'As long as this artifact is on the battlefield, it has all activated abilities of all land cards in all graveyards.',
+      oracle_text:
+        'As long as this artifact is on the battlefield, it has all activated abilities of all land cards in all graveyards.',
     });
     assert.deepStrictEqual(rolesOf(signalsFor(mirranSafehouse), 'graveyardToolbox'), ['produces']);
   });
@@ -3411,7 +3493,8 @@ describe('Graveyard Toolbox: flexible retrieval from the graveyard as a resource
     const squee = makeCard({
       name: 'Squee, Goblin Nabob',
       type_line: 'Legendary Creature — Goblin',
-      oracle_text: 'At the beginning of your upkeep, you may return this card from your graveyard to your hand.',
+      oracle_text:
+        'At the beginning of your upkeep, you may return this card from your graveyard to your hand.',
     });
     assert.strictEqual(find(signalsFor(squee), 'graveyardToolbox'), undefined);
 
@@ -3434,7 +3517,7 @@ describe('Graveyard Toolbox: flexible retrieval from the graveyard as a resource
       name: 'Beacon of Unrest',
       type_line: 'Sorcery',
       oracle_text:
-        "Put target artifact or creature card from a graveyard onto the battlefield under your control. " +
+        'Put target artifact or creature card from a graveyard onto the battlefield under your control. ' +
         "Shuffle Beacon of Unrest into its owner's library.",
     });
     assert.strictEqual(find(signalsFor(beaconOfUnrest), 'graveyardToolbox'), undefined);
@@ -3493,7 +3576,9 @@ describe('Power Matters: payoffs that scale with how big a creature is', () => {
         '• Draw cards equal to the greatest power among non-Human creatures you control.\n' +
         '• Non-Human creatures you control get +3/+3 until end of turn.',
     });
-    assert.deepStrictEqual(rolesOf(signalsFor(returnOfTheWildspeaker), 'powerMatters'), ['rewards']);
+    assert.deepStrictEqual(rolesOf(signalsFor(returnOfTheWildspeaker), 'powerMatters'), [
+      'rewards',
+    ]);
 
     const tuyaBearclaw = makeCard({
       name: 'Tuya Bearclaw',
@@ -3549,7 +3634,11 @@ describe('Power Matters: payoffs that scale with how big a creature is', () => {
   });
 
   it('does not fire on a card with no power-matters text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'powerMatters'), undefined);
   });
 });
@@ -3619,7 +3708,11 @@ describe('Pillowfort: taxing or deterring attacks aimed at you', () => {
   });
 
   it('does not fire on a card with no pillowfort text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'pillowfort'), undefined);
   });
 });
@@ -3636,10 +3729,9 @@ describe('Mono-Color Devotion: payoffs that read your devotion to a single color
         'You gain life equal to the life lost this way. (Each {B} in the mana costs of permanents ' +
         'you control counts toward your devotion to black.)',
     });
-    assert.deepStrictEqual(
-      rolesOf(signalsFor(grayMerchant), 'monoColorDevotion', 'Black'),
-      ['rewards'],
-    );
+    assert.deepStrictEqual(rolesOf(signalsFor(grayMerchant), 'monoColorDevotion', 'Black'), [
+      'rewards',
+    ]);
 
     const purphoros = makeCard({
       name: 'Purphoros, God of the Forge',
@@ -3660,7 +3752,7 @@ describe('Mono-Color Devotion: payoffs that read your devotion to a single color
       oracle_text:
         "Indestructible\nAs long as your devotion to black is less than five, Erebos isn't a " +
         'creature. (Each {B} in the mana costs of permanents you control counts toward your ' +
-        'devotion to black.)\nYour opponents can\'t gain life.\n{1}{B}, Pay 2 life: Draw a card.',
+        "devotion to black.)\nYour opponents can't gain life.\n{1}{B}, Pay 2 life: Draw a card.",
     });
     assert.deepStrictEqual(rolesOf(signalsFor(erebos), 'monoColorDevotion', 'Black'), ['rewards']);
   });
@@ -3697,7 +3789,11 @@ describe('Mono-Color Devotion: payoffs that read your devotion to a single color
   });
 
   it('does not fire on a card with no devotion text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'monoColorDevotion'), undefined);
   });
 });
@@ -3749,7 +3845,11 @@ describe('Alternate Win Condition: a genuine "you win the game" outcome', () => 
   });
 
   it('does not fire on a card with no win-condition text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'alternateWin'), undefined);
   });
 });
@@ -3757,20 +3857,18 @@ describe('Alternate Win Condition: a genuine "you win the game" outcome', () => 
 describe('Politics: multiplayer social tools that direct threat elsewhere', () => {
   it('produces from the Goad keyword', () => {
     // Eye of Nidhogg — real oracle text.
-    const eyeOfNidhogg = makeCard(
-      {
-        name: 'Eye of Nidhogg',
-        type_line: 'Legendary Enchantment — Aura',
-        oracle_text:
-          'Enchant creature\n' +
-          'Enchanted creature is a black Dragon with base power and toughness 4/2, has flying and ' +
-          "deathtouch, and is goaded. (It attacks each combat if able and attacks a player other " +
-          "than you if able.)\n" +
-          "When Eye of Nidhogg is put into a graveyard from the battlefield, return it to its " +
-          "owner's hand.",
-        keywords: '["Goad"]',
-      },
-    );
+    const eyeOfNidhogg = makeCard({
+      name: 'Eye of Nidhogg',
+      type_line: 'Legendary Enchantment — Aura',
+      oracle_text:
+        'Enchant creature\n' +
+        'Enchanted creature is a black Dragon with base power and toughness 4/2, has flying and ' +
+        'deathtouch, and is goaded. (It attacks each combat if able and attacks a player other ' +
+        'than you if able.)\n' +
+        'When Eye of Nidhogg is put into a graveyard from the battlefield, return it to its ' +
+        "owner's hand.",
+      keywords: '["Goad"]',
+    });
     assert.deepStrictEqual(rolesOf(signalsFor(eyeOfNidhogg), 'politics'), ['produces']);
   });
 
@@ -3825,18 +3923,23 @@ describe('Politics: multiplayer social tools that direct threat elsewhere', () =
     const humbleDefector = makeCard({
       name: 'Humble Defector',
       type_line: 'Creature — Human Rogue',
-      oracle_text: '{T}: Draw two cards. Target opponent gains control of this creature. Activate only during your turn.',
+      oracle_text:
+        '{T}: Draw two cards. Target opponent gains control of this creature. Activate only during your turn.',
     });
     assert.strictEqual(find(signalsFor(humbleDefector), 'politics'), undefined);
   });
 
   it('does not fire on a card with no political text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'politics'), undefined);
   });
 });
 
-describe("Storm: casting many spells in a single turn as its own payoff", () => {
+describe('Storm: casting many spells in a single turn as its own payoff', () => {
   it('produces from the Storm keyword', () => {
     // Empty the Warrens — real oracle text.
     const emptyTheWarrens = makeCard({
@@ -3899,14 +4002,18 @@ describe("Storm: casting many spells in a single turn as its own payoff", () => 
       oracle_text:
         'Creatures you control get +1/+0.\n' +
         "+1: Add {R} or {G}. Creature spells you cast this turn can't be countered.\n" +
-        '−2: Target creature you control fights target creature you don\'t control.',
+        "−2: Target creature you control fights target creature you don't control.",
       keywords: '["Fight"]',
     });
     assert.strictEqual(find(signalsFor(domri), 'storm'), undefined);
   });
 
   it('does not fire on a card with no storm text at all', () => {
-    const solRing = makeCard({ name: 'Sol Ring', type_line: 'Artifact', oracle_text: '{T}: Add {C}{C}.' });
+    const solRing = makeCard({
+      name: 'Sol Ring',
+      type_line: 'Artifact',
+      oracle_text: '{T}: Add {C}{C}.',
+    });
     assert.strictEqual(find(signalsFor(solRing), 'storm'), undefined);
   });
 });

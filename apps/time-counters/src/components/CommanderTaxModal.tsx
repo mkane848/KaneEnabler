@@ -55,7 +55,7 @@ export default function CommanderTaxModal({
           </ModalTitle>
         </div>
         <ModalClose asChild>
-          <button type="button" className="btn btn-ghost btn-sm">
+          <button type="button" className="mtg-btn mtg-btn-ghost mtg-btn-sm">
             Done
           </button>
         </ModalClose>
@@ -81,11 +81,15 @@ export default function CommanderTaxModal({
           {onBattlefield && ' Currently on the battlefield.'}
         </p>
         {onBattlefield ? (
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onReturnToCommandZone}>
+          <button
+            type="button"
+            className="mtg-btn mtg-btn-ghost mtg-btn-sm"
+            onClick={onReturnToCommandZone}
+          >
             Return {name} to the command zone
           </button>
         ) : (
-          <button type="button" className="btn btn-primary btn-sm" onClick={onCast}>
+          <button type="button" className="mtg-btn mtg-btn-primary mtg-btn-sm" onClick={onCast}>
             Cast {name} from the command zone
           </button>
         )}
@@ -120,7 +124,11 @@ export default function CommanderTaxModal({
               </button>
             </div>
           </div>
-          <button type="button" className="btn btn-primary btn-sm" onClick={onRoseAttacks}>
+          <button
+            type="button"
+            className="mtg-btn mtg-btn-primary mtg-btn-sm"
+            onClick={onRoseAttacks}
+          >
             Rose attacks — count the board
           </button>
         </section>
@@ -132,7 +140,11 @@ export default function CommanderTaxModal({
           <p className={styles.taxBody}>
             {'{7}'}: Time travel three times. Activate only as a sorcery.
           </p>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onOpenTimeyWimey}>
+          <button
+            type="button"
+            className="mtg-btn mtg-btn-ghost mtg-btn-sm"
+            onClick={onOpenTimeyWimey}
+          >
             Time Travel ×3 →
           </button>
         </section>

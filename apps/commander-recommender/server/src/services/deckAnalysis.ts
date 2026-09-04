@@ -264,7 +264,10 @@ export function analyzeDeck(
     // incidental pump is not a Wizard deck, and a pile of sacrifice fodder
     // with nothing rewarding a death is not Aristocrats — see
     // definingRequirement and archetypes.md's "rules that are settled".
-    const { role: definingRole, minimum } = definingRequirement(group.signal.archetype, group.signal.qualifier);
+    const { role: definingRole, minimum } = definingRequirement(
+      group.signal.archetype,
+      group.signal.qualifier,
+    );
     const caringCount = [...distinct.values()].filter((p) => p.roles.includes(definingRole)).length;
     if (caringCount < minimum) continue;
 

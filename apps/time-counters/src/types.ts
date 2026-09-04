@@ -12,10 +12,17 @@ export type Mechanic = 'suspend' | 'vanishing' | 'fading' | 'saga' | 'custom';
 export type Direction = 'increment' | 'decrement';
 
 /**
- * Visual theme. 'who' (Doctor Who skin) is the default; 'claude' is the
- * app's original styling, kept as a selectable option rather than replaced.
+ * Visual theme. 'platform' is the default — the same brass-and-parchment
+ * look every other tool on the site wears (@mtg/ui/theme.css), so this app
+ * doesn't read as a separate product. 'who' is the Doctor Who skin, this
+ * app's one deliberate departure, opted into via ThemeToggle.
+ *
+ * It used to be the other way round, with 'who' as the default and a
+ * 'claude' theme as the alternative; 'claude' is gone, replaced by the
+ * platform theme it was an ancestor of. `loadTheme` migrates anyone whose
+ * stored preference still says 'claude'.
  */
-export type Theme = 'claude' | 'who';
+export type Theme = 'platform' | 'who';
 
 /**
  * Card data as generated from Scryfall (see scripts/fetch-card-data.mjs).

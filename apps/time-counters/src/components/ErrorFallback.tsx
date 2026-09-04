@@ -25,12 +25,12 @@ export default function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
         </p>
         <p className={styles.detail}>{error.message}</p>
         <div className={styles.actions}>
-          <button type="button" className="btn btn-primary" onClick={onRetry}>
+          <button type="button" className="mtg-btn mtg-btn-primary" onClick={onRetry}>
             Try again
           </button>
           <button
             type="button"
-            className="btn btn-danger"
+            className="mtg-btn mtg-btn-danger"
             onClick={() => {
               clearState();
               window.location.reload();

@@ -1,6 +1,15 @@
-:root {
-  color-scheme: dark;
+/* This app's palette and type come from the platform theme
+   (@mtg/ui/theme.css, imported ahead of this file in main.tsx) exactly like
+   the other two tools. What's below is what stays this app's own: the
+   counter-mechanic vocabulary, the mana pips, and the Doctor Who skin.
 
+   The Doctor Who skin is now the app's one deliberate difference from the
+   rest of the site — an opt-in toggle rather than the default. It used to
+   be the other way round (Doctor Who default, a "Claude" theme as the
+   alternative), which is why this tool read as a separate product. The
+   platform theme replaced that "Claude" theme; see utils/theme.ts for how
+   a visitor who had picked it is migrated. */
+:root {
   /* Mana pips — MTG's own White/Blue/Black/Red/Green colors. These stay
      fixed across themes on purpose: a blue pip should always read as blue
      mana no matter which skin is active, the same way suit colors on a
@@ -40,26 +49,56 @@
      all light/mid-tone, so one fixed dark ink reads on any of them. */
   --mechanic-badge-ink: #14162b;
 
-  --radius-sm: 7px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --shadow-card: 0 2px 14px rgba(6, 7, 20, 0.45);
-  --shadow-modal: 0 12px 40px rgba(6, 7, 20, 0.6);
+  --radius-sm: var(--mtg-radius-sm);
+  --radius-md: var(--mtg-radius-md);
+  --radius-lg: var(--mtg-radius-lg);
+  --shadow-card: var(--mtg-shadow-card);
+  --shadow-modal: var(--mtg-shadow-modal);
+
+  /* This app's local names for the platform palette, so the ~30 component
+     stylesheets that read var(--color-*) need no edit. The Doctor Who
+     block below overrides these same names — that is the whole mechanism
+     by which the skin reskins. */
+  --color-bg: var(--mtg-color-bg);
+  --color-surface: var(--mtg-color-surface);
+  --color-surface-hover: var(--mtg-color-surface-hover);
+  --color-surface-raised: var(--mtg-color-surface-raised);
+  --color-border: var(--mtg-color-border);
+  --color-border-soft: var(--mtg-color-border-soft);
+  --color-text: var(--mtg-color-text);
+  --color-text-muted: var(--mtg-color-text-muted);
+  --color-text-faint: var(--mtg-color-text-faint);
+  --color-accent: var(--mtg-color-accent);
+  --color-accent-strong: var(--mtg-color-accent-hover);
+  --color-accent-soft: var(--mtg-color-accent-soft);
+  --color-accent-ink: var(--mtg-color-accent-ink);
+  --color-danger: var(--mtg-color-danger-strong);
+  --color-danger-soft: var(--mtg-color-danger-soft);
+
+  --font-display: var(--mtg-font-display);
+  --font-body: var(--mtg-font-body);
+  --font-mono: var(--mtg-font-mono);
 }
 
 /* ==========================================================================
-   Doctor Who theme — the default. TARDIS-blue chrome with an electric-cyan
-   "time vortex" accent; sci-fi/HUD typography (Orbitron, Titillium Web,
-   JetBrains Mono — all free/open, SIL OFL or Apache 2.0). Deliberately
-   original rather than a copy of any BBC-owned asset: the Doctor Who logo
-   wordmark and the TARDIS shape itself are both design-trademarked, so
-   neither appears here — this is a color-and-type language a fan would
-   recognize, not a reproduction of protected show assets.
-   ========================================================================== */
-:root,
+   Doctor Who skin — this app's one deliberate departure from the platform
+   look, and the only thing that makes this tool look different from the
+   other two. Off by default; ThemeToggle turns it on.
+
+   TARDIS-blue chrome with an electric-cyan "time vortex" accent; sci-fi/HUD
+   typography (Orbitron, Titillium Web, JetBrains Mono — all free/open, SIL
+   OFL or Apache 2.0). Deliberately original rather than a copy of any
+   BBC-owned asset: the Doctor Who logo wordmark and the TARDIS shape itself
+   are both design-trademarked, so neither appears here — this is a
+   color-and-type language a fan would recognize, not a reproduction of
+   protected show assets.
+
+   It overrides both this app's local --color-* names and the platform's own
+   --mtg-* tokens, because the shared chrome (NavBar, AccountMenu,
+   AuthDialog) reads the latter — that is what lets the skin carry across
+   the whole page rather than stopping at this app's own components. */
 :root[data-theme='who'] {
   --color-bg: #071627;
-  --color-bg-gradient: radial-gradient(ellipse 120% 60% at 50% -10%, #0e3252 0%, #071627 55%);
   --color-surface: #0d2338;
   --color-surface-hover: #123049;
   --color-surface-raised: #143355;
@@ -79,88 +118,39 @@
   --font-body: 'Titillium Web', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  /* Platform tokens — read by shared components from @mtg/ui/@mtg/profile
-     (NavBar, AccountMenu, AuthDialog) so they re-theme live with the
-     Doctor Who/Claude toggle below, without per-app overrides. Mapped from
-     this theme's own tokens above; nothing above is renamed or removed.
-     Font stack deliberately stays Doctor Who's own (Orbitron/Titillium/
-     JetBrains) — that's the preserved theme identity, not something this
-     unification touches. */
   --mtg-color-bg: var(--color-bg);
-  --mtg-color-surface: var(--color-surface-raised);
+  --mtg-color-bg-image: radial-gradient(ellipse 120% 60% at 50% -10%, #0e3252 0%, #071627 55%);
+  --mtg-color-surface: var(--color-surface);
+  --mtg-color-surface-raised: var(--color-surface-raised);
+  --mtg-color-surface-hover: var(--color-surface-hover);
   --mtg-color-border: var(--color-border);
+  --mtg-color-border-soft: var(--color-border-soft);
   --mtg-color-text: var(--color-text);
   --mtg-color-text-muted: var(--color-text-muted);
+  --mtg-color-text-faint: var(--color-text-faint);
   --mtg-color-accent: var(--color-accent);
   --mtg-color-accent-hover: var(--color-accent-strong);
-  --mtg-color-danger: var(--color-danger);
+  --mtg-color-accent-soft: var(--color-accent-soft);
+  --mtg-color-accent-ink: var(--color-accent-ink);
+  --mtg-color-danger-strong: var(--color-danger);
+  --mtg-color-danger-soft: var(--color-danger-soft);
   --mtg-font-display: var(--font-display);
   --mtg-font-body: var(--font-body);
   --mtg-font-mono: var(--font-mono);
 }
 
 /* ==========================================================================
-   Claude theme — the app's original styling, kept as a selectable option.
+   What stays local. The reset, focus ring, reduced-motion block, .mtg-btn/
+   .mtg-input primitives and .mtg-visually-hidden that used to sit here are
+   the platform's now (@mtg/ui/theme.css) — the rules below are the ones
+   that are genuinely this app's.
    ========================================================================== */
-:root[data-theme='claude'] {
-  /* An exile zone at night, counted down in brass and glass. */
-  --color-bg: #14162b;
-  --color-bg-gradient: radial-gradient(ellipse 120% 60% at 50% -10%, #1c2049 0%, #14162b 55%);
-  --color-surface: #1e2140;
-  --color-surface-hover: #262a4d;
-  --color-surface-raised: #262a52;
-  --color-border: #33375f;
-  --color-border-soft: #292c50;
-  --color-text: #edeae0;
-  --color-text-muted: #9498c2;
-  --color-text-faint: #6b6f9a;
-  --color-accent: #d4a24c;
-  --color-accent-strong: #eabd72;
-  --color-accent-soft: #4a3d22;
-  --color-accent-ink: #201607;
-  --color-danger: #e0644a;
-  --color-danger-soft: #4a2a22;
 
-  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-
-  /* See the 'who' block above for why these platform tokens exist. */
-  --mtg-color-bg: var(--color-bg);
-  --mtg-color-surface: var(--color-surface-raised);
-  --mtg-color-border: var(--color-border);
-  --mtg-color-text: var(--color-text);
-  --mtg-color-text-muted: var(--color-text-muted);
-  --mtg-color-accent: var(--color-accent);
-  --mtg-color-accent-hover: var(--color-accent-strong);
-  --mtg-color-danger: var(--color-danger);
-  --mtg-font-display: var(--font-display);
-  --mtg-font-body: var(--font-body);
-  --mtg-font-mono: var(--font-mono);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
+/* The crossfade when the Doctor Who skin is toggled. Worth the two
+   properties: the toggle is this app's one deliberate difference from the
+   rest of the site, and a hard cut between palettes reads as a page
+   reload. Suppressed under prefers-reduced-motion by theme.css's block. */
 body {
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  background: var(--color-bg-gradient), var(--color-bg);
-  background-attachment: fixed;
-  color: var(--color-text);
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
   transition:
     background-color 200ms ease,
     color 200ms ease;
@@ -183,14 +173,9 @@ p {
   margin: 0;
 }
 
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-  color: inherit;
-}
-
+/* This app styles nearly every control from scratch in its own CSS module,
+   so a bare <button> is expected to arrive unstyled. The platform theme
+   only resets buttons that opt in via .mtg-btn, so that reset lives here. */
 button {
   cursor: pointer;
   border: none;
@@ -200,104 +185,4 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-accent-strong);
-  outline-offset: 2px;
-}
-
-/* --- shared building blocks -------------------------------------------- */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4em;
-  padding: 0.6em 1.1em;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-size: 0.92rem;
-  border: 1px solid transparent;
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    transform 80ms ease;
-}
-
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  color: var(--color-accent-ink);
-}
-
-.btn-primary:hover {
-  background: var(--color-accent-strong);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--color-text-muted);
-  border-color: var(--color-border);
-}
-
-.btn-ghost:hover {
-  color: var(--color-text);
-  border-color: var(--color-text-faint);
-}
-
-.btn-danger {
-  background: transparent;
-  color: var(--color-danger);
-  border-color: var(--color-danger-soft);
-}
-
-.btn-danger:hover {
-  background: var(--color-danger-soft);
-}
-
-.btn-sm {
-  padding: 0.35em 0.7em;
-  font-size: 0.8rem;
-}
-
-.input {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.6em 0.8em;
-  color: var(--color-text);
-  font-size: 0.95rem;
-  width: 100%;
-}
-
-.input:focus {
-  border-color: var(--color-accent);
-}
-
-.input::placeholder {
-  color: var(--color-text-faint);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
 }

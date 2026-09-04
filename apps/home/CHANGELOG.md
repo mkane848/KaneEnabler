@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-09-03
+
+### Added
+
+- **The profile page now covers all seven of the lists it promised** — favourite jank cards,
+  favourite commanders and disliked commanders were missing (finding F2 in `docs/KimiAudit.md`).
+  They arrive as a filter over the two card sections ("Everything / Commanders / Jank") rather than
+  as seven stacked lists, because the sets overlap: a liked, jank-tagged commander belongs to three
+  of them at once and would otherwise have been rendered three times on one page. Each chip carries
+  a count, so "how many commanders have I liked?" is answerable at a glance.
+
+### Changed
+
+- **This page now looks like the tools it links to.** It had a violet palette of its own, which made
+  the landing page read as a different product from the two apps it introduces; it now wears the
+  shared platform theme (`@mtg/ui`'s new `theme.css`) along with the shared page frame and footer.
+
 ## [0.2.1] - 2026-08-21
 
 ### Fixed

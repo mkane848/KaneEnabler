@@ -63,14 +63,14 @@ export default function CommanderFieldTile({
           <div className={styles.actions}>
             <button
               type="button"
-              className="btn btn-sm btn-ghost"
+              className="mtg-btn mtg-btn-sm mtg-btn-ghost"
               onClick={() => onManage(id, imageSmall)}
             >
               Tax / Bad Wolf →
             </button>
             <button
               type="button"
-              className="btn btn-sm btn-ghost"
+              className="mtg-btn mtg-btn-sm mtg-btn-ghost"
               onClick={() => onReturnToCommandZone(id)}
             >
               Return to command zone

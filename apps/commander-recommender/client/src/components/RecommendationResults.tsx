@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { useCardPreferencesIndex } from '@mtg/profile';
 import { useAppStore } from '../store/useAppStore';
 import { useRecommendations } from '../api/queries';
 import {
@@ -10,6 +11,7 @@ import {
   hasActiveFilters,
   type SuggestionFilters,
 } from '../lib/filters';
+import { partitionDisliked } from '../lib/disliked';
 import { sortSuggestions, type SortDirection, type SortMode } from '../lib/sort';
 import { CommanderCard } from './CommanderCard';
 import { DeckSummary } from './DeckSummary';
@@ -129,6 +131,13 @@ export function RecommendationResults() {
   const restoreAll = useAppStore((s) => s.restoreAll);
   const { data: result, error } = useRecommendations(submittedList);
 
+  // A persistent dislike hides a commander from the grid, the way a session
+  // dismissal does — the difference being that it survives a new list and a
+  // browser restart, since it's a statement about the card rather than
+  // about these results. Signed out this index is empty, so nothing hides.
+  const cardPreferences = useCardPreferencesIndex();
+  const [showDisliked, setShowDisliked] = useState(false);
+
   // Filters/sort live in the URL (see lib/searchSchema.ts) rather than
   // component state — shareable, and survives a refresh.
   const { filters, sortMode, sortDirection } = routeApi.useSearch();
@@ -150,10 +159,15 @@ export function RecommendationResults() {
   // Dismissals and filters are separate ideas: dismissing is the user saying
   // "not this one", filtering is "not right now". Both narrow the grid, but
   // the counts below report them separately so neither hides the other.
-  const kept = useMemo(
+  const notDismissed = useMemo(
     () => suggestions.filter((s) => !dismissed.includes(s.unitId)),
     [suggestions, dismissed],
   );
+  const { shown: notDisliked, hidden: dislikedSuggestions } = useMemo(
+    () => partitionDisliked(notDismissed, cardPreferences),
+    [notDismissed, cardPreferences],
+  );
+  const kept = showDisliked ? notDismissed : notDisliked;
   const filtered = useMemo(() => applyFilters(kept, filters), [kept, filters]);
   const sorted = useMemo(
     () => sortSuggestions(filtered, sortMode, sortDirection),
@@ -164,14 +178,42 @@ export function RecommendationResults() {
     [kept],
   );
 
+  // An empty grid has three quite different causes, and offering "Restore
+  // all" to someone who filtered to Black is a dead end. Filters come first:
+  // they are the only one of the three set on this screen, so they are the
+  // likeliest thing the user meant to undo.
+  const emptyGridReason: { message: string; action: string; onAction: () => void } =
+    hasActiveFilters(filters)
+      ? {
+          message: 'No commanders match these filters.',
+          action: 'Clear filters',
+          onAction: () => setFilters(EMPTY_FILTERS),
+        }
+      : dismissed.length > 0
+        ? {
+            message: 'You have dismissed every suggestion.',
+            action: 'Restore all',
+            onAction: restoreAll,
+          }
+        : {
+            message: 'Every suggestion is a commander you have disliked.',
+            action: 'Show disliked',
+            onAction: () => setShowDisliked(true),
+          };
+
   // The coverage tier runs through the same dismissal set and filter bar as
   // the main grid — a Black filter producing an empty main grid above a
   // full, unfiltered coverage list would be a worse bug than the one this
   // tier exists to fix. See docs/recommendation-coverage.md.
-  const alsoPlayableKept = useMemo(
+  const alsoPlayableNotDismissed = useMemo(
     () => alsoPlayable.filter((s) => !dismissed.includes(s.unitId)),
     [alsoPlayable, dismissed],
   );
+  const alsoPlayableNotDisliked = useMemo(
+    () => partitionDisliked(alsoPlayableNotDismissed, cardPreferences).shown,
+    [alsoPlayableNotDismissed, cardPreferences],
+  );
+  const alsoPlayableKept = showDisliked ? alsoPlayableNotDismissed : alsoPlayableNotDisliked;
   const alsoPlayableFiltered = useMemo(
     () => applyFilters(alsoPlayableKept, filters),
     [alsoPlayableKept, filters],
@@ -181,7 +223,7 @@ export function RecommendationResults() {
     [alsoPlayableFiltered, sortMode, sortDirection],
   );
 
-  // The whole page scrolls (no inner scroll pane — see .app-shell in
+  // The whole page scrolls (no inner scroll pane — see .mtg-page-main in
   // index.css), so this virtualizes against the window rather than a fixed-
   // height container. gridElementRef doubles as both the column-count
   // probe inside useGridColumns and the scrollMargin anchor below:
@@ -267,6 +309,19 @@ export function RecommendationResults() {
             </button>
           </span>
         )}
+        {dislikedSuggestions.length > 0 && (
+          <span className="dismissed-note">
+            {dislikedSuggestions.length} disliked
+            <button
+              type="button"
+              className="link-button"
+              aria-pressed={showDisliked}
+              onClick={() => setShowDisliked((value) => !value)}
+            >
+              {showDisliked ? 'Hide' : 'Show'}
+            </button>
+          </span>
+        )}
         {sorted.length > 0 && <ExportControls suggestions={sorted} />}
       </div>
 
@@ -300,17 +355,9 @@ export function RecommendationResults() {
 
           {filtered.length === 0 ? (
             <p className="status-empty">
-              {hasActiveFilters(filters)
-                ? 'No commanders match these filters.'
-                : 'You have dismissed every suggestion.'}{' '}
-              <button
-                type="button"
-                className="link-button"
-                onClick={() =>
-                  hasActiveFilters(filters) ? setFilters(EMPTY_FILTERS) : restoreAll()
-                }
-              >
-                {hasActiveFilters(filters) ? 'Clear filters' : 'Restore all'}
+              {emptyGridReason.message}{' '}
+              <button type="button" className="link-button" onClick={emptyGridReason.onAction}>
+                {emptyGridReason.action}
               </button>
             </p>
           ) : (

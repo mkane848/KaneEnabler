@@ -158,6 +158,6 @@
   margin-top: 1rem;
 }
 
-.actions .btn {
+.actions :global(.mtg-btn) {
   flex: 1;
 }

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#071627" />
+    <meta name="theme-color" content="#17140f" />
     <title>Time Counters — Commander Companion</title>
     <meta
       name="description"
@@ -11,19 +11,22 @@
     />
     <!--
       Sets the theme attribute before first paint, so a returning visitor who
-      picked the Claude theme doesn't see a flash of the Doctor Who default
-      while React mounts. Doctor Who is the default, and its palette is what
-      the bare :root already renders, so the only case this needs to handle
-      is "the stored preference says Claude" — everything else is a no-op.
+      turned the Doctor Who skin on doesn't see a flash of the platform
+      default while React mounts. The platform theme is the default and is
+      what the bare :root already renders, so the only case this needs to
+      handle is "the stored preference says who" — everything else, including
+      the retired 'claude' value, is a no-op that lands on the default.
+      Kept in sync with src/utils/theme.ts's DEFAULT_THEME and loadTheme.
     -->
     <script>
       (function () {
         try {
-          if (localStorage.getItem('mtg-time-tracker:theme:v1') === 'claude') {
-            document.documentElement.setAttribute('data-theme', 'claude');
+          if (localStorage.getItem('mtg-time-tracker:theme:v1') === 'who') {
+            document.documentElement.setAttribute('data-theme', 'who');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#071627');
           }
         } catch (e) {
-          /* private browsing, etc. — Doctor Who default renders fine either way */
+          /* private browsing, etc. — the platform default renders fine either way */
         }
       })();
     </script>

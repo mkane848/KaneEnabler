@@ -1,11 +1,53 @@
 .toggle {
-  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
   padding: 0.3em 0.2em;
   white-space: nowrap;
 }
 
-.toggle:hover {
+.toggle:hover,
+.toggle.on {
   color: var(--color-accent);
+}
+
+.track {
+  position: relative;
+  display: inline-block;
+  width: 2rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.toggle.on .track {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--color-text-faint);
+  transform: translateY(-50%);
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease;
+}
+
+.toggle.on .thumb {
+  background: var(--color-accent);
+  transform: translate(0.95rem, -50%);
 }

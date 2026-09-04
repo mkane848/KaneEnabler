@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NavBar, type NavBarLink } from '@mtg/ui';
+import { NavBar, SiteFooter, type NavBarLink } from '@mtg/ui';
 import { AccountMenu } from '@mtg/profile';
 import { CardListUpload } from './components/CardListUpload';
 import { RecommendationResults } from './components/RecommendationResults';
@@ -23,7 +23,7 @@ function App() {
   useEffect(wakeServer, []);
 
   return (
-    <>
+    <div className="mtg-page">
       <NavBar
         brand={{ label: 'KaneEnabler', href: '/' }}
         links={NAV_LINKS}
@@ -37,28 +37,23 @@ function App() {
         }
       />
 
-      <div className="app-shell">
+      <main className="mtg-page-main app-main">
         <header className="app-header">
-          <h1 className="app-title">Find the Commander hiding in your collection</h1>
-          <p className="app-subtitle">
+          <h1 className="mtg-page-title app-title">Find the Commander hiding in your collection</h1>
+          <p className="mtg-page-subtitle">
             Paste or upload a card list. We'll look for synergies across it and suggest legal
             Commanders, with the reasoning behind each one.
           </p>
         </header>
 
-        <main className="app-main">
-          <CardListUpload />
-          <RecommendationResults />
-        </main>
+        <CardListUpload />
+        <RecommendationResults />
+      </main>
 
-        <footer className="app-footer">
-          <p>
-            Card data via Scryfall. Suggestions are a heuristic, not a model of how a deck actually
-            plays.
-          </p>
-        </footer>
-      </div>
-    </>
+      <SiteFooter>
+        <p>Suggestions are a heuristic, not a model of how a deck actually plays.</p>
+      </SiteFooter>
+    </div>
   );
 }
 

@@ -15,7 +15,12 @@ import {
 } from '@mtg/rules';
 import { readSidecar } from '@mtg/scryfall';
 import { faceNameEntries } from '../src/services/cardNames';
-import { buildCardFacts, buildVocabulary, detectSignals, hasActiveRole } from '../src/services/signals';
+import {
+  buildCardFacts,
+  buildVocabulary,
+  detectSignals,
+  hasActiveRole,
+} from '../src/services/signals';
 import type { CardRow } from '../src/types';
 import { IMPORT_VERSION } from '../src/services/dataSnapshot';
 import { readImportedSnapshot, writeImportedSnapshot } from '../src/services/importedSnapshot';
