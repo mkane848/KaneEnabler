@@ -172,7 +172,10 @@ describe('buildCommanderUnits — real Scryfall data', () => {
   });
 
   it('pairs a real Choose-a-Background commander with real legendary Backgrounds', () => {
-    const units = buildCommanderUnits([HALSIN, KARLACH], [DUNGEON_DELVER, RAISED_BY_GIANTS]);
+    const units = buildCommanderUnits(
+      [HALSIN, KARLACH],
+      [DUNGEON_DELVER, RAISED_BY_GIANTS],
+    );
     const keys = units.map(unitKey);
     expect(keys).toContain(unitKey({ cards: [HALSIN, DUNGEON_DELVER] }));
     expect(keys).toContain(unitKey({ cards: [HALSIN, RAISED_BY_GIANTS] }));
