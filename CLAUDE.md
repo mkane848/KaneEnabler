@@ -209,7 +209,13 @@ Both apps share these, and predate consolidation:
 
 ## Environment notes
 
-- The remote sandbox can reach `api.scryfall.com` only. `media.wizards.com`, `mtgjson.com` and
-  `api.academyruins.com` are blocked by the egress proxy — the Comprehensive Rules ingestion script
-  must run locally or in GitHub Actions and commit its output.
+- The remote sandbox's egress allowlist is **narrower than it once was, but not as narrow as this
+  file used to claim** (re-measured 2026-09-04; see `TODO.md` for the full table and the retest
+  commands). `api.scryfall.com`, Supabase, `*.onrender.com`, Google Fonts, `magic.wizards.com` and
+  `mtgjson.com` all resolve. Still blocked: `api.academyruins.com` and `media.wizards.com` — which
+  is why the Comprehensive Rules ingestion script (Phase 3a) still has to run locally or in GitHub
+  Actions and commit its output — plus `cards.scryfall.io`, so card art is absent from screenshots.
+- A Playwright-launched browser does **not** inherit `$HTTPS_PROXY`; pass it explicitly, with
+  `localhost` bypassed. See `TODO.md`'s gotcha note — getting this wrong looks exactly like an
+  egress block, and has been misread as one before.
 - Playwright and Chromium are pre-installed; do not run `playwright install`.
