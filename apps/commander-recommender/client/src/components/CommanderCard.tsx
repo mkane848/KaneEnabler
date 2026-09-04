@@ -149,7 +149,7 @@ function ScoreBadge({ suggestion }: { suggestion: CommanderSuggestionDTO }) {
         {rows.length > 0 && (
           // The separator is a real text node, not a CSS ::before: it is part
           // of how the badge is announced, not decoration.
-          <span className="badge-match-strength"> · {suggestion.evidence}</span>
+          <span> · {suggestion.evidence}</span>
         )}
       </button>
       <span role="tooltip" id={tooltipId} className="match-tooltip">

@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] - 2026-09-04
+
+### Changed
+
+- **Primary buttons (`.mtg-btn-primary`, shared with the rest of the site) now rest on the
+  brighter of the two brass tones and darken on hover**, instead of resting dim and brightening on
+  hover. This was a platform-theme defect, not an intentional choice: the recommender's own primary
+  button — the one the repo owner picked as the platform's look — always rested bright and darkened
+  on press, and `@mtg/ui/theme.css` had carried over this app's original direction instead when it
+  was written. Fixed at the platform level (`packages/ui/src/theme.css`), so this app's 8 primary
+  buttons (Header, add-card and time-travel panels, the commander tax modal, the error fallback)
+  pick it up automatically, in both the platform theme and the Doctor Who skin. Slightly brighter at
+  rest; otherwise no layout or behavior change.
+
 ## [1.6.0] - 2026-09-03
 
 ### Changed

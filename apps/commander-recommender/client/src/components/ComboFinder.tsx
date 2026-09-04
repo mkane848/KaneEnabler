@@ -143,7 +143,11 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
             that fit its color identity.
           </p>
           <div className="combo-button-row">
-            <button type="button" className="combo-button" onClick={() => setRequested(true)}>
+            <button
+              type="button"
+              className="mtg-btn mtg-btn-primary mtg-btn-sm combo-button"
+              onClick={() => setRequested(true)}
+            >
               Find combos
             </button>
             {/* Placeholder only — no request is made and no EDHREC data is
@@ -153,7 +157,7 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
                 button above works. */}
             <button
               type="button"
-              className="combo-button combo-button-placeholder"
+              className="mtg-btn mtg-btn-primary mtg-btn-sm combo-button combo-button-placeholder"
               disabled
               title="Coming soon"
             >
@@ -170,7 +174,11 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
           <p className="combo-error">
             {error instanceof Error ? error.message : 'Combo lookup failed.'}
           </p>
-          <button type="button" className="combo-button" onClick={() => refetch()}>
+          <button
+            type="button"
+            className="mtg-btn mtg-btn-primary mtg-btn-sm combo-button"
+            onClick={() => refetch()}
+          >
             Try again
           </button>
         </>

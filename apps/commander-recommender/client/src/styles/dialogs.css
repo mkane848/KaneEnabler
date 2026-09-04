@@ -100,20 +100,13 @@
 
 /* Only rendered for a genuine two-sided card, so it never sits inert next to
    a single-faced one. */
+/* Migrated onto .mtg-btn .mtg-btn-ghost .mtg-btn-sm — this rule now holds
+   only its genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). */
 .card-image-flip {
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  color: var(--text-primary);
-  background: transparent;
-  border: 1px solid var(--ink-border);
   border-radius: 6px;
   padding: 0.25rem 0.55rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.card-image-flip:hover {
-  border-color: var(--brass);
+  color: var(--text-primary);
 }
 
 .dialog-art {
@@ -221,7 +214,9 @@
 
 /* 44px is the minimum comfortable touch target, and it matters most here:
    this control sits at the top of the screen on mobile, right where the URL
-   bar and notch encroach. */
+   bar and notch encroach. Stays local: icon-only, fixed-size — .mtg-btn's
+   padding would break the square (docs/control-primitives-migration.md
+   §2b). */
 .dialog-close {
   position: absolute;
   top: 0.6rem;
@@ -324,24 +319,13 @@
   gap: 0.6rem;
 }
 
+/* Migrated onto .mtg-btn .mtg-btn-danger-solid (packages/ui/src/theme.css)
+   — this rule now holds only its genuine deltas from that shared control
+   (see docs/control-primitives-migration.md). Its own :focus-visible is
+   dropped: it duplicated theme.css's, differing only in using --brass,
+   which resolves to the same color as --mtg-color-accent-hover. */
 .danger-button {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--danger-text);
-  background: var(--danger);
-  border: 1px solid transparent;
-  border-radius: 8px;
+  font-size: 0.85rem;
   padding: 0.5rem 0.95rem;
-  cursor: pointer;
-  transition: filter 0.15s ease;
-}
-
-.danger-button:hover {
-  filter: brightness(1.12);
-}
-
-.danger-button:focus-visible {
-  outline: 2px solid var(--brass);
-  outline-offset: 2px;
 }

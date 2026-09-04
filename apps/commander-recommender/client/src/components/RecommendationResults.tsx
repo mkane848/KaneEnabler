@@ -60,12 +60,16 @@ function ExportControls({ suggestions }: { suggestions: CommanderSuggestionDTO[]
 
   return (
     <div className="export-controls">
-      <button type="button" className="export-button" onClick={handleCopy}>
+      <button
+        type="button"
+        className="mtg-btn mtg-btn-ghost mtg-btn-sm export-button"
+        onClick={handleCopy}
+      >
         {copied ? 'Copied!' : 'Copy list'}
       </button>
       <button
         type="button"
-        className="export-button"
+        className="mtg-btn mtg-btn-ghost mtg-btn-sm export-button"
         onClick={() => downloadTextFile(EXPORT_FILENAME, toExportText(suggestions))}
       >
         Download .txt

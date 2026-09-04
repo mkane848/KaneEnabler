@@ -1,7 +1,7 @@
 # Recommender controls onto the shared `.mtg-btn` / `.mtg-input` primitives
 
-**Status:** approved, not started. This is an execution brief — a fresh session should be able to
-work from it without re-deriving the analysis.
+**Status:** shipped. This is an execution brief — a fresh session should be able to work from it
+without re-deriving the analysis.
 **Scope:** `packages/ui/src/theme.css` (two additions), `apps/commander-recommender/client` (eight
 controls + comments), plus a screenshot-verified appearance change to `apps/time-counters`.
 

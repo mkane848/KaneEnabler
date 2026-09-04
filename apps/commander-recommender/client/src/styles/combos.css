@@ -5,22 +5,16 @@
   gap: 0.5rem;
 }
 
+/* Migrated onto .mtg-btn .mtg-btn-primary .mtg-btn-sm — this rule now
+   holds only its genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). .combo-button-placeholder below
+   does not migrate (dashed border on a parchment card has no platform
+   analogue) and relies on following this rule in source order to win the
+   cascade when both classes are applied together. */
 .combo-button {
   align-self: flex-start;
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--ink-text);
-  background: var(--brass-bright);
-  border: none;
   border-radius: 7px;
   padding: 0.45rem 0.9rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.combo-button:hover {
-  background: var(--brass);
 }
 
 .combo-button-placeholder {

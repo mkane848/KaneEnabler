@@ -36,12 +36,16 @@ export function ConfirmDialog({ children, title, description, confirmLabel, onCo
               <Dialog.Description className="confirm-description">{description}</Dialog.Description>
               <div className="confirm-actions">
                 <Dialog.Close asChild>
-                  <button type="button" className="page-button">
+                  <button type="button" className="mtg-btn mtg-btn-ghost page-button">
                     Cancel
                   </button>
                 </Dialog.Close>
                 <Dialog.Close asChild>
-                  <button type="button" className="danger-button" onClick={onConfirm}>
+                  <button
+                    type="button"
+                    className="mtg-btn mtg-btn-danger-solid danger-button"
+                    onClick={onConfirm}
+                  >
                     {confirmLabel}
                   </button>
                 </Dialog.Close>

@@ -7,6 +7,27 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [1.11.2] — 2026-09-04
+
+### Changed
+
+- **Eight of the client's buttons now render through the shared `@mtg/ui` `.mtg-btn` primitive**
+  (`.mtg-btn-ghost`/`.mtg-btn-primary`/`.mtg-btn-danger-solid`, plus `.mtg-btn-sm` where the local
+  control was already small) instead of duplicating its own chrome — export/download, the "About"
+  nav link, the card-image flip control, pagination and "Cancel"/"Clear", the file-upload label,
+  the "Suggest Commanders"/"Try again" primary buttons, the combo-finder buttons, and the confirm
+  dialog's "Clear list". Each local class survives only as a modifier holding its genuine deltas
+  from the shared control (padding, radius, font-size), documented in
+  `docs/control-primitives-migration.md`. Visually neutral — see that document's §6 for the
+  screenshot verification this went through, and its §4 table for the handful of deliberately
+  accepted micro-differences (disabled buttons a touch more transparent; two colors close enough on
+  brass to be imperceptible). The remaining bespoke controls (parchment-surface controls, icon-only
+  toggles, text-as-link controls, and a few controls with a bespoke state model) now carry a
+  one-line comment explaining why each stays local rather than migrating.
+- Removed two dead classes found during that sweep: `badge-match-strength` (no stylesheet rule,
+  and nothing else used it) and a note clarifying that `toggle-chip-off`/`toggle-pip-off`
+  intentionally have no rule of their own — "off" is the base class's own styling.
+
 ## [1.13.0] — 2026-09-03
 
 ### Added
