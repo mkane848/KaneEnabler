@@ -5,21 +5,15 @@
    uses those directly and only the differences remain below. Likewise
    .app-footer, now @mtg/ui's SiteFooter. */
 
+/* Migrated onto .mtg-btn .mtg-btn-ghost — this rule now holds only its
+   genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). Its border-radius already matched
+   --mtg-radius-sm, so there's nothing to override there. */
 .app-nav-link {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-primary);
-  background: transparent;
-  border: 1px solid var(--ink-border);
-  border-radius: var(--mtg-radius-sm);
+  font-size: 0.85rem;
   padding: 0.4rem 0.9rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.app-nav-link:hover {
-  border-color: var(--brass);
+  color: var(--text-primary);
 }
 
 .app-main {

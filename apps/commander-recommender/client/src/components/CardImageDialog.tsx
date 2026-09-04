@@ -73,7 +73,7 @@ export function CardImageDialog({
             {canFlip && (
               <button
                 type="button"
-                className="card-image-flip"
+                className="mtg-btn mtg-btn-ghost mtg-btn-sm card-image-flip"
                 onClick={() => setShowBack((b) => !b)}
                 aria-label={`Flip to ${showBack ? name : (backName ?? 'the other face')}`}
               >

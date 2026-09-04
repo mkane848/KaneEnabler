@@ -18,6 +18,8 @@
   color: var(--text-muted);
 }
 
+/* Stays local: text, not a button — padding: 0 and inheriting type is the
+   point (docs/control-primitives-migration.md §2b). */
 .upload-collapse-toggle {
   display: flex;
   align-items: center;
@@ -49,6 +51,8 @@
   gap: 0.9rem;
 }
 
+/* Stays local: lives on the parchment card surface, which .mtg-input is not
+   authored for (docs/control-primitives-migration.md §2a). */
 .upload-textarea {
   background: var(--parchment);
   color: var(--ink-text);
@@ -73,21 +77,17 @@
   flex-wrap: wrap;
 }
 
+/* Migrated onto .mtg-btn .mtg-btn-ghost — this rule now holds only its
+   genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). Its border-radius already matched
+   --mtg-radius-sm, so there's nothing to override there. Sits on a <label>
+   rather than a <button>, so .mtg-btn's display: inline-flex newly applies
+   here — verified against the file-picker row. */
 .file-button {
-  font-family: var(--font-body);
-  font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-primary);
-  background: transparent;
-  border: 1px solid var(--ink-border);
-  border-radius: 8px;
+  font-size: 0.9rem;
   padding: 0.6rem 1rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.file-button:hover {
-  border-color: var(--brass);
+  color: var(--text-primary);
 }
 
 .file-name {
@@ -95,24 +95,18 @@
   color: var(--text-muted);
 }
 
+/* Migrated onto .mtg-btn .mtg-btn-primary (after packages/ui/src/theme.css's
+   §3a hover-direction fix — see docs/control-primitives-migration.md) —
+   this rule now holds only its genuine deltas from that shared control.
+   Adopts --mtg-color-accent-ink over the local --ink-text token
+   (tokens.css); the two are imperceptibly close on brass. Its own
+   :disabled opacity (0.6) is kept — it's more transparent than .mtg-btn's
+   shared 0.5, deliberately, since this is the form's primary submit. */
 .primary-button {
   margin-left: auto;
-  font-family: var(--font-body);
-  font-weight: 600;
   font-size: 0.95rem;
-  color: var(--ink-text);
-  background: var(--brass-bright);
-  border: none;
-  border-radius: 8px;
   padding: 0.7rem 1.4rem;
-  cursor: pointer;
-  transition:
-    transform 0.1s ease,
-    background 0.15s ease;
-}
-
-.primary-button:hover:not(:disabled) {
-  background: var(--brass);
+  color: var(--mtg-color-accent-ink);
 }
 
 .primary-button:active:not(:disabled) {
@@ -121,7 +115,6 @@
 
 .primary-button:disabled {
   opacity: 0.6;
-  cursor: not-allowed;
 }
 
 @media (max-width: 520px) {

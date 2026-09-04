@@ -22,7 +22,11 @@ export default function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
         </p>
         <p className="error-fallback-detail">{error.message}</p>
         <div className="error-fallback-actions">
-          <button type="button" className="primary-button" onClick={onRetry}>
+          <button
+            type="button"
+            className="mtg-btn mtg-btn-primary primary-button"
+            onClick={onRetry}
+          >
             Try again
           </button>
           <button type="button" className="link-button" onClick={() => window.location.reload()}>

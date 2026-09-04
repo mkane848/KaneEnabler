@@ -43,21 +43,13 @@
   margin-left: auto;
 }
 
+/* Migrated onto .mtg-btn .mtg-btn-ghost .mtg-btn-sm — this rule now holds
+   only its genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). */
 .export-button {
-  font-family: var(--font-body);
-  font-size: 0.78rem;
+  border-radius: 7px;
   font-weight: 500;
   color: var(--text-primary);
-  background: transparent;
-  border: 1px solid var(--ink-border);
-  border-radius: 7px;
-  padding: 0.35rem 0.7rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.export-button:hover {
-  border-color: var(--brass);
 }
 
 /* Virtualized suggestion grid (RecommendationResults.tsx) — replaces what

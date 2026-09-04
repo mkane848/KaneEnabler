@@ -75,7 +75,7 @@ export function Pagination({ pageIndex, pageCount, onPageChange, label }: Props)
     <nav className="pagination" aria-label={label}>
       <button
         type="button"
-        className="page-button"
+        className="mtg-btn mtg-btn-ghost page-button"
         onClick={() => onPageChange(pageIndex - 1)}
         disabled={pageIndex === 0}
       >
@@ -107,7 +107,7 @@ export function Pagination({ pageIndex, pageCount, onPageChange, label }: Props)
 
       <button
         type="button"
-        className="page-button"
+        className="mtg-btn mtg-btn-ghost page-button"
         onClick={() => onPageChange(pageIndex + 1)}
         disabled={pageIndex >= pageCount - 1}
       >

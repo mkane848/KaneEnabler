@@ -9,6 +9,8 @@
   position: relative;
 }
 
+/* Stays local: icon-only, fixed-size — .mtg-btn's padding would break the
+   circle (docs/control-primitives-migration.md §2b). */
 .dismiss-button {
   position: absolute;
   top: 0.5rem;
@@ -299,7 +301,9 @@
   margin: 0;
 }
 
-/* The rules text box, and the button wrapping it that opens the full card. */
+/* The rules text box, and the button wrapping it that opens the full card.
+   Stays local: lives on the parchment card surface, which .mtg-btn is not
+   authored for (docs/control-primitives-migration.md §2a). */
 .commander-oracle-button {
   display: block;
   width: 100%;
@@ -391,6 +395,8 @@
   display: inline-block;
 }
 
+/* Stays local: text, not a button — padding: 0 and inheriting type is the
+   point (docs/control-primitives-migration.md §2b). */
 .badge-match {
   font: inherit;
   border: none;
@@ -531,6 +537,8 @@
 
 /* "Why this commander?" disclosure */
 
+/* Stays local: lives on the parchment card surface, which .mtg-btn is not
+   authored for (docs/control-primitives-migration.md §2a). */
 .explain-toggle {
   margin-top: 0.6rem;
   width: 100%;
@@ -704,6 +712,9 @@ summary.explain-group-title::after {
   min-width: 0;
 }
 
+/* Stays local: text, not a button — .mtg-btn's chrome would fight the
+   "reads as list text" effect the comment above describes
+   (docs/control-primitives-migration.md §2b). */
 .support-name {
   /* A button, but it reads as the list's text — the underline on hover is
      what says it's tappable, rather than a control's chrome in every row. */

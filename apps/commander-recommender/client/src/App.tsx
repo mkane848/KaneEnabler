@@ -30,7 +30,7 @@ function App() {
         accountSlot={<AccountMenu />}
         extraSlot={
           <AboutDialog>
-            <button type="button" className="app-nav-link">
+            <button type="button" className="mtg-btn mtg-btn-ghost app-nav-link">
               About
             </button>
           </AboutDialog>

@@ -107,7 +107,7 @@ export function CardListUpload() {
             </p>
           )}
           <div className="upload-actions">
-            <label className="file-button">
+            <label className="mtg-btn mtg-btn-ghost file-button">
               Upload .txt
               <input
                 type="file"
@@ -132,12 +132,16 @@ export function CardListUpload() {
                 confirmLabel="Clear list"
                 onConfirm={handleReset}
               >
-                <button type="button" className="page-button">
+                <button type="button" className="mtg-btn mtg-btn-ghost page-button">
                   Clear
                 </button>
               </ConfirmDialog>
             )}
-            <button type="submit" className="primary-button" disabled={isFetching}>
+            <button
+              type="submit"
+              className="mtg-btn mtg-btn-primary primary-button"
+              disabled={isFetching}
+            >
               {isFetching ? 'Finding synergies…' : 'Suggest Commanders'}
             </button>
           </div>

@@ -38,6 +38,8 @@
   flex-wrap: wrap;
 }
 
+/* Stays local: a colour-pip cycler, a bespoke tri-state model .mtg-btn has
+   no equivalent for (docs/control-primitives-migration.md §2b). */
 .toggle-pip {
   background: transparent;
   border: 1px solid transparent;
@@ -61,7 +63,9 @@
 }
 
 /* Include/exclude read as color, not just a filled-in state, since both
-   are "active" — green ring to require a value, red ring to rule it out. */
+   are "active" — green ring to require a value, red ring to rule it out.
+   The third mode, `toggle-pip-off`, has no rule of its own: "off" is
+   .toggle-pip's own base styling, so there's nothing to add. */
 .toggle-pip-include {
   opacity: 1;
   border-color: #2e8c50;
@@ -90,6 +94,9 @@
   opacity: 0.4;
 }
 
+/* Stays local: a tri-state include/exclude filter pill, a bespoke state
+   model .mtg-btn has no equivalent for
+   (docs/control-primitives-migration.md §2b). */
 .toggle-chip {
   display: inline-flex;
   align-items: center;
@@ -113,6 +120,8 @@
   color: var(--text-primary);
 }
 
+/* The third mode, `toggle-chip-off`, has no rule of its own: "off" is
+   .toggle-chip's own base styling, so there's nothing to add. */
 .toggle-chip-include {
   background: rgba(46, 140, 80, 0.18);
   border-color: #2e8c50;
@@ -145,6 +154,8 @@
   gap: 0.3rem;
 }
 
+/* Stays local: text, not a button — padding: 0 and inheriting type is the
+   point (docs/control-primitives-migration.md §2b). */
 .facet-group-toggle {
   display: inline-flex;
   align-items: center;
@@ -178,6 +189,10 @@
   margin: 0;
 }
 
+/* Stays local, not .mtg-input: relies on outline: none plus a border-color
+   swap as its entire focus indicator — don't "tidy" this onto the shared
+   input or the platform focus ring reappears with a 2px offset it never
+   had (docs/control-primitives-migration.md §4a). */
 .facet-search {
   font-family: var(--font-body);
   font-size: 0.75rem;
@@ -239,6 +254,8 @@
   color: var(--text-muted);
 }
 
+/* Stay local: text-as-link, not a button — padding: 0 and inheriting type
+   is the point (docs/control-primitives-migration.md §2b). */
 .filter-clear,
 .link-button {
   font-family: var(--font-body);
@@ -285,6 +302,10 @@
   color: var(--text-muted);
 }
 
+/* Stays local, not .mtg-input: relies on outline: none plus a border-color
+   swap as its entire focus indicator — don't "tidy" this onto the shared
+   input or the platform focus ring reappears with a 2px offset it never
+   had (docs/control-primitives-migration.md §4a). */
 .page-jump-input {
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -309,26 +330,18 @@
   opacity: 0.6;
 }
 
+/* Migrated onto .mtg-btn .mtg-btn-ghost — this rule now holds only its
+   genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). Its border-radius already matched
+   --mtg-radius-sm, so there's nothing to override there. Its own :disabled
+   opacity (0.4) is also dropped in favor of .mtg-btn's shared 0.5 — a
+   deliberately accepted, barely-visible change rather than one more local
+   override. */
 .page-button {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-primary);
-  background: transparent;
-  border: 1px solid var(--ink-border);
-  border-radius: 8px;
+  font-size: 0.85rem;
   padding: 0.5rem 0.95rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.page-button:hover:not(:disabled) {
-  border-color: var(--brass);
-}
-
-.page-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  color: var(--text-primary);
 }
 
 .page-status {
@@ -348,6 +361,9 @@
   justify-content: center;
 }
 
+/* Stays local: a mono numeral cell with anti-jitter min-width sizing (see
+   below), not the platform button (docs/control-primitives-migration.md
+   §2b). */
 .page-number {
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -383,7 +399,9 @@
   padding: 0 0.1rem;
 }
 
-/* Reverses whichever sort mode is selected; sits beside that control. */
+/* Reverses whichever sort mode is selected; sits beside that control. Stays
+   local: icon-only, fixed-size — .mtg-btn's padding would break the square
+   (docs/control-primitives-migration.md §2b). */
 .sort-direction {
   font-family: var(--font-mono);
   font-size: 0.85rem;

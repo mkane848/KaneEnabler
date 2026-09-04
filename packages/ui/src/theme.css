@@ -246,13 +246,17 @@ textarea {
   opacity: 0.5;
 }
 
+/* Rests on the brighter --accent-hover and darkens on press, matching the
+   recommender's .primary-button (the repo owner's chosen platform look) —
+   not time-counters' original rest-dim/brighten-on-hover, which is what
+   this file carried over when it was written. */
 .mtg-btn-primary {
-  background: var(--mtg-color-accent);
+  background: var(--mtg-color-accent-hover);
   color: var(--mtg-color-accent-ink);
 }
 
 .mtg-btn-primary:hover:not(:disabled) {
-  background: var(--mtg-color-accent-hover);
+  background: var(--mtg-color-accent);
 }
 
 .mtg-btn-ghost {
@@ -274,6 +278,19 @@ textarea {
 
 .mtg-btn-danger:hover:not(:disabled) {
   background: var(--mtg-color-danger-soft);
+}
+
+/* Solid fill, for a confirmed destructive action where the outlined
+   .mtg-btn-danger reads as too soft a signal — matches the recommender's
+   .danger-button (dialogs.css) so its confirm dialog is unchanged. */
+.mtg-btn-danger-solid {
+  background: var(--mtg-color-danger);
+  color: var(--mtg-color-danger-text);
+  border-color: transparent;
+}
+
+.mtg-btn-danger-solid:hover:not(:disabled) {
+  filter: brightness(1.12);
 }
 
 .mtg-btn-sm {

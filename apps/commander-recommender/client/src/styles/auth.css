@@ -3,6 +3,8 @@
   gap: 0.3rem;
 }
 
+/* Stays local: icon-only, fixed-size — .mtg-btn's padding would break the
+   circle (docs/control-primitives-migration.md §2b). */
 .like-dislike-btn {
   font-size: 0.85rem;
   line-height: 1;
@@ -41,6 +43,8 @@
   background: rgba(140, 47, 47, 0.15);
 }
 
+/* Stays local: lives on the parchment card surface, which .mtg-btn is not
+   authored for (docs/control-primitives-migration.md §2a). */
 .jank-toggle {
   font-family: var(--font-body);
   font-size: 0.78rem;
