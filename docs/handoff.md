@@ -43,9 +43,6 @@ What's genuinely still open, gathered here so a fresh session doesn't have to re
 - **Phase 3a (CR ingestion) is blocked, not done** — this sandbox's egress proxy blocks all three
   source domains (re-confirmed 2026-08-18). Needs to run locally or in GitHub Actions; see that
   section for why the ingestion script itself was deliberately not written blind.
-- **Deck-size and whole-deck color-identity validation** (`@mtg/rules`' `deckLegality.ts`) are
-  tested and CR-cited but not wired into either app — neither has a deck-list-validation feature
-  for them to back yet. See Phase 3b's primitives table.
 - **The Spellbook cache is per-process, in-memory** — fine for one user, not once accounts exist.
   See `api-policy.md`'s "known violations," item 2.
 
@@ -62,6 +59,15 @@ out of `index.ts` so `app.listen()` isn't a side effect of importing it) — it 
 outside the one place a seeded database exists (the weekly fetch-check workflow). And
 favourited-combo-renders-from-snapshot-with-network-blocked is tested against `ComboFavoriteButton`,
 the one component that reads a stored combo preference back today — see Verification items 3 and 6.
+
+**Landed since the list above was last trimmed (2026-09-18):** `deckLegality.ts`'s deck-size and
+whole-deck color-identity validation is now wired into the new `POST /api/deck-validity` route
+(`server/src/routes/deckValidity.ts` + `services/deckValidation.ts`) — the pure rules stay in
+`@mtg/rules`, the service runs them seedless-testable, and the route resolves names via the existing
+DB lookups. Commander-unit legality (Partners/companions, 702.124) is checked through the same
+`buildCommanderUnits` path `/api/recommend` uses, so the endpoint rejects illegal pairings and
+non-eligible commanders instead of scoring them. Verified end-to-end against the real corpus
+fixtures in `deckValidity.integration.test.ts` (CI's weekly fetch-check workflow).
 
 ## Decisions on record
 
@@ -293,13 +299,13 @@ rules support every time a new feature is imagined.
 | Turn steps that matter (upkeep, precombat main)    | 500–514             | `counters.ts` — same file; DWC's two hardcoded copies now call this                                                                                                                           |
 | `parseCreatureTypes`                               | 205.3m              | `creatureTypes.ts` — moved from HKH's `signals.ts`                                                                                                                                            |
 | Commander format legality                          | —                   | `legality.ts` — `isCommanderLegal` centralized here; ban list / Game Changers are still raw Scryfall fields, no primitive needed                                                              |
-| Deck size (100 cards)                              | 903.5a              | `deckLegality.ts` — new                                                                                                                                                                       |
-| Deck-wide colour-identity legality                 | 903.4               | `deckLegality.ts` — new (`combinedColorIdentity` + `findColorIdentityViolations`)                                                                                                             |
+| Deck size (100 cards)                              | 903.5a              | `deckLegality.ts` — wired into `/api/deck-validity` (2026-09-18)                                                                                                   |
+| Deck-wide colour-identity legality                 | 903.4               | `deckLegality.ts` — same (`combinedColorIdentity` + `findColorIdentityViolations`)                                                                                |
 
-The last two are genuinely new: neither app has a deck-list-level validation feature today (both only
-score/suggest against a _submitted_ list, never validate a completed 100-card deck), so these two are
-tested and CR-cited but **not called from either app yet** — wire them in when a feature needs them,
-rather than leaving the rule undocumented until then.
+Both are now called from `server/src/services/deckValidation.ts`, backing the `POST /api/deck-validity`
+route — see the "Landed" ledger above. They run seedless (the service takes a resolved name
+`Map`, never touches the DB itself), so their unit tests and the routing behavior are both verified
+without a seeded database.
 
 ## Phase 4 — Rules audit
 
