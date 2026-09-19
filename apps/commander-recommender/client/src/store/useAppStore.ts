@@ -16,12 +16,17 @@ interface AppState {
   submittedList: string;
   /** unitIds the user has dismissed from the current results. */
   dismissed: string[];
+  /** The deck-validity check actually submitted — the list as it stood plus
+   * the named commanders. Null until the user runs a check; the verdict
+   * query hangs off this snapshot, not the live textarea. */
+  submittedValidation: { list: string; commanderNames: string[] } | null;
   setRawList: (text: string) => void;
   submitList: (text: string) => void;
+  submitValidation: (list: string, commanderNames: string[]) => void;
   dismiss: (unitId: string) => void;
   restore: (unitId: string) => void;
   restoreAll: () => void;
-  /** Clears the list, the results, and any dismissals. */
+  /** Clears the list, the results, any dismissals, and any deck verdict. */
   resetList: () => void;
 }
 
@@ -29,6 +34,7 @@ export const useAppStore = create<AppState>((set) => ({
   rawList: '',
   submittedList: '',
   dismissed: [],
+  submittedValidation: null,
 
   setRawList: (rawList) => set({ rawList }),
 
@@ -41,6 +47,9 @@ export const useAppStore = create<AppState>((set) => ({
       dismissed: submittedList === state.submittedList ? state.dismissed : [],
     })),
 
+  submitValidation: (list, commanderNames) =>
+    set({ submittedValidation: { list, commanderNames } }),
+
   dismiss: (unitId) =>
     set((state) => ({
       dismissed: state.dismissed.includes(unitId) ? state.dismissed : [...state.dismissed, unitId],
@@ -51,8 +60,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   restoreAll: () => set({ dismissed: [] }),
 
-  // Back to a blank slate: the textarea, the submitted list, and any
-  // dismissals. Clearing submittedList is what actually retires the results,
-  // since every server query is keyed on it.
-  resetList: () => set({ rawList: '', submittedList: '', dismissed: [] }),
+  // Back to a blank slate: the textarea, the submitted list, any dismissals,
+  // and any deck verdict. Clearing submittedList/submittedValidation is what
+  // actually retires the results, since every server query is keyed on them.
+  resetList: () =>
+    set({ rawList: '', submittedList: '', dismissed: [], submittedValidation: null }),
 }));

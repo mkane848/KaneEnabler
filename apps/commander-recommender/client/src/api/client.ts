@@ -1,5 +1,6 @@
 import type {
   ComboLookupResponse,
+  DeckValidityResponse,
   RecommendResponse,
   ServerMeta,
   WireRecommendResponse,
@@ -61,6 +62,20 @@ export async function fetchMeta(): Promise<ServerMeta> {
   const response = await fetch(`${API_BASE}/api/meta`);
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
   return (await response.json()) as ServerMeta;
+}
+
+/**
+ * Checks a finished deck against the format's rules: size, singleton, color
+ * identity, commander eligibility/pairing, ban-list. Local database only —
+ * no external API is involved, so the api-policy click-consent rules don't
+ * apply here; it's still only called from an explicit click, like everything
+ * else that POSTs.
+ */
+export function fetchDeckValidity(
+  rawList: string,
+  commanderNames: string[],
+): Promise<DeckValidityResponse> {
+  return postJson<DeckValidityResponse>('/api/deck-validity', { list: rawList, commanderNames });
 }
 
 /**

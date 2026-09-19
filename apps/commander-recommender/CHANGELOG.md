@@ -7,6 +7,23 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [Unreleased]
+
+### Added
+
+- **Check a finished deck's legality.** A new collapsed-by-default panel under the card list
+  ("Check a finished deck") takes the pasted list plus one or two commander names and reports
+  every rule the deck breaks: exactly 100 cards including the commander(s) (CR 903.5a), singleton
+  with the card's own exemptions — basic lands, "any number", "up to N" (903.5b, via `@mtg/rules`'
+  `singletonLimit`), color identity (903.4), commander eligibility and Partner/Background pairing
+  (903.3 / 702.124), the ban-list, and unrecognized cards. Banned and unrecognized cards still count
+  toward the 100 — the fix for a banned card is "swap it", not "add one". Backed by the new
+  `POST /api/deck-validity` route (`server/src/routes/deckValidity.ts` +
+  `services/deckValidation.ts`), which reuses the same CR-cited primitives and `buildCommanderUnits`
+  path `/api/recommend` uses; local database only, no external API traffic. Verified end-to-end
+  against the real 20-deck corpus in `deckValidity.integration.test.ts`, which the weekly
+  `scryfall-fetch-check.yml` workflow now runs explicitly alongside the recommend and cards checks.
+
 ## [1.13.6] — 2026-11-24
 
 ### Fixed
@@ -20,7 +37,7 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 ### Fixed
 
 - **Combo lookup is click-only again after the list changes.** A "Find combos" click now consents to
-  the commander unit *and* the submitted list it was clicked for; changing the list requires a fresh
+  the commander unit _and_ the submitted list it was clicked for; changing the list requires a fresh
   click instead of silently querying Spellbook for the new deck (even when its result is cached).
 - **Commander Spellbook traffic backs off when told to.** A 429 now starts a server-side cooldown
   until its `Retry-After` passes (60s if none is sent), identical concurrent lookups share one

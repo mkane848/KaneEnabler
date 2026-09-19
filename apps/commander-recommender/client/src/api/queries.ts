@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchCombos, fetchMeta, fetchRecommendations } from './client';
+import { fetchCombos, fetchDeckValidity, fetchMeta, fetchRecommendations } from './client';
 
 /**
  * Recommendations for a submitted list.
@@ -18,6 +18,24 @@ export function useRecommendations(submittedList: string) {
     queryKey: ['recommendations', submittedList],
     queryFn: () => fetchRecommendations(submittedList),
     enabled: submittedList.trim().length > 0,
+  });
+}
+
+/**
+ * The legality verdict on a finished deck.
+ *
+ * Same modelling as useRecommendations: a query, not a mutation — it POSTs
+ * only because a deck list is too big for a query string, and validating
+ * changes nothing on the server. Keyed on the submitted snapshot (list +
+ * named commanders), so re-checking an unchanged deck is free and editing
+ * the textarea doesn't fire anything. `enabled` stays false until the user
+ * actually submits a check.
+ */
+export function useDeckValidity(request: { list: string; commanderNames: string[] } | null) {
+  return useQuery({
+    queryKey: ['deck-validity', request?.list ?? '', [...(request?.commanderNames ?? [])].sort()],
+    queryFn: () => fetchDeckValidity(request!.list, request!.commanderNames),
+    enabled: request !== null && request.list.trim().length > 0,
   });
 }
 
