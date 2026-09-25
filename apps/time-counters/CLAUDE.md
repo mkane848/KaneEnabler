@@ -96,8 +96,10 @@ from the repo root.
     class — always trigger per-chapter, never just check the final target).
 - `src/components/` — one file + co-located `.module.css` per component;
   no shared component library, styling is local CSS Modules reading
-  theme values from CSS custom properties (`--color-*`, `--font-*`, set by
-  `data-theme` on `<html>`)
+  theme values from CSS custom properties (`--color-*`, `--font-*`), which
+  `src/index.css` aliases to the platform's `--mtg-*` tokens. The Doctor
+  Who skin (`data-theme='who'` on `<html>`) overrides only those `--mtg-*`
+  tokens, so a new platform token needs a Who value there too
   - `CommanderTaxModal.tsx` — opened by tapping a commander portrait/name
     in `CommanderBanner.tsx`, or a commander's field tile once it's cast;
     commander tax for both (with a Cast/Return-to-command-zone button that

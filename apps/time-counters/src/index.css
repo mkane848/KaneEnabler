@@ -57,8 +57,8 @@
 
   /* This app's local names for the platform palette, so the ~30 component
      stylesheets that read var(--color-*) need no edit. The Doctor Who
-     block below overrides these same names — that is the whole mechanism
-     by which the skin reskins. */
+     block below overrides the --mtg-* tokens these point at, and these
+     follow — that is the whole mechanism by which the skin reskins. */
   --color-bg: var(--mtg-color-bg);
   --color-surface: var(--mtg-color-surface);
   --color-surface-hover: var(--mtg-color-surface-hover);
@@ -93,50 +93,45 @@
    color-and-type language a fan would recognize, not a reproduction of
    protected show assets.
 
-   It overrides both this app's local --color-* names and the platform's own
-   --mtg-* tokens, because the shared chrome (NavBar, AccountMenu,
-   AuthDialog) reads the latter — that is what lets the skin carry across
-   the whole page rather than stopping at this app's own components. */
+   It redefines the platform's own tokens and nothing else. The --color-*
+   names above are aliases of those, so they follow automatically, and so
+   does the shared chrome (NavBar, AccountMenu, AuthDialog, .mtg-btn). A
+   skin that sets every platform token means a new token added to
+   theme.css is the one thing to add here as well; the contrast of each
+   pairing below is measured, not eyeballed. */
 :root[data-theme='who'] {
-  --color-bg: #071627;
-  --color-surface: #0d2338;
-  --color-surface-hover: #123049;
-  --color-surface-raised: #143355;
-  --color-border: #1f4d70;
-  --color-border-soft: #142f47;
-  --color-text: #eaf4fa;
-  --color-text-muted: #85aec9;
-  --color-text-faint: #4f7793;
-  --color-accent: #35d0e0;
-  --color-accent-strong: #7de8f0;
-  --color-accent-soft: #123c42;
-  --color-accent-ink: #052226;
-  --color-danger: #e5484f;
-  --color-danger-soft: #451a1d;
-
-  --font-display: 'Orbitron', 'Michroma', system-ui, sans-serif;
-  --font-body: 'Titillium Web', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-
-  --mtg-color-bg: var(--color-bg);
+  --mtg-color-bg: #071627;
   --mtg-color-bg-image: radial-gradient(ellipse 120% 60% at 50% -10%, #0e3252 0%, #071627 55%);
-  --mtg-color-surface: var(--color-surface);
-  --mtg-color-surface-raised: var(--color-surface-raised);
-  --mtg-color-surface-hover: var(--color-surface-hover);
-  --mtg-color-border: var(--color-border);
-  --mtg-color-border-soft: var(--color-border-soft);
-  --mtg-color-text: var(--color-text);
-  --mtg-color-text-muted: var(--color-text-muted);
-  --mtg-color-text-faint: var(--color-text-faint);
-  --mtg-color-accent: var(--color-accent);
-  --mtg-color-accent-hover: var(--color-accent-strong);
-  --mtg-color-accent-soft: var(--color-accent-soft);
-  --mtg-color-accent-ink: var(--color-accent-ink);
-  --mtg-color-danger-strong: var(--color-danger);
-  --mtg-color-danger-soft: var(--color-danger-soft);
-  --mtg-font-display: var(--font-display);
-  --mtg-font-body: var(--font-body);
-  --mtg-font-mono: var(--font-mono);
+  --mtg-color-surface: #0d2338;
+  --mtg-color-surface-hover: #123049;
+  --mtg-color-surface-raised: #143355;
+  --mtg-color-border: #1f4d70;
+  --mtg-color-border-soft: #142f47;
+
+  --mtg-color-text: #eaf4fa;
+  --mtg-color-text-muted: #85aec9;
+  /* 4.9:1 on the page, 4.3:1 on a surface; it was 3.8:1 and 3.3:1. */
+  --mtg-color-text-faint: #628aa6;
+  --mtg-color-text-inverse: #071627;
+
+  --mtg-color-accent: #35d0e0;
+  --mtg-color-accent-hover: #7de8f0;
+  --mtg-color-accent-soft: #123c42;
+  --mtg-color-accent-ink: #052226;
+
+  --mtg-color-danger: #b3262d;
+  --mtg-color-danger-hover: #c42b33;
+  --mtg-color-danger-soft: #451a1d;
+  --mtg-color-danger-text: #fdf2f2;
+  --mtg-color-danger-strong: #f0646a;
+  --mtg-color-scrim: rgba(3, 10, 20, 0.72);
+
+  --mtg-shadow-card: 0 2px 14px rgba(2, 8, 16, 0.5);
+  --mtg-shadow-modal: 0 12px 40px rgba(2, 8, 16, 0.65);
+
+  --mtg-font-display: 'Orbitron', 'Michroma', system-ui, sans-serif;
+  --mtg-font-body: 'Titillium Web', system-ui, -apple-system, sans-serif;
+  --mtg-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
 /* ==========================================================================

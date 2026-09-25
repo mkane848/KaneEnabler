@@ -4,6 +4,30 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.2] - 2026-09-25
+
+### Changed
+
+- **The Doctor Who skin was rebuilt on the current platform theme.** It used to keep a palette
+  of its own and point the platform's tokens back at it, which left six newer platform colours
+  unskinned. Now it sets every platform token directly and nothing else. Visible differences under
+  the skin:
+  - Danger buttons and destructive fills are a TARDIS-palette red rather than the default theme's
+    brick red.
+  - Shadows and the modal backdrop are navy.
+  - Faint text is lighter: 4.9:1 on the page, up from 3.8:1.
+
+### Fixed
+
+- **Sign-in errors are readable.** The sign-in dialog printed errors in the dark red used for
+  button fills, about 1.5:1 against the dialog. They now use the lighter red meant for text.
+- **The sign-in button matches the site's other primary buttons.** It rested dim and brightened on
+  hover, the reverse of every other primary button; it now uses the shared `.mtg-btn-primary`.
+- **One modal backdrop across the site.** The three apps each dimmed the page behind a dialog in a
+  different colour (brown, navy and black). They now share one platform colour.
+  In this app's default theme that means modals dim to the platform's warm brown instead of a navy
+  left over from the retired "Claude" theme.
+
 ## [1.7.1] - 2026-09-25
 
 ### Fixed

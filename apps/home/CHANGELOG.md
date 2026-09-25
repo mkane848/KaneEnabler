@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-09-25
+
+### Fixed
+
+- **Sign-in errors are readable.** The sign-in dialog printed errors in the dark red used for
+  button fills, about 1.5:1 against the dialog. They now use the lighter red meant for text.
+- **The sign-in button matches the site's other primary buttons.** It rested dim and brightened on
+  hover, the reverse of every other primary button; it now uses the shared `.mtg-btn-primary`.
+- **One modal backdrop across the site.** The three apps each dimmed the page behind a dialog in a
+  different colour (brown, navy and black). They now share one platform colour.
+
 ## [0.3.0] - 2026-09-03
 
 ### Added

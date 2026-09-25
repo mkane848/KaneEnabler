@@ -78,6 +78,9 @@
      read (--mtg-color-danger on --mtg-color-bg is about 1.5:1). This one
      clears 8:1, so an error message is legible rather than merely red. */
   --mtg-color-danger-strong: #e89a8f;
+  /* Behind every modal and drawer. It used to be three colours, one per app:
+     brown, navy and black. */
+  --mtg-color-scrim: rgba(12, 10, 7, 0.72);
 
   /* --- Type ----------------------------------------------------------- */
   --mtg-font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;

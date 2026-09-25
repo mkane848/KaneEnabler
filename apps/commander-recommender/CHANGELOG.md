@@ -7,6 +7,18 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [1.13.3] — 2026-09-25
+
+### Fixed
+
+- **Sign-in errors are readable.** The sign-in dialog printed errors in the dark red used for
+  button fills, about 1.5:1 against the dialog. They now use the lighter red meant for text.
+- **The sign-in button matches the site's other primary buttons.** It rested dim and brightened on
+  hover, the reverse of every other primary button; it now uses the shared `.mtg-btn-primary`.
+- **One modal backdrop across the site.** The three apps each dimmed the page behind a dialog in a
+  different colour (brown, navy and black). They now share one platform colour.
+  This app's own dialogs already used that colour, so they look the same.
+
 ## [1.13.2] — 2026-09-25
 
 ### Changed

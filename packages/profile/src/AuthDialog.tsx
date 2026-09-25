@@ -94,7 +94,11 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
             </p>
           )}
 
-          <button type="submit" className="mtg-auth-dialog-submit" disabled={submitting}>
+          <button
+            type="submit"
+            className="mtg-btn mtg-btn-primary mtg-auth-dialog-submit"
+            disabled={submitting}
+          >
             {submitting ? 'Working…' : mode === 'sign-in' ? 'Sign in' : 'Sign up'}
           </button>
         </form>

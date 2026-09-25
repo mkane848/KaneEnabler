@@ -3,7 +3,7 @@
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(12, 10, 7, 0.72);
+  background: var(--mtg-color-scrim);
   backdrop-filter: blur(2px);
   z-index: 20;
 }
