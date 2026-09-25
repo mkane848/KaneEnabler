@@ -429,3 +429,30 @@
     flex: 1;
   }
 }
+
+/* On parchment. The controls above were written for the dark page, but three
+   parchment surfaces reuse them: the confirm dialog's Cancel, the combo
+   finder's pager and "Hide results", and the deck summary's "Show more".
+   --text-primary *is* the parchment colour, so there they rendered as
+   parchment on parchment: Cancel, Previous and Next had no visible label at
+   all. These swap in the ink the rest of each card already uses
+   (commander-card.css, combos.css). The specificity is deliberate:
+   .mtg-btn-ghost's hover sets its own text colour at (0,3,0). */
+:is(.commander-card, .dialog-card, .deck-theme) .page-button,
+:is(.commander-card, .dialog-card, .deck-theme) .page-button:hover:not(:disabled),
+:is(.commander-card, .dialog-card, .deck-theme) .page-jump-input,
+:is(.commander-card, .dialog-card, .deck-theme) .page-number:hover {
+  color: var(--ink-text);
+}
+
+:is(.commander-card, .dialog-card, .deck-theme) .page-number,
+:is(.commander-card, .dialog-card, .deck-theme) .page-gap,
+:is(.commander-card, .dialog-card, .deck-theme) .page-jump,
+:is(.commander-card, .dialog-card, .deck-theme) .filter-label {
+  color: var(--ink-text-muted);
+}
+
+:is(.commander-card, .dialog-card, .deck-theme) .link-button,
+:is(.commander-card, .dialog-card, .deck-theme) .page-number.is-current {
+  color: var(--brass-ink);
+}

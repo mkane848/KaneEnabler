@@ -20,7 +20,15 @@
   --text-primary: var(--mtg-color-text);
   --text-muted: var(--mtg-color-text-muted);
   --ink-text: var(--mtg-color-text-inverse);
-  --ink-text-muted: var(--mtg-color-text-faint);
+
+  /* Muted and accent ink for text on a parchment surface. No platform
+     equivalent: the platform models the dark page only. --ink-text-muted
+     used to alias --mtg-color-text-faint, which shared this value by
+     coincidence. That token was lightened for the dark page, and the same
+     change would have faded this one on parchment. --brass-ink is the brass
+     that reads on parchment: --brass itself is under 3:1 there. */
+  --ink-text-muted: #6b5f4a;
+  --brass-ink: #7a5615;
 
   /* A dimmer parchment for a large fill that would glare at full strength.
      No platform equivalent — nothing else on the site fills an area this

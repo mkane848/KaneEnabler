@@ -43,12 +43,16 @@
   margin-left: auto;
 }
 
-/* Migrated onto .mtg-btn .mtg-btn-ghost .mtg-btn-sm — this rule now holds
-   only its genuine deltas from that shared control (see
-   docs/control-primitives-migration.md). */
+/* Migrated onto .mtg-btn .mtg-btn-ghost — this rule now holds only its
+   genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). Not .mtg-btn-sm: that pads in em,
+   so at this font size it came out about 20% tighter than this control's
+   rem padding. */
 .export-button {
   border-radius: 7px;
+  font-size: 0.78rem;
   font-weight: 500;
+  padding: 0.35rem 0.7rem;
   color: var(--text-primary);
 }
 

@@ -98,15 +98,17 @@
 /* Migrated onto .mtg-btn .mtg-btn-primary (after packages/ui/src/theme.css's
    §3a hover-direction fix — see docs/control-primitives-migration.md) —
    this rule now holds only its genuine deltas from that shared control.
-   Adopts --mtg-color-accent-ink over the local --ink-text token
-   (tokens.css); the two are imperceptibly close on brass. Its own
-   :disabled opacity (0.6) is kept — it's more transparent than .mtg-btn's
-   shared 0.5, deliberately, since this is the form's primary submit. */
+   Takes .mtg-btn-primary's --mtg-color-accent-ink rather than the local
+   --ink-text it used to set; the two are imperceptibly close on brass.
+   border: none because it never had one, and .mtg-btn's 1px transparent
+   border would make it 2px larger each way. Its own :disabled opacity
+   (0.6) is kept: it stays a little more visible than .mtg-btn's shared
+   0.5 while a request is in flight. */
 .primary-button {
   margin-left: auto;
   font-size: 0.95rem;
   padding: 0.7rem 1.4rem;
-  color: var(--mtg-color-accent-ink);
+  border: none;
 }
 
 .primary-button:active:not(:disabled) {

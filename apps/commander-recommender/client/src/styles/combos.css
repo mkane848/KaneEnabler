@@ -7,21 +7,32 @@
 
 /* Migrated onto .mtg-btn .mtg-btn-primary .mtg-btn-sm — this rule now
    holds only its genuine deltas from that shared control (see
-   docs/control-primitives-migration.md). .combo-button-placeholder below
-   does not migrate (dashed border on a parchment card has no platform
-   analogue) and relies on following this rule in source order to win the
-   cascade when both classes are applied together. */
+   docs/control-primitives-migration.md). border: none because it never had
+   one, and .mtg-btn's 1px transparent border would make it 2px larger each
+   way. */
 .combo-button {
   align-self: flex-start;
   border-radius: 7px;
   padding: 0.45rem 0.9rem;
+  border: none;
 }
 
+/* Doesn't migrate: a dashed border on a parchment card has no platform
+   analogue. It carries the .mtg-btn-primary classes only so it sizes like
+   the button beside it, and overrides that variant's fill, ink and border
+   here, which wins because theme.css loads first. */
 .combo-button-placeholder {
   background: transparent;
   color: var(--ink-text-muted);
   border: 1px dashed var(--parchment-dim);
   cursor: not-allowed;
+}
+
+/* The dashed outline and muted ink already say "unavailable". .mtg-btn's
+   disabled fade on top of that took the label to about 2:1 against the
+   card. */
+.combo-button-placeholder:disabled {
+  opacity: 1;
 }
 
 .combo-button-placeholder:hover {
@@ -78,13 +89,13 @@
 }
 
 .combo-arrow {
-  color: var(--brass);
+  color: var(--brass-ink);
   font-weight: 700;
 }
 
 .combo-produces-list {
   font-weight: 600;
-  color: #7a5615;
+  color: var(--brass-ink);
   background: rgba(184, 132, 42, 0.14);
   border-radius: 999px;
   padding: 0.12rem 0.55rem;
@@ -108,11 +119,11 @@
 .combo-steps-details summary {
   cursor: pointer;
   font-weight: 600;
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 .combo-steps-details summary::marker {
-  color: var(--brass);
+  color: var(--brass-ink);
 }
 
 .combo-steps {
@@ -126,7 +137,7 @@
 .combo-link,
 .combo-credit a {
   font-size: 0.72rem;
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 .combo-credit {

@@ -58,7 +58,7 @@
 }
 
 .jank-toggle.is-active {
-  color: var(--brass);
+  color: var(--brass-ink);
   border-color: var(--brass);
   background: rgba(184, 132, 42, 0.15);
 }

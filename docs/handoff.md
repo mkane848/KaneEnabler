@@ -571,8 +571,10 @@ carries everything a list item renders (names, produces text, description, perma
 
 ## Phase 9 — Signal engine rework
 
-**Not started.** Planned in detail in [`signals-rework.md`](./signals-rework.md), with the vocabulary
-it implements in [`archetypes.md`](./archetypes.md).
+**Shipped** — every phase, through Phase D (`a0a12cb`, 2026-08-23; released as
+commander-recommender 1.9.0). Planned and logged in [`signals-rework.md`](./signals-rework.md), with
+the vocabulary it implements in [`archetypes.md`](./archetypes.md). The paragraphs below are the
+original motivation, kept as the record.
 
 Twenty of the owner's real Commander decks were traced by hand against `signals.ts` and committed as
 a corpus (`apps/commander-recommender/server/src/services/__fixtures__/decks/`). The traces found

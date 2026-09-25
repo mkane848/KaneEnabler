@@ -40,10 +40,14 @@ and can't reach, measured rather than assumed:
 **Gotcha for future sessions:** outbound traffic goes through an HTTPS CONNECT proxy
 (`$HTTPS_PROXY`). `curl` and Node pick it up from the environment, but a browser launched by
 Playwright does **not** — pass `proxy: { server: process.env.HTTPS_PROXY, bypass: 'localhost,127.0.0.1' }`
-and `args: ['--ignore-certificate-errors']` (the proxy MITMs TLS). Without the bypass, requests to
-a local dev server get swallowed by the proxy and the page renders as a proxy error. This is why
-earlier sessions concluded the sandbox "can't reach Supabase" — it can; the browser just wasn't
-using the proxy.
+and `args: ['--ignore-certificate-errors']` (the proxy MITMs TLS), **and** run the script with
+`PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1` in the environment. That variable is the
+part that's easy to miss: Playwright appends `<-loopback>` to Chromium's bypass list, which sends
+`localhost` _through_ the proxy whatever `bypass` says (re-verified 2026-09-25 on Playwright
+1.56.1). Without both, requests to a local dev server get swallowed by the proxy and the page
+renders as "agent-proxy relay: this proxy only accepts HTTPS CONNECT tunnels". This is why earlier
+sessions concluded the sandbox "can't reach Supabase" — it can; the browser just wasn't using the
+proxy.
 
 ## Verification only a real browser/human can do
 
