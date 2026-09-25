@@ -413,10 +413,11 @@
 
 /* A thin match is shown, but not in the colour a real one earns — the same
    reasoning as .slot-hint in deck-summary.css, where lower confidence is
-   said in the styling rather than only in the words. */
+   said in the styling rather than only in the words. Grey, but the card's
+   own muted ink: the dark page's --text-muted was under 2:1 here. */
 .badge-match.is-thin {
   background: rgba(90, 90, 90, 0.15);
-  color: var(--text-muted);
+  color: var(--ink-text-muted);
 }
 
 .badge-match.is-thin:hover,

@@ -99,12 +99,15 @@
 }
 
 /* Only rendered for a genuine two-sided card, so it never sits inert next to
-   a single-faced one. */
-/* Migrated onto .mtg-btn .mtg-btn-ghost .mtg-btn-sm — this rule now holds
-   only its genuine deltas from that shared control (see
-   docs/control-primitives-migration.md). */
+   a single-faced one. Migrated onto .mtg-btn .mtg-btn-ghost — this rule now
+   holds only its genuine deltas from that shared control (see
+   docs/control-primitives-migration.md). Regular weight, not .mtg-btn's
+   600: it's a quiet caption-sized control over the artwork, and never set a
+   weight before migrating. */
 .card-image-flip {
   border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 400;
   padding: 0.25rem 0.55rem;
   color: var(--text-primary);
 }
@@ -305,11 +308,13 @@
   max-width: 26rem;
 }
 
+/* --ink-text-muted, not --text-muted: the latter is the dark page's muted
+   grey, about 2.3:1 on this parchment card. */
 .confirm-description {
   font-family: var(--font-body);
   font-size: 0.9rem;
   line-height: 1.55;
-  color: var(--text-muted);
+  color: var(--ink-text-muted);
   margin: 0.75rem 0 1.4rem;
 }
 
@@ -322,8 +327,10 @@
 /* Migrated onto .mtg-btn .mtg-btn-danger-solid (packages/ui/src/theme.css)
    — this rule now holds only its genuine deltas from that shared control
    (see docs/control-primitives-migration.md). Its own :focus-visible is
-   dropped: it duplicated theme.css's, differing only in using --brass,
-   which resolves to the same color as --mtg-color-accent-hover. */
+   dropped in favour of theme.css's, which is a shade brighter (--brass is
+   --mtg-color-accent; the platform ring uses --mtg-color-accent-hover).
+   Deliberately: this button's focus ring now matches every other control's
+   instead of being the one exception. */
 .danger-button {
   font-weight: 500;
   font-size: 0.85rem;

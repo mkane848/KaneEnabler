@@ -230,10 +230,13 @@ textarea {
   border: 1px solid transparent;
   background: none;
   cursor: pointer;
+  /* filter is here for .mtg-btn-danger-solid, whose hover brightens rather
+     than swapping a colour — without it that one hover snaps. */
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
     color 120ms ease,
+    filter 120ms ease,
     transform 80ms ease;
 }
 

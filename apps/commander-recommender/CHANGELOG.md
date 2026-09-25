@@ -7,7 +7,24 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
-## [1.11.2] — 2026-09-04
+## [1.13.2] — 2026-09-25
+
+### Fixed
+
+- **The confirm dialog's "Cancel" and the combo finder's "Previous"/"Next" had no visible label.**
+  Those buttons were written for the dark page, and on a parchment card their text was the card's
+  own colour. So a user clearing their list saw "Clear list" beside an empty box. They now use the
+  parchment ink the rest of each card uses, and so do the labels beside them that sat around 2:1
+  and were hard to read: "Show more"/"Hide results", the combo pager's page numbers and "Show"
+  label, the confirm dialog's description, and thin-match score badges. Predates 1.13.1; found by
+  an automated contrast check over the running app.
+- **Restored five controls that 1.13.1 changed by accident.** The export buttons had shrunk, the
+  card-image "Flip" had turned bold, "Suggest Commanders" and "Find combos" had grown 2px, and the
+  "EDHRec" coming-soon placeholder had faded to about 2:1. Each is back to how it looked before the
+  migration, checked by a pixel diff of every control in every state, at desktop and 520px widths.
+  The confirm dialog's "Clear list" also fades on hover again rather than snapping.
+
+## [1.13.1] — 2026-09-04
 
 ### Changed
 
@@ -18,10 +35,11 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   the "Suggest Commanders"/"Try again" primary buttons, the combo-finder buttons, and the confirm
   dialog's "Clear list". Each local class survives only as a modifier holding its genuine deltas
   from the shared control (padding, radius, font-size), documented in
-  `docs/control-primitives-migration.md`. Visually neutral — see that document's §6 for the
-  screenshot verification this went through, and its §4 table for the handful of deliberately
-  accepted micro-differences (disabled buttons a touch more transparent; two colors close enough on
-  brass to be imperceptible). The remaining bespoke controls (parchment-surface controls, icon-only
+  `docs/control-primitives-migration.md`. Intended to be visually neutral, apart from its §4
+  table's deliberately accepted micro-differences (disabled buttons a touch more transparent; two
+  colors close enough on brass to be imperceptible). It wasn't quite: five controls drifted, fixed
+  in 1.13.2. Released as "1.11.2" at the time, a version number that doesn't follow 1.13.0; this
+  entry has been renumbered. The remaining bespoke controls (parchment-surface controls, icon-only
   toggles, text-as-link controls, and a few controls with a bespoke state model) now carry a
   one-line comment explaining why each stays local rather than migrating.
 - Removed two dead classes found during that sweep: `badge-match-strength` (no stylesheet rule,
