@@ -9,6 +9,14 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ## [1.13.2] — 2026-09-25
 
+### Changed
+
+- **Small brass headings and labels on parchment are darker, so they can be read.** "Themes you're
+  already building", "Combos", a pair's commander names, the Themes/Keywords labels, dialog field
+  labels and the combo arrows were the page's bright brass at about 2.8:1 on the light cards. They
+  now use the darker brass the cards already used for accent text (about 5.6:1), which is now a
+  named token (`--brass-ink`) instead of eleven copies of the same hex value.
+
 ### Fixed
 
 - **The confirm dialog's "Cancel" and the combo finder's "Previous"/"Next" had no visible label.**

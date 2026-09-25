@@ -193,7 +193,7 @@
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--brass);
+  color: var(--brass-ink);
   min-width: 8.5rem;
 }
 
@@ -212,7 +212,7 @@
 
 .dialog-link {
   font-size: 0.8rem;
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 /* 44px is the minimum comfortable touch target, and it matters most here:
@@ -272,7 +272,7 @@
 }
 
 .about-credits a {
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 .about-caveat {
@@ -285,7 +285,7 @@
 }
 
 .about-caveat a {
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 /* On the image dialog the close button overlays the card art rather than a

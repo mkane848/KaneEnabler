@@ -232,9 +232,22 @@ visible label at all, and several labels beside them sat at 1.9–2.4:1. This pr
 theme. The tokens have always been equal. They now take the parchment ink the rest of each card
 uses, via a surface-scoped block at the end of `filters.css`.
 
-What remains below 3:1 is brass (`--brass`, ~2.8:1) used for small headings and labels on
-parchment (`.explain-heading`, `.commander-face-label`, dialog `dt`s). That looks deliberate, so it
-is left as a design call for the repo owner rather than changed here.
+Two further findings were design calls, so they went to the repo owner, who approved both:
+
+- **Brass on parchment.** Small headings and labels (`.explain-heading`, `.commander-face-label`,
+  dialog `dt`s) used `--brass` at ~2.8:1. They now use `--brass-ink` (`#7a5615`, ~5.6:1), the dark
+  brass the cards already used for accent text. It is now a token in `tokens.css` rather than eleven
+  hex literals.
+- **The platform's faint ink.** `--mtg-color-text-faint` (`#6b5f4a`) sat under 3:1 on the dark
+  page, where time-counters uses it for empty-state copy and hints. It is now `#8a7d65` (4.5:1 on
+  `--mtg-color-bg`). The recommender's `--ink-text-muted` used to alias it only because the two
+  happened to share a value. It keeps `#6b5f4a` as its own literal, since that value is right for
+  parchment.
+
+What the sweep still reports between 3:1 and 4.5:1 is deliberate styling rather than a wrong token.
+In the recommender that is the red "Missing:" line, the green "In your list" badge and the
+`opacity`-faded build date. The Doctor Who skin's own faint shade (`#4f7793`) sits at ~3.8:1. It is
+the skin's palette, not the platform's, so it was left alone.
 
 **Method, for the next migration.** `tsc` and Vitest can't see any of this. What caught it:
 

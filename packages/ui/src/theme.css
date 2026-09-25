@@ -48,7 +48,11 @@
   /* --- Ink ------------------------------------------------------------ */
   --mtg-color-text: #f4ecd8;
   --mtg-color-text-muted: #a89a80;
-  --mtg-color-text-faint: #6b5f4a;
+  /* The quietest ink that still reads: 4.5:1 on --mtg-color-bg (4.15:1 on
+     --mtg-color-surface). It was #6b5f4a, under 3:1, and time-counters sets
+     empty-state copy and hints in it. Going lighter would leave it hard to
+     tell apart from -muted above. */
+  --mtg-color-text-faint: #8a7d65;
   /* Ink for text placed *on* a parchment-colored fill rather than on the
      dark page — the inverse pairing. */
   --mtg-color-text-inverse: #241f16;

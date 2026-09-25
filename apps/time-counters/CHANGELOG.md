@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.1] - 2026-09-25
+
+### Fixed
+
+- **Faint text is readable again in the default theme.** The empty-state line, the add-card
+  panel's suggestions and hints, and the other quiet labels use the platform's faintest ink, which
+  sat at about 2.6–2.9:1 on the dark page, below where it was before this app adopted the shared
+  palette. The platform shade is lighter now (4.5:1 on the page background), fixed once in
+  `@mtg/ui`'s `theme.css` for the whole site. The Doctor Who skin sets its own faint shade and is
+  unchanged.
+
 ## [1.7.0] - 2026-09-04
 
 ### Changed

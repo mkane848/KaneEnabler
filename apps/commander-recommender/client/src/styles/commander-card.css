@@ -150,7 +150,7 @@
 }
 
 .pair-plus {
-  color: var(--brass);
+  color: var(--brass-ink);
   font-weight: 400;
 }
 
@@ -162,7 +162,7 @@
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--brass);
+  color: var(--brass-ink);
   margin: 0;
 }
 
@@ -345,7 +345,7 @@
   margin-top: 0.35rem;
   font-size: 0.72rem;
   font-weight: 600;
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 .badge-row {
@@ -373,7 +373,7 @@
 
 .badge-bracket {
   background: rgba(184, 132, 42, 0.18);
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 .badge-gc {
@@ -520,7 +520,7 @@
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--brass);
+  color: var(--brass-ink);
   margin-right: 0.35rem;
 }
 
@@ -550,7 +550,7 @@
   font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: 600;
-  color: #7a5615;
+  color: var(--brass-ink);
   background: rgba(184, 132, 42, 0.12);
   border: 1px solid rgba(184, 132, 42, 0.35);
   border-radius: 8px;
@@ -587,7 +587,7 @@
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--brass);
+  color: var(--brass-ink);
   margin: 0;
 }
 
@@ -736,7 +736,7 @@ summary.explain-group-title::after {
 .support-name:hover,
 .support-name:focus-visible {
   text-decoration: underline;
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 /* Portalled to <body> by Radix HoverCard, so it escapes .support-cards'

@@ -454,5 +454,5 @@
 
 :is(.commander-card, .dialog-card, .deck-theme) .link-button,
 :is(.commander-card, .dialog-card, .deck-theme) .page-number.is-current {
-  color: #7a5615;
+  color: var(--brass-ink);
 }

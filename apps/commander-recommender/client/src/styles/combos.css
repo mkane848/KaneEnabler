@@ -89,13 +89,13 @@
 }
 
 .combo-arrow {
-  color: var(--brass);
+  color: var(--brass-ink);
   font-weight: 700;
 }
 
 .combo-produces-list {
   font-weight: 600;
-  color: #7a5615;
+  color: var(--brass-ink);
   background: rgba(184, 132, 42, 0.14);
   border-radius: 999px;
   padding: 0.12rem 0.55rem;
@@ -119,11 +119,11 @@
 .combo-steps-details summary {
   cursor: pointer;
   font-weight: 600;
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 .combo-steps-details summary::marker {
-  color: var(--brass);
+  color: var(--brass-ink);
 }
 
 .combo-steps {
@@ -137,7 +137,7 @@
 .combo-link,
 .combo-credit a {
   font-size: 0.72rem;
-  color: #7a5615;
+  color: var(--brass-ink);
 }
 
 .combo-credit {
