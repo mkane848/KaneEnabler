@@ -208,9 +208,10 @@ localStorage key), so New Game doesn't reset it:
   the community-standard [mana-font](https://github.com/andrewgioia/mana)
   project for its MTG identity.
 
-  Turning it on reskins the whole page, including the shared navigation bar
-  and account menu — it overrides the platform's own `--mtg-*` tokens, not
-  just this app's local ones.
+  Turning it on reskins the whole page, including the shared navigation bar,
+  account menu, sign-in dialog and modal backdrops. It does that by
+  overriding the platform's own `--mtg-*` tokens and nothing else: this app's
+  local `--color-*` names are aliases of those, so they follow.
 
 There used to be a third option, **Claude**, holding the app's original
 "exile zone at night" styling; the platform theme is its descendant, and a

@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgb(0 0 0 / 60%);
+  background: var(--mtg-color-scrim);
 }
 
 .mtg-auth-dialog-content {
@@ -12,7 +12,7 @@
   z-index: 41;
   width: min(24rem, calc(100vw - 2rem));
   padding: 1.5rem;
-  background: var(--mtg-color-surface, #1c1b2c);
+  background: var(--mtg-color-surface, transparent);
   border: 1px solid var(--mtg-color-border, transparent);
   border-radius: 0.75rem;
   color: var(--mtg-color-text, inherit);
@@ -49,28 +49,16 @@
 
 .mtg-auth-dialog-error {
   margin: 0.25rem 0 0;
-  color: var(--mtg-color-danger, inherit);
+  /* -strong: --mtg-color-danger is a button fill, about 1.5:1 as text on
+     this surface. */
+  color: var(--mtg-color-danger-strong, inherit);
   font-size: 0.85rem;
 }
 
+/* The rest is .mtg-btn .mtg-btn-primary, the same primary button as the
+   rest of the site. It used to be its own rule, which hovered the other way. */
 .mtg-auth-dialog-submit {
   margin-top: 1rem;
-  padding: 0.6rem;
-  border: none;
-  border-radius: 0.4rem;
-  background: var(--mtg-color-accent, #8b7fe8);
-  color: var(--mtg-color-bg, #14131f);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.mtg-auth-dialog-submit:hover {
-  background: var(--mtg-color-accent-hover, var(--mtg-color-accent, #8b7fe8));
-}
-
-.mtg-auth-dialog-submit:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 
 .mtg-auth-dialog-switch {
