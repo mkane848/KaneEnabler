@@ -3,6 +3,10 @@
 The companion to [`archetypes.md`](./archetypes.md). That document says what the vocabulary **means**
 and why; this one says what to **change**, in what order, and how to know it worked.
 
+**Status:** shipped — every phase, through Phase D (`a0a12cb`, released as commander-recommender
+1.9.0). What follows is the running log in the order the phases landed, so read it as history, not
+as a to-do list.
+
 **Phases A, A2, and B have landed** (see their sections below and the `[Unreleased]` entries in
 `apps/commander-recommender/CHANGELOG.md`). Phase B shipped: the `Role` addition (`enables`/
 `protects`); the `cardType`/`permanentSubtype`/`counterType` `QualifierKind` additions (the last

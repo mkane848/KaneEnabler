@@ -1,7 +1,9 @@
 # Recommender controls onto the shared `.mtg-btn` / `.mtg-input` primitives
 
-**Status:** shipped. This is an execution brief — a fresh session should be able to work from it
-without re-deriving the analysis.
+**Status:** shipped in two passes: the migration itself (PR #81), then the fixes from a
+screenshot-diff audit of it (§8). Kept here as the design record. Five rows of the §4 table were
+wrong in this brief as first written. They are corrected in place and marked _(corrected)_, with
+§8 saying what each one got wrong.
 **Scope:** `packages/ui/src/theme.css` (two additions), `apps/commander-recommender/client` (eight
 controls + comments), plus a screenshot-verified appearance change to `apps/time-counters`.
 
@@ -109,16 +111,16 @@ Each control becomes `.mtg-btn` + variant in the markup. The local class survive
 modifier holding its genuine deltas, with a comment naming them. Ordered lowest-risk first; verify
 after each. Paths are relative to `apps/commander-recommender/client/src/`.
 
-| #   | Class (defined at)                            | Becomes                                      | Deltas to keep                                                                                                                                                                                                                              |
-| --- | --------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `.export-button` — `styles/results.css:46`    | `.mtg-btn .mtg-btn-ghost .mtg-btn-sm`        | `border-radius: 7px`, `font-weight: 500`, `color: var(--text-primary)`; the `@media ≤520px` `flex: 1` + padding at `results.css:142`                                                                                                        |
-| 2   | `.app-nav-link` — `styles/layout.css:8`       | `.mtg-btn .mtg-btn-ghost`                    | `font-weight: 500`, `font-size: .85rem`, `padding: .4rem .9rem`, `color: var(--text-primary)`. Already on `--mtg-radius-sm`; sits in `NavBar`'s `extraSlot`, so it neighbours platform chrome — good first read                             |
-| 3   | `.card-image-flip` — `styles/dialogs.css:103` | `.mtg-btn .mtg-btn-ghost .mtg-btn-sm`        | `border-radius: 6px`, tighter `padding: .25rem .55rem`, `color: var(--text-primary)`                                                                                                                                                        |
-| 4   | `.page-button` — `styles/filters.css:312`     | `.mtg-btn .mtg-btn-ghost`                    | `font-weight: 500`, `font-size: .85rem`, `padding: .5rem .95rem`, `color: var(--text-primary)`. **`:disabled` goes .4 → .5 opacity** — accept and note, or keep the override                                                                |
-| 5   | `.file-button` — `styles/upload.css:76`       | `.mtg-btn .mtg-btn-ghost`                    | `font-weight: 500`, `font-size: .9rem`, `padding: .6rem 1rem`, `color: var(--text-primary)`. **On a `<label>`, not a `<button>`** (`CardListUpload.tsx:110`) — `.mtg-btn`'s `display: inline-flex` newly applies; check the file-picker row |
-| 6   | `.primary-button` — `styles/upload.css:98`    | `.mtg-btn .mtg-btn-primary` (after §3a)      | `margin-left: auto`, `font-size: .95rem`, `padding: .7rem 1.4rem`, `:active translateY(1px)`, `:disabled` .6. Adopt `--mtg-color-accent-ink` over local `--ink-text` — imperceptible on brass, but the screenshot diff will prove it        |
-| 7   | `.combo-button` — `styles/combos.css:8`       | `.mtg-btn .mtg-btn-primary .mtg-btn-sm`      | `align-self: flex-start`, `border-radius: 7px`, `padding: .45rem .9rem`. **`.combo-button-placeholder` does not migrate** — dashed `--parchment-dim` border on a parchment card, `cursor: not-allowed`, no platform analogue                |
-| 8   | `.danger-button` — `styles/dialogs.css:327`   | `.mtg-btn .mtg-btn-danger-solid` (after §3b) | `font-weight: 500`, `font-size: .85rem`, `padding: .5rem .95rem`. **Drop its own `:focus-visible`** (`dialogs.css:344`) — it duplicates `theme.css`'s except for using `--brass`, which resolves to the same colour                         |
+| #   | Class (defined at)                            | Becomes                                      | Deltas to keep                                                                                                                                                                                                                                                                                                                          |
+| --- | --------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `.export-button` — `styles/results.css:46`    | `.mtg-btn .mtg-btn-ghost`                    | _(corrected)_ `border-radius: 7px`, `font-weight: 500`, `color: var(--text-primary)`, **and `font-size: .78rem` + `padding: .35rem .7rem`** — not `.mtg-btn-sm`, which pads in `em` and came out ~20% tighter; the `@media ≤520px` `flex: 1` + padding at `results.css:142`                                                             |
+| 2   | `.app-nav-link` — `styles/layout.css:8`       | `.mtg-btn .mtg-btn-ghost`                    | `font-weight: 500`, `font-size: .85rem`, `padding: .4rem .9rem`, `color: var(--text-primary)`. Already on `--mtg-radius-sm`; sits in `NavBar`'s `extraSlot`, so it neighbours platform chrome — good first read                                                                                                                         |
+| 3   | `.card-image-flip` — `styles/dialogs.css:103` | `.mtg-btn .mtg-btn-ghost`                    | _(corrected)_ `border-radius: 6px`, tighter `padding: .25rem .55rem`, `color: var(--text-primary)`, **`font-size: .78rem`, `font-weight: 400`** — it never set a weight, so `.mtg-btn`'s 600 made it bold. Accepts ~1.5px extra width: the flex `gap` replaces the typed space after its icon                                           |
+| 4   | `.page-button` — `styles/filters.css:312`     | `.mtg-btn .mtg-btn-ghost`                    | `font-weight: 500`, `font-size: .85rem`, `padding: .5rem .95rem`, `color: var(--text-primary)`. **`:disabled` goes .4 → .5 opacity** — accept and note, or keep the override                                                                                                                                                            |
+| 5   | `.file-button` — `styles/upload.css:76`       | `.mtg-btn .mtg-btn-ghost`                    | `font-weight: 500`, `font-size: .9rem`, `padding: .6rem 1rem`, `color: var(--text-primary)`. **On a `<label>`, not a `<button>`** (`CardListUpload.tsx:110`) — `.mtg-btn`'s `display: inline-flex` newly applies; check the file-picker row                                                                                             |
+| 6   | `.primary-button` — `styles/upload.css:98`    | `.mtg-btn .mtg-btn-primary` (after §3a)      | _(corrected)_ `border: none` (it had none; `.mtg-btn`'s 1px transparent border adds 2px each way), `margin-left: auto`, `font-size: .95rem`, `padding: .7rem 1.4rem`, `:active translateY(1px)`, `:disabled` .6. Adopt `--mtg-color-accent-ink` over local `--ink-text` — imperceptible on brass, but the screenshot diff will prove it |
+| 7   | `.combo-button` — `styles/combos.css:8`       | `.mtg-btn .mtg-btn-primary .mtg-btn-sm`      | _(corrected)_ `border: none` (as #6), `align-self: flex-start`, `border-radius: 7px`, `padding: .45rem .9rem`. **`.combo-button-placeholder` does not migrate** — dashed `--parchment-dim` border on a parchment card, `cursor: not-allowed`, no platform analogue                                                                      |
+| 8   | `.danger-button` — `styles/dialogs.css:327`   | `.mtg-btn .mtg-btn-danger-solid` (after §3b) | `font-weight: 500`, `font-size: .85rem`, `padding: .5rem .95rem`. **Drop its own `:focus-visible`** (`dialogs.css:344`). _(corrected)_ It does **not** resolve to the same colour — `--brass` is `--mtg-color-accent`, the platform ring is `-hover` — so the ring gets a shade brighter, accepted so it matches every other control    |
 
 **Call sites:** `CardListUpload.tsx:110`,`135`,`140`; `ErrorFallback.tsx:25`; `Pagination.tsx:78`,`110`;
 `ConfirmDialog.tsx:39`,`44`; `RecommendationResults.tsx:63`,`68`; `ComboFinder.tsx:146`,`173`;
@@ -174,7 +176,8 @@ prepare-data`) so `/api/recommend` returns real results.
    the static build has no `/api` proxy, only Vite's dev server does.
 4. Drive it with Playwright, passing the proxy explicitly:
    `proxy: { server: process.env.HTTPS_PROXY, bypass: 'localhost,127.0.0.1' }` and
-   `args: ['--ignore-certificate-errors']`. Without that the page renders as a proxy error — see
+   `args: ['--ignore-certificate-errors']`, with `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1`
+   set (the bypass alone is not enough). Without that the page renders as a proxy error — see
    [`../TODO.md`](../TODO.md)'s gotcha note, and don't misread it as an egress block.
 5. Screenshot every state containing a migrated control, at desktop **and** the 640/520px
    breakpoints (several of the eight carry `@media ≤520px` overrides):
@@ -201,3 +204,47 @@ prepare-data`) so `/api/recommend` returns real results.
 - Bump `apps/commander-recommender/package.json` and `apps/time-counters/package.json` with
   `CHANGELOG.md` entries. time-counters' change is user-visible (primary buttons brighter at rest),
   so minor there; the recommender's is a patch if the diff is visually neutral.
+
+## 8. Post-ship verification (what the first pass missed)
+
+PR #81 checked the migration by eye on five screens. A pixel diff of every migrated control
+against the pre-migration build, at 1280px and 520px, in rest, hover, focus and disabled states,
+found that five of the eight still rendered differently, all silently:
+
+| Control                     | Drift                                           | Cause                                                           |
+| --------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| `.export-button`            | ~3px narrower, ~2px shorter                     | `.mtg-btn-sm` pads in `em`; the local `rem` padding was dropped |
+| `.card-image-flip`          | Bold                                            | Relied on the UA's weight 400; `.mtg-btn` sets 600              |
+| `.primary-button`           | 2px larger each way                             | Had `border: none`; `.mtg-btn` adds `1px solid transparent`     |
+| `.combo-button`             | 2px larger each way                             | Same                                                            |
+| `.combo-button-placeholder` | Faded to 50%, taking its label to ~2:1 contrast | It is `disabled`, so `.mtg-btn:disabled` now applied            |
+
+Plus two platform-level findings. `.danger-button`'s hover stopped fading: `.mtg-btn-danger-solid`
+brightens with `filter`, which `.mtg-btn`'s `transition` didn't list. And row 8's "same colour"
+premise was false. All five drifts are restored, `filter` is in the platform transition, and the
+§4 rows above are corrected.
+
+**The same audit found a worse, older bug.** The brief's §2a finding, that dark-page controls
+don't belong on parchment, missed that two of them are _already used there_. `.page-button` is the
+confirm dialog's Cancel and the combo finder's Previous/Next. `.link-button` is "Show more" and
+"Hide results". `--text-primary` _is_ the parchment colour, so Cancel, Previous and Next had no
+visible label at all, and several labels beside them sat at 1.9–2.4:1. This predates the platform
+theme. The tokens have always been equal. They now take the parchment ink the rest of each card
+uses, via a surface-scoped block at the end of `filters.css`.
+
+What remains below 3:1 is brass (`--brass`, ~2.8:1) used for small headings and labels on
+parchment (`.explain-heading`, `.commander-face-label`, dialog `dt`s). That looks deliberate, so it
+is left as a design call for the repo owner rather than changed here.
+
+**Method, for the next migration.** `tsc` and Vitest can't see any of this. What caught it:
+
+1. A second worktree at the pre-change commit (`git worktree add <dir> <sha>`), its own Vite dev
+   server on another port, and one shared API server.
+2. Playwright capturing each control's element screenshot _and_ its computed style in every state,
+   in both builds. A computed-style diff names the cause directly; the pixel diff only says
+   something moved.
+3. A contrast sweep: for every visible text node, compute its colour against the composited
+   background behind it, and flag anything under 3:1. It found the invisible labels in one pass,
+   where eyeballing screenshots had not.
+4. Stub any response that would otherwise call an external API (`/api/combos` here) with
+   `page.route`, rather than generating real traffic for a visual check.

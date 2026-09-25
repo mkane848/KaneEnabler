@@ -272,9 +272,8 @@ only difference from the rest of the site_. What it found, and did:
   `.btn` rules written inside time-counters CSS Modules were scoped-and-hashed, so they had never
   matched the global `btn` class in the markup and had silently never applied.
 
-Not attempted: converting the recommender's bespoke control CSS onto the shared `.mtg-btn`/
-`.mtg-input` primitives. Its buttons now read from shared tokens and so match in colour and radius,
-but they are still its own rules. **Scoped and approved since, as
+Not attempted in this pass: converting the recommender's bespoke control CSS onto the shared
+`.mtg-btn`/`.mtg-input` primitives. **Shipped since (PR #81 plus a follow-up), per
 [`control-primitives-migration.md`](./control-primitives-migration.md)** — and the survey behind it
 shrank the job considerably: this section originally called it "~2,300 lines", but only eight
 controls are actually migratable. The recommender is a two-palette app, and the platform models only
@@ -364,7 +363,10 @@ Credit where due - these are load-bearing and correct:
    controls migrate, not thirty. The survey also found two defects in the platform theme itself:
    `.mtg-btn-primary` carries time-counters' hover direction rather than the recommender's, whose
    look was the one adopted; and there is no solid-fill danger variant for the one the recommender
-   actually ships.
+   actually ships. **Shipped** in PR #81. A follow-up pixel-diff and contrast audit then fixed
+   five controls #81 had drifted, and found that the recommender's confirm-dialog "Cancel" and
+   combo pager had rendered with invisible labels since before the platform theme — see that
+   document's §8.
 
 ---
 
