@@ -76,6 +76,10 @@ the final target") — the helper honours it, the callers don't.
 
 ### 3. Bad Wolf under-counts suspended cards `[FIXED]`
 
+> **Contradicts entry #4 below** — #3 treats a suspended card as qualifying at any count, #4 says a
+> suspended card at 0 is no longer suspended. The code implements both. Open question D2 in
+> [`state-machine-audit.md`](./state-machine-audit.md) (B2/B7); one of these two entries must be corrected.
+
 **`DrWhoCompanionEDH`** — `src/hooks/useGameState.ts:437`
 
 Rose Tyler's trigger counts _"each suspended card you own and each **other** permanent you control
