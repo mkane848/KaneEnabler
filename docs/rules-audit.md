@@ -71,7 +71,7 @@ chapters I and II are silently lost.
 
 The doc comment at `counters.ts:126-128` claims the logic "stays correct if a manual edit or Time
 Travel jumps the count by more than one." That is true of the _function_ and false of its _call
-sites_. `CLAUDE.md:85-89` names this exact bug class ("always trigger per-chapter, never just check
+sites_. `apps/time-counters/AGENTS.md` names this exact bug class ("always trigger per-chapter, never just check
 the final target") — the helper honours it, the callers don't.
 
 ### 3. Bad Wolf under-counts suspended cards `[FIXED]`
@@ -200,7 +200,7 @@ payoff for that type, provided the submitted list holds 3+ citable cards of it.
 ### 12. Dead code that is nonetheless tested `[FIXED]`
 
 - `turnStepForMechanic` (`DrWhoCompanionEDH` `counters.ts:113-115`) is exported, documented in
-  `CLAUDE.md`, and unit-tested at `counters.test.ts:72-80` — but **never imported by production
+  `apps/time-counters/AGENTS.md`, and unit-tested at `counters.test.ts:72-80` — but **never imported by production
   code**. `nextTurn` hardcodes the branch twice instead (`useGameState.ts:231`, `:248`). Adding a
   third turn-step mechanic means editing both inline conditions while the tested helper provides
   false confidence.

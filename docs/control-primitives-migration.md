@@ -7,8 +7,8 @@ wrong in this brief as first written. They are corrected in place and marked _(c
 **Scope:** `packages/ui/src/theme.css` (two additions), `apps/commander-recommender/client` (eight
 controls + comments), plus a screenshot-verified appearance change to `apps/time-counters`.
 
-Read [`../CLAUDE.md`](../CLAUDE.md) and
-[`../apps/commander-recommender/CLAUDE.md`](../apps/commander-recommender/CLAUDE.md) first. The
+Read [`../AGENTS.md`](../AGENTS.md) and
+[`../apps/commander-recommender/AGENTS.md`](../apps/commander-recommender/AGENTS.md) first. The
 platform-theme section of the root file is the constraint this whole document sits under.
 
 ---
