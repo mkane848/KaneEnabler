@@ -1,6 +1,7 @@
-# CLAUDE.md
+# apps/time-counters guide
 
-Guidance for Claude Code when working in this repo.
+Guidance for working inside `apps/time-counters/`. Follow the root
+[`AGENTS.md`](../../AGENTS.md) unless this file gives a more specific rule.
 
 ## What this is
 
@@ -15,7 +16,7 @@ Read `README.md` first — it documents the product behavior (Next Turn vs.
 Time Travel, themes, counter mechanics, project layout table) in more
 depth than this file repeats. This file is about how to work in the code,
 not what the code does. This app lives in the `KaneEnabler` monorepo;
-[`../../CLAUDE.md`](../../CLAUDE.md) covers workspace-wide commands and
+[`../../AGENTS.md`](../../AGENTS.md) covers workspace-wide commands and
 conventions this file doesn't repeat.
 
 ## Commands
@@ -118,7 +119,7 @@ from the repo root.
   `storage.ts` default-fills `commanders` for saves from before that field
   existed — extend that migration pattern for any future `GameState` field.
 - This app deploys under `/time-counters` as part of the combined platform static site (root
-  `CLAUDE.md`'s "Combined deploy") — `vite.config.ts`'s `base` sets that at build time, and
+  `AGENTS.md`'s "Combined deploy") — `vite.config.ts`'s `base` sets that at build time, and
   `cardCatalog.ts` reads `${import.meta.env.BASE_URL}cards.json` rather than a hardcoded
   `/cards.json`. Anything new that fetches a public/ asset or builds a link needs the same pattern.
 
@@ -187,6 +188,14 @@ secondary sources — reuse rather than re-deriving:
   _"Whenever Rose Tyler attacks, put a time counter on it for each
   suspended card you own and each other permanent you control with a time
   counter on it."_
+
+## Verification
+
+Before calling work finished (also see Commands):
+
+1. `pnpm run build` (typecheck) and `pnpm test`.
+2. Exercise the UI in a browser — a clean typecheck and passing tests are
+   necessary, not sufficient.
 
 ## Working with the user
 

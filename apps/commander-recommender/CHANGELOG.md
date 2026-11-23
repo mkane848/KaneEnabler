@@ -327,7 +327,7 @@ See `docs/archetypes.md`'s "A produces-only SUPPORTER doesn't back a qualified s
     702.79 — both only ever name "-1/-1" inside their own reminder text)
     and `TIME_COUNTER_KEYWORDS` (`TIME_COUNTER_MECHANICS` plus Time
     Travel, rule 701.56) — consumed rather than re-derived locally, per
-    root CLAUDE.md hard rule 2.
+    root AGENTS.md hard rule 2.
   - `counters.produces` now recognizes -1/-1 (via those keywords) and stun
     counters (rule 122.1d — The Watcher in the Water's own nine), not just
     "+1/+1"; `findCounterKind` also recognizes a curated list of named

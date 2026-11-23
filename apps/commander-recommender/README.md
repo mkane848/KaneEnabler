@@ -68,7 +68,7 @@ in the API response; only its display is switched off (see
 ## Setup
 
 This app lives in the `KaneEnabler` monorepo and is installed/run via pnpm from the
-**repo root** — see [`../../CLAUDE.md`](../../CLAUDE.md) for the full command reference.
+**repo root** — see [`../../AGENTS.md`](../../AGENTS.md) for the full command reference.
 
 ### 1. Install dependencies
 
@@ -370,7 +370,7 @@ See [`DEPLOY.md`](./DEPLOY.md) for a free, one-click Render setup (the repo's
 ## Contributing
 
 This started as a solo hobby project — issues and pull requests are
-welcome. See [`CLAUDE.md`](./CLAUDE.md) for dev setup and conventions, and
+welcome. See [`AGENTS.md`](./AGENTS.md) for dev setup and conventions, and
 [`../../docs/commander-recommender.md`](../../docs/commander-recommender.md)
 for the fuller design rationale and known risk areas if you're picking up
 unfamiliar parts of the codebase. `CHANGELOG.md` tracks notable changes;

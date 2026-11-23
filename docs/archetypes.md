@@ -16,7 +16,7 @@ claim here is checkable against real lists.
 ## How this was built
 
 Twenty of the repo owner's real Commander decks were traced by hand against the matchers in
-`signals.ts`, using oracle text pulled from Scryfall rather than recalled (root CLAUDE.md hard rule 4).
+`signals.ts`, using oracle text pulled from Scryfall rather than recalled (root AGENTS.md hard rule 4).
 For each deck the owner then confirmed the intended game plan, so every rule below is anchored to a
 deck someone actually plays rather than to a hypothetical.
 
@@ -60,7 +60,7 @@ asked to build ahead of that rather than wait on a named deck for every remainin
 **inferring from established Magic patterns and this catalog's own conventions is now an accepted
 way to ship, not just a stopgap.** The corpus-first discipline underneath this document does not
 relax — real oracle text, pulled from the seeded database, is still the only thing any matcher is
-ever written against (root CLAUDE.md hard rule 4 stays absolute), and a new archetype is still
+ever written against (root AGENTS.md hard rule 4 stays absolute), and a new archetype is still
 checked against the full legal card pool for false positives before it ships, the same rigor every
 Vetted entry already got. What changes is only whether a real deck in the corpus is confirmed to
 build around it.
@@ -312,7 +312,7 @@ And `proliferate` touches all of them at once — Morcant's second ability, Thir
 **This is not new rules work.** `packages/rules/src/counters.ts` already defines `CounterMechanic`,
 `TIME_COUNTER_MECHANICS` (suspend and vanishing, cited to **CR 702.62**, correctly excluding fade and
 lore counters) and `turnStepForMechanic`. It was written for `time-counters` and the recommender has
-never imported it. Root CLAUDE.md hard rule 2 says a primitive lives in `@mtg/rules` once and apps
+never imported it. Root AGENTS.md hard rule 2 says a primitive lives in `@mtg/rules` once and apps
 consume it — so the work is to consume and widen it, not to add a regex here.
 
 ---

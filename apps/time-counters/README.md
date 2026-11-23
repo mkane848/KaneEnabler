@@ -99,7 +99,7 @@ time from Scryfall's bulk data, and game state lives in your browser's
 ## Setup
 
 This app lives in the `KaneEnabler` monorepo — `pnpm install` at the repo root installs
-the whole workspace (see [`../../CLAUDE.md`](../../CLAUDE.md)).
+the whole workspace (see [`../../AGENTS.md`](../../AGENTS.md)).
 
 ```bash
 pnpm install

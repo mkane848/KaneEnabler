@@ -1,6 +1,7 @@
-# CLAUDE.md
+# apps/commander-recommender guide
 
-Guidance for Claude Code when working in `apps/commander-recommender/`.
+Guidance for working inside `apps/commander-recommender/`. Follow the root
+[`AGENTS.md`](../../AGENTS.md) unless this file gives a more specific rule.
 
 ## What this is
 
@@ -14,7 +15,7 @@ Read [`../../docs/commander-recommender.md`](../../docs/commander-recommender.md
 this app's own handoff document (moved here during the monorepo consolidation, file map kept
 current) and covers the deeper "why" behind the stack choices, the scoring model, and known risk
 areas in more depth than this file repeats. This file is about how to work in the code, not what
-the code does. The root [`CLAUDE.md`](../../CLAUDE.md) covers workspace-wide commands and
+the code does. The root [`AGENTS.md`](../../AGENTS.md) covers workspace-wide commands and
 conventions this file doesn't repeat.
 
 ## Commands
@@ -57,15 +58,15 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   feeding `synergy.ts`: what a card contributes to a deck's plan (`is`/`produces`/`consumes`/
   `rewards`/`amplifies`) and in what capacity. **Read
   [`../../docs/archetypes.md`](../../docs/archetypes.md) before changing this file** — it is the
-  reviewable catalog of what those roles and archetypes are _meant_ to mean, derived from twenty real
-  decks, and it records which current behaviours are deliberate (so they don't get "fixed") and which
-  are known gaps. `deckAnalysis.ts` + `lifecycle.ts` + `packages.ts`
-  build on it to answer "what is this list trying to do, and what's it missing" independent of any
-  commander — see `docs/commander-recommender.md`'s file map for how those three fit together.
+  reviewable catalog of what those roles and archetypes are _meant_ to mean, derived from twenty
+  real decks, and it records which current behaviours are deliberate (so they don't get "fixed")
+  and which are known gaps. `deckAnalysis.ts` + `lifecycle.ts` + `packages.ts` build on it to
+  answer "what is this list trying to do, and what's it missing" independent of any commander — see
+  `docs/commander-recommender.md`'s file map for how those three fit together.
 - **`server/src/services/partners.ts`** builds every legal `CommanderUnit` (rule 702.124: one card
   or a legal pair) from the eligible pool — a `CommanderUnit` is what `synergy.ts` scores, not a
-  bare `CardRow`. Grouped by ability variant (Partner, Partner—[text], Partner with [Name], Friends
-  forever, Choose a Background, Doctor's companion) rather than a cross-product.
+  bare `CardRow`. Grouped by ability variant (Partner, Partner—[text], Partner with [Name],
+  Friends forever, Choose a Background, Doctor's companion) rather than a cross-product.
 - **`server/src/services/eligibility.ts`** judges commander eligibility on a card's **front face
   only** (CR 712.4) — Scryfall's top-level `type_line` for a DFC is both faces joined, which is why
   this can't just substring-match the whole thing. `split` is the deliberate exception (CR 709.4).
@@ -76,25 +77,25 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   `cardNames.ts`'s rules) so a decklist naming only one face of a DFC still resolves.
   `findCardsByOracleIds` is the reverse direction — apps/home's `/profile` page's only way to turn
   a stored `card_preferences` row (oracle_id only) back into a name/image, via `GET /api/cards`
-  (`routes/cards.ts`). Both routes' `CardRow` → wire-DTO mapping lives in
-  `services/cardDTO.ts` (`toCardDTO`), shared with `routes/recommend.ts` rather than duplicated.
+  (`routes/cards.ts`). Both routes' `CardRow` → wire-DTO mapping lives in `services/cardDTO.ts`
+  (`toCardDTO`), shared with `routes/recommend.ts` rather than duplicated.
 - **`server/scripts/fetch-scryfall.ts`** + **`import-scryfall.ts`** are the only place Scryfall is
   called from this app — see [`../../docs/api-policy.md`](../../docs/api-policy.md), a hard
   project rule, before changing what these call or when. The bulk-snapshot fetch/cache mechanics
   and `User-Agent` are shared with time-counters via `@mtg/scryfall` (`packages/scryfall`); this
-  app's own companion fetches (creature types, re-skinned names) and its `IMPORT_VERSION`/sqlite
-  `meta`-table freshness check (`dataSnapshot.ts`/`importedSnapshot.ts`) stay local — see
-  `docs/handoff.md`'s `@mtg/scryfall` section for why those didn't move.
-- **`server/src/services/spellbook.ts`** — Commander Spellbook adapter. Click-triggered only, 1-hour
-  in-memory cache, no retry on 429. Same hard-rule constraints apply.
+  app's own companion fetches (creature types, re-skinned names) and its
+  `IMPORT_VERSION`/sqlite `meta`-table freshness check (`dataSnapshot.ts`/`importedSnapshot.ts`)
+  stay local — see `docs/handoff.md`'s `@mtg/scryfall` section for why those didn't move.
+- **`server/src/services/spellbook.ts`** — Commander Spellbook adapter. Click-triggered only,
+  1-hour in-memory cache, no retry on 429. Same hard-rule constraints apply.
 - **Cited-card dedup**: the server sends each cited card once (`server/src/services/cardIndex.ts`)
   and cites it by position; `client/src/lib/rehydrate.ts` puts cards back together at the API
   boundary. This is why a 12MB response became 0.25MB (see `CHANGELOG.md` 1.7.1) — don't bypass it
   by threading whole card objects through a new code path.
 - **`client/src/api/`** — `client.ts` (fetch + cold-start retry against Render's free-tier sleep)
   wrapped by `queries.ts` (TanStack Query hooks). The `retry`/`refetchOnWindowFocus`/
-  `refetchOnReconnect: false` defaults in `main.tsx` are load-bearing against Commander
-  Spellbook traffic — don't restore them without re-reading the api-policy doc.
+  `refetchOnReconnect: false` defaults in `main.tsx` are load-bearing against Commander Spellbook
+  traffic — don't restore them without re-reading the api-policy doc.
 - **`client/src/store/`** splits by what the state _is_: `useAppStore` (not persisted — textarea
   contents, submitted list, dismissals) vs. `usePreferencesStore` (persisted to `localStorage` —
   durable UI prefs, currently just `combosPerPage`). Don't merge these; a dismissal surviving a
@@ -107,7 +108,7 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   `validateRecommenderSearch`), not `useState` — shareable and survives a refresh, which neither
   Zustand store's split above was designed for. Its `basepath` reads `import.meta.env.BASE_URL` at
   runtime rather than hardcoding `/` — this app is deployed under `/recommender` as part of the
-  combined platform static site (root `CLAUDE.md`'s "Combined deploy"), and `vite.config.ts`'s
+  combined platform static site (root `AGENTS.md`'s "Combined deploy"), and `vite.config.ts`'s
   `base` is what actually sets `BASE_URL` per build.
 - **`client/src/lib/mtg.ts`** — WUBRG ordering and color-identity naming ("Golgari", never
   "Black/Green"). Mana glyph paths and cost parsing live in `@mtg/mana` (`packages/mana`), shared
@@ -140,10 +141,16 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   codebase were written from recall and were wrong on real cards (see
   `docs/commander-recommender.md`'s "Known risk areas"). Every string in `signals.test.ts` is
   copied verbatim from the imported database — keep it that way.
-- Before opening a PR: typecheck and test both `client/` and `server/`, and actually run the app
-  for anything user-visible — a clean typecheck and passing tests are necessary, not sufficient
-  (they don't catch a CSS rule that silently stopped applying, for instance).
 - Add a `CHANGELOG.md` entry under `[Unreleased]` for any user-facing change, in the existing
   style (see `1.7.1`'s entry for the level of detail expected).
 - `docs/commander-recommender.md`'s file map is meant to stay current — update it in the same
   commit whenever you add, rename, or remove a file it lists.
+
+## Verification
+
+Before opening a PR:
+
+1. Typecheck and test both `client/` and `server/` (see Commands). A clean typecheck and passing
+   tests are necessary, not sufficient.
+2. Actually run the app for anything user-visible — tests don't catch a CSS rule that silently
+   stopped applying.

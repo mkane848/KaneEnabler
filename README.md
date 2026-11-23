@@ -13,7 +13,7 @@ Phase 0 (consolidation) and Phase 1 (pnpm + Turborepo toolchain baseline) are do
 | [`apps/commander-recommender`](./apps/commander-recommender) | Paste a card list, get ranked Commander suggestions with cited synergies, ban-list legality, and Partner/Background pairing        |
 | [`apps/time-counters`](./apps/time-counters)                 | In-game counter companion for a Jeskai _Doctor Who_ Commander deck — Suspend, Vanishing, Fading, Sagas, commander tax, Time Travel |
 
-`pnpm install` at the repo root installs the whole workspace; see [`CLAUDE.md`](./CLAUDE.md) for
+`pnpm install` at the repo root installs the whole workspace; see [`AGENTS.md`](./AGENTS.md) for
 the full command reference (`pnpm turbo run build/typecheck/lint/test`, per-app `pnpm dev`, etc.).
 
 ## Where this is going

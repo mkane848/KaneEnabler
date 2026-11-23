@@ -6,8 +6,8 @@ repo owner (§4). Nothing in the code has changed yet.
 **Audited at:** `9903e07` (line numbers below are as of that commit — re-check before editing).
 **Scope:** `apps/time-counters`, `apps/commander-recommender` (client + server), `packages/profile`.
 
-Read [`../CLAUDE.md`](../CLAUDE.md), [`../apps/time-counters/CLAUDE.md`](../apps/time-counters/CLAUDE.md)
-and [`../apps/commander-recommender/CLAUDE.md`](../apps/commander-recommender/CLAUDE.md) first. Three
+Read [`../AGENTS.md`](../AGENTS.md), [`../apps/time-counters/AGENTS.md`](../apps/time-counters/AGENTS.md)
+and [`../apps/commander-recommender/AGENTS.md`](../apps/commander-recommender/AGENTS.md) first. Three
 of their rules bind this work directly:
 
 - **Hard rule 1 (`docs/api-policy.md`).** B6 and D5 change what triggers a Commander Spellbook call.
@@ -253,7 +253,7 @@ explicitly signed off. A cheap confirmation in the PR description is still court
 
 Separate PRs, in this order. Each: failing test first (from §3), then the fix, then
 `pnpm turbo run lint typecheck test build --filter <pkg>`, then exercise the UI in a browser (see
-root `CLAUDE.md`'s Playwright proxy note).
+root `AGENTS.md`'s Playwright proxy note).
 
 1. **time-counters — game state (B1, B3, B4, B5; D1, D6).** All in `useGameState.ts`:
    clear `lastRemoved` in `nextTurn`/`setTurn`/`applyTimeTravel`; seed `triggeredChapters` in

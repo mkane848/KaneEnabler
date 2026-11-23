@@ -3,7 +3,7 @@
 **Shipped.** A submitted card list is a **pool**, not a deck-in-progress. This document says what
 to change so every card in a pool gets some commander recommended for it, in what order, and how
 to know it worked — it was written as the brief and is kept here as the design record; the
-implementation itself lives in `server/src/services/coverage.ts` (see that app's own `CLAUDE.md`).
+implementation itself lives in `server/src/services/coverage.ts` (see that app's own `AGENTS.md`).
 
 The companion reading is [`commander-recommender.md`](./commander-recommender.md) (the app's own
 handoff doc, including the scoring model this plan modifies) and
@@ -260,7 +260,7 @@ not a change to what we call under [`api-policy.md`](./api-policy.md).
 - `client/src/lib/rehydrate.test.ts` — `alsoPlayable` and `coveredCards` rehydration.
 - A `db`/`parseList` test for the `-` rung, using the Edgar line verbatim.
 
-**Run the app** — required by `apps/commander-recommender/CLAUDE.md` for anything user-visible, and
+**Run the app** — required by `apps/commander-recommender/AGENTS.md` for anything user-visible, and
 a clean typecheck will not catch any of these. `pnpm dev`, paste the reproducing list, confirm:
 
 1. Results appear with no filter, as before the change.
@@ -271,5 +271,5 @@ a clean typecheck will not catch any of these. `pnpm dev`, paste the reproducing
 
 **Then:** `pnpm turbo run lint typecheck test build` at the repo root; a `CHANGELOG.md` entry under
 `[Unreleased]` in `apps/commander-recommender/`; and updates to
-[`commander-recommender.md`](./commander-recommender.md)'s file map and that app's `CLAUDE.md`
+[`commander-recommender.md`](./commander-recommender.md)'s file map and that app's `AGENTS.md`
 architecture list for the new `services/coverage.ts`.

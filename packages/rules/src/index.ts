@@ -1,7 +1,7 @@
 /**
  * Magic: The Gathering rules primitives shared by both apps. Every export
  * here cites the Comprehensive Rules number it implements and is tested
- * against it (see root CLAUDE.md's hard rule 2) — a primitive belongs here
+ * against it (see root AGENTS.md's hard rule 2) — a primitive belongs here
  * once, and an app consumes it rather than re-deriving it locally.
  *
  * Internal relative imports in this package need an explicit `.js`

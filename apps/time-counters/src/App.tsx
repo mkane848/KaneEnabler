@@ -19,7 +19,7 @@ import { COMMANDER_IDS, COMMANDER_NAME } from './utils/commanders';
 
 /**
  * Root-relative platform subpaths, not relative to this app's own base —
- * all three tools share one origin in production (root CLAUDE.md's
+ * all three tools share one origin in production (root AGENTS.md's
  * "Combined deploy"), same as apps/home's own pre-existing tool links.
  */
 const NAV_LINKS: NavBarLink[] = [

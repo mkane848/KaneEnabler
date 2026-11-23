@@ -5,8 +5,8 @@
 per §4 below; kept here as the design record.
 **Scope:** `apps/commander-recommender/client` only. No server changes, no `packages/*` changes.
 
-Read [`../CLAUDE.md`](../CLAUDE.md) and
-[`../apps/commander-recommender/CLAUDE.md`](../apps/commander-recommender/CLAUDE.md) before
+Read [`../AGENTS.md`](../AGENTS.md) and
+[`../apps/commander-recommender/AGENTS.md`](../apps/commander-recommender/AGENTS.md) before
 starting — they carry hard rules this change depends on, notably hard rule 2 ("Magic rules go in
 `@mtg/rules`, once").
 
@@ -218,7 +218,7 @@ Run from the repo root.
 3. `pnpm turbo run test typecheck --filter mtg-recommender-server` — expected untouched; run it to
    confirm the new `@mtg/rules` import didn't disturb that package's CommonJS build path (the
    server consumes `@mtg/rules` through a real CJS build — see `packages/rules/tsconfig.build.json`).
-4. **Run the app.** The app's own `CLAUDE.md` requires this for any user-visible change — a clean
+4. **Run the app.** The app's own `AGENTS.md` requires this for any user-visible change — a clean
    typecheck doesn't catch a CSS rule that silently stopped applying.
    `pnpm --filter mtg-recommender-server dev` + `pnpm --filter mtg-recommender-client dev`.
    Needs a seeded `server/data/cards.sqlite`; if absent, `cd server && pnpm run prepare-data`
@@ -250,7 +250,7 @@ Run from the repo root.
 - Don't `disable` unavailable pips (see the callout in §4b).
 - Don't touch the `exclude` branch of `matchesColors`.
 - Don't write a local `.every()` subset helper in the client — `@mtg/rules` owns that primitive
-  (root `CLAUDE.md` hard rule 2), it's already a dependency, and it's CR-cited and tested.
+  (root `AGENTS.md` hard rule 2), it's already a dependency, and it's CR-cited and tested.
 - Don't change anything server-side. The `shown`/`total` footer undercount (it counts only the main
   grid, not the "Also playable" tier) was raised with the owner and **deliberately left out of
   scope** — leave it.
