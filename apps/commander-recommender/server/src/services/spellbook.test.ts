@@ -222,4 +222,48 @@ describe('spellbook adapter', () => {
     assert.strictEqual(retry.cached, false);
     assert.strictEqual(state.requests.length, 2);
   });
+
+  it('holds a server-side cooldown after a 429 instead of asking again', async () => {
+    clearComboCache();
+    state.requests = [];
+    state.handler = (_req, res) => {
+      res.statusCode = 429;
+      res.setHeader('Retry-After', '30');
+      res.end('slow down');
+    };
+
+    await assert.rejects(() => findCombos(['Grimgrin'], ['Gravecrawler']));
+    // A different lookup during the cooldown must not reach them.
+    await assert.rejects(
+      () => findCombos(['Grimgrin'], ['Gravecrawler', 'Another Card']),
+      (err: unknown) => {
+        assert.ok(err instanceof SpellbookError);
+        assert.strictEqual(err.status, 429);
+        assert.ok((err.retryAfterSeconds ?? 0) > 0);
+        return true;
+      },
+    );
+    assert.strictEqual(state.requests.length, 1, 'must not call again during the cooldown');
+  });
+
+  it('shares one upstream request between identical concurrent lookups', async () => {
+    clearComboCache();
+    state.requests = [];
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    state.handler = (_req, res) => {
+      void gate.then(() => json(res, 200, { results: { included: [], almostIncluded: [] } }));
+    };
+
+    const first = findCombos(['Grimgrin'], ['Gravecrawler']);
+    const second = findCombos(['Grimgrin'], ['Gravecrawler']);
+    release();
+
+    const [a, b] = await Promise.all([first, second]);
+    assert.strictEqual(a.cached, false);
+    assert.strictEqual(b.cached, false);
+    assert.strictEqual(state.requests.length, 1, 'expected one shared request');
+  });
 });

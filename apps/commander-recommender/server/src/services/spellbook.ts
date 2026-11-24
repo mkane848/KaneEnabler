@@ -13,6 +13,10 @@
  *   - a request timeout, so a hung call doesn't hold a connection open
  *   - no automatic retry on 429; we surface their Retry-After and stop,
  *     rather than adding load to a service that just told us to back off
+ *   - a server-side cooldown after a 429, so we actually stop until their
+ *     Retry-After has passed instead of relying on the user to
+ *   - identical concurrent lookups share one request, and expired cache
+ *     entries are pruned, so a burst of clicks can't multiply calls
  */
 
 const ENDPOINT =
@@ -20,6 +24,8 @@ const ENDPOINT =
 const REQUEST_TIMEOUT_MS = 12_000;
 const CACHE_TTL_MS = 60 * 60 * 1000; // an hour; combo data changes slowly
 const MAX_CARDS = 250; // a Commander deck is 100; this is a sanity bound
+/** How long to back off after a 429 that didn't carry a usable Retry-After. */
+const DEFAULT_COOLDOWN_SECONDS = 60;
 
 import { APP_VERSION } from '../version.generated';
 
@@ -58,6 +64,17 @@ export class SpellbookError extends Error {
 }
 
 const cache = new Map<string, { at: number; value: Omit<ComboLookup, 'cached'> }>();
+/** Identical concurrent lookups share one upstream request. */
+const inFlight = new Map<string, Promise<Omit<ComboLookup, 'cached'>>>();
+/** Epoch ms until which a 429's Retry-After says we must not call again. */
+let cooldownUntil = 0;
+
+/** Drops entries past their TTL so the process doesn't retain them forever. */
+function pruneCache(now: number): void {
+  for (const [key, entry] of cache) {
+    if (now - entry.at >= CACHE_TTL_MS) cache.delete(key);
+  }
+}
 
 function cacheKey(commanderNames: string[], cards: string[]): string {
   return JSON.stringify([
@@ -144,12 +161,42 @@ export async function findCombos(
 ): Promise<ComboLookup> {
   const cards = cardNames.slice(0, MAX_CARDS);
   const key = cacheKey(commanderNames, cards);
+  const now = Date.now();
 
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+  if (hit && now - hit.at < CACHE_TTL_MS) {
     return { ...hit.value, cached: true };
   }
 
+  // A 429 is the service telling us to stop, not a cue to keep asking. Until
+  // the window it gave us (or the default, if it didn't give one) has passed,
+  // answer from the cooldown instead of making another request.
+  if (cooldownUntil > now) {
+    throw new SpellbookError(
+      'Commander Spellbook is rate limiting requests right now.',
+      429,
+      Math.ceil((cooldownUntil - now) / 1000),
+    );
+  }
+
+  // Identical concurrent lookups share one request rather than racing two.
+  const running = inFlight.get(key);
+  if (running) {
+    return { ...(await running), cached: false };
+  }
+
+  const request = fetchAndNormalize(commanderNames, cards, key).finally(() => {
+    inFlight.delete(key);
+  });
+  inFlight.set(key, request);
+  return { ...(await request), cached: false };
+}
+
+async function fetchAndNormalize(
+  commanderNames: string[],
+  cards: string[],
+  key: string,
+): Promise<Omit<ComboLookup, 'cached'>> {
   let response: Response;
   try {
     response = await fetch(ENDPOINT, {
@@ -169,10 +216,13 @@ export async function findCombos(
 
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get('retry-after'));
+    const seconds =
+      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : DEFAULT_COOLDOWN_SECONDS;
+    cooldownUntil = Date.now() + seconds * 1000;
     throw new SpellbookError(
       'Commander Spellbook is rate limiting requests right now.',
       429,
-      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
+      seconds,
     );
   }
 
@@ -201,11 +251,14 @@ export async function findCombos(
     almost: toResults(results.almostIncluded),
   };
 
+  pruneCache(Date.now());
   cache.set(key, { at: Date.now(), value });
-  return { ...value, cached: false };
+  return value;
 }
 
 /** Exposed so tests can start from a known state. */
 export function clearComboCache(): void {
   cache.clear();
+  inFlight.clear();
+  cooldownUntil = 0;
 }

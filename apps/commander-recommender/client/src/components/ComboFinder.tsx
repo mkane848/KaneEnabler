@@ -94,12 +94,26 @@ function ComboList({
  *
  * The lookup is keyed on the submitted list rather than the textarea's
  * current contents, so editing the box after getting results doesn't quietly
- * ask about a different deck than the one on screen.
+ * ask about a different deck than the one on screen. The click's consent is
+ * tied to that list too: changing the submitted list requires a new click,
+ * even when the new answer is already cached (docs/state-machine-audit.md
+ * B6/D4).
  */
 export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
   const submittedList = useAppStore((s) => s.submittedList);
-  const [requested, setRequested] = useState(false);
-  const { data, error, isFetching, refetch } = useCombos(commanderNames, submittedList, requested);
+  const [requestedList, setRequestedList] = useState<string | null>(null);
+  const enabled = requestedList !== null && requestedList === submittedList;
+  const {
+    data: combosData,
+    error: combosError,
+    isFetching: combosFetching,
+    refetch,
+  } = useCombos(commanderNames, submittedList, enabled);
+  // Hide any cached answer for a list that hasn't been clicked for, so a
+  // changed list always starts from the "Find combos" button.
+  const data = enabled ? combosData : undefined;
+  const error = enabled ? combosError : null;
+  const isFetching = enabled && combosFetching;
   const combosPerPage = usePreferencesStore((s) => s.combosPerPage);
   const setCombosPerPage = usePreferencesStore((s) => s.setCombosPerPage);
 
@@ -146,7 +160,7 @@ export function ComboFinder({ commanderNames }: { commanderNames: string[] }) {
             <button
               type="button"
               className="mtg-btn mtg-btn-primary mtg-btn-sm combo-button"
-              onClick={() => setRequested(true)}
+              onClick={() => setRequestedList(submittedList)}
             >
               Find combos
             </button>
