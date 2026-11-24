@@ -1,9 +1,9 @@
 # Implicit state machines: audit, findings, and fix plan
 
 **Status:** partially shipped. The time-counters game-state block (B1, B3, B4, B5; D1, D6) landed in
-`1.7.3` (§5 item 1), and the profile UI states (D7, D8, card-catalog retry) are fixed (§5 item 3).
-The owner approved D2–D5, so the rules block (B2, B7) and the Spellbook traffic block (B6, D5)
-remain to be implemented, along with the remaining §3.2 reading-found items.
+`1.7.3` (§5 item 1), the profile UI states (D7, D8, card-catalog retry) are fixed (§5 item 3), and
+the rules block (B2, B7; D2, D3) is fixed in `1.7.5` (§5 item 2). The owner approved D2–D5; the
+Spellbook traffic block (B6, D5) remains, along with the remaining §3.2 reading-found items.
 **Audited at:** `9903e07` (line numbers below are as of that commit — re-check before editing).
 **Scope:** `apps/time-counters`, `apps/commander-recommender` (client + server), `packages/profile`.
 

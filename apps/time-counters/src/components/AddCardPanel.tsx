@@ -208,7 +208,9 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     form.setFieldValue('resolveNote', defaultResolveNote(next));
     form.setFieldValue('autoAdjust', true);
     // Keep the detected count/target only if it still applies to the newly chosen mechanic.
-    if (!detectedCount) form.setFieldValue('startingCount', next === 'saga' ? '0' : '');
+    // A Saga without read ahead enters with a lore counter (CR 714.3a), so the
+    // natural default is 1 — chapter I has already triggered on arrival.
+    if (!detectedCount) form.setFieldValue('startingCount', next === 'saga' ? '1' : '');
     if (next !== currentMechanic) form.setFieldValue('targetCount', '');
     if (next === 'saga' && currentChapters.length === 0)
       form.setFieldValue('chapters', DEFAULT_CHAPTER_ROWS);

@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.5] - 2026-11-24
+
+### Fixed
+
+- **Bad Wolf no longer counts suspended cards whose last time counter is gone.** CR 702.62b defines
+  a card as suspended only while it has a time counter, so a Suspend card at 0 counters (already
+  cast) no longer adds a Bad Wolf counter to Rose. Bad Wolf and Time Travel now share one
+  `hasTimeCounter` predicate in `@mtg/rules` so they can't disagree again.
+- **A new Saga starts at lore 1 by default.** A Saga without read ahead enters with a lore counter
+  (CR 714.3a), so the add-card form now pre-fills 1 instead of 0; chapter I is recorded as already
+  triggered, not re-fired later.
+
 ## [1.7.4] - 2026-11-24
 
 ### Fixed
