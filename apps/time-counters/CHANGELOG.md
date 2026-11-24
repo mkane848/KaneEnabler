@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.4] - 2026-11-24
+
+### Fixed
+
+- **A failed card-catalog load can be retried.** The add-card panel now offers "Try again" when
+  `cards.json` fails to load, instead of leaving search permanently unavailable (manual entry was
+  always the fallback).
+- **The sign-up confirmation screen is no longer a dead end.** It now offers "Back to sign in", and
+  the sign-in/sign-up switch is disabled while a request is in flight so a late error can't land
+  under the wrong title.
+
 ## [1.7.3] - 2026-11-24
 
 ### Fixed

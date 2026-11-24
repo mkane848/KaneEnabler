@@ -58,7 +58,25 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
       </ModalTitle>
 
       {confirmSent ? (
-        <p className="mtg-auth-dialog-note">Check {email} for a confirmation link, then sign in.</p>
+        <>
+          <p className="mtg-auth-dialog-note">
+            Check {email} for a confirmation link, then sign in.
+          </p>
+          <p className="mtg-auth-dialog-switch">
+            <button
+              type="button"
+              className="mtg-auth-dialog-switch-link"
+              onClick={() => {
+                setConfirmSent(false);
+                setMode('sign-in');
+                setPassword('');
+                setError(null);
+              }}
+            >
+              Back to sign in
+            </button>
+          </p>
+        </>
       ) : (
         <form className="mtg-auth-dialog-form" onSubmit={handleSubmit}>
           <label className="mtg-auth-dialog-label" htmlFor="auth-email">
@@ -110,6 +128,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             className="mtg-auth-dialog-switch-link"
+            disabled={submitting}
             onClick={() => {
               setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
               setError(null);

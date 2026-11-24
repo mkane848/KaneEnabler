@@ -7,6 +7,18 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [1.13.4] — 2026-11-24
+
+### Fixed
+
+- **Liking or disliking a card responds immediately.** The buttons used to read only the server
+  cache, so a quick second tap re-sent the same sentiment instead of removing it, and switching
+  straight from like to dislike raced two writes. The preference now updates optimistically
+  (rolled back if the write fails) and reconciles from the server afterwards.
+- **The sign-up confirmation screen is no longer a dead end.** It now offers "Back to sign in", and
+  the sign-in/sign-up switch is disabled while a request is in flight so a late error can't land
+  under the wrong title.
+
 ## [1.13.3] — 2026-09-25
 
 ### Fixed

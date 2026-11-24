@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] - 2026-11-24
+
+### Fixed
+
+- **The sign-up confirmation screen is no longer a dead end.** It now offers "Back to sign in", and
+  the sign-in/sign-up switch is disabled while a request is in flight so a late error can't land
+  under the wrong title.
+
 ## [0.3.1] - 2026-09-25
 
 ### Fixed
