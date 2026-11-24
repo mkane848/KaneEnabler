@@ -60,4 +60,41 @@ describe('AuthDialog', () => {
       await screen.findByText(/Check new@example\.com for a confirmation link/),
     ).toBeInTheDocument();
   });
+
+  it('can go back to sign in after the sign-up confirmation is shown', async () => {
+    signUp.mockResolvedValue({ error: null });
+    render(<AuthDialog onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'new@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+
+    expect(
+      await screen.findByText(/Check new@example\.com for a confirmation link/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to sign in' }));
+
+    expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.queryByText(/Check new@example\.com/)).not.toBeInTheDocument();
+  });
+
+  it('disables the mode switch while a request is in flight', async () => {
+    let settle!: (value: { error: string | null }) => void;
+    signIn.mockReturnValue(
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+    );
+    const onClose = vi.fn();
+    render(<AuthDialog onClose={onClose} />);
+
+    fillAndSubmit('player@example.com', 'hunter2');
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign up' })).toBeDisabled());
+
+    settle({ error: null });
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
 });

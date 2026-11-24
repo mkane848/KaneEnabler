@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MINUS_ONE_MINUS_ONE_KEYWORDS,
   TIME_COUNTER_KEYWORDS,
+  hasTimeCounter,
   turnStepForMechanic,
   usesTimeCounters,
 } from './counters';
@@ -13,6 +14,18 @@ describe('usesTimeCounters', () => {
     expect(usesTimeCounters('fading')).toBe(false);
     expect(usesTimeCounters('saga')).toBe(false);
     expect(usesTimeCounters('custom')).toBe(false);
+  });
+});
+
+describe('hasTimeCounter', () => {
+  it('requires a time-counter mechanic and at least one counter (CR 702.62b)', () => {
+    expect(hasTimeCounter({ mechanic: 'suspend', count: 1 })).toBe(true);
+    expect(hasTimeCounter({ mechanic: 'vanishing', count: 2 })).toBe(true);
+    expect(hasTimeCounter({ mechanic: 'suspend', count: 0 })).toBe(false);
+    expect(hasTimeCounter({ mechanic: 'vanishing', count: 0 })).toBe(false);
+    expect(hasTimeCounter({ mechanic: 'fading', count: 3 })).toBe(false);
+    expect(hasTimeCounter({ mechanic: 'saga', count: 3 })).toBe(false);
+    expect(hasTimeCounter({ mechanic: 'custom', count: 3 })).toBe(false);
   });
 });
 

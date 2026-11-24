@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { commanderTax, turnStepForMechanic, usesTimeCounters } from '@mtg/rules';
+import { commanderTax, hasTimeCounter, turnStepForMechanic } from '@mtg/rules';
 import type {
   CardData,
   CommanderId,
@@ -465,7 +465,7 @@ export function useGameState() {
    *
    * Only Suspend and Vanishing cards are eligible targets — Fading uses
    * fade counters and Saga uses lore counters, neither of which is a time
-   * counter (see usesTimeCounters in @mtg/rules), so the caller
+   * counter (see hasTimeCounter in @mtg/rules), so the caller
    * (TimeTravelPanel via App.tsx) never offers them a choice here. Rose
    * Tyler's own Bad Wolf time counters are a legitimate target too — she's
    * "a permanent you control with a time counter on it" — passed with the
@@ -615,20 +615,21 @@ export function useGameState() {
   /**
    * Rose Tyler's Bad Wolf: "Whenever Rose Tyler attacks, put a time counter
    * on it for each suspended card you own and each other permanent you
-   * control with a time counter on it." Two clauses with different
-   * conditions: a suspended card counts unconditionally — it's still
-   * "suspended" regardless of how many time counters remain on it — while
-   * the second clause is explicitly about permanents *with a time counter
-   * on them*, so a tracked Vanishing card with none left doesn't qualify.
-   * Fading and Saga never count either way (neither uses time counters —
-   * see usesTimeCounters in @mtg/rules). Adds that many counters to Rose in one step
-   * instead of the player counting the board by hand.
+   * control with a time counter on it." CR 702.62b defines a card as
+   * "suspended" only while it is in exile *with a time counter on it*, so
+   * both clauses come down to the same thing: the card must still have a
+   * time counter. A Suspend card whose last counter was removed has been
+   * cast, and a Vanishing permanent with none left has been sacrificed —
+   * neither counts. Fading and Saga never count either way (fade/lore
+   * counters aren't time counters). Adds that many counters to Rose in one
+   * step instead of the player counting the board by hand.
+   *
+   * hasTimeCounter is shared with Time Travel's target list so the two can't
+   * disagree again (docs/state-machine-audit.md B2/B7).
    */
   const roseAttacks = useCallback(() => {
     setTracker((prev) => {
-      const contributing = prev.game.cards.filter(
-        (c) => c.mechanic === 'suspend' || (usesTimeCounters(c.mechanic) && c.count > 0),
-      );
+      const contributing = prev.game.cards.filter((c) => hasTimeCounter(c));
       const gained = contributing.length;
       const from = prev.game.commanders.roseTyler.timeCounters;
       const to = from + gained;

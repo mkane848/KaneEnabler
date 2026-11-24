@@ -31,6 +31,7 @@ export {
   MINUS_ONE_MINUS_ONE_KEYWORDS,
   TIME_COUNTER_KEYWORDS,
   TIME_COUNTER_MECHANICS,
+  hasTimeCounter,
   turnStepForMechanic,
   usesTimeCounters,
   type CounterMechanic,

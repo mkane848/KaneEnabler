@@ -59,7 +59,12 @@ const SUSPENDED_BY_EFFECT_NOTE =
   'Suspended by an effect rather than its own Suspend cost — cast it for free from exile when the last counter is removed.';
 
 export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
-  const { cards: catalog, error: catalogError, loading: catalogLoading } = useCardCatalog();
+  const {
+    cards: catalog,
+    error: catalogError,
+    loading: catalogLoading,
+    retry: retryCatalog,
+  } = useCardCatalog();
   const [stage, setStage] = useState<Stage>('closed');
   const [query, setQuery] = useState('');
   const [manualMode, setManualMode] = useState(false);
@@ -203,7 +208,9 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     form.setFieldValue('resolveNote', defaultResolveNote(next));
     form.setFieldValue('autoAdjust', true);
     // Keep the detected count/target only if it still applies to the newly chosen mechanic.
-    if (!detectedCount) form.setFieldValue('startingCount', next === 'saga' ? '0' : '');
+    // A Saga without read ahead enters with a lore counter (CR 714.3a), so the
+    // natural default is 1 — chapter I has already triggered on arrival.
+    if (!detectedCount) form.setFieldValue('startingCount', next === 'saga' ? '1' : '');
     if (next !== currentMechanic) form.setFieldValue('targetCount', '');
     if (next === 'saga' && currentChapters.length === 0)
       form.setFieldValue('chapters', DEFAULT_CHAPTER_ROWS);
@@ -283,8 +290,11 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               {catalogLoading && <>Loading every Commander-legal Jeskai card… </>}
               {catalogError && (
                 <>
-                  Couldn&apos;t load the card catalog ({catalogError}). You can still add cards by
-                  name.{' '}
+                  Couldn&apos;t load the card catalog ({catalogError}).{' '}
+                  <button type="button" className={styles.manualLink} onClick={retryCatalog}>
+                    Try again
+                  </button>
+                  .{' '}
                 </>
               )}
               {catalog && <>Searching {catalog.length.toLocaleString()} Jeskai-legal cards. </>}

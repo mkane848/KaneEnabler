@@ -21,6 +21,7 @@ import {
   useSetCardPreferences,
 } from './useCardPreferences';
 import type { CardPreferenceRow } from './rows';
+import type { CardPreference } from './types';
 
 const FAKE_SUPABASE = { from } as unknown as NonNullable<(typeof clientModule)['supabase']>;
 
@@ -263,5 +264,96 @@ describe('useRemoveCardPreferences', () => {
     result.current.mutate({ userId: 'user-1', oracleIds: ['a'] });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe('Profiles are not configured for this deployment.');
+  });
+});
+
+describe('useCardPreferences — optimistic updates (D7)', () => {
+  function wrapperWith(queryClient: QueryClient) {
+    return function Wrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    };
+  }
+
+  const KEY = ['card-preferences', 'user-1'];
+  const SEEDED: CardPreference[] = [
+    {
+      id: 'row-1',
+      userId: 'user-1',
+      oracleId: 'oracle-1',
+      sentiment: 'dislike',
+      tags: [],
+      note: null,
+      createdAt: '2026-01-01T00:00:00Z',
+    },
+  ];
+
+  function freshClient() {
+    return new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+  }
+
+  it('applies a like to the cache before the request settles', async () => {
+    let settle!: (value: { error: null }) => void;
+    upsert.mockReturnValue(
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+    );
+    const queryClient = freshClient();
+    queryClient.setQueryData<CardPreference[]>(KEY, SEEDED);
+    const { result } = renderHook(() => useSetCardPreferences(), {
+      wrapper: wrapperWith(queryClient),
+    });
+
+    result.current.mutate({
+      userId: 'user-1',
+      inputs: [{ oracleId: 'oracle-1', sentiment: 'like' }],
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData<CardPreference[]>(KEY)?.[0]?.sentiment).toBe('like'),
+    );
+
+    settle({ error: null });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it('rolls the cache back to its previous value when the write fails', async () => {
+    upsert.mockResolvedValue({ error: { message: 'boom' } });
+    const queryClient = freshClient();
+    queryClient.setQueryData<CardPreference[]>(KEY, SEEDED);
+    const { result } = renderHook(() => useSetCardPreferences(), {
+      wrapper: wrapperWith(queryClient),
+    });
+
+    result.current.mutate({
+      userId: 'user-1',
+      inputs: [{ oracleId: 'oracle-1', sentiment: 'like' }],
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(queryClient.getQueryData<CardPreference[]>(KEY)).toEqual(SEEDED);
+  });
+
+  it('optimistically removes a row before the delete settles', async () => {
+    let settle!: (value: { error: null }) => void;
+    deleteIn.mockReturnValue(
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+    );
+    const queryClient = freshClient();
+    queryClient.setQueryData<CardPreference[]>(KEY, SEEDED);
+    const { result } = renderHook(() => useRemoveCardPreferences(), {
+      wrapper: wrapperWith(queryClient),
+    });
+
+    result.current.mutate({ userId: 'user-1', oracleIds: ['oracle-1'] });
+
+    await waitFor(() => expect(queryClient.getQueryData<CardPreference[]>(KEY)).toEqual([]));
+
+    settle({ error: null });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

@@ -74,22 +74,22 @@ Travel jumps the count by more than one." That is true of the _function_ and fal
 sites_. `apps/time-counters/AGENTS.md` names this exact bug class ("always trigger per-chapter, never just check
 the final target") — the helper honours it, the callers don't.
 
-### 3. Bad Wolf under-counts suspended cards `[FIXED]`
+### 3. Bad Wolf counted suspended cards with no time counters left `[FIXED]`
 
-> **Contradicts entry #4 below** — #3 treats a suspended card as qualifying at any count, #4 says a
-> suspended card at 0 is no longer suspended. The code implements both. Open question D2 in
-> [`state-machine-audit.md`](./state-machine-audit.md) (B2/B7); one of these two entries must be corrected.
+> **Resolved with entry #4** — both now agree on CR 702.62b: a card is "suspended" only while it has
+> a time counter on it. Decision D2(a) in
+> [`state-machine-audit.md`](./state-machine-audit.md) (B2/B7).
 
 **`DrWhoCompanionEDH`** — `src/hooks/useGameState.ts:437`
 
 Rose Tyler's trigger counts _"each suspended card you own and each **other** permanent you control
-with a time counter on it."_ Those are two clauses with different conditions, collapsed into one
-predicate: `usesTimeCounters(c.mechanic) && c.count > 0`.
+with a time counter on it."_ It used to treat the first clause as unconditional, so a Suspend card
+whose last time counter had been removed still added a Bad Wolf counter.
 
-`count > 0` is correct for the second clause — a permanent with no time counters isn't "a permanent
-with a time counter on it." It is wrong for the first: a suspended card qualifies **unconditionally**,
-regardless of how many time counters remain. Narrow window in practice, but the clauses should be
-separated.
+CR 702.62b: _"A card is 'suspended' if it's in the exile zone, has suspend, and has a time counter
+on it."_ At 0 counters the card has been cast and is no longer suspended, so both clauses require a
+time counter. The two are now one shared predicate (`hasTimeCounter` in `@mtg/rules`), used by both
+Bad Wolf and Time Travel so they can't disagree again.
 
 ### 4. Time Travel offered for suspended cards at 0 counters `[FIXED]`
 

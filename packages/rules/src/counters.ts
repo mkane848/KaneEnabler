@@ -32,6 +32,18 @@ export function usesTimeCounters(mechanic: CounterMechanic): boolean {
 }
 
 /**
+ * Whether a tracked card still has a time counter on it, and so qualifies for
+ * time-counter effects. CR 702.62b: "A card is 'suspended' if it's in the
+ * exile zone, has suspend, and has a time counter on it." A Suspend card whose
+ * last counter was removed has been cast; a Vanishing permanent with none left
+ * has been sacrificed. Rose Tyler's Bad Wolf count and Time Travel's target
+ * list need this same answer, so they share one predicate.
+ */
+export function hasTimeCounter(card: { mechanic: CounterMechanic; count: number }): boolean {
+  return usesTimeCounters(card.mechanic) && card.count > 0;
+}
+
+/**
  * Which turn step auto-adjusts a given mechanic's counter: Suspend,
  * Vanishing, and Fading all tick down at upkeep (rules 500–514), while a
  * Saga gains a lore counter as precombat main begins (rule 714).
