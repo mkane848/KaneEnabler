@@ -23,7 +23,19 @@ interface AddCardPanelProps {
   onAdd: (input: AddCardInput) => void;
 }
 
-type Stage = 'closed' | 'search' | 'configure';
+type SearchSource = 'catalog' | 'quick-suspend' | 'manual' | 'token';
+
+/**
+ * One explicit state instead of `stage` plus a pile of flags. The old model
+ * could represent `creatingToken && manualMode` at once; this can't. The
+ * search variants are `source`s rather than separate booleans, and
+ * `configure` remembers where the card came from so "Change" returns to the
+ * right search.
+ */
+type PanelState =
+  | { stage: 'closed' }
+  | { stage: 'search'; source: SearchSource }
+  | { stage: 'configure'; card: CardData; detectedCount: number | null; source: SearchSource };
 
 /** The "configure" stage's fields — everything `onAdd` needs beyond the selected card. */
 interface ConfigureFormValues {
@@ -65,22 +77,27 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
     loading: catalogLoading,
     retry: retryCatalog,
   } = useCardCatalog();
-  const [stage, setStage] = useState<Stage>('closed');
+  const [panel, setPanel] = useState<PanelState>({ stage: 'closed' });
   const [query, setQuery] = useState('');
-  const [manualMode, setManualMode] = useState(false);
   const [manualName, setManualName] = useState('');
-  const [quickSuspend, setQuickSuspend] = useState(false);
-  // Tokens (e.g. the Human Noble token from The Girl in the Fireplace) aren't
-  // real cards, so they're never in the Scryfall catalog — this skips search
-  // entirely and goes straight to naming one by hand.
-  const [creatingToken, setCreatingToken] = useState(false);
 
   // What the panel is configuring, and a read-only hint about it — neither is
-  // a submitted field, so both stay outside the form: `selected` picks which
-  // card `onAdd` receives, and `detectedCount` only ever drives the "Detected
-  // Suspend 3 from card text" hint, never a value the player edits directly.
-  const [selected, setSelected] = useState<CardData | null>(null);
-  const [detectedCount, setDetectedCount] = useState<number | null>(null);
+  // a submitted field, so both stay outside the form: `configure.card` picks
+  // which card `onAdd` receives, and `detectedCount` only ever drives the
+  // "Detected Suspend 3 from card text" hint, never a value the player edits.
+  const configure = panel.stage === 'configure' ? panel : null;
+  const selected = configure?.card ?? null;
+  const detectedCount = configure?.detectedCount ?? null;
+  const searchSource =
+    panel.stage === 'search' && (panel.source === 'catalog' || panel.source === 'quick-suspend')
+      ? panel.source
+      : null;
+  const nameEntrySource =
+    panel.stage === 'search' && (panel.source === 'manual' || panel.source === 'token')
+      ? panel.source
+      : null;
+  const stage = panel.stage;
+  const source = panel.stage === 'closed' ? null : panel.source;
 
   const form = useForm({
     defaultValues: DEFAULT_CONFIGURE_VALUES,
@@ -136,34 +153,26 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
   );
 
   function resetAll() {
-    setStage('closed');
+    setPanel({ stage: 'closed' });
     setQuery('');
-    setManualMode(false);
     setManualName('');
-    setQuickSuspend(false);
-    setCreatingToken(false);
-    setSelected(null);
-    setDetectedCount(null);
     form.reset();
   }
 
   function openQuickSuspend() {
-    setQuickSuspend(true);
-    setStage('search');
+    setPanel({ stage: 'search', source: 'quick-suspend' });
   }
 
   function openCreateToken() {
-    setCreatingToken(true);
-    setStage('search');
+    setPanel({ stage: 'search', source: 'token' });
   }
 
-  function selectCard(card: CardData) {
-    const detection = quickSuspend ? null : detectMechanic(card.oracleText);
-    const nextMechanic = quickSuspend ? 'suspend' : (detection?.mechanic ?? 'custom');
+  function selectCard(card: CardData, from: SearchSource) {
+    const quick = from === 'quick-suspend';
+    const detection = quick ? null : detectMechanic(card.oracleText);
+    const nextMechanic = quick ? 'suspend' : (detection?.mechanic ?? 'custom');
     const nextDirection = detection?.direction ?? mechanicDirection(nextMechanic);
 
-    setSelected(card);
-    setDetectedCount(detection?.count ?? null);
     // keepDefaultValues: true — otherwise this reset's values become the
     // form's new `defaultValues` (per TanStack Form's own reset() semantics),
     // which then mismatch the static DEFAULT_CONFIGURE_VALUES this component
@@ -179,23 +188,24 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
         startingCount: detection?.count != null ? String(detection.count) : '',
         targetCount: detection?.targetCount != null ? String(detection.targetCount) : '',
         autoAdjust: true,
-        resolveNote: quickSuspend ? SUSPENDED_BY_EFFECT_NOTE : defaultResolveNote(nextMechanic),
+        resolveNote: quick ? SUSPENDED_BY_EFFECT_NOTE : defaultResolveNote(nextMechanic),
         chapters: DEFAULT_CHAPTER_ROWS,
       },
       { keepDefaultValues: true },
     );
-    setStage('configure');
+    setPanel({ stage: 'configure', card, detectedCount: detection?.count ?? null, source: from });
   }
 
-  function handleManualSubmit(e: FormEvent) {
+  function handleManualSubmit(e: FormEvent, from: 'manual' | 'token') {
     e.preventDefault();
     const name = manualName.trim();
     if (!name) return;
-    if (creatingToken) {
-      selectCard({ id: `token:${name.toLowerCase()}`, name, isToken: true });
-    } else {
-      selectCard({ id: `manual:${name.toLowerCase()}`, name });
-    }
+    selectCard(
+      from === 'token'
+        ? { id: `token:${name.toLowerCase()}`, name, isToken: true }
+        : { id: `manual:${name.toLowerCase()}`, name },
+      from,
+    );
   }
 
   function changeMechanic(next: Mechanic) {
@@ -219,7 +229,11 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
   if (stage === 'closed') {
     return (
       <div className={styles.wrap}>
-        <button type="button" className={styles.toggle} onClick={() => setStage('search')}>
+        <button
+          type="button"
+          className={styles.toggle}
+          onClick={() => setPanel({ stage: 'search', source: 'catalog' })}
+        >
           <span className={styles.plus}>+</span> Add a card
         </button>
         <button type="button" className={styles.quickLink} onClick={openQuickSuspend}>
@@ -238,9 +252,9 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
         <div className={styles.panelHeader}>
           <span className={styles.panelTitle}>
             {stage === 'search'
-              ? quickSuspend
+              ? source === 'quick-suspend'
                 ? 'Suspend a card via an effect'
-                : creatingToken
+                : source === 'token'
                   ? 'Create a token'
                   : 'Add a card'
               : 'Set up counters'}
@@ -250,7 +264,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
           </button>
         </div>
 
-        {stage === 'search' && !manualMode && !creatingToken && (
+        {searchSource && (
           <>
             <input
               autoFocus
@@ -267,7 +281,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                     <button
                       type="button"
                       className={styles.resultItem}
-                      onClick={() => selectCard(card)}
+                      onClick={() => selectCard(card, searchSource)}
                     >
                       <span className={styles.resultName}>
                         {card.name}
@@ -302,7 +316,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
               <button
                 type="button"
                 className={styles.manualLink}
-                onClick={() => setManualMode(true)}
+                onClick={() => setPanel({ stage: 'search', source: 'manual' })}
               >
                 Add it by name
               </button>
@@ -311,10 +325,10 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
           </>
         )}
 
-        {stage === 'search' && (manualMode || creatingToken) && (
-          <form onSubmit={handleManualSubmit}>
+        {nameEntrySource && (
+          <form onSubmit={(e) => handleManualSubmit(e, nameEntrySource)}>
             <label className={styles.fieldLabel} htmlFor="manual-name">
-              {creatingToken ? 'Token name' : 'Card name'}
+              {nameEntrySource === 'token' ? 'Token name' : 'Card name'}
             </label>
             <div className={styles.manualRow}>
               <input
@@ -322,7 +336,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 autoFocus
                 className="mtg-input"
                 type="text"
-                placeholder={creatingToken ? 'e.g. Human Noble' : 'e.g. Ancestral Vision'}
+                placeholder={nameEntrySource === 'token' ? 'e.g. Human Noble' : 'e.g. Ancestral Vision'}
                 value={manualName}
                 onChange={(e) => setManualName(e.target.value)}
               />
@@ -330,7 +344,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 Next
               </button>
             </div>
-            {creatingToken ? (
+            {nameEntrySource === 'token' ? (
               <p className={styles.emptyHint}>
                 Tokens aren&apos;t cataloged cards, so there&apos;s no art or oracle text — just
                 name it and pick its mechanic next (e.g. Vanishing 3 for the token The Girl in the
@@ -341,7 +355,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
                 <button
                   type="button"
                   className={styles.manualLink}
-                  onClick={() => setManualMode(false)}
+                  onClick={() => setPanel({ stage: 'search', source: 'catalog' })}
                 >
                   ← Back to search
                 </button>
@@ -350,7 +364,7 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
           </form>
         )}
 
-        {stage === 'configure' && selected && (
+        {configure && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -359,14 +373,18 @@ export default function AddCardPanel({ onAdd }: AddCardPanelProps) {
             }}
           >
             <div className={styles.selectedRow}>
-              {selected.imageSmall ? (
-                <img className={styles.selectedThumb} src={selected.imageSmall} alt="" />
+              {configure.card.imageSmall ? (
+                <img className={styles.selectedThumb} src={configure.card.imageSmall} alt="" />
               ) : (
                 <div className={styles.selectedThumbFallback} />
               )}
-              <span className={styles.selectedName}>{selected.name}</span>
-              <ManaCost cost={selected.manaCost} />
-              <button type="button" className={styles.changeBtn} onClick={() => setStage('search')}>
+              <span className={styles.selectedName}>{configure.card.name}</span>
+              <ManaCost cost={configure.card.manaCost} />
+              <button
+                type="button"
+                className={styles.changeBtn}
+                onClick={() => setPanel({ stage: 'search', source: configure.source })}
+              >
                 Change
               </button>
             </div>
