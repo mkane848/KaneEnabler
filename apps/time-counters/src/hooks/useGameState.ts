@@ -134,6 +134,7 @@ export function useGameState() {
 
   const addCard = useCallback((input: AddCardInput) => {
     setTracker((prev) => {
+      const count = clampCount(input.startingCount, input.direction, input.targetCount);
       const tracked: TrackedCard = {
         instanceId: makeId(),
         cardId: input.card.id,
@@ -141,7 +142,7 @@ export function useGameState() {
         imageSmall: input.card.imageSmall,
         mechanic: input.mechanic,
         customLabel: input.customLabel,
-        count: clampCount(input.startingCount, input.direction, input.targetCount),
+        count,
         startingCount: input.startingCount,
         direction: input.direction,
         targetCount: input.targetCount,
@@ -150,7 +151,12 @@ export function useGameState() {
         turnAdded: prev.game.turn,
         isToken: input.card.isToken,
         chapters: input.mechanic === 'saga' ? input.chapters : undefined,
-        triggeredChapters: input.mechanic === 'saga' ? [] : undefined,
+        // Chapters at or below the starting lore count have already triggered;
+        // record them so an edit back across them can't fire them a second time.
+        triggeredChapters:
+          input.mechanic === 'saga'
+            ? Array.from({ length: Math.min(count, input.chapters?.length ?? 0) }, (_, i) => i + 1)
+            : undefined,
       };
       const log = appendLog(prev.game.log, {
         turn: prev.game.turn,
@@ -266,12 +272,28 @@ export function useGameState() {
     const safe = Number.isFinite(turn) ? Math.max(1, Math.round(turn)) : 1;
     setTracker((prev) => {
       if (safe === prev.game.turn) return prev;
+      // Correcting the turn backward is a correction, not a rewind: a card
+      // added on a turn that no longer exists is re-anchored to the new turn,
+      // so its "added on" turn can't sit in the future or out of log order.
+      let reanchored = 0;
+      const cards =
+        safe < prev.game.turn
+          ? prev.game.cards.map((c) => {
+              if (c.turnAdded <= safe) return c;
+              reanchored += 1;
+              return { ...c, turnAdded: safe };
+            })
+          : prev.game.cards;
+      const suffix =
+        reanchored > 0
+          ? `; ${reanchored} card${reanchored === 1 ? '' : 's'} added later re-anchored`
+          : '';
       const log = appendLog(prev.game.log, {
         turn: safe,
         title: 'Turn changed',
-        detail: `Turn set to ${safe} (was ${prev.game.turn})`,
+        detail: `Turn set to ${safe} (was ${prev.game.turn})${suffix}`,
       });
-      return { ...prev, game: { ...prev.game, turn: safe, log } };
+      return { ...prev, game: { ...prev.game, turn: safe, cards, log }, lastRemoved: null };
     });
   }, []);
 
@@ -425,6 +447,8 @@ export function useGameState() {
         game: { ...prev.game, turn, cards, log },
         // Only interrupt the player when something actually happened.
         lastUpkeep: changes.length > 0 ? changes : null,
+        // Time moved on, so the window to undo the last removal has closed.
+        lastRemoved: null,
       };
     });
   }, []);
@@ -490,7 +514,9 @@ export function useGameState() {
           detail: logChanges.length === 0 ? 'No counters added or removed this pass.' : undefined,
           changes: logChanges,
         });
-        return { ...prev, game: { ...prev.game, cards, commanders, log } };
+        // Time Travel changed counters, so undo-the-last-removal would restore
+        // a card against counters it has since moved past — close the window.
+        return { ...prev, game: { ...prev.game, cards, commanders, log }, lastRemoved: null };
       });
     },
     [],
@@ -510,6 +536,9 @@ export function useGameState() {
   const castCommander = useCallback((id: CommanderId) => {
     setTracker((prev) => {
       const commander = prev.game.commanders[id];
+      // Already on the battlefield: this isn't a cast from the command zone,
+      // so it can't add tax. Mirrors returnCommanderToCommandZone's guard.
+      if (commander.onBattlefield) return prev;
       const castCount = commander.castCount + 1;
       const name = COMMANDER_NAME[id];
       const log = appendLog(prev.game.log, {

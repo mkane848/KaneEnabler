@@ -306,10 +306,8 @@ describe('useGameState — commander tax', () => {
     const { result } = renderHook(() => useGameState());
     act(() => result.current.castCommander('tenthDoctor'));
     expect(result.current.state.commanders.tenthDoctor.castCount).toBe(1);
-    act(() => result.current.castCommander('tenthDoctor'));
-    expect(result.current.state.commanders.tenthDoctor.castCount).toBe(2);
     const [entry] = result.current.state.log.slice(-1);
-    expect(entry!.detail).toContain('{4}');
+    expect(entry!.detail).toContain('{2}');
   });
 
   it('tracks each commander independently', () => {
@@ -506,5 +504,115 @@ describe('useGameState — resetGame', () => {
         roseTyler: { castCount: 0, timeCounters: 0, onBattlefield: false },
       },
     });
+  });
+});
+
+describe('useGameState — the undo window closes when time moves on (B1)', () => {
+  it('Next Turn closes the undo window, so Undo cannot restore a card that skipped its upkeep', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput({ startingCount: 3 })));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.removeCard(id));
+    expect(result.current.lastRemoved?.card.instanceId).toBe(id);
+
+    act(() => result.current.nextTurn());
+    expect(result.current.lastRemoved).toBeNull();
+
+    act(() => result.current.undoRemove());
+    expect(result.current.state.cards).toEqual([]);
+  });
+
+  it('a manual turn edit closes the undo window', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput()));
+    const id = result.current.state.cards[0]!.instanceId;
+    act(() => result.current.removeCard(id));
+
+    act(() => result.current.setTurn(2));
+    expect(result.current.lastRemoved).toBeNull();
+
+    act(() => result.current.undoRemove());
+    expect(result.current.state.cards).toEqual([]);
+  });
+
+  it('Time Travel closes the undo window', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => {
+      result.current.addCard(addInput({ card: card({ id: 'a', name: 'A' }), startingCount: 2 }));
+      result.current.addCard(addInput({ card: card({ id: 'b', name: 'B' }), startingCount: 2 }));
+    });
+    const [aId, bId] = result.current.state.cards.map((c) => c.instanceId);
+    act(() => result.current.removeCard(bId!));
+    expect(result.current.lastRemoved?.card.instanceId).toBe(bId);
+
+    act(() =>
+      result.current.applyTimeTravel([{ id: aId!, delta: -1 }], { current: 1, total: 1 }),
+    );
+    expect(result.current.lastRemoved).toBeNull();
+
+    act(() => result.current.undoRemove());
+    expect(result.current.state.cards.map((c) => c.name)).toEqual(['A']);
+  });
+});
+
+describe('useGameState — turn edits (B5)', () => {
+  it('moving the turn backward re-anchors a card added after it', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTurn(5));
+    act(() => result.current.addCard(addInput()));
+    expect(result.current.state.cards[0]!.turnAdded).toBe(5);
+
+    act(() => result.current.setTurn(2));
+    expect(result.current.state.turn).toBe(2);
+    expect(result.current.state.cards[0]!.turnAdded).toBe(2);
+  });
+
+  it('moving the turn forward leaves turnAdded unchanged', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput()));
+    act(() => result.current.setTurn(5));
+    expect(result.current.state.cards[0]!.turnAdded).toBe(1);
+  });
+
+  it('only re-anchors cards added after the new turn', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTurn(3));
+    act(() => result.current.addCard(addInput({ card: card({ id: 'a', name: 'A' }) })));
+    act(() => result.current.setTurn(5));
+    act(() => result.current.addCard(addInput({ card: card({ id: 'b', name: 'B' }) })));
+
+    act(() => result.current.setTurn(4));
+    expect(result.current.state.cards.map((c) => c.turnAdded)).toEqual([3, 4]);
+  });
+});
+
+describe('useGameState — Saga starting lore (B3)', () => {
+  it('records the chapters already covered by the starting lore count', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(sagaInput({ startingCount: 2 })));
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1, 2]);
+  });
+
+  it('does not re-fire chapter I after a Saga added at lore 1 is corrected to 0 and back to 1', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(sagaInput({ startingCount: 1 })));
+    const id = result.current.state.cards[0]!.instanceId;
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1]);
+
+    act(() => result.current.setCount(id, 0));
+    act(() => result.current.setCount(id, 1));
+    expect(result.current.state.cards[0]!.triggeredChapters).toEqual([1]);
+    const [entry] = result.current.state.log.slice(-1);
+    expect(entry!.detail).not.toContain('triggers Chapter');
+  });
+});
+
+describe('useGameState — commander cast guard (B4)', () => {
+  it('casting a commander already on the battlefield does not increase its tax', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.castCommander('tenthDoctor'));
+    act(() => result.current.castCommander('tenthDoctor'));
+    expect(result.current.state.commanders.tenthDoctor.castCount).toBe(1);
+    expect(result.current.state.commanders.tenthDoctor.onBattlefield).toBe(true);
   });
 });
