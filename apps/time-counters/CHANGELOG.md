@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.3] - 2026-11-24
+
+### Fixed
+
+- **Undo can no longer restore a card after time has moved on.** Advancing the turn (Next Turn), a
+  manual turn edit, or a Time Travel pass now closes the single-level undo window, so undoing a
+  removal can't bring a card back with counters it should already have lost at upkeep.
+- **Casting a commander that is already on the battlefield no longer increases its tax.** Cast is a
+  no-op while the commander is on the battlefield, mirroring the return-to-command-zone guard; send
+  it back to the command zone first, then cast again.
+- **A Saga added above chapter I no longer re-fires the chapters it already passed.** Adding a Saga
+  now records the chapters covered by its starting lore count, so editing the count down and back up
+  can't log the same chapter twice.
+- **Correcting the turn backward re-anchors cards added after it.** Lowering the turn number now
+  clamps each later card's "added on" turn down to the new turn, so the game log can't run out of
+  order.
+
 ## [1.7.2] - 2026-09-25
 
 ### Changed

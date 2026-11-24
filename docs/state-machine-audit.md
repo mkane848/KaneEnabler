@@ -1,8 +1,9 @@
 # Implicit state machines: audit, findings, and fix plan
 
-**Status:** audited, not started. Seven defects found (six reproduced with throwaway tests, one a
-documentation contradiction); ten product decisions recorded below, four of them still need the
-repo owner (§4). Nothing in the code has changed yet.
+**Status:** partially shipped. The time-counters game-state block (B1, B3, B4, B5; decisions D1 and
+D6) has landed as of `1.7.3` — see §5 item 1. Seven defects found (six reproduced with throwaway
+tests, one a documentation contradiction); ten product decisions recorded below, four of them still
+need the repo owner (§4). B2, B6, and B7 remain, along with the §3.2 reading-found items.
 **Audited at:** `9903e07` (line numbers below are as of that commit — re-check before editing).
 **Scope:** `apps/time-counters`, `apps/commander-recommender` (client + server), `packages/profile`.
 
