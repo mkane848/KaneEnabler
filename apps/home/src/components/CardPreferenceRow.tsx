@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSetCardPreference, useRemoveCardPreference } from '@mtg/profile';
 import type { CardPreference } from '@mtg/profile';
 import type { ResolvedCard } from '../api/cards';
@@ -22,8 +22,18 @@ interface Props {
 export function CardPreferenceRow({ userId, preference, card }: Props) {
   const setPreference = useSetCardPreference();
   const removePreference = useRemoveCardPreference();
-  const [note, setNote] = useState(preference.note ?? '');
+  // Show the stored note until the user edits, then keep their draft so a
+  // background refetch can't clobber in-progress typing. Once the stored
+  // value catches up with the draft, drop it — a later external change is
+  // then reflected instead of being masked by a stale draft.
+  const [draft, setDraft] = useState<string | null>(null);
+  const storedNote = preference.note ?? '';
+  const note = draft ?? storedNote;
   const isJank = preference.tags.includes('jank');
+
+  useEffect(() => {
+    if (draft !== null && storedNote === draft) setDraft(null);
+  }, [draft, storedNote]);
 
   function toggleJank() {
     const tags = isJank
@@ -41,14 +51,14 @@ export function CardPreferenceRow({ userId, preference, card }: Props) {
   }
 
   function saveNote() {
-    if (note === (preference.note ?? '')) return;
+    if (draft === null || draft === storedNote) return;
     setPreference.mutate({
       userId,
       input: {
         oracleId: preference.oracleId,
         sentiment: preference.sentiment,
         tags: preference.tags,
-        note: note === '' ? null : note,
+        note: draft === '' ? null : draft,
       },
     });
   }
@@ -78,7 +88,7 @@ export function CardPreferenceRow({ userId, preference, card }: Props) {
           placeholder="Add a note…"
           aria-label={`Note for ${card?.name ?? preference.oracleId}`}
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e) => setDraft(e.target.value)}
           onBlur={saveNote}
         />
 

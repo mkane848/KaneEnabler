@@ -7,6 +7,14 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [1.13.6] — 2026-11-24
+
+### Fixed
+
+- **A late session check can no longer overwrite a newer sign-in.** If the initial `getSession()`
+  call resolved after an auth event, it could replace the current user with a stale one. The stale
+  result is now ignored.
+
 ## [1.13.5] — 2026-11-24
 
 ### Fixed

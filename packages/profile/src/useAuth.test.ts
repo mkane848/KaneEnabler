@@ -182,6 +182,42 @@ describe('useAuth — configured', () => {
     expect(getSession).toHaveBeenCalledTimes(1);
     expect(onAuthStateChange).toHaveBeenCalledTimes(1);
   });
+
+  it('does not let a late getSession overwrite a newer onAuthStateChange user', async () => {
+    const OTHER: typeof USER = { id: 'user-2', email: 'b@c.com' };
+    let resolveSession!: (value: {
+      data: { session: { user: typeof USER } | null };
+    }) => void;
+    getSession.mockReturnValue(
+      new Promise<{ data: { session: { user: typeof USER } | null } }>((resolve) => {
+        resolveSession = resolve;
+      }),
+    );
+    let authCallback: (event: string, session: { user: typeof USER } | null) => void = () => {};
+    onAuthStateChange.mockImplementation((cb) => {
+      authCallback = cb;
+      return { data: { subscription: { unsubscribe } } };
+    });
+
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    expect(result.current.loading).toBe(true);
+
+    act(() => {
+      authCallback('SIGNED_IN', { user: OTHER });
+    });
+    expect(result.current.user).toEqual(OTHER);
+    expect(result.current.loading).toBe(false);
+
+    await act(async () => {
+      resolveSession({ data: { session: { user: USER } } });
+      // Let the getSession .then callback run; the assertions below are that
+      // it does NOT replace the newer user.
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.user).toEqual(OTHER);
+  });
 });
 
 describe('useAuth — outside a provider', () => {

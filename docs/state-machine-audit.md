@@ -1,10 +1,10 @@
 # Implicit state machines: audit, findings, and fix plan
 
-**Status:** all four fix PRs done. B1, B3, B4, B5 (D1, D6) landed in `1.7.3`; D7, D8 and the
-card-catalog retry in the profile PR; B2, B7 (D2, D3) in `1.7.5`; and B6 (D4, D5) plus the
-Spellbook cooldown/dedup/eviction in `1.13.5`. The optional M5/M1 refactor (§5 item 5) and the
-remaining minor §3.2 items (D9(a) leave-as-is, the `useAuth` race, note re-sync) are not part of
-these PRs.
+**Status:** done. All four fix PRs landed: B1, B3, B4, B5 (D1, D6); D7, D8 and the card-catalog
+retry; B2, B7 (D2, D3); and B6 (D4, D5) plus the Spellbook cooldown/dedup/eviction. The optional
+M5 panel-state refactor and M1 game-state reducer (§5 item 5) are done, along with the remaining
+minor §3.2 items (note re-sync; the `useAuth` race). D9 (multi-tab sync) stays deliberately
+leave-as-is per the decision above.
 **Audited at:** `9903e07` (line numbers below are as of that commit — re-check before editing).
 **Scope:** `apps/time-counters`, `apps/commander-recommender` (client + server), `packages/profile`.
 
