@@ -7,6 +7,25 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, where MAJOR is a breaking change to how the app is used,
 MINOR is a new capability, and PATCH is a fix with no new capability.
 
+## [1.13.6] — 2026-11-24
+
+### Fixed
+
+- **A late session check can no longer overwrite a newer sign-in.** If the initial `getSession()`
+  call resolved after an auth event, it could replace the current user with a stale one. The stale
+  result is now ignored.
+
+## [1.13.5] — 2026-11-24
+
+### Fixed
+
+- **Combo lookup is click-only again after the list changes.** A "Find combos" click now consents to
+  the commander unit *and* the submitted list it was clicked for; changing the list requires a fresh
+  click instead of silently querying Spellbook for the new deck (even when its result is cached).
+- **Commander Spellbook traffic backs off when told to.** A 429 now starts a server-side cooldown
+  until its `Retry-After` passes (60s if none is sent), identical concurrent lookups share one
+  in-flight request, and expired cache entries are pruned. No automatic retries.
+
 ## [1.13.4] — 2026-11-24
 
 ### Fixed

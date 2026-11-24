@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.3] - 2026-11-24
+
+### Fixed
+
+- **A saved note re-syncs when it changes elsewhere.** The profile card row's note field
+  initialised once and ignored later server updates, so a note edited in another tab or refetched
+  stayed stale until the row remounted. It now follows the stored value unless you are actively
+  typing, in which case your draft is kept.
+- **A late session check can no longer overwrite a newer sign-in.** If the initial `getSession()`
+  call resolved after an auth event, it could replace the current user with a stale one. The stale
+  result is now ignored.
+
 ## [0.3.2] - 2026-11-24
 
 ### Fixed

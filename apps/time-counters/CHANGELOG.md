@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.6] - 2026-11-24
+
+### Fixed
+
+- **A late session check can no longer overwrite a newer sign-in.** If the initial `getSession()`
+  call resolved after an auth event, it could replace the current user with a stale one. The stale
+  result is now ignored.
+
 ## [1.7.5] - 2026-11-24
 
 ### Fixed

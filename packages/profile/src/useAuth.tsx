@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './client';
 
@@ -40,6 +40,10 @@ const AuthContext = createContext<AuthState>(NOT_CONFIGURED_STATE);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(supabase != null);
+  // An auth event is authoritative for the current session. If one lands
+  // before the initial getSession resolves, the stale result must not
+  // overwrite it (docs/state-machine-audit.md §3.2).
+  const authEventSeen = useRef(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -48,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data }) => {
-        if (cancelled) return;
+        if (cancelled || authEventSeen.current) return;
         setUser(data.session?.user ?? null);
         setLoading(false);
       })
@@ -58,14 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // missing .catch here would leave loading stuck true forever — every
         // consumer (AccountMenu, the /profile route) gates its render on it,
         // so this degrades to "no session" instead of an eternal spinner.
-        if (cancelled) return;
+        if (cancelled || authEventSeen.current) return;
         setLoading(false);
       });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      authEventSeen.current = true;
       setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => {

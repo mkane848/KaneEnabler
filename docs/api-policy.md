@@ -35,14 +35,15 @@ download.
 The politeness measures here are the reason calling them is acceptable at all. From
 `apps/commander-recommender/server/src/services/spellbook.ts:1-17`:
 
-| Constraint | Detail                                                                                              |
-| ---------- | --------------------------------------------------------------------------------------------------- |
-| Trigger    | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation. |
-| Endpoint   | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database.         |
-| Caching    | 1 hour, keyed on commander names + card set. Repeat clicks cost them nothing.                       |
-| 429        | Surface their `Retry-After` to the user and **stop**. No automatic retry.                           |
-| Bounds     | `MAX_CARDS = 250`; 12s request timeout.                                                             |
-| Identity   | Identifying `User-Agent` naming the app and linking the repo.                                       |
+| Constraint | Detail                                                                                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trigger    | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation.                                                   |
+| Endpoint   | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database.                                                           |
+| Caching    | 1 hour, keyed on commander names + card set. Repeat clicks cost them nothing; expired entries are pruned on write.                                     |
+| 429        | Surface their `Retry-After` and **stop** — no automatic retry, and the server holds a cooldown until that window passes (60s if the header is missing). |
+| Dedup      | Identical concurrent lookups share one in-flight request instead of racing two.                                                                        |
+| Bounds     | `MAX_CARDS = 250`; 12s request timeout.                                                                                                               |
+| Identity   | Identifying `User-Agent` naming the app and linking the repo.                                                                                         |
 
 **Favorited combos must render from a stored snapshot, never a live call.** See
 [`handoff.md`](./handoff.md) Phase 7.
@@ -103,3 +104,8 @@ These belong in CI so the policy survives future refactors:
   `useComboPreferences`' stored `snapshot` alone, with zero network calls. There's no dedicated
   favourites-browsing page yet (`ComboFinder.tsx` only fetches live results after an explicit
   click), so this is the one component that reads a stored combo preference back today.
+- **Landed:** `ComboFinder.test.tsx` (`client/src/components/`) asserts no combo lookup happens until
+  the button is clicked, and that changing the submitted list requires a fresh click rather than
+  reusing the previous consent.
+- **Landed:** `spellbook.test.ts` (`server/src/services/`) asserts a 429 holds a server-side cooldown
+  (no further calls until it expires) and that identical concurrent lookups share one request.
