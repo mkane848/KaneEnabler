@@ -282,6 +282,18 @@ they stay is now as much of the deliverable as the deletion.
 
 ## 6. Easy optimization wins, ranked
 
+**Status (2026-11-25): W1-W8 have all landed; W9 is the only one still open.** Verified in code,
+not just claimed: W1's `AuthProvider` wraps all three apps; W2's `usePreferencesIndex` hoists the
+per-row lookups; W3's writes batch via `.in('oracle_id', ...)`; W4's `useResolvedCards` sets a
+1-hour `staleTime`/`gcTime`; W5's `@mtg/api-client` owns the single wake-retry helper; W6's
+`synergy.ts` memoizes the collection profile by content; W7's hygiene sweep is done (the stale
+`TODO.md` retirement item is checked, `apps/home/render.yaml` deleted in `cf2d0e5`, the fossil
+leftovers pruned, and the "where truth lives" pointer now lives in the root `AGENTS.md`); W8's
+Spellbook User-Agent reads a build-generated `APP_VERSION` instead of a hand-synced literal.
+**W9 (shared/persistent Spellbook cache) remains open** — it changes what gets persisted, so it
+needs owner sign-off per `api-policy.md` before implementation. F8 / open question 4 (TS port of
+`@mtg/scryfall` + `@mtg/card-model` vs blessing the `.js`) is likewise still undecided.
+
 Roughly effort-ascending; W1-W5 are each well under a day.
 
 1. **W1 - Shared `AuthProvider` in `@mtg/profile`.** One `getSession` + one subscription at the

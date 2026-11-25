@@ -92,19 +92,19 @@ working in that app; this file covers only what's shared:
 
 ## Documents
 
-| Document                                                                         | What it's for                                                                                     |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [`docs/handoff.md`](./docs/handoff.md)                                           | The phase plan: target architecture, all seven phases, verification steps                         |
-| [`docs/api-policy.md`](./docs/api-policy.md)                                     | **Hard rule.** External API limits and etiquette                                                  |
-| [`docs/commander-recommender.md`](./docs/commander-recommender.md)               | Commander recommender's own handoff doc and file map                                              |
-| [`docs/rules-audit.md`](./docs/rules-audit.md)                                   | Every Magic rules defect found in the incoming code, with file:line citations                     |
-| [`docs/archetypes.md`](./docs/archetypes.md)                                     | Signal vocabulary: roles, archetypes, qualifiers, and the decks behind them                       |
-| [`docs/signals-rework.md`](./docs/signals-rework.md)                             | Signal engine rework plan (shipped)                                                               |
-| [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md)           | Per-card recommendation coverage plan (shipped)                                                   |
-| [`docs/color-filter-semantics.md`](./docs/color-filter-semantics.md)             | Colour-pip subset semantics brief (approved, not started)                                         |
-| [`docs/control-primitives-migration.md`](./docs/control-primitives-migration.md) | Moving bespoke controls onto `@mtg/ui` (shipped)                                                  |
-| [`docs/state-machine-audit.md`](./docs/state-machine-audit.md)                   | State-machine audit: confirmed defects, product decisions, phased fix plan (audited, not started) |
-| [`TODO.md`](./TODO.md)                                                           | Remaining manual and dashboard-only tasks                                                         |
+| Document                                                                         | What it's for                                                                                                                 |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [`docs/handoff.md`](./docs/handoff.md)                                           | The phase plan: target architecture, all seven phases, verification steps                                                     |
+| [`docs/api-policy.md`](./docs/api-policy.md)                                     | **Hard rule.** External API limits and etiquette                                                                              |
+| [`docs/commander-recommender.md`](./docs/commander-recommender.md)               | Commander recommender's own handoff doc and file map                                                                          |
+| [`docs/rules-audit.md`](./docs/rules-audit.md)                                   | Every Magic rules defect found in the incoming code, with file:line citations                                                 |
+| [`docs/archetypes.md`](./docs/archetypes.md)                                     | Signal vocabulary: roles, archetypes, qualifiers, and the decks behind them                                                   |
+| [`docs/signals-rework.md`](./docs/signals-rework.md)                             | Signal engine rework plan (shipped)                                                                                           |
+| [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md)           | Per-card recommendation coverage plan (shipped)                                                                               |
+| [`docs/color-filter-semantics.md`](./docs/color-filter-semantics.md)             | Colour-pip subset semantics brief (shipped)                                                                                   |
+| [`docs/control-primitives-migration.md`](./docs/control-primitives-migration.md) | Moving bespoke controls onto `@mtg/ui` (shipped)                                                                              |
+| [`docs/state-machine-audit.md`](./docs/state-machine-audit.md)                   | State-machine audit: confirmed defects, product decisions, phased fix plan (shipped; D9 multi-tab sync deferred to issue #92) |
+| [`TODO.md`](./TODO.md)                                                           | Remaining manual and dashboard-only tasks                                                                                     |
 
 **Where truth lives:** [`docs/handoff.md`](./docs/handoff.md) is the phase plan and the record of
 what landed; [`docs/api-policy.md`](./docs/api-policy.md) is the hard rule for external calls; the
