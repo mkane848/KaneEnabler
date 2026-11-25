@@ -40,9 +40,6 @@ scope difference from what the phase originally proposed.
 
 What's genuinely still open, gathered here so a fresh session doesn't have to re-scan every phase:
 
-- **Phase 3a (CR ingestion) is blocked, not done** — this sandbox's egress proxy blocks all three
-  source domains (re-confirmed 2026-08-18). Needs to run locally or in GitHub Actions; see that
-  section for why the ingestion script itself was deliberately not written blind.
 - **The Spellbook cache is per-process, in-memory** — fine for one user, not once accounts exist.
   See `api-policy.md`'s "known violations," item 2.
 
@@ -73,7 +70,8 @@ the 100 cards include the commander, matched by oracle_id so a DFC's front face 
 gained a matching "Check a finished deck" panel (`DeckValidityPanel.tsx`, collapsed by default).
 Verified end-to-end against the real corpus fixtures in `deckValidity.integration.test.ts`, which
 the weekly fetch-check workflow now runs as its own explicit step (it runs integration tests by
-filename, so a new one is invisible to CI until listed).
+filename, so a new one is invisible to CI until listed). **Phase 3a (CR ingestion) also landed
+2026-11-25** — see its section above; it was the last item in this open list.
 
 ## Decisions on record
 
@@ -261,10 +259,19 @@ Two layers, deliberately separate.
 
 ### 3a. Vendored Comprehensive Rules snapshot
 
-`packages/rules/data/cr-<version>.json` — `{ ruleNumber, text, examples[], parent }` plus the
-glossary, committed to the repo.
+**Shipped 2026-11-25.** `packages/rules/data/cr-<version>.json` — `{ ruleNumber, text, examples[],
+parent }` plus the glossary and section titles, committed to the repo. Ingestion is
+`packages/rules/scripts/ingest-cr.mjs` (`pnpm --filter @mtg/rules run ingest:cr`), parsing Wizards'
+own `.txt` and cross-checking the Academy Ruins API (AGPL — verification only, nothing vendored
+from it): rule set and rule text must match exactly, examples directionally, glossary/toc as
+warnings. The first snapshot (20261106) matched all 3,183 entries and every rule text; the three
+example differences found were Academy Ruins dropping trailing examples, not parse errors.
+`cr-refresh.yml` checks monthly and opens a PR on a new revision, gated by the snapshot integrity
+tests (every CR number cited in `@mtg/rules` must resolve). The block below was sandbox-specific:
+all three hosts respond normally from the owner's machine (measured 2026-11-25), which is where
+the ingestion was written and verified against real output — the discipline the block demanded.
 
-> **Network constraint:** the remote sandbox can reach `api.scryfall.com` only.
+> **Network constraint (historical — superseded by the shipped ingestion above):** the remote sandbox can reach `api.scryfall.com` only.
 > `media.wizards.com`, `mtgjson.com` and `api.academyruins.com` are blocked by the egress proxy.
 > The ingestion script must therefore run **where egress exists** — locally, or in GitHub Actions —
 > and commit its output. That is the right design regardless: the CR changes roughly 4× a year, and

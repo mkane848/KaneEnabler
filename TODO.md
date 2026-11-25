@@ -36,7 +36,9 @@ and can't reach, measured rather than assumed:
       These two are the only remaining blockers for it. **Measured 2026-11-25 from the owner's
       local Windows machine: all three "blocked" hosts respond normally** (400/404/404 at their
       roots — real server responses, not egress blocks), so the block is sandbox-specific and CR
-      ingestion can run locally without any allowlist change.
+      ingestion can run locally without any allowlist change. **Phase 3a shipped 2026-11-25**
+      (`packages/rules/scripts/ingest-cr.mjs` + `cr-refresh.yml`), so these allowlist items now
+      only matter if a sandbox session itself needs to re-ingest the CR.
 - [ ] Optional, cosmetic: allowlist `cards.scryfall.io` so a session's screenshots show real card
       art instead of empty card frames.
 
