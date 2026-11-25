@@ -33,7 +33,10 @@ and can't reach, measured rather than assumed:
 
 - [ ] Allowlist `api.academyruins.com` (and `media.wizards.com`) if you want CR ingestion
       (`docs/handoff.md` Phase 3a) to be runnable from a session rather than locally or in Actions.
-      These two are the only remaining blockers for it.
+      These two are the only remaining blockers for it. **Measured 2026-11-25 from the owner's
+      local Windows machine: all three "blocked" hosts respond normally** (400/404/404 at their
+      roots — real server responses, not egress blocks), so the block is sandbox-specific and CR
+      ingestion can run locally without any allowlist change.
 - [ ] Optional, cosmetic: allowlist `cards.scryfall.io` so a session's screenshots show real card
       art instead of empty card frames.
 
@@ -65,6 +68,8 @@ proxy.
 
 ## Repo housekeeping
 
-- [ ] Confirm the original `HardlyKnowHer` and `DrWhoCompanionEDH` GitHub repos got archived
-      read-only with a README pointing here, per `docs/handoff.md` Phase 0's plan — they're outside
-      this session's repo scope so it was never actually confirmed as done.
+- [x] Confirm the original `HardlyKnowHer` and `DrWhoCompanionEDH` GitHub repos got archived
+      read-only with a README pointing here, per `docs/handoff.md` Phase 0's plan — **done
+      2026-11-25**: both were still live, so each got an archive notice prepended to its README
+      (pointing at `apps/commander-recommender` / `apps/time-counters` here) and was then archived
+      via `gh repo archive`; `isArchived: true` confirmed for both.
