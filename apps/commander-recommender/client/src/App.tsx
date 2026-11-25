@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { NavBar, SiteFooter, type NavBarLink } from '@mtg/ui';
 import { AccountMenu } from '@mtg/profile';
 import { CardListUpload } from './components/CardListUpload';
+import { DeckValidityPanel } from './components/DeckValidityPanel';
 import { RecommendationResults } from './components/RecommendationResults';
 import { AboutDialog } from './components/AboutDialog';
 import { wakeServer } from './api/client';
@@ -47,6 +48,7 @@ function App() {
         </header>
 
         <CardListUpload />
+        <DeckValidityPanel />
         <RecommendationResults />
       </main>
 

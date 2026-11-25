@@ -47,5 +47,11 @@ jobs:
       - name: commander-recommender — /api/cards integration test
         run: pnpm --filter mtg-recommender-server exec vitest run src/routes/cards.integration.test.ts
 
+      # Same story again, for the deck-legality endpoint: size, singleton,
+      # identity, pairing and ban-list against the real corpus decks. See
+      # deckValidity.integration.test.ts.
+      - name: commander-recommender — /api/deck-validity integration test
+        run: pnpm --filter mtg-recommender-server exec vitest run src/routes/deckValidity.integration.test.ts
+
       - name: time-counters — real Scryfall fetch
         run: pnpm --filter mtg-time-tracker run fetch-cards

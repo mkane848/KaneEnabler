@@ -235,6 +235,44 @@ export interface RecommendResponse {
   alsoPlayable: AlsoPlayableSuggestionDTO[];
 }
 
+/**
+ * The verdict on a finished deck, from POST /api/deck-validity.
+ *
+ * The opposite posture to /api/recommend: that endpoint drops extra copies
+ * and scores what's left, this one reports every rule the pasted deck
+ * breaks. Mirrors server/src/services/deckValidation.ts's result shape.
+ */
+export interface DeckValidityResponse {
+  isValid: boolean;
+  commander: {
+    names: string[];
+    colorIdentity: string[];
+    /** Every named card is itself a legal commander (903.3). */
+    eligible: boolean;
+    /** The named set is a real commander unit — solo, or a legal pair (702.124). */
+    pairingLegal: boolean;
+    /** Named commanders the pasted list doesn't contain (903.5a). */
+    missingFromList: string[];
+  };
+  deckSize: {
+    /** Every card pasted, resolved or not — banned/unrecognized cards still fill slots. */
+    total: number;
+    expected: number;
+    isValid: boolean;
+  };
+  colorIdentity: {
+    combined: string[];
+    violations: { name: string; color_identity: string[]; quantity: number }[];
+  };
+  singleton: {
+    violations: { name: string; quantity: number; limit: number }[];
+  };
+  legality: {
+    banned: string[];
+    notFound: string[];
+  };
+}
+
 /** Server-side facts about the deployment itself, from /api/meta. */
 export interface ServerMeta {
   /** Scryfall's publish time for the bulk snapshot the card database was

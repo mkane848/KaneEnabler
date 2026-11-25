@@ -180,7 +180,8 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
                                    whatever list is pasted in next would be surprising;
                                    a durable preference should outlive the tab)
     api/
-      client.ts             fetchRecommendations/fetchCombos, wakeServer, cold-start retry
+      client.ts             fetchRecommendations/fetchCombos/fetchDeckValidity, wakeServer,
+                             cold-start retry
       queries.ts             TanStack Query hooks wrapping the above
     lib/
       mtg.ts                 WUBRG ordering, color-identity naming (Dimir, Golgari, ...)
@@ -199,6 +200,10 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
                              cards per unit, not a single flattened card
     components/
       CardListUpload.tsx        paste or upload .txt, submit; collapses after a load succeeds
+      DeckValidityPanel.tsx     the other action on the same list: "is this finished deck legal?"
+                                 Collapsed by default; names 1-2 commanders, checks the submitted
+                                 snapshot against POST /api/deck-validity, and renders a per-rule
+                                 pass/fail verdict (size, singleton, identity, pairing, ban-list)
       RecommendationResults.tsx  filter bar + sort + export controls + virtualized suggestion
                                   grid (@tanstack/react-virtual — see the comment above
                                   useGridColumns for why it's window-scrolled and grouped into
@@ -271,7 +276,7 @@ client/                Vite + React + TS + Zustand + TanStack Query/Table
 server/                Express + TS + better-sqlite3
   src/
     app.ts                  Express app construction (CORS via optional CLIENT_ORIGIN env var,
-                             compression, JSON parsing, the three routers, errorHandler) — no
+                             compression, JSON parsing, the routers, errorHandler) — no
                              app.listen(), so recommend.integration.test.ts can import it directly
                              with supertest
     index.ts                imports app from app.ts; PORT + app.listen() only
@@ -294,6 +299,13 @@ server/                Express + TS + better-sqlite3
                                would make both of those lie.
       combos.ts                POST /api/combos — proxies to Commander Spellbook, on request only;
                                 takes `commanderNames: string[]` (1-2) for a Partner unit
+      deckValidity.ts          POST /api/deck-validity — validates a finished deck (size incl. the
+                                 commander, singleton, identity, pairing, ban-list) against the
+                                 local database; no external API. Pure rules in services/
+                                 deckValidation.ts
+      deckValidity.integration.test.ts  real corpus decks through the route (supertest), same
+                                       skipIf(!isSeeded) convention as recommend's; run by the
+                                       weekly scryfall-fetch-check.yml workflow's own step
       meta.ts                   GET /api/meta — how current the card data is (reads
                                  importedSnapshot.ts); deliberately separate from /api/health,
                                  which stays a trivial liveness probe
@@ -318,6 +330,12 @@ server/                Express + TS + better-sqlite3
                                 (CR 205.3m) moved out to `@mtg/rules`
       legality.ts               `partitionSubmittedCards` (banned/not-found/submitted split for a
                                  decklist); `isCommanderLegal` itself is `@mtg/rules`
+      deckValidation.ts         pure `validateDeck` behind POST /api/deck-validity: 903.5a size
+                                 (banned/unrecognized cards still fill slots) + commander-in-list,
+                                 903.5b singleton via `@mtg/rules`' `singletonLimit`, 903.4 identity,
+                                 702.124 pairing through the same `buildCommanderUnits` path
+                                 recommend uses. Takes a resolved name Map, never touches the DB,
+                                 so every rule is seedless-testable
       synergy.ts               profile-building + commander scoring (the core logic), operating on
                                 `CommanderUnit`s (1-2 cards), not single cards. Per-archetype
                                 weights are 16–22 (kindred 15, keyword 8) — see signals.ts, not a

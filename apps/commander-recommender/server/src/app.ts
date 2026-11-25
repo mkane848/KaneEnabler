@@ -5,6 +5,7 @@ import recommendRouter from './routes/recommend';
 import combosRouter from './routes/combos';
 import metaRouter from './routes/meta';
 import cardsRouter from './routes/cards';
+import deckValidityRouter from './routes/deckValidity';
 import { errorHandler } from './errorHandler';
 
 // Split from index.ts so tests can import the app without the `app.listen()`
@@ -33,6 +34,7 @@ app.use('/api', recommendRouter);
 app.use('/api', combosRouter);
 app.use('/api', metaRouter);
 app.use('/api', cardsRouter);
+app.use('/api', deckValidityRouter);
 
 // Error middleware must be registered last — Express only routes a request
 // here once every route/middleware above it has run (or thrown).
