@@ -35,15 +35,15 @@ download.
 The politeness measures here are the reason calling them is acceptable at all. From
 `apps/commander-recommender/server/src/services/spellbook.ts:1-17`:
 
-| Constraint | Detail                                                                                                                                                |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Trigger    | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation.                                                   |
-| Endpoint   | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database.                                                           |
-| Caching    | 1 hour, keyed on commander names + card set. Repeat clicks cost them nothing; expired entries are pruned on write.                                     |
+| Constraint | Detail                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trigger    | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation.                                                     |
+| Endpoint   | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database.                                                             |
+| Caching    | 1 hour, keyed on commander names + card set. Repeat clicks cost them nothing; expired entries are pruned on write.                                      |
 | 429        | Surface their `Retry-After` and **stop** — no automatic retry, and the server holds a cooldown until that window passes (60s if the header is missing). |
-| Dedup      | Identical concurrent lookups share one in-flight request instead of racing two.                                                                        |
-| Bounds     | `MAX_CARDS = 250`; 12s request timeout.                                                                                                               |
-| Identity   | Identifying `User-Agent` naming the app and linking the repo.                                                                                         |
+| Dedup      | Identical concurrent lookups share one in-flight request instead of racing two.                                                                         |
+| Bounds     | `MAX_CARDS = 250`; 12s request timeout.                                                                                                                 |
+| Identity   | Identifying `User-Agent` naming the app and linking the repo.                                                                                           |
 
 **Favorited combos must render from a stored snapshot, never a live call.** See
 [`handoff.md`](./handoff.md) Phase 7.
@@ -58,8 +58,18 @@ rate-respecting. Never bulk, never scraped.
 
 ### Wizards of the Coast / Academy Ruins (Comprehensive Rules)
 
-The CR is ingested as a **vendored snapshot** committed to the repo, refreshed at most once per CR
-release (roughly 4× a year) via a scheduled workflow that opens a PR. Runtime never fetches rules.
+The CR is ingested as a **vendored snapshot** committed to the repo
+(`packages/rules/data/cr-<version>.json`), refreshed at most once per CR release (roughly 4× a
+year) via a scheduled workflow that opens a PR. Runtime never fetches rules. **Shipped 2026-11-25**
+(Phase 3a); sources, cadence and trigger confirmed with the repo owner that day.
+
+| Constraint  | Detail                                                                                                                                                                                                                                                                                                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trigger     | The monthly `cr-refresh.yml` check (1st, 14:00 UTC) plus manual `workflow_dispatch` / local `pnpm --filter @mtg/rules run ingest:cr`. Never at runtime, never per build.                                                                                                                                                                                       |
+| Discovery   | One GET of `magic.wizards.com/en/rules` per check, to read the current official `.txt` link.                                                                                                                                                                                                                                                                   |
+| Primary     | One GET of the `media.wizards.com/…/MagicCompRules <YYYYMMDD>.txt` per refresh — Wizards' own text is the source of record.                                                                                                                                                                                                                                    |
+| Cross-check | `api.academyruins.com` (`/cr`, `/cr/glossary`, `/cr/toc`) at ingestion only. AGPL-3.0: verification source, **none of its data is vendored**. Rule set and rule text must match exactly; examples are checked directionally and glossary/toc as warnings, because their own parse has known artifacts (dropped trailing examples, a "Credits" glossary entry). |
+| Volume      | ~4 refreshes/year × 4 requests; the monthly check is 1 request when nothing changed.                                                                                                                                                                                                                                                                           |
 
 Distribution follows the [WotC Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy):
 free, carrying the unofficial-content notice, no WotC logos or trademarks. Both apps already ship
@@ -94,7 +104,7 @@ These belong in CI so the policy survives future refactors:
 - **Landed:** `.github/workflows/scryfall-fetch-check.yml` runs the real Scryfall fetch (not just
   the import against a file already on disk) weekly, separate from the main CI workflow so a normal
   PR generates no extra Scryfall traffic — confirmed with the repo owner before implementation, per
-  this doc's own rule, including the cadence. Catches a bad *fetch* (a changed bulk-data shape, a
+  this doc's own rule, including the cadence. Catches a bad _fetch_ (a changed bulk-data shape, a
   moved field) via each script's own floor check before a real deploy hits it. The same workflow now
   also runs `recommend.integration.test.ts` (`server/src/routes/`) right after the fetch, exercising
   the whole `/api/recommend` pipeline against real freshly-imported data — that test `skipIf`s itself

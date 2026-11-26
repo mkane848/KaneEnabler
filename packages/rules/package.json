@@ -13,6 +13,7 @@
     "typecheck": "tsc",
     "build": "tsc -p tsconfig.build.json && node -e \"require('node:fs').copyFileSync('cjs-dist-package.json','dist/package.json')\"",
     "lint": "eslint .",
+    "ingest:cr": "node scripts/ingest-cr.mjs",
     "test": "vitest run --coverage",
     "test:watch": "vitest"
   },

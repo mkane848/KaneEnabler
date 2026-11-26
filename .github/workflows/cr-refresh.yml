@@ -1,0 +1,63 @@
+name: CR refresh
+
+# The Comprehensive Rules ship roughly 4x a year. This checks monthly whether
+# Wizards has published a newer revision than the vendored snapshot in
+# packages/rules/data/, and opens a PR with the re-ingested snapshot when so —
+# a rules update becomes a review, not a chore (docs/handoff.md Phase 3a).
+# Sources and cadence confirmed with the repo owner 2026-11-25; see
+# docs/api-policy.md's Comprehensive Rules section before changing them.
+on:
+  schedule:
+    - cron: '0 14 1 * *' # 1st of the month, 14:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    name: Check for a newer Comprehensive Rules revision
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Compare the official revision against the vendored snapshot
+        id: check
+        run: |
+          echo "result=$(node packages/rules/scripts/ingest-cr.mjs --check-only)" >> "$GITHUB_OUTPUT"
+
+      - name: Ingest and cross-check the new revision
+        if: fromJSON(steps.check.outputs.result).refreshNeeded
+        run: node packages/rules/scripts/ingest-cr.mjs
+
+      # The snapshot's own integrity tests gate the PR: every CR number cited
+      # by @mtg/rules must still resolve in the new revision.
+      - name: Snapshot integrity tests
+        if: fromJSON(steps.check.outputs.result).refreshNeeded
+        run: pnpm --filter @mtg/rules exec vitest run scripts/cr-snapshot.test.mjs
+
+      - name: Open a PR with the new snapshot
+        if: fromJSON(steps.check.outputs.result).refreshNeeded
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -e "console.log(JSON.parse(process.argv[1]).current)" '${{ steps.check.outputs.result }}')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "cr-refresh-$version"
+          git add packages/rules/data
+          git commit -m "data: refresh vendored Comprehensive Rules to $version"
+          git push -u origin "cr-refresh-$version"
+          gh pr create \
+            --title "data: refresh vendored Comprehensive Rules to $version" \
+            --body "The monthly check found a newer official CR revision. Ingested from Wizards' own .txt and cross-checked against the Academy Ruins API: rule set and rule text match exactly (see packages/rules/scripts/ingest-cr.mjs for what is gated vs warned). Review the diff for changes to rules the primitives cite — the snapshot integrity tests already passed."
