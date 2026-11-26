@@ -11,9 +11,16 @@
  * mapping turns out to differ, this is the file to correct first.
  */
 import assert from 'node:assert';
+import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import os from 'node:os';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, it } from 'vitest';
+
+// The cache is a SQLite file now; give this suite its own throwaway one so it
+// neither reads nor writes the dev server's cache.
+const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spellbook-adapter-test-'));
 
 interface MockState {
   requests: { body: unknown; userAgent?: string }[];
@@ -52,6 +59,7 @@ describe('spellbook adapter', () => {
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     const { port } = server.address() as AddressInfo;
     process.env.SPELLBOOK_ENDPOINT = `http://127.0.0.1:${port}/find-my-combos`;
+    process.env.SPELLBOOK_CACHE_DB = path.join(cacheDir, 'cache.sqlite');
 
     // The .js extension is required for a dynamic ESM import under
     // moduleResolution node16; Vite/Vitest resolves it to the .ts source the
@@ -64,6 +72,9 @@ describe('spellbook adapter', () => {
 
   afterAll(async () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
+    const cacheMod = await import('./spellbookCache.js');
+    cacheMod.closeSpellbookCacheDb();
+    fs.rmSync(cacheDir, { recursive: true, force: true });
   });
 
   it('normalises nested {card:{name}} / {feature:{name}} shapes', async () => {

@@ -40,9 +40,6 @@ scope difference from what the phase originally proposed.
 
 What's genuinely still open, gathered here so a fresh session doesn't have to re-scan every phase:
 
-- **The Spellbook cache is per-process, in-memory** — fine for one user, not once accounts exist.
-  See `api-policy.md`'s "known violations," item 2.
-
 **Landed since the list above was last trimmed (2026-08-18):** `@mtg/profile`'s Supabase-backed
 hooks (`useAuth`, `useCardPreferences`/`useSetCardPreference`/`useRemoveCardPreference`, the combo
 equivalents, `rows.ts`, `client.ts`) are now tested — 95%/92%/100%/100% statements/branches/
@@ -71,7 +68,10 @@ gained a matching "Check a finished deck" panel (`DeckValidityPanel.tsx`, collap
 Verified end-to-end against the real corpus fixtures in `deckValidity.integration.test.ts`, which
 the weekly fetch-check workflow now runs as its own explicit step (it runs integration tests by
 filename, so a new one is invisible to CI until listed). **Phase 3a (CR ingestion) also landed
-2026-11-25** — see its section above; it was the last item in this open list.
+2026-11-25** — see its section above; it was the last item in this open list. **The Spellbook
+cache moved to SQLite the same day** (owner sign-off per api-policy): `spellbookCache.ts` keeps
+answers and the 429 cooldown across process restarts; see api-policy's known-violations item 2
+for why an external store was deliberately not chosen.
 
 ## Decisions on record
 

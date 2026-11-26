@@ -35,15 +35,15 @@ download.
 The politeness measures here are the reason calling them is acceptable at all. From
 `apps/commander-recommender/server/src/services/spellbook.ts:1-17`:
 
-| Constraint | Detail                                                                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Trigger    | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation.                                                     |
-| Endpoint   | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database.                                                             |
-| Caching    | 1 hour, keyed on commander names + card set. Repeat clicks cost them nothing; expired entries are pruned on write.                                      |
-| 429        | Surface their `Retry-After` and **stop** — no automatic retry, and the server holds a cooldown until that window passes (60s if the header is missing). |
-| Dedup      | Identical concurrent lookups share one in-flight request instead of racing two.                                                                         |
-| Bounds     | `MAX_CARDS = 250`; 12s request timeout.                                                                                                                 |
-| Identity   | Identifying `User-Agent` naming the app and linking the repo.                                                                                           |
+| Constraint | Detail                                                                                                                                                                                                                            |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trigger    | **Click-only.** Never on page load, never on a timer, never as part of generating a recommendation.                                                                                                                               |
+| Endpoint   | `find-my-combos` — the endpoint built for this exact question. Do not crawl their database.                                                                                                                                       |
+| Caching    | 1 hour, keyed on commander names + card set, in a SQLite file (`server/data/spellbook-cache.sqlite`) so answers and the cooldown survive a process restart. Repeat clicks cost them nothing; expired entries are pruned on write. |
+| 429        | Surface their `Retry-After` and **stop** — no automatic retry, and the server holds a cooldown until that window passes (60s if the header is missing).                                                                           |
+| Dedup      | Identical concurrent lookups share one in-flight request instead of racing two.                                                                                                                                                   |
+| Bounds     | `MAX_CARDS = 250`; 12s request timeout.                                                                                                                                                                                           |
+| Identity   | Identifying `User-Agent` naming the app and linking the repo.                                                                                                                                                                     |
 
 **Favorited combos must render from a stored snapshot, never a live call.** See
 [`handoff.md`](./handoff.md) Phase 7.
@@ -92,8 +92,13 @@ cached client-side via TanStack Query rather than re-queried per navigation.
    until something resolves that constraint — it already has once, re-synced to 1.8.0 by hand at
    that release; the same manual step is needed at every one after, until it is.
 
-2. **Per-process in-memory Spellbook cache.** Fine for a single user. Once accounts exist, N users
-   asking the same question costs them N calls instead of one. Move to a shared, persistent cache.
+2. ~~**Per-process in-memory Spellbook cache.**~~ **Fixed 2026-11-25 (owner sign-off).** The cache
+   and the 429 cooldown live in `server/data/spellbook-cache.sqlite` (`spellbookCache.ts`), so a
+   process restart forgets neither. Deliberately not an external store: Render's free tier has an
+   ephemeral filesystem, so a redeploy starts the cache empty — bounded by the 1-hour TTL — and a
+   Supabase/Key Value store would add credentials and a failure mode for a cache whose job is
+   politeness. (The audit's "N users = N calls" framing was partly off: one process already shared
+   the Map across users; the real loss was cache-on-restart.)
 
 ## Regression guards
 
