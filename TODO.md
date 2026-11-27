@@ -30,6 +30,11 @@ and can't reach, measured rather than assumed:
 | `cards.scryfall.io`                | **Blocked** | 403 at the egress gateway. Card _images_ — so browser screenshots render card frames with no art. Cosmetic only; nothing in the build needs it |
 | `api.academyruins.com`             | **Blocked** | Still the blocker for Phase 3a CR ingestion                                                                                                    |
 | `media.wizards.com`                | **Blocked** |                                                                                                                                                |
+| `raw.githubusercontent.com`        | OK          | Read the TCGdex and Pokémon TCG data READMEs (2026-11-27)                                                                                      |
+| GitHub `git clone` (public)        | OK          | Served by the session's git proxy; `pokemon-decks`' `build-snapshot` clones TCGdex this way                                                    |
+| `www.pokemon.com`                  | OK          | Allowlisted 2026-11-27 for Pokémon rule text; rejects `HEAD`, so test with `GET`                                                               |
+| `gymleaderchallenge.com`           | OK          | Allowlisted 2026-11-27 for GLC rules and ban list                                                                                              |
+| `tcgdex.dev` / `api.tcgdex.net`    | OK          | Allowlisted 2026-11-27; docs only — the app never calls the API (docs/api-policy.md)                                                           |
 
 - [ ] Allowlist `api.academyruins.com` (and `media.wizards.com`) if you want CR ingestion
       (`docs/handoff.md` Phase 3a) to be runnable from a session rather than locally or in Actions.

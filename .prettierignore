@@ -8,3 +8,4 @@ pnpm-lock.yaml
 apps/commander-recommender/server/data
 apps/time-counters/public/cards.json
 packages/rules/data
+apps/pokemon-decks/public/data

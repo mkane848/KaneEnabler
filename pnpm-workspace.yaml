@@ -2,6 +2,7 @@ packages:
   - 'apps/commander-recommender/client'
   - 'apps/commander-recommender/server'
   - 'apps/home'
+  - 'apps/pokemon-decks'
   - 'apps/time-counters'
   - 'packages/*'
 allowBuilds:

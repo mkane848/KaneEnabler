@@ -1,0 +1,25 @@
+{
+  "name": "pokemon-decks",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "build-snapshot": "node scripts/build-snapshot.mjs"
+  },
+  "devDependencies": {
+    "@mtg/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "eslint": "catalog:",
+    "globals": "^15.14.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

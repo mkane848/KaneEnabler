@@ -75,6 +75,26 @@ Distribution follows the [WotC Fan Content Policy](https://company.wizards.com/e
 free, carrying the unofficial-content notice, no WotC logos or trademarks. Both apps already ship
 this disclaimer in their About dialogs — keep it there.
 
+### TCGdex (Pokémon card data)
+
+The Pokémon deck recommender (`apps/pokemon-decks`) reads card data from a **vendored snapshot**
+of TCGdex's card database (`github.com/tcgdex/cards-database`, MIT), committed as
+`apps/pokemon-decks/public/data/` and served as the app's own static assets. Runtime never calls
+TCGdex. Source, cadence and trigger confirmed with the repo owner on 2026-11-27, replacing the
+originally planned Pokémon TCG API: that project's own dataset README says the API goes offline on
+**March 1, 2027** and that its data is no longer maintained.
+
+| Constraint | Detail                                                                                                                                                                                                                                                                                  |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Published  | From [tcgdex.dev/faq](https://tcgdex.dev/faq) (read 2026-11-27): _"There are no published hard rate limits, but please be considerate. For bulk data needs, cache responses locally rather than fetching the same data repeatedly."_ A vendored snapshot is the strongest form of that. |
+| Source     | One `git clone --depth 1` of the database repo per refresh (`apps/pokemon-decks/scripts/build-snapshot.mjs`). **No requests to `api.tcgdex.net`** — the repo holds the same data with no per-card calls. The repo's files are TypeScript modules; they are parsed, never executed.      |
+| Trigger    | The monthly `pokemon-data-refresh.yml` workflow (opens a PR) plus manual `workflow_dispatch` / local `pnpm --filter pokemon-decks run build-snapshot`. Never at runtime, per build, or per deploy.                                                                                      |
+| Images     | **Not used.** Card images live on TCGdex's asset CDN, and showing them would be runtime third-party traffic from every visitor — a separate decision for the repo owner, not part of this snapshot. Cards render as text.                                                               |
+| Volume     | ~12 clones/year, one per refresh.                                                                                                                                                                                                                                                       |
+
+Attribution: the app footer credits TCGdex as the card-data source. TCGdex is a fan database, not
+The Pokémon Company — the app also carries an unofficial-content notice.
+
 ### Supabase
 
 Free-tier row, bandwidth, and auth limits apply once user profiles ship. Profile reads should be
