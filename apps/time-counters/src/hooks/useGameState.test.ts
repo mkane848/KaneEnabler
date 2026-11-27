@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
-import type { CardData } from '../types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CardData, GameState } from '../types';
 import { useGameState, type AddCardInput } from './useGameState';
 
 function card(overrides: Partial<CardData> = {}): CardData {
@@ -544,9 +544,7 @@ describe('useGameState — the undo window closes when time moves on (B1)', () =
     act(() => result.current.removeCard(bId!));
     expect(result.current.lastRemoved?.card.instanceId).toBe(bId);
 
-    act(() =>
-      result.current.applyTimeTravel([{ id: aId!, delta: -1 }], { current: 1, total: 1 }),
-    );
+    act(() => result.current.applyTimeTravel([{ id: aId!, delta: -1 }], { current: 1, total: 1 }));
     expect(result.current.lastRemoved).toBeNull();
 
     act(() => result.current.undoRemove());
@@ -613,5 +611,112 @@ describe('useGameState — commander cast guard (B4)', () => {
     act(() => result.current.castCommander('tenthDoctor'));
     expect(result.current.state.commanders.tenthDoctor.castCount).toBe(1);
     expect(result.current.state.commanders.tenthDoctor.onBattlefield).toBe(true);
+  });
+});
+
+const KEY = 'mtg-time-tracker:game-state:v1';
+
+/** Stands in for another tab: it writes storage, and the browser tells this
+ * tab with a `storage` event (never the writer itself). */
+function otherTabSaves(game: GameState | null) {
+  const newValue = game ? JSON.stringify(game) : null;
+  if (newValue) localStorage.setItem(KEY, newValue);
+  else localStorage.removeItem(KEY);
+  act(() => {
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: KEY, newValue, storageArea: localStorage }),
+    );
+  });
+}
+
+describe('useGameState — cross-tab sync (D9)', () => {
+  function otherTabGame(): GameState {
+    const { result, unmount } = renderHook(() => useGameState());
+    act(() =>
+      result.current.addCard(addInput({ card: card({ id: 'c2', name: 'Other Tab Card' }) })),
+    );
+    act(() => result.current.setTurn(6));
+    const game = result.current.state;
+    unmount();
+    localStorage.clear();
+    return game;
+  }
+
+  it("adopts another tab's game and says so", () => {
+    const incoming = otherTabGame();
+    const { result } = renderHook(() => useGameState());
+    otherTabSaves(incoming);
+    expect(result.current.state).toEqual(incoming);
+    expect(result.current.externalChange).toBe('updated');
+  });
+
+  it('closes the undo window and the upkeep summary, which described the old board', () => {
+    const incoming = otherTabGame();
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput()));
+    act(() => result.current.nextTurn());
+    act(() => result.current.addCard(addInput()));
+    act(() => result.current.removeCard(result.current.state.cards[1]!.instanceId));
+    expect(result.current.lastUpkeep).not.toBeNull();
+    expect(result.current.lastRemoved).not.toBeNull();
+
+    otherTabSaves(incoming);
+    expect(result.current.lastUpkeep).toBeNull();
+    expect(result.current.lastRemoved).toBeNull();
+  });
+
+  it('does not write the adopted game back, so the tabs cannot ping-pong', () => {
+    const incoming = otherTabGame();
+    const { result } = renderHook(() => useGameState());
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    otherTabSaves(incoming);
+    // The one call is otherTabSaves' own write, standing in for the other tab.
+    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toEqual(incoming);
+    setItem.mockRestore();
+  });
+
+  it('follows a reset in another tab back to a fresh game', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput()));
+    otherTabSaves(null);
+    expect(result.current.state.cards).toEqual([]);
+    expect(result.current.state.turn).toBe(1);
+    expect(result.current.externalChange).toBe('reset');
+  });
+
+  it('treats a corrupt save from another tab the way a reload would', () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.addCard(addInput()));
+    localStorage.setItem(KEY, '{not json');
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: KEY, newValue: '{not json', storageArea: localStorage }),
+      );
+    });
+    expect(result.current.state.cards).toEqual([]);
+    expect(result.current.externalChange).toBe('reset');
+  });
+
+  it('clears the notice on dismiss, or on the next action that changes something', () => {
+    const { result } = renderHook(() => useGameState());
+    otherTabSaves(otherTabGame());
+    act(() => result.current.dismissExternalChange());
+    expect(result.current.externalChange).toBeNull();
+
+    otherTabSaves(otherTabGame());
+    // Dismissing an undo prompt that isn't showing changes nothing.
+    act(() => result.current.dismissLastRemoved());
+    expect(result.current.externalChange).toBe('updated');
+    act(() => result.current.nextTurn());
+    expect(result.current.externalChange).toBeNull();
+  });
+
+  it('stops listening once unmounted', () => {
+    const { result, unmount } = renderHook(() => useGameState());
+    const before = result.current.state;
+    unmount();
+    otherTabSaves(otherTabGame());
+    expect(result.current.state).toBe(before);
   });
 });

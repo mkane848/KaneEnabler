@@ -3,8 +3,8 @@
 **Status:** done. All four fix PRs landed: B1, B3, B4, B5 (D1, D6); D7, D8 and the card-catalog
 retry; B2, B7 (D2, D3); and B6 (D4, D5) plus the Spellbook cooldown/dedup/eviction. The optional
 M5 panel-state refactor and M1 game-state reducer (§5 item 5) are done, along with the remaining
-minor §3.2 items (note re-sync; the `useAuth` race). D9 (multi-tab sync) stays deliberately
-leave-as-is per the decision above.
+minor §3.2 items (note re-sync; the `useAuth` race). D9 (multi-tab sync) was first left as-is,
+then shipped as option (b) in time-counters 1.8.0 at the owner's request (issue #92).
 **Audited at:** `9903e07` (line numbers below are as of that commit — re-check before editing).
 **Scope:** `apps/time-counters`, `apps/commander-recommender` (client + server), `packages/profile`.
 
@@ -245,7 +245,7 @@ Recommendation first. **Owner** = needs the repo owner's answer before implement
 | D6  | What does a backward turn edit mean? (B5)                                           | (a) a correction: clamp `turnAdded` down to the new turn, log "Turn corrected" · (b) forbid lowering the turn                        | **(a)** — forbidding gets in the way at the table                                                                                                                           | agreed in session       |
 | D7  | Like/dislike while a write is in flight                                             | (a) optimistic update via `onMutate` on the shared `card-preferences` query, rolled back on error · (b) disable while pending        | **(a)** — taps feel instant and toggle correctly                                                                                                                            | agreed in session       |
 | D8  | Sign-up confirmation screen                                                         | add a "Back to sign in" link that resets `confirmSent`; disable the mode switch while `submitting`                                   | **yes**                                                                                                                                                                     | agreed in session       |
-| D9  | Sync time-counters across tabs?                                                     | (a) leave it · (b) `storage` event sync                                                                                              | **(a)** — one device at the table; conflict handling buys nothing                                                                                                           | agreed in session       |
+| D9  | Sync time-counters across tabs?                                                     | (a) leave it · (b) `storage` event sync                                                                                              | **(b)**, reversing (a) on 2026-11-27 (issue #92): last write wins with a notice, overlays close, unchanged saves skipped so tabs can't echo                                 | agreed in session       |
 | D10 | Undo depth                                                                          | keep single-level                                                                                                                    | **keep**                                                                                                                                                                    | agreed in session       |
 
 "Agreed in session" means the owner was shown the recommendation and didn't object; it was not

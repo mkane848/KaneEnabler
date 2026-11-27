@@ -103,7 +103,7 @@ working in that app; this file covers only what's shared:
 | [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md)           | Per-card recommendation coverage plan (shipped)                                                                               |
 | [`docs/color-filter-semantics.md`](./docs/color-filter-semantics.md)             | Colour-pip subset semantics brief (shipped)                                                                                   |
 | [`docs/control-primitives-migration.md`](./docs/control-primitives-migration.md) | Moving bespoke controls onto `@mtg/ui` (shipped)                                                                              |
-| [`docs/state-machine-audit.md`](./docs/state-machine-audit.md)                   | State-machine audit: confirmed defects, product decisions, phased fix plan (shipped; D9 multi-tab sync deferred to issue #92) |
+| [`docs/state-machine-audit.md`](./docs/state-machine-audit.md)                   | State-machine audit: confirmed defects, product decisions, phased fix plan (shipped; D9 multi-tab sync shipped via issue #92) |
 | [`TODO.md`](./TODO.md)                                                           | Remaining manual and dashboard-only tasks                                                                                     |
 
 **Where truth lives:** [`docs/handoff.md`](./docs/handoff.md) is the phase plan and the record of

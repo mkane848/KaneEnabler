@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-11-27
+
+### Added
+
+- **Open tabs now stay in sync.** Previously, two tabs on the same game each kept their own copy and
+  silently overwrote each other's saves. Now a tab adopts the other's save as soon as it lands,
+  last write wins, and shows a small "This game was updated in another tab" notice (or "A new game
+  was started in another tab" after a reset). The undo prompt and the Next Turn summary close when
+  this happens, because both describe the board as it was before. A save from another tab goes
+  through the same validation and migrations as a reload. A tab never writes back a game it just
+  adopted, so two tabs can't trigger each other in a loop (issue #92, audit D9).
+
 ## [1.7.6] - 2026-11-24
 
 ### Fixed

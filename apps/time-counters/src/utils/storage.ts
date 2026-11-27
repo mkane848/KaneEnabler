@@ -46,10 +46,14 @@ function isValidTrackedCard(value: unknown): value is TrackedCard {
   );
 }
 
-export function loadState(): GameState | null {
+/**
+ * Validates and migrates one serialized game. Shared by the initial load and
+ * by another tab's writes (see subscribeToExternalChanges), so a save from a
+ * tab running an older build passes through the same checks and migrations
+ * as one read on startup.
+ */
+export function parseState(raw: string): GameState | null {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return null;
     const parsed = JSON.parse(raw) as GameState;
     if (typeof parsed.turn !== 'number' || !Array.isArray(parsed.cards)) return null;
     const validCards = parsed.cards.filter(isValidTrackedCard);
@@ -81,12 +85,50 @@ export function loadState(): GameState | null {
   }
 }
 
+export function loadState(): GameState | null {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? parseState(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function saveState(state: GameState): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    const raw = JSON.stringify(state);
+    // Skipping an unchanged write is what stops two tabs echoing a game back
+    // and forth: a tab that has just adopted another tab's save re-renders
+    // with that same game, and rewriting identical JSON would fire a
+    // `storage` event straight back at the tab it came from.
+    if (localStorage.getItem(KEY) === raw) return;
+    localStorage.setItem(KEY, raw);
   } catch {
     // Private browsing / quota issues — tracking still works for this session.
   }
+}
+
+/**
+ * Calls `onChange` whenever another tab saves or clears the game. `null`
+ * means the other tab reset it (or storage was cleared outright). The
+ * browser only fires `storage` in tabs *other* than the writer, so a tab
+ * never hears its own saves.
+ *
+ * A save that fails validation is reported as `null` too — the same answer
+ * loadState gives for it on a reload — rather than being ignored, which would
+ * leave this tab silently diverged from what storage holds.
+ */
+export function subscribeToExternalChanges(
+  onChange: (state: GameState | null) => void,
+): () => void {
+  const listener = (event: StorageEvent) => {
+    // `key === null` is localStorage.clear(), which takes the game with it.
+    if (event.key !== KEY && event.key !== null) return;
+    if (event.storageArea !== null && event.storageArea !== localStorage) return;
+    onChange(event.newValue ? parseState(event.newValue) : null);
+  };
+  window.addEventListener('storage', listener);
+  return () => window.removeEventListener('storage', listener);
 }
 
 export function clearState(): void {

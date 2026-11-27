@@ -1,6 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GameState, TrackedCard } from '../types';
-import { clearState, loadState, saveState } from './storage';
+import {
+  clearState,
+  loadState,
+  parseState,
+  saveState,
+  subscribeToExternalChanges,
+} from './storage';
 
 const KEY = 'mtg-time-tracker:game-state:v1';
 
@@ -168,5 +174,87 @@ describe('storage', () => {
     loadState();
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
+  });
+});
+
+const SAVED: GameState = { turn: 4, cards: [VALID_CARD], log: [], commanders: FRESH_COMMANDERS };
+
+/** What the browser dispatches in *this* tab when another tab writes. */
+function otherTabWrites(key: string | null, newValue: string | null) {
+  window.dispatchEvent(new StorageEvent('storage', { key, newValue, storageArea: localStorage }));
+}
+
+describe('parseState', () => {
+  it('gives the same answer loadState gives for the same raw save', () => {
+    const legacy = JSON.stringify({ turn: 2, cards: [VALID_CARD, {}] });
+    localStorage.setItem(KEY, legacy);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(parseState(legacy)).toEqual(loadState());
+    warn.mockRestore();
+  });
+
+  it('returns null for unparsable JSON', () => {
+    expect(parseState('{not json')).toBeNull();
+  });
+});
+
+describe('saveState', () => {
+  it('skips the write when storage already holds this exact game', () => {
+    saveState(SAVED);
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    saveState({ ...SAVED });
+    expect(setItem).not.toHaveBeenCalled();
+    saveState({ ...SAVED, turn: 5 });
+    expect(setItem).toHaveBeenCalledTimes(1);
+    setItem.mockRestore();
+  });
+});
+
+describe('subscribeToExternalChanges', () => {
+  let unsubscribe: (() => void) | undefined;
+  afterEach(() => unsubscribe?.());
+
+  it("hands over another tab's save, validated", () => {
+    const onChange = vi.fn();
+    unsubscribe = subscribeToExternalChanges(onChange);
+    otherTabWrites(KEY, JSON.stringify(SAVED));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(SAVED);
+  });
+
+  it('reports a reset in another tab as null', () => {
+    const onChange = vi.fn();
+    unsubscribe = subscribeToExternalChanges(onChange);
+    otherTabWrites(KEY, null);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null);
+  });
+
+  it('reports storage being cleared outright as null', () => {
+    const onChange = vi.fn();
+    unsubscribe = subscribeToExternalChanges(onChange);
+    otherTabWrites(null, null);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null);
+  });
+
+  it('reports a save that fails validation as null, as a reload would', () => {
+    const onChange = vi.fn();
+    unsubscribe = subscribeToExternalChanges(onChange);
+    otherTabWrites(KEY, '{not json');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null);
+  });
+
+  it('ignores other keys, sessionStorage, and stops after unsubscribing', () => {
+    const onChange = vi.fn();
+    unsubscribe = subscribeToExternalChanges(onChange);
+    otherTabWrites('mtg-time-tracker:theme', 'claude');
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: KEY,
+        newValue: JSON.stringify(SAVED),
+        storageArea: sessionStorage,
+      }),
+    );
+    unsubscribe();
+    otherTabWrites(KEY, JSON.stringify(SAVED));
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
