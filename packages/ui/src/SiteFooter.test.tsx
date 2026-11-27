@@ -21,6 +21,12 @@ describe('SiteFooter', () => {
     expect(paragraphs[1]).toMatch(/Card data via Scryfall/);
   });
 
+  it("replaces the Magic attribution for a tool that isn't Scryfall-backed", () => {
+    render(<SiteFooter attribution={<p>Card data from TCGdex.</p>} />);
+    expect(screen.getByText('Card data from TCGdex.')).toBeInTheDocument();
+    expect(screen.queryByText(/Scryfall/)).toBeNull();
+  });
+
   it('keeps the shared class when an app adds its own', () => {
     render(<SiteFooter className="app-footer" />);
     expect(screen.getByRole('contentinfo')).toHaveClass('mtg-footer', 'app-footer');

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import { describe, expect, it } from 'vitest';
 import { buildSnapshot, trimCard } from './snapshot.mjs';
 

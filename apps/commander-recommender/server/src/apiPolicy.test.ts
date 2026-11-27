@@ -26,18 +26,15 @@ const SCANNED_DIRS = [
   'apps/home/src',
   'apps/time-counters/src',
   'apps/time-counters/scripts',
+  'apps/pokemon-decks/src',
+  'apps/pokemon-decks/scripts',
   'packages',
   'scripts',
 ];
 
-const SKIPPED_DIRS = new Set([
-  'node_modules',
-  'dist',
-  'coverage',
-  '.turbo',
-  '__fixtures__',
-  'data',
-]);
+// No blanket `data` skip: generated data is JSON, which the walk ignores by
+// extension anyway, and an app's own src/data/ is exactly where a fetch lives.
+const SKIPPED_DIRS = new Set(['node_modules', 'dist', 'coverage', '.turbo', '__fixtures__']);
 const SOURCE_FILE = /\.(c|m)?(j|t)sx?$/;
 const TEST_FILE = /\.test\.(c|m)?(j|t)sx?$/;
 
@@ -78,6 +75,10 @@ const ALLOWED_CALL_SITES: Record<string, CallSite> = {
   },
   'apps/commander-recommender/client/src/api/client.ts': {
     why: 'Our own recommender server (health ping, /api/meta).',
+    thirdParty: false,
+  },
+  'apps/pokemon-decks/src/data/catalog.ts': {
+    why: "The app's own vendored card snapshot (public/data/), served alongside it.",
     thirdParty: false,
   },
   'apps/time-counters/src/utils/cardCatalog.ts': {

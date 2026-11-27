@@ -18,6 +18,7 @@ export default function RootLayout() {
     { label: 'Home', href: '/', current: pathname === '/' },
     { label: 'Recommender', href: '/recommender/' },
     { label: 'Time Counters', href: '/time-counters/' },
+    { label: 'Pokémon Decks', href: '/pokemon/' },
   ];
   if (user) {
     links.push({ label: 'Profile', href: '/profile', current: pathname === '/profile' });

@@ -16,6 +16,7 @@ const NAV_LINKS: NavBarLink[] = [
   { label: 'Home', href: '/' },
   { label: 'Recommender', href: '/recommender/', current: true },
   { label: 'Time Counters', href: '/time-counters/' },
+  { label: 'Pokémon Decks', href: '/pokemon/' },
 ];
 
 function App() {

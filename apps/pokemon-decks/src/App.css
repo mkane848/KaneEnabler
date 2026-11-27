@@ -1,0 +1,230 @@
+/* Built on the platform theme (@mtg/ui/theme.css); every colour, radius and
+   font here is a --mtg-* token, so this app can't drift from the others. */
+
+.app-header {
+  margin-bottom: 1.5rem;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--mtg-color-border);
+  margin-top: 1rem;
+}
+
+.mode-tabs a {
+  padding: 0.6rem 0.9rem;
+  color: var(--mtg-color-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.mode-tabs a.active,
+.mode-tabs a:hover {
+  color: var(--mtg-color-text);
+  border-bottom-color: var(--mtg-color-accent);
+}
+
+.format-picker {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1.25rem;
+}
+
+.format-picker legend,
+.collection-form label,
+.build-search label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.format-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.format-hint,
+.field-hint,
+.status {
+  color: var(--mtg-color-text-muted);
+  font-size: 0.9rem;
+  margin: 0.4rem 0;
+}
+
+.status-error {
+  color: var(--mtg-color-danger-text);
+}
+
+.collection-form,
+.build-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.collection-form textarea {
+  font-family: var(--mtg-font-mono);
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.collection-form button {
+  align-self: flex-start;
+}
+
+.results-summary {
+  color: var(--mtg-color-text-muted);
+}
+
+.unmatched code {
+  font-family: var(--mtg-font-mono);
+}
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.deck-card {
+  background: var(--mtg-color-surface);
+  border: 1px solid var(--mtg-color-border);
+  border-radius: var(--mtg-radius-md);
+  box-shadow: var(--mtg-shadow-card);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.deck-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.deck-title {
+  font-family: var(--mtg-font-display);
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.deck-sub {
+  color: var(--mtg-color-text-muted);
+  font-size: 0.85rem;
+  margin: 0.2rem 0 0;
+}
+
+.type-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--mtg-radius-sm);
+  background: var(--mtg-color-accent-soft);
+  color: var(--mtg-color-text);
+  font-size: 0.75rem;
+}
+
+.deck-owned {
+  margin: 0;
+}
+
+.deck-breakdown {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.deck-breakdown dt {
+  color: var(--mtg-color-text-faint);
+}
+
+.deck-breakdown dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.deck-violations {
+  color: var(--mtg-color-danger-text);
+  font-size: 0.85rem;
+}
+
+.deck-list summary {
+  cursor: pointer;
+  color: var(--mtg-color-text-muted);
+}
+
+.deck-list h4 {
+  margin: 0.6rem 0 0.2rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mtg-color-text-faint);
+}
+
+.deck-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.deck-list .count {
+  display: inline-block;
+  min-width: 2.2em;
+  font-family: var(--mtg-font-mono);
+  color: var(--mtg-color-text-muted);
+}
+
+.deck-list .need {
+  color: var(--mtg-color-danger-text);
+  font-size: 0.85em;
+}
+
+.attacker-matches {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+  border: 1px solid var(--mtg-color-border);
+  border-radius: var(--mtg-radius-md);
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.attacker-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--mtg-color-border-soft);
+  color: var(--mtg-color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.attacker-option:hover,
+.attacker-option.active {
+  background: var(--mtg-color-surface-hover);
+}
+
+.attacker-meta {
+  color: var(--mtg-color-text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 480px) {
+  .deck-breakdown {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

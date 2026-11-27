@@ -15,6 +15,7 @@ this project follows [Semantic Versioning](https://semver.org/).
   this happens, because both describe the board as it was before. A save from another tab goes
   through the same validation and migrations as a reload. A tab never writes back a game it just
   adopted, so two tabs can't trigger each other in a loop (issue #92, audit D9).
+- **A "Pokémon Decks" link in the nav**, to the platform's new Pokémon deck builder.
 
 ## [1.7.6] - 2026-11-24
 

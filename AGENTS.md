@@ -1,9 +1,9 @@
 # Repository guide
 
-KaneEnabler is the root of a pnpm + Turborepo monorepo of Magic: The Gathering tools. The game's
-rules, card data, mana symbols, and shared UI are modelled once in `packages/` and consumed by
-three apps in `apps/`, so a new tool never re-implements colour identity, commander legality, or
-counter semantics.
+KaneEnabler is the root of a pnpm + Turborepo monorepo of trading card game tools — three for Magic:
+The Gathering and one for the Pokémon TCG. Each game's rules, card data, and the shared UI are
+modelled once in `packages/` and consumed by the apps in `apps/`, so a new tool never re-implements
+colour identity, commander legality, counter semantics, or Pokémon deck legality.
 
 <!-- intent-skills:start -->
 
@@ -39,7 +39,7 @@ directory name).
   [`docs/api-policy.md`](./docs/api-policy.md) before touching them.
 
 Package names: `mtg-recommender-client`, `mtg-recommender-server`, `mtg-time-tracker`,
-`mtg-platform-home`.
+`mtg-platform-home`, `pokemon-decks`.
 
 ## Project layout
 
@@ -49,6 +49,8 @@ Package names: `mtg-recommender-client`, `mtg-recommender-server`, `mtg-time-tra
 - `apps/time-counters/` — in-game counter companion for one Doctor Who deck: static
   `public/cards.json`, `localStorage` state, CSS Modules, no backend.
 - `apps/home/` — platform landing page and `/profile`; ships inside the combined static site.
+- `apps/pokemon-decks/` — Pokémon TCG deck builder: paste a collection for ranked decks, or build
+  around one Pokémon. Client-only; card data is a committed TCGdex snapshot (`public/data/`).
 - `packages/config/` (`@mtg/config`) — shared tsconfig / ESLint / Prettier / Vitest bases.
 - `packages/rules/` (`@mtg/rules`) — CR-cited Magic rules primitives; the one place the rules live.
 - `packages/ptcg-rules/` (`@ptcg/rules`) — the Pokémon TCG counterpart: deck-construction and
@@ -63,7 +65,7 @@ Package names: `mtg-recommender-client`, `mtg-recommender-server`, `mtg-time-tra
   `theme.css` (the platform theme; the single place a platform colour/font/radius/shadow is
   defined).
 - `packages/profile/` (`@mtg/profile`) — Supabase auth and card/combo preference hooks, shared by
-  all three apps.
+  every app.
 - `docs/` — phase plan, API policy, audits, and per-feature briefs (see Documents below).
 - `scripts/build-platform.mjs` — assembles the combined static site.
 
@@ -72,13 +74,14 @@ working in that app; this file covers only what's shared:
 
 - [`apps/commander-recommender/AGENTS.md`](./apps/commander-recommender/AGENTS.md)
 - [`apps/time-counters/AGENTS.md`](./apps/time-counters/AGENTS.md)
+- [`apps/pokemon-decks/AGENTS.md`](./apps/pokemon-decks/AGENTS.md)
 
 ## Architecture
 
 - **`apps/*` are independently deployable**, each with its own `package.json` name, version, and
   `CHANGELOG.md`; they are not versioned together. Bump the app you changed.
-- **Combined deploy:** production serves `apps/home`, `apps/commander-recommender/client`, and
-  `apps/time-counters` from one Render static site (`kaneenabler-platform`), so the shared
+- **Combined deploy:** production serves `apps/home`, `apps/commander-recommender/client`,
+  `apps/time-counters`, and `apps/pokemon-decks` (at `/pokemon/`) from one Render static site (`kaneenabler-platform`), so the shared
   Supabase session carries across every tool. Each app still builds standalone at `base: '/'`;
   only `scripts/build-platform.mjs` sets `VITE_BASE_PATH` for a subpath. Read asset and fetch URLs
   back through `import.meta.env.BASE_URL` — a hardcoded `/`-rooted path breaks the subpath build.
