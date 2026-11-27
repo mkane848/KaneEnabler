@@ -118,8 +118,14 @@ cached client-side via TanStack Query rather than re-queried per navigation.
    until something resolves that constraint — it already has once, re-synced to 1.8.0 by hand at
    that release; the same manual step is needed at every one after, until it is.
 
-2. **Per-process in-memory Spellbook cache.** Fine for a single user. Once accounts exist, N users
-   asking the same question costs them N calls instead of one. Move to a shared, persistent cache.
+2. ~~**Per-process in-memory Spellbook cache.**~~ **Fixed in code (2026-11-27), active once
+   configured.** `services/spellbookStore.ts` adds a shared Supabase table
+   (`supabase/migrations/*_spellbook_cache.sql`, RLS on with no policies, so only the server's
+   service role can touch it) behind the in-memory cache: one answer now serves every user and
+   survives a restart, for the same one-hour window. What triggers a call is unchanged (click-only,
+   cooldown, in-flight dedup); the store only ever saves calls. It takes effect once the migration is
+   applied and `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` are set on the Render service (see
+   `TODO.md`); until then the server behaves exactly as before.
 
 ## Regression guards
 

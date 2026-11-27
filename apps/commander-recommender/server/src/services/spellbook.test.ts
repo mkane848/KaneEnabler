@@ -43,6 +43,43 @@ function json(res: http.ServerResponse, status: number, payload: unknown) {
 let findCombos: typeof import('./spellbook').findCombos;
 let clearComboCache: typeof import('./spellbook').clearComboCache;
 let SpellbookError: typeof import('./spellbook').SpellbookError;
+let setSpellbookStore: typeof import('./spellbook').setSpellbookStore;
+
+type Stored = {
+  value: {
+    ready: import('./spellbook').ComboResult[];
+    almost: import('./spellbook').ComboResult[];
+  };
+  fetchedAt: number;
+};
+
+/** An in-memory stand-in for the Supabase table, recording what was asked of it. */
+function fakeStore(initial: Record<string, Stored> = {}) {
+  const rows = new Map(Object.entries(initial));
+  const calls = { get: 0, put: 0 };
+  return {
+    rows,
+    calls,
+    failGets: false,
+    async get(key: string) {
+      calls.get++;
+      if (this.failGets) throw new Error('supabase unavailable');
+      return rows.get(key) ?? null;
+    },
+    async put(key: string, value: Stored['value']) {
+      calls.put++;
+      rows.set(key, { value, fetchedAt: Date.now() });
+    },
+  };
+}
+
+/** The key spellbook.ts files a lookup under — sorted, lowercased names. */
+const keyFor = (commanders: string[], cards: string[]) =>
+  JSON.stringify([
+    [...commanders].map((c) => c.toLowerCase()).sort(),
+    [...cards].map((c) => c.toLowerCase()).sort(),
+  ]);
+const EMPTY = { results: { included: [], almostIncluded: [] } };
 
 describe('spellbook adapter', () => {
   beforeAll(async () => {
@@ -60,6 +97,7 @@ describe('spellbook adapter', () => {
     findCombos = mod.findCombos;
     clearComboCache = mod.clearComboCache;
     SpellbookError = mod.SpellbookError;
+    setSpellbookStore = mod.setSpellbookStore;
   });
 
   afterAll(async () => {
@@ -265,5 +303,93 @@ describe('spellbook adapter', () => {
     assert.strictEqual(a.cached, false);
     assert.strictEqual(b.cached, false);
     assert.strictEqual(state.requests.length, 1, 'expected one shared request');
+  });
+
+  describe('shared store (W9)', () => {
+    const stored = { ready: [], almost: [] };
+
+    it('answers from the shared store without asking Spellbook', async () => {
+      clearComboCache();
+      state.requests = [];
+      const store = fakeStore({
+        [keyFor(['Krenko'], ['Sol Ring'])]: { value: stored, fetchedAt: Date.now() },
+      });
+      setSpellbookStore(store);
+      const result = await findCombos(['Krenko'], ['Sol Ring']);
+      setSpellbookStore(null);
+      assert.strictEqual(result.cached, true);
+      assert.strictEqual(state.requests.length, 0);
+    });
+
+    it('treats an entry past the hour as a miss, asks Spellbook, and writes the answer back', async () => {
+      clearComboCache();
+      state.requests = [];
+      state.handler = (_req, res) => json(res, 200, EMPTY);
+      const key = keyFor(['Krenko'], ['Sol Ring']);
+      const store = fakeStore({
+        [key]: { value: stored, fetchedAt: Date.now() - 2 * 60 * 60 * 1000 },
+      });
+      setSpellbookStore(store);
+      const result = await findCombos(['Krenko'], ['Sol Ring']);
+      await new Promise((r) => setImmediate(r)); // the write is fire-and-forget
+      setSpellbookStore(null);
+      assert.strictEqual(result.cached, false);
+      assert.strictEqual(state.requests.length, 1);
+      assert.strictEqual(store.calls.put, 1);
+      assert.ok(Date.now() - store.rows.get(key)!.fetchedAt < 1000, 'the row was refreshed'); // put just wrote it
+    });
+
+    it('falls through to Spellbook when the store errors, rather than failing the lookup', async () => {
+      clearComboCache();
+      state.requests = [];
+      state.handler = (_req, res) => json(res, 200, EMPTY);
+      const store = fakeStore();
+      store.failGets = true;
+      setSpellbookStore(store);
+      const warn = console.warn;
+      console.warn = () => {};
+      try {
+        const result = await findCombos(['Krenko'], ['Arcane Signet']);
+        assert.strictEqual(result.cached, false);
+        assert.strictEqual(state.requests.length, 1);
+      } finally {
+        console.warn = warn;
+        setSpellbookStore(null);
+      }
+    });
+
+    it('still answers from the store during a 429 cooldown', async () => {
+      clearComboCache();
+      state.requests = [];
+      state.handler = (_req, res) => {
+        res.statusCode = 429;
+        res.setHeader('Retry-After', '120');
+        res.end();
+      };
+      await findCombos(['Atraxa'], ['Sol Ring']).catch(() => {}); // trips the cooldown
+      const store = fakeStore({
+        [keyFor(['Krenko'], ['Sol Ring'])]: { value: stored, fetchedAt: Date.now() },
+      });
+      setSpellbookStore(store);
+      const result = await findCombos(['Krenko'], ['Sol Ring']);
+      setSpellbookStore(null);
+      assert.strictEqual(result.cached, true);
+      assert.strictEqual(state.requests.length, 1, 'only the request that tripped the cooldown');
+    });
+
+    it('lets concurrent identical lookups share one store read', async () => {
+      clearComboCache();
+      state.requests = [];
+      const store = fakeStore({
+        [keyFor(['Krenko'], ['Sol Ring'])]: { value: stored, fetchedAt: Date.now() },
+      });
+      setSpellbookStore(store);
+      await Promise.all([
+        findCombos(['Krenko'], ['Sol Ring']),
+        findCombos(['Krenko'], ['Sol Ring']),
+      ]);
+      setSpellbookStore(null);
+      assert.strictEqual(store.calls.get, 1);
+    });
   });
 });

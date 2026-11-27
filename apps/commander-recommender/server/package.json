@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@mtg/rules": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
     "@types/compression": "^1.8.1",
     "better-sqlite3": "^13.0.1",
     "compression": "^1.8.1",

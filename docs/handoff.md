@@ -40,8 +40,9 @@ scope difference from what the phase originally proposed.
 
 What's genuinely still open, gathered here so a fresh session doesn't have to re-scan every phase:
 
-- **The Spellbook cache is per-process, in-memory** — fine for one user, not once accounts exist.
-  See `api-policy.md`'s "known violations," item 2.
+- **The shared Spellbook cache is built but not yet switched on** — it needs the Supabase migration
+  applied and two Render secrets set. See `api-policy.md`'s "known violations," item 2, and
+  `TODO.md`.
 
 **Landed since the list above was last trimmed (2026-08-18):** `@mtg/profile`'s Supabase-backed
 hooks (`useAuth`, `useCardPreferences`/`useSetCardPreference`/`useRemoveCardPreference`, the combo

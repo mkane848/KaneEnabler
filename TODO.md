@@ -13,6 +13,12 @@ elsewhere. Delete items as you do them.
 - [x] Once retired, remove their service blocks from `render.yaml` (root) so the blueprint matches
       reality again.
 
+- [ ] **Switch on the shared Spellbook cache** (W9). The code ships switched off until:
+  1. `supabase/migrations/20261127000000_spellbook_cache.sql` is applied to the production
+     Supabase project (a session can do this with the Supabase connector once you OK it);
+  2. `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set on the `mtg-recommender-server` Render
+     service (dashboard → Environment). The service-role key is a secret: never commit it.
+
 ## Sandbox egress
 
 **Re-tested 2026-09-04 — most of what used to be blocked now works.** The three items that were

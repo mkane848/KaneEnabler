@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@mtg/ui": "workspace:*",
-    "@supabase/supabase-js": "^2.112.3"
+    "@supabase/supabase-js": "catalog:"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.101.4",
