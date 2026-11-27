@@ -99,8 +99,20 @@ cached client-side via TanStack Query rather than re-queried per navigation.
 
 These belong in CI so the policy survives future refactors:
 
-- A test that fails if any Scryfall or Spellbook request is issued without the shared headers.
-- A test asserting Commander Spellbook is **never** called during page load or route loading.
+- **Landed:** `apiPolicy.test.ts` (`apps/commander-recommender/server/src/`) statically scans the
+  whole workspace and fails if any file issues a request (`fetch`, `http(s).get/request`, XHR,
+  `sendBeacon`) without being on its `ALLOWED_CALL_SITES` list, each entry with the reason it may
+  call out. Every third-party entry must build a `User-Agent`; for `@mtg/scryfall`'s
+  `bulkData.js`, which forwards headers its callers supply, the check moves to every caller.
+  A new call site therefore fails CI until someone adds it to the list — which is the moment to
+  read this policy and confirm the change with the repo owner.
+- **Landed:** `spellbookConsent.test.tsx` (`apps/commander-recommender/client/src/`) renders the
+  whole recommender through the real router, with a list submitted, results on screen, search
+  params in the URL, and the explanation panel open, and asserts that nothing reaches
+  `/api/combos` until "Find combos" is clicked. Exactly one request follows the click.
+  `ComboFinder.test.tsx` pins the component's own click-consent rules. This one catches the
+  regression that looks like a refactor: a combos query moved into a route loader, a prefetch, or
+  an `enabled` default.
 - **Landed:** `.github/workflows/scryfall-fetch-check.yml` runs the real Scryfall fetch (not just
   the import against a file already on disk) weekly, separate from the main CI workflow so a normal
   PR generates no extra Scryfall traffic — confirmed with the repo owner before implementation, per
