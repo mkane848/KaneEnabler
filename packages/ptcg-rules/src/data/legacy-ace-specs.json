@@ -1,0 +1,63 @@
+{
+  "source": {
+    "repo": "https://github.com/PokemonTCG/pokemon-tcg-data",
+    "files": "cards/en/<set>.json for the 29 Black & White and XY sets (sets/en.json series \"Black & White\" and \"XY\")",
+    "field": "subtypes includes \"ACE SPEC\"",
+    "read": "2026-11-27",
+    "note": "TCGdex marks ACE SPEC only through the \"ACE SPEC Rare\" rarity, which these older prints do not carry. Ids and names only; every id was checked against the TCGdex snapshot (same id, same name)."
+  },
+  "cards": [
+    {
+      "id": "bw7-137",
+      "name": "Computer Search"
+    },
+    {
+      "id": "bw7-138",
+      "name": "Crystal Edge"
+    },
+    {
+      "id": "bw7-139",
+      "name": "Crystal Wall"
+    },
+    {
+      "id": "bw7-140",
+      "name": "Gold Potion"
+    },
+    {
+      "id": "bw8-128",
+      "name": "Dowsing Machine"
+    },
+    {
+      "id": "bw8-129",
+      "name": "Scramble Switch"
+    },
+    {
+      "id": "bw8-130",
+      "name": "Victory Piece"
+    },
+    {
+      "id": "bw9-107",
+      "name": "Life Dew"
+    },
+    {
+      "id": "bw9-108",
+      "name": "Rock Guard"
+    },
+    {
+      "id": "bw10-92",
+      "name": "G Booster"
+    },
+    {
+      "id": "bw10-93",
+      "name": "G Scope"
+    },
+    {
+      "id": "bw10-94",
+      "name": "Master Ball"
+    },
+    {
+      "id": "bw10-95",
+      "name": "Scoop Up Cyclone"
+    }
+  ]
+}

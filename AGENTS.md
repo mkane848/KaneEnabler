@@ -51,6 +51,9 @@ Package names: `mtg-recommender-client`, `mtg-recommender-server`, `mtg-time-tra
 - `apps/home/` — platform landing page and `/profile`; ships inside the combined static site.
 - `packages/config/` (`@mtg/config`) — shared tsconfig / ESLint / Prettier / Vitest bases.
 - `packages/rules/` (`@mtg/rules`) — CR-cited Magic rules primitives; the one place the rules live.
+- `packages/ptcg-rules/` (`@ptcg/rules`) — the Pokémon TCG counterpart: deck-construction and
+  format-legality rules for `apps/pokemon-decks`, cited to the official rulebook and Gym Leader
+  Challenge's published rules, tested against the app's real card snapshot.
 - `packages/card-model/` (`@mtg/card-model`) — face/DFC-aware Scryfall field readers (plain `.js`
   with JSDoc types, not `.ts`).
 - `packages/scryfall/` (`@mtg/scryfall`) — the single choke point for Scryfall bulk-data
@@ -123,6 +126,8 @@ nested guides point inward to these rather than restating them.
 2. **Magic rules go in `@mtg/rules`, once.** Every rules primitive cites the Comprehensive Rules
    number it implements and is tested against it. Don't re-derive colour identity, commander
    legality, or counter semantics in an app — if it isn't in the package yet, add it there.
+   Pokémon TCG rules follow the same rule in `@ptcg/rules`, citing the official rulebook or the
+   format's own published rules verbatim (`packages/ptcg-rules/src/official.ts`, `data/glc.json`).
 
 3. **Don't assume the legacy logic is correct.** Comments that cite CR numbers make code easier to
    audit, not automatically right; several documented defects sit directly underneath a comment

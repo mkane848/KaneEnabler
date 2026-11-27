@@ -92,6 +92,12 @@ originally planned Pokémon TCG API: that project's own dataset README says the 
 | Images     | **Not used.** Card images live on TCGdex's asset CDN, and showing them would be runtime third-party traffic from every visitor — a separate decision for the repo owner, not part of this snapshot. Cards render as text.                                                               |
 | Volume     | ~12 clones/year, one per refresh.                                                                                                                                                                                                                                                       |
 
+**One-time source, 2026-11-27:** TCGdex doesn't mark Black & White-era ACE SPEC cards. Their ids
+were read once from the frozen `github.com/PokemonTCG/pokemon-tcg-data` (29 Black & White and XY
+set files via `raw.githubusercontent.com`, each card's `subtypes`), confirmed with the repo owner,
+and vendored as ids and names only in `packages/ptcg-rules/src/data/legacy-ace-specs.json`. Those
+sets never change, so there is no refresh and nothing calls that repository again.
+
 Attribution: the app footer credits TCGdex as the card-data source. TCGdex is a fan database, not
 The Pokémon Company — the app also carries an unofficial-content notice.
 
