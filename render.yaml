@@ -55,10 +55,3 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # The shared Spellbook cache (services/spellbookStore.ts). Without both,
-      # the server falls back to its in-memory cache alone. The key is the
-      # service-role secret: set it in the dashboard, never in this file.
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false

@@ -17,9 +17,6 @@
  *     Retry-After has passed instead of relying on the user to
  *   - identical concurrent lookups share one request, and expired cache
  *     entries are pruned, so a burst of clicks can't multiply calls
- *   - answers are also kept in a shared Supabase table (spellbookStore.ts),
- *     so a restart or another user asking the same question costs them
- *     nothing either — within the same one-hour freshness window
  */
 
 const ENDPOINT =
@@ -31,7 +28,6 @@ const MAX_CARDS = 250; // a Commander deck is 100; this is a sanity bound
 const DEFAULT_COOLDOWN_SECONDS = 60;
 
 import { APP_VERSION } from '../version.generated';
-import { storeFromEnv, type SpellbookStore } from './spellbookStore';
 
 const HEADERS = {
   'Content-Type': 'application/json',
@@ -67,18 +63,9 @@ export class SpellbookError extends Error {
   }
 }
 
-type Lookup = Omit<ComboLookup, 'cached'>;
-
-const cache = new Map<string, { at: number; value: Lookup }>();
+const cache = new Map<string, { at: number; value: Omit<ComboLookup, 'cached'> }>();
 /** Identical concurrent lookups share one upstream request. */
-const inFlight = new Map<string, Promise<ComboLookup>>();
-/** The shared layer behind `cache`; null when Supabase isn't configured. */
-let store: SpellbookStore<Lookup> | null = storeFromEnv<Lookup>(CACHE_TTL_MS);
-
-/** Tests swap the shared store for a fake (or none). */
-export function setSpellbookStore(next: SpellbookStore<Lookup> | null): void {
-  store = next;
-}
+const inFlight = new Map<string, Promise<Omit<ComboLookup, 'cached'>>>();
 /** Epoch ms until which a 429's Retry-After says we must not call again. */
 let cooldownUntil = 0;
 
@@ -181,35 +168,9 @@ export async function findCombos(
     return { ...hit.value, cached: true };
   }
 
-  // Identical concurrent lookups share one miss — the shared-store read and,
-  // if that misses too, one upstream request — rather than racing two.
-  const running = inFlight.get(key);
-  if (running) return running;
-
-  const request = resolveMiss(commanderNames, cards, key).finally(() => {
-    inFlight.delete(key);
-  });
-  inFlight.set(key, request);
-  return request;
-}
-
-async function resolveMiss(
-  commanderNames: string[],
-  cards: string[],
-  key: string,
-): Promise<ComboLookup> {
-  // The shared store answers even during a 429 cooldown: a stored answer
-  // costs Spellbook nothing.
-  const stored = await readStore(key);
-  if (stored) {
-    cache.set(key, { at: stored.fetchedAt, value: stored.value });
-    return { ...stored.value, cached: true };
-  }
-
   // A 429 is the service telling us to stop, not a cue to keep asking. Until
   // the window it gave us (or the default, if it didn't give one) has passed,
   // answer from the cooldown instead of making another request.
-  const now = Date.now();
   if (cooldownUntil > now) {
     throw new SpellbookError(
       'Commander Spellbook is rate limiting requests right now.',
@@ -218,34 +179,24 @@ async function resolveMiss(
     );
   }
 
-  const value = await fetchAndNormalize(commanderNames, cards, key);
-  writeStore(key, value);
-  return { ...value, cached: false };
-}
-
-async function readStore(key: string) {
-  if (!store) return null;
-  try {
-    const stored = await store.get(key);
-    return stored && Date.now() - stored.fetchedAt < CACHE_TTL_MS ? stored : null;
-  } catch (err) {
-    console.warn('Spellbook shared cache read failed; asking Spellbook instead.', err);
-    return null;
+  // Identical concurrent lookups share one request rather than racing two.
+  const running = inFlight.get(key);
+  if (running) {
+    return { ...(await running), cached: false };
   }
-}
 
-/** Fire-and-forget: the lookup already succeeded, and a failed write must not undo that. */
-function writeStore(key: string, value: Lookup): void {
-  store?.put(key, value).catch((err: unknown) => {
-    console.warn('Spellbook shared cache write failed.', err);
+  const request = fetchAndNormalize(commanderNames, cards, key).finally(() => {
+    inFlight.delete(key);
   });
+  inFlight.set(key, request);
+  return { ...(await request), cached: false };
 }
 
 async function fetchAndNormalize(
   commanderNames: string[],
   cards: string[],
   key: string,
-): Promise<Lookup> {
+): Promise<Omit<ComboLookup, 'cached'>> {
   let response: Response;
   try {
     response = await fetch(ENDPOINT, {

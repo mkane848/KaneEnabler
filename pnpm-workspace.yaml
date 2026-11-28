@@ -18,9 +18,6 @@ catalog:
   # hand-pinned per this file's own header comment, now that it's shared.
   '@tanstack/react-query': ^5.101.4
   '@tanstack/react-router': ^1.170.29
-  # @mtg/profile (browser auth) and commander-recommender/server (the shared
-  # Spellbook cache) both talk to Supabase.
-  '@supabase/supabase-js': ^2.112.3
   '@testing-library/jest-dom': ^6.9.1
   '@testing-library/react': ^16.3.2
   '@types/node': ^22.18.0

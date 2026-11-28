@@ -11,12 +11,6 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Added
 
-- **Combo lookups are shared across users and restarts.** The server's Commander Spellbook cache
-  now has a second layer in a Supabase table, so the same question asked by another player, or
-  after the server wakes up, is answered without calling Spellbook again — still within the same
-  one-hour window, and still only when someone clicks "Find combos". It's inert until the table
-  exists and the server has its Supabase settings; until then lookups work exactly as before.
-
 - **A "Pokémon Decks" link in the nav**, to the platform's new Pokémon deck builder.
 
 - **Check a finished deck's legality.** A new collapsed-by-default panel under the card list

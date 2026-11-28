@@ -290,9 +290,8 @@ per-row lookups; W3's writes batch via `.in('oracle_id', ...)`; W4's `useResolve
 `TODO.md` retirement item is checked, `apps/home/render.yaml` deleted in `cf2d0e5`, the fossil
 leftovers pruned, and the "where truth lives" pointer now lives in the root `AGENTS.md`); W8's
 Spellbook User-Agent reads a build-generated `APP_VERSION` instead of a hand-synced literal.
-**W9 (shared/persistent Spellbook cache) is implemented (2026-11-27, owner-approved design)** — a
-Supabase table behind the in-memory cache; it switches on once the migration is applied and the
-Render secrets are set (`TODO.md`). F8 / open question 4 (TS port of
+**W9 (shared/persistent Spellbook cache) remains open** — it changes what gets persisted, so it
+needs owner sign-off per `api-policy.md` before implementation. F8 / open question 4 (TS port of
 `@mtg/scryfall` + `@mtg/card-model` vs blessing the `.js`) is likewise still undecided.
 
 Roughly effort-ascending; W1-W5 are each well under a day.
