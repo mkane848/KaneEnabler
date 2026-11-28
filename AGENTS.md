@@ -167,6 +167,16 @@ Before calling work finished:
 is the only place the `*.integration.test.ts` suites execute. If a check fails, fix it and rerun;
 don't skip the gate.
 
+## PR expectations
+
+- **Traffic changes are called out.** If a PR changes what any app or script calls, how often, or
+  what triggers it (hard rule 1), its description says so explicitly and names where the owner
+  confirmed it.
+- **Evidence, not claims.** List what was run (the focused checks, the full gate) and, for
+  user-visible changes, what was exercised in a browser.
+- **Changelog and version.** Each app changed in a user-visible way gets a `CHANGELOG.md` entry, and
+  a version bump where that app's guide says so.
+
 ## Safety
 
 - Do not commit secrets or credentials, and never put a private token or host in these docs.
@@ -183,11 +193,11 @@ don't skip the gate.
 
 ## Environment notes
 
-- The remote sandbox's egress allowlist is narrow but not absolute (re-measured 2026-09-04; see
-  [`TODO.md`](./TODO.md) for the full table). `api.scryfall.com`, Supabase, `*.onrender.com`,
-  Google Fonts, `magic.wizards.com`, and `mtgjson.com` resolve; `api.academyruins.com`,
-  `media.wizards.com`, and `cards.scryfall.io` are blocked — so Comprehensive Rules ingestion runs
-  locally or in GitHub Actions, and screenshot card art is absent.
-- A Playwright-launched browser does **not** inherit `$HTTPS_PROXY`; pass it explicitly with
-  `localhost` bypassed, and set `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXY_LOOPBACK=1`.
+- The remote sandbox's network allowlist is narrow and changes over time. Which hosts are
+  reachable is measured, with dates, in [`TODO.md`](./TODO.md)'s "Sandbox egress" table — check
+  there (or test with `curl`) rather than assuming; don't copy the list here.
+- A Playwright-launched browser does **not** inherit `$HTTPS_PROXY`: pass
+  `proxy: { server: process.env.HTTPS_PROXY, bypass: 'localhost,127.0.0.1' }` and
+  `--ignore-certificate-errors`, **and** run with
+  `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1` (see `TODO.md` for why both are needed).
 - Playwright and Chromium are pre-installed; do not run `playwright install`.

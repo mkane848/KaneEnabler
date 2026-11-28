@@ -30,9 +30,9 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   network access; reuses a copy less than a week old unless run as `prepare-data:fresh`
 - `cd server && pnpm run typecheck` (`tsc`) / `pnpm run build` (`tsc -p tsconfig.build.json`,
   `src/` only, test files excluded — see the note in `tsconfig.build.json` about why `rootDir`
-  matters here) / `pnpm test` (Vitest, 12 files colocated under `src/services/`)
+  matters here) / `pnpm test` (Vitest, tests colocated next to the code)
 - `cd client && pnpm run typecheck` (`tsc -b`) / `pnpm run build` (`tsc -b && vite build`) /
-  `pnpm test` (Vitest, 5 files colocated under `src/lib/`)
+  `pnpm test` (Vitest, tests colocated next to the code)
 - `pnpm run lint` in either — no type-aware rules (see `packages/config/eslint.base.js`)
 - Single test file: `pnpm exec vitest run src/services/synergy.test.ts` (or any other), from
   whichever of `client`/`server` it lives in
@@ -54,7 +54,7 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   confident tier still didn't cite (reason `'covers'`). `routes/recommend.ts` sends this as
   `alsoPlayable`, serialized through the same `serialize()`/`cardIndex` the confident `suggestions`
   use — never a second index.
-- **`server/src/services/signals.ts`** (879 lines, the largest file) is the signal/role model
+- **`server/src/services/signals.ts`** (by far the largest file) is the signal/role model
   feeding `synergy.ts`: what a card contributes to a deck's plan (`is`/`produces`/`consumes`/
   `rewards`/`amplifies`) and in what capacity. **Read
   [`../../docs/archetypes.md`](../../docs/archetypes.md) before changing this file** — it is the
@@ -130,18 +130,15 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
 
 ## Conventions
 
-- Comments explain _why_, not _what_ — match the existing tone (see `synergy.ts`'s comments on the
-  scoring formula, or `eligibility.ts`'s on front-face-only reasoning).
+- For the tone of _why_ comments (root `AGENTS.md` Conventions), see `synergy.ts`'s on the scoring
+  formula or `eligibility.ts`'s on front-face-only reasoning.
 - Keep changes proportional to the ask. This codebase deliberately favors a short, readable
   heuristic over a "complete" system in synergy detection and Bracket estimation — see
   `docs/commander-recommender.md`'s "Core logic" section before making one more sophisticated.
-- Match the existing pattern for whichever file you're touching. If the surrounding code uses a
-  plain function and a `Set`, don't reach for a class or a new dependency to do the same job.
-- **Never write oracle text from memory — copy it from the database.** Scryfall has moved much
-  self-referential wording from a card's name to "this creature"/"this land"; two rules in this
-  codebase were written from recall and were wrong on real cards (see
-  `docs/commander-recommender.md`'s "Known risk areas"). Every string in `signals.test.ts` is
-  copied verbatim from the imported database — keep it that way.
+- Root hard rule 4 (no oracle text from memory) bites hardest here: two rules in this codebase
+  were written from recall and were wrong on real cards (see `docs/commander-recommender.md`'s
+  "Known risk areas"). Every string in `signals.test.ts` is copied verbatim from the imported
+  database — keep it that way.
 - Add a `CHANGELOG.md` entry under `[Unreleased]` for any user-facing change, in the existing
   style (see `1.7.1`'s entry for the level of detail expected).
 - `docs/commander-recommender.md`'s file map is meant to stay current — update it in the same
@@ -149,9 +146,9 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
 
 ## Verification
 
-Before opening a PR:
+For changes in this directory tree, run from the repo root:
 
-1. Typecheck and test both `client/` and `server/` (see Commands). A clean typecheck and passing
-   tests are necessary, not sufficient.
-2. Actually run the app for anything user-visible — tests don't catch a CSS rule that silently
-   stopped applying.
+1. `pnpm turbo run typecheck test --filter mtg-recommender-client --filter mtg-recommender-server`
+2. `pnpm turbo run lint typecheck test build` (the full gate, as CI runs it)
+3. For anything user-visible, run both dev servers and exercise it in a browser (root `AGENTS.md`
+   Environment notes cover the Playwright proxy setup).
