@@ -30,6 +30,11 @@ export interface PtcgCard {
   /** `Normal` (basic Energy) or `Special`. */
   energyType?: string;
   regulationMark?: string;
+  /**
+   * TCGdex image base URL (`https://assets.tcgdex.net/en/<series>/<set>/<number>`),
+   * present only when TCGdex has the image; append `/low.webp` or `/high.webp`.
+   */
+  image?: string;
 }
 
 export interface SetInfo {

@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import { describe, expect, it } from 'vitest';
-import { buildSnapshot, trimCard } from './snapshot.mjs';
+import { buildSnapshot, imageBase, trimCard, UNLISTED_IMAGE_SETS } from './snapshot.mjs';
 
 const serie = { id: 'sv', name: { en: 'Scarlet & Violet' } };
 const set = {
@@ -85,6 +85,36 @@ describe('trimCard', () => {
       { name: 'A', cost: ['Fire'], damage: '30' },
       { name: 'B', cost: [], damage: '30+', effect: 'Flip a coin.' },
     ]);
+  });
+});
+
+describe('imageBase', () => {
+  // Shape of assets.tcgdex.net/datas.json: language → series → set → localId → hash.
+  const manifest = { en: { sv: { sv10: { '003': 'a1b2' } } } };
+
+  it("builds TCGdex's image base URL for a card the manifest lists", () => {
+    expect(imageBase({ serie, set, localId: '003', card: {} }, manifest)).toBe(
+      'https://assets.tcgdex.net/en/sv/sv10/003',
+    );
+  });
+
+  it('gives no image for a card the manifest leaves out, or without a manifest', () => {
+    expect(imageBase({ serie, set, localId: '004', card: {} }, manifest)).toBeUndefined();
+    expect(imageBase({ serie, set, localId: '003', card: {} }, undefined)).toBeUndefined();
+  });
+
+  it("follows TCGdex's compiler for the sets it exempts from the manifest", () => {
+    expect([...UNLISTED_IMAGE_SETS].sort()).toEqual(['30th', 'me06']);
+    const me06 = { id: 'me06', name: { en: 'Delta Reign' }, serie: { id: 'me' } };
+    expect(imageBase({ serie: { id: 'me' }, set: me06, localId: '001', card: {} }, {})).toBe(
+      'https://assets.tcgdex.net/en/me/me06/001',
+    );
+  });
+
+  it('carries through trimCard', () => {
+    expect(trimCard({ serie, set, localId: '003', card: yanmega }, manifest)?.image).toBe(
+      'https://assets.tcgdex.net/en/sv/sv10/003',
+    );
   });
 });
 

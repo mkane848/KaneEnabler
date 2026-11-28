@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import type { Format } from '@ptcg/rules';
 import { DeckView } from '../components/DeckView';
+import { CardArt } from '../components/CardArt';
 import { FormatPicker } from '../components/FormatPicker';
 import { useCatalog } from '../data/useCatalog';
 import { buildDeck } from '../engine/build';
@@ -77,10 +78,13 @@ export default function BuildPage() {
                   aria-pressed={c.id === pickedId}
                   onClick={() => setPickedId(c.id)}
                 >
-                  <span>{c.name}</span>
-                  <span className="attacker-meta">
-                    {(c.types ?? []).join('/')} · {c.attacks?.map((a) => a.name).join(', ')} ·{' '}
-                    {ready?.sets.get(c.setId)?.name ?? c.setId}
+                  <CardArt card={c} className="attacker-thumb" decorative />
+                  <span className="attacker-text">
+                    <span>{c.name}</span>
+                    <span className="attacker-meta">
+                      {(c.types ?? []).join('/')} · {c.attacks?.map((a) => a.name).join(', ')} ·{' '}
+                      {ready?.sets.get(c.setId)?.name ?? c.setId}
+                    </span>
                   </span>
                 </button>
               </li>

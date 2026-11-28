@@ -30,8 +30,10 @@ from the combined platform site at `/pokemon/`.
   Star, GLC's type and Rule Box rules. Every built deck goes through its `validateDeck`.
 - **Role patterns and test fixtures come from real snapshot text.** Each regex in `roles.ts` names
   the card it was written against, and `roles.test.ts` pins it. Don't write card text from memory.
-- **No runtime third-party requests.** The app's only fetches are its own `public/data/` files
-  (listed in `apiPolicy.test.ts`). Card images would be a new request to TCGdex's CDN from every
-  visitor — that's an owner decision under `docs/api-policy.md`, not a quick add.
+- **Runtime requests: the app's own `public/data/` files, plus card images.** Data loads only
+  through `src/data/catalog.ts` (listed in `apiPolicy.test.ts`). Images follow the Magic tools'
+  Scryfall arrangement (owner-approved 2026-11-28, `docs/api-policy.md`): the snapshot carries
+  each card's TCGdex image base URL, and `CardArt` lets the browser load `…/low.webp` lazily from
+  TCGdex's CDN. Keep it lazy and on-screen only — no preloading, no images in collapsed lists.
 - The engine is a heuristic and says so in the UI. Its tuning numbers (role targets, the shape
   constants, score weights) are judgement calls; change them with a before/after list in the PR.

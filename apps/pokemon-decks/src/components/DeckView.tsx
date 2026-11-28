@@ -4,6 +4,7 @@ import { ROLE_LABELS } from '../engine/roles';
 import type { RankedDeck } from '../engine/recommend';
 import type { Catalog } from '../data/catalog';
 import { exportList } from '../lib/exportList';
+import { CardArt } from './CardArt';
 
 const SLOT_LABELS: Record<DeckLine['slot'], string> = {
   line: 'Main line',
@@ -49,7 +50,8 @@ export function DeckView({
   return (
     <article className="deck-card">
       <header className="deck-head">
-        <div>
+        <CardArt card={deck.attacker} className="deck-art" decorative />
+        <div className="deck-head-text">
           <h3 className="deck-title">{deck.attacker.name}</h3>
           <p className="deck-sub">
             {deck.line.map((c) => c.name).join(' → ')}

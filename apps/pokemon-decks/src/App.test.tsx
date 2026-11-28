@@ -57,6 +57,10 @@ describe('collection → decks', () => {
 
     const first = (await screen.findAllByRole('article'))[0]!; // findAll throws if there are none
     expect(within(first).getByRole('heading', { level: 3 })).toHaveTextContent('Gengar ex');
+    // The attacker's art, lazy-loaded from TCGdex's image CDN.
+    const art = first.querySelector('img.deck-art');
+    expect(art?.getAttribute('src')).toMatch(/^https:\/\/assets\.tcgdex\.net\/en\/.+\/low\.webp$/);
+    expect(art).toHaveAttribute('loading', 'lazy');
     expect(screen.getByText(/1 line not recognised/)).toBeInTheDocument();
     expect(localStorage.getItem('pokemon-decks:collection:v1')).toMatch(/Gastly/);
   });

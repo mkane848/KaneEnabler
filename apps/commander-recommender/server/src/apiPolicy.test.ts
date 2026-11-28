@@ -77,6 +77,10 @@ const ALLOWED_CALL_SITES: Record<string, CallSite> = {
     why: 'Our own recommender server (health ping, /api/meta).',
     thirdParty: false,
   },
+  'apps/pokemon-decks/scripts/build-snapshot.mjs': {
+    why: "TCGdex's image manifest (assets.tcgdex.net/datas.json), once per monthly snapshot refresh.",
+    thirdParty: true,
+  },
   'apps/pokemon-decks/src/data/catalog.ts': {
     why: "The app's own vendored card snapshot (public/data/), served alongside it.",
     thirdParty: false,

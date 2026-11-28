@@ -103,9 +103,23 @@
 
 .deck-head {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
   gap: 0.75rem;
+}
+
+.deck-head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Pokémon cards are 63 × 88 mm; fixing the box keeps the header from
+   jumping when a lazy image arrives. */
+.deck-art {
+  width: 4.5rem;
+  aspect-ratio: 63 / 88;
+  object-fit: cover;
+  border-radius: var(--mtg-radius-sm);
+  flex-shrink: 0;
 }
 
 .deck-title {
@@ -200,8 +214,8 @@
 
 .attacker-option {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  gap: 0.7rem;
   width: 100%;
   padding: 0.55rem 0.8rem;
   min-height: 44px;
@@ -211,6 +225,20 @@
   color: var(--mtg-color-text);
   text-align: left;
   cursor: pointer;
+}
+
+.attacker-thumb {
+  width: 2.4rem;
+  aspect-ratio: 63 / 88;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.attacker-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .attacker-option:hover,

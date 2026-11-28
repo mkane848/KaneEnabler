@@ -39,10 +39,42 @@ function compact(/** @type {Record<string, unknown>} */ obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 }
 
+const ASSETS = 'https://assets.tcgdex.net';
+
+/**
+ * Sets TCGdex's own compiler gives images without consulting the manifest
+ * (`getCardPictures` in its server/compiler/utils/cardUtil.ts, marked a
+ * "temporary hack"). Both are absent from datas.json as of 2026-11-28, yet
+ * their images are served; mirroring the compiler keeps the app in step with
+ * TCGdex's own API.
+ */
+export const UNLISTED_IMAGE_SETS = new Set(['30th', 'me06']);
+
+/**
+ * @typedef {Record<string, Record<string, Record<string, Record<string, unknown>>>>} ImageManifest
+ *   assets.tcgdex.net/datas.json: language → series → set → localId → hash
+ */
+
+/**
+ * The card's image base URL, the same way TCGdex's API builds its `image`
+ * field: present only when the manifest lists the card (or its set is one the
+ * compiler exempts). The app appends `/low.webp` or `/high.webp`.
+ *
+ * @param {import('./tcgdexSource.mjs').RawCard} raw
+ * @param {ImageManifest | undefined} manifest
+ */
+export function imageBase(raw, manifest) {
+  const { serie, set, localId } = raw;
+  const listed = Boolean(manifest?.en?.[serie.id]?.[set.id]?.[localId]);
+  if (!listed && !UNLISTED_IMAGE_SETS.has(set.id)) return undefined;
+  return `${ASSETS}/en/${serie.id}/${set.id}/${localId}`;
+}
+
 /**
  * @param {import('./tcgdexSource.mjs').RawCard} raw
+ * @param {ImageManifest} [manifest]
  */
-export function trimCard(raw) {
+export function trimCard(raw, manifest) {
   const { card, set, localId } = raw;
   const name = en(card.name);
   if (!name) return null;
@@ -88,6 +120,7 @@ export function trimCard(raw) {
     trainerType: str(card.trainerType),
     energyType: str(card.energyType),
     regulationMark: regulationMark(card.regulationMark),
+    image: imageBase(raw, manifest),
   });
 }
 
@@ -115,8 +148,9 @@ function readFilter(filter) {
  * @param {import('./tcgdexSource.mjs').RawCard[]} rawCards
  * @param {Record<string, unknown>} legals  meta/legals.ts's named exports
  * @param {{ repo: string, commit: string, committedAt: string }} source
+ * @param {ImageManifest} [manifest]  without it, no card gets an image
  */
-export function buildSnapshot(rawCards, legals, source) {
+export function buildSnapshot(rawCards, legals, source, manifest) {
   /** @type {Map<string, { id: string, name: string, serieId: string, code?: string, releaseDate?: string, official?: number }>} */
   const sets = new Map();
   /** @type {Map<string, { id: string, name: string }>} */
@@ -125,7 +159,7 @@ export function buildSnapshot(rawCards, legals, source) {
   const bySeries = new Map();
 
   for (const raw of rawCards) {
-    const card = trimCard(raw);
+    const card = trimCard(raw, manifest);
     if (!card) continue;
     const serieId = raw.serie.id;
     const releaseDate = typeof raw.set.releaseDate === 'string' ? raw.set.releaseDate : '';
@@ -169,9 +203,14 @@ export function buildSnapshot(rawCards, legals, source) {
   }
 
   const cardCount = [...series.values()].reduce((n, list) => n + list.length, 0);
+  const imageCount = [...series.values()].reduce(
+    (n, list) => n + list.filter((c) => c.image).length,
+    0,
+  );
   const index = {
     source: { ...source, licence: 'MIT', attribution: 'Card data from TCGdex (tcgdex.dev)' },
     cardCount,
+    imageCount,
     // Which regulation marks each series carries, so the app can fetch only
     // the series a format can draw from (Standard needs two of twenty).
     series: [...seriesInfo.values()]

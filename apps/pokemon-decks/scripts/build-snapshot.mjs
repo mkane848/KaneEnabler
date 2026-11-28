@@ -5,13 +5,15 @@
  *
  *   pnpm --filter pokemon-decks run build-snapshot                 # clone, then build
  *   pnpm --filter pokemon-decks run build-snapshot -- --source DIR # use an existing checkout
+ *   … -- --manifest FILE   # use a downloaded datas.json instead of fetching it
  *
- * Network: one `git clone --depth 1` of github.com/tcgdex/cards-database (MIT),
- * nothing else — no API requests, so no per-card traffic and no rate limit to
- * respect. It runs by hand or from the monthly pokemon-data-refresh workflow,
- * never at build, deploy, or page load; see docs/api-policy.md's TCGdex
- * section. It is not a `fetch` call site, which is why apiPolicy.test.ts's
- * allowlist doesn't list it.
+ * Network, per run: one `git clone --depth 1` of github.com/tcgdex/cards-database
+ * (MIT), and one GET of assets.tcgdex.net/datas.json — the manifest of which
+ * cards have an image, which is how TCGdex's own API decides — sent with an
+ * identifying User-Agent. No per-card requests. It runs by hand or from the
+ * monthly pokemon-data-refresh workflow, never at build, deploy, or page load;
+ * see docs/api-policy.md's TCGdex section. The manifest GET is listed in
+ * apiPolicy.test.ts's allowlist.
  *
  * The database's files are TypeScript modules; they're parsed, never executed
  * (see tcgdexSource.mjs).
@@ -33,11 +35,32 @@ import { parseNamedExports, readDatabase } from './tcgdexSource.mjs';
 import { buildSnapshot } from './snapshot.mjs';
 
 const REPO = 'https://github.com/tcgdex/cards-database.git';
+const IMAGE_MANIFEST = 'https://assets.tcgdex.net/datas.json';
+/** Below this share of cards with an image, the manifest has changed shape. */
+const MIN_IMAGE_SHARE = 0.5;
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(APP_ROOT, 'public', 'data');
 
 const args = process.argv.slice(2);
-const sourceArg = args.includes('--source') ? args[args.indexOf('--source') + 1] : undefined;
+const argValue = (/** @type {string} */ flag) =>
+  args.includes(flag) ? args[args.indexOf(flag) + 1] : undefined;
+const sourceArg = argValue('--source');
+const manifestArg = argValue('--manifest');
+
+const pkg = JSON.parse(readFileSync(path.join(APP_ROOT, 'package.json'), 'utf8'));
+const USER_AGENT = `KaneEnabler-pokemon-decks/${pkg.version} (hobby project; https://github.com/mkane848/KaneEnabler)`;
+
+/** @returns {Promise<import('./snapshot.mjs').ImageManifest>} */
+async function loadImageManifest() {
+  if (manifestArg) return JSON.parse(readFileSync(manifestArg, 'utf8'));
+  console.log(`Fetching ${IMAGE_MANIFEST}…`);
+  const res = await fetch(IMAGE_MANIFEST, {
+    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!res.ok) throw new Error(`${IMAGE_MANIFEST} responded ${res.status}`);
+  return res.json();
+}
 
 /** @param {string[]} gitArgs @param {string} [cwd] */
 const git = (gitArgs, cwd) => execFileSync('git', gitArgs, { cwd, encoding: 'utf8' }).trim();
@@ -69,10 +92,21 @@ try {
       throw new Error('Too many unreadable files — update tcgdexSource.mjs.');
   }
 
-  const { index, series } = buildSnapshot(cards, legals, { repo: REPO, commit, committedAt });
+  const manifest = await loadImageManifest();
+  const { index, series } = buildSnapshot(
+    cards,
+    legals,
+    { repo: REPO, commit, committedAt },
+    manifest,
+  );
   if (index.cardCount < 15_000) {
     throw new Error(
       `Only ${index.cardCount} English cards — refusing to write a partial snapshot.`,
+    );
+  }
+  if (index.imageCount < index.cardCount * MIN_IMAGE_SHARE) {
+    throw new Error(
+      `Only ${index.imageCount} of ${index.cardCount} cards have images — has datas.json changed shape?`,
     );
   }
 
@@ -83,7 +117,7 @@ try {
     writeFileSync(path.join(OUT_DIR, 'series', `${id}.json`), `${JSON.stringify(seriesCards)}\n`);
   }
   console.log(
-    `Wrote ${index.cardCount} cards in ${series.size} series from tcgdex@${commit.slice(0, 7)}.`,
+    `Wrote ${index.cardCount} cards (${index.imageCount} with images) in ${series.size} series from tcgdex@${commit.slice(0, 7)}.`,
   );
 } finally {
   cleanup();
