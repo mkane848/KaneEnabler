@@ -372,6 +372,9 @@ server/                Express + TS + better-sqlite3
       bracket.ts               Game-Changer-count -> Bracket estimate (still computed and
                                 still on the API response, but its UI is hidden — see below)
       spellbook.ts             Commander Spellbook adapter: cache, backoff, response normalisation
+      spellbookCache.ts        the adapter's SQLite store (data/spellbook-cache.sqlite): combo
+                                answers and the 429 cooldown, so a process restart forgets
+                                neither; TTL/pruning live here, politeness policy in spellbook.ts
   scripts/
     fetch-scryfall.ts        downloads current Oracle Cards bulk file (skips if a recent copy exists)
     import-scryfall.ts       parses that file into server/data/cards.sqlite + card_face_names;

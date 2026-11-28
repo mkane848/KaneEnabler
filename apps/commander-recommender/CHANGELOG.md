@@ -24,6 +24,16 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
   against the real 20-deck corpus in `deckValidity.integration.test.ts`, which the weekly
   `scryfall-fetch-check.yml` workflow now runs explicitly alongside the recommend and cards checks.
 
+### Changed
+
+- **The Commander Spellbook cache survives a server restart.** Combo answers and the 429 cooldown
+  moved from a per-process Map to a SQLite file (`server/data/spellbook-cache.sqlite`,
+  `spellbookCache.ts`), so bouncing the process no longer forgets either — a cooldown in
+  particular is the service telling us to stop, not a per-process hint. Still click-only, still
+  a 1-hour TTL with expired entries pruned on write, still no retry on 429. A redeploy starts the
+  cache empty (Render's free-tier filesystem is ephemeral); that loss is bounded by the TTL, and
+  an external store was deliberately declined — see `docs/api-policy.md`.
+
 ## [1.13.6] — 2026-11-24
 
 ### Fixed
