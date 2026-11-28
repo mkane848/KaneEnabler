@@ -87,7 +87,8 @@ Run from `apps/commander-recommender/` unless noted (or use `pnpm --filter mtg-r
   `IMPORT_VERSION`/sqlite `meta`-table freshness check (`dataSnapshot.ts`/`importedSnapshot.ts`)
   stay local — see `docs/handoff.md`'s `@mtg/scryfall` section for why those didn't move.
 - **`server/src/services/spellbook.ts`** — Commander Spellbook adapter. Click-triggered only,
-  1-hour in-memory cache, no retry on 429. Same hard-rule constraints apply.
+  1-hour SQLite-backed cache (`spellbookCache.ts`, survives process restarts), no retry on 429.
+  Same hard-rule constraints apply.
 - **Cited-card dedup**: the server sends each cited card once (`server/src/services/cardIndex.ts`)
   and cites it by position; `client/src/lib/rehydrate.ts` puts cards back together at the API
   boundary. This is why a 12MB response became 0.25MB (see `CHANGELOG.md` 1.7.1) — don't bypass it
