@@ -11,6 +11,8 @@ MINOR is a new capability, and PATCH is a fix with no new capability.
 
 ### Added
 
+- **A "Pokémon Decks" link in the nav**, to the platform's new Pokémon deck builder.
+
 - **Check a finished deck's legality.** A new collapsed-by-default panel under the card list
   ("Check a finished deck") takes the pasted list plus one or two commander names and reports
   every rule the deck breaks: exactly 100 cards including the commander(s) (CR 903.5a), singleton

@@ -35,9 +35,13 @@ cpSync(new URL('../apps/home/dist/', import.meta.url), outDir, { recursive: true
 // buildCommand (Render fills in ${SERVER_HOST} itself before this script
 // ever runs) — passed through here, not re-derived.
 run('mtg-recommender-client', 'build', { VITE_BASE_PATH: '/recommender/' });
-cpSync(new URL('../apps/commander-recommender/client/dist/', import.meta.url), new URL('recommender/', outDir), {
-  recursive: true,
-});
+cpSync(
+  new URL('../apps/commander-recommender/client/dist/', import.meta.url),
+  new URL('recommender/', outDir),
+  {
+    recursive: true,
+  },
+);
 
 // fetch-cards needs to run before build, same as this app's own `pnpm run
 // build` (its prebuild script) — but that prebuild script only runs
@@ -47,5 +51,12 @@ cpSync(new URL('../apps/commander-recommender/client/dist/', import.meta.url), n
 run('mtg-time-tracker', 'fetch-cards');
 run('mtg-time-tracker', 'build', { VITE_BASE_PATH: '/time-counters/' });
 cpSync(new URL('../apps/time-counters/dist/', import.meta.url), new URL('time-counters/', outDir), {
+  recursive: true,
+});
+
+// No fetch step: the card snapshot is committed under public/data/ and
+// refreshed by its own monthly workflow, never at deploy (docs/api-policy.md).
+run('pokemon-decks', 'build', { VITE_BASE_PATH: '/pokemon/' });
+cpSync(new URL('../apps/pokemon-decks/dist/', import.meta.url), new URL('pokemon/', outDir), {
   recursive: true,
 });

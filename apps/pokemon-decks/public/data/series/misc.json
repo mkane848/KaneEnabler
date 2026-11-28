@@ -1,0 +1,1 @@
+[{"id":"miscp-001","setId":"miscp","localId":"001","name":"Ancient Mew","category":"Pokemon","rarity":"Promo","stage":"Stage1","hp":30,"types":["Psychic"],"attacks":[{"name":"Psyche","cost":["Psychic","Psychic"],"damage":"40"}],"retreat":2}]

@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 export interface SiteFooterProps {
   /** App-specific line, rendered above the shared attribution. */
   children?: ReactNode;
+  /** Replaces the Magic attribution, for a tool whose card data isn't Scryfall's. */
+  attribution?: ReactNode;
   className?: string;
 }
 
@@ -13,11 +15,13 @@ export interface SiteFooterProps {
  * styles on a bare <footer>, which is how the two ended up looking nothing
  * alike. Anything an individual app needs to add goes in `children`.
  */
-export function SiteFooter({ children, className }: SiteFooterProps) {
+export function SiteFooter({ children, attribution, className }: SiteFooterProps) {
   return (
     <footer className={['mtg-footer', className].filter(Boolean).join(' ')}>
       {children}
-      <p>Card data via Scryfall. Magic: The Gathering is © Wizards of the Coast.</p>
+      {attribution ?? (
+        <p>Card data via Scryfall. Magic: The Gathering is © Wizards of the Coast.</p>
+      )}
     </footer>
   );
 }

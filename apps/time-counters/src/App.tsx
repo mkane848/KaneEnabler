@@ -12,6 +12,7 @@ import Header from './components/Header';
 import ThemeToggle from './components/ThemeToggle';
 import TimeTravelPanel, { buildTimeTravelTargets } from './components/TimeTravelPanel';
 import UndoToast from './components/UndoToast';
+import ExternalChangeNotice from './components/ExternalChangeNotice';
 import { useCommanderCards } from './hooks/useCommanderCards';
 import { useGameState } from './hooks/useGameState';
 import type { CommanderId } from './types';
@@ -26,6 +27,7 @@ const NAV_LINKS: NavBarLink[] = [
   { label: 'Home', href: '/' },
   { label: 'Recommender', href: '/recommender/' },
   { label: 'Time Counters', href: '/time-counters/', current: true },
+  { label: 'Pokémon Decks', href: '/pokemon/' },
 ];
 
 export default function App() {
@@ -33,6 +35,8 @@ export default function App() {
     state,
     lastUpkeep,
     lastRemoved,
+    externalChange,
+    dismissExternalChange,
     addCard,
     removeCard,
     undoRemove,
@@ -156,6 +160,9 @@ export default function App() {
           onUndo={undoRemove}
           onDismiss={dismissLastRemoved}
         />
+      )}
+      {externalChange && (
+        <ExternalChangeNotice change={externalChange} onDismiss={dismissExternalChange} />
       )}
     </div>
   );

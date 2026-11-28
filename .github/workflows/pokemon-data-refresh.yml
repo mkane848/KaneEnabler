@@ -1,0 +1,65 @@
+name: Pokémon data refresh
+
+# Rebuilds apps/pokemon-decks' vendored card snapshot from TCGdex's card
+# database each month and opens a PR when anything changed — a new set or a
+# rotation becomes a review, not a chore. One shallow git clone per run; no
+# TCGdex API requests. Source and cadence confirmed with the repo owner
+# 2026-11-27; see docs/api-policy.md's TCGdex section before changing them.
+on:
+  schedule:
+    - cron: '0 15 2 * *' # 2nd of the month, 15:00 UTC (a day apart from cr-refresh)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    name: Rebuild the TCGdex snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Rebuild the snapshot
+        run: pnpm --filter pokemon-decks run build-snapshot
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet -- apps/pokemon-decks/public/data; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The app's and @ptcg/rules' tests read the snapshot, so a shape change
+      # upstream fails here rather than in a merged PR.
+      - name: Tests against the new snapshot
+        if: steps.diff.outputs.changed == 'true'
+        run: pnpm turbo run test --filter pokemon-decks...
+
+      - name: Open a PR with the new snapshot
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          commit=$(node -e "console.log(require('./apps/pokemon-decks/public/data/index.json').source.commit.slice(0, 7))")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "pokemon-data-$commit"
+          git add apps/pokemon-decks/public/data
+          git commit -m "data: refresh Pokémon card snapshot to tcgdex@$commit"
+          git push -u origin "pokemon-data-$commit"
+          gh pr create \
+            --title "data: refresh Pokémon card snapshot to tcgdex@$commit" \
+            --body "The monthly rebuild found changes in TCGdex's card database (github.com/tcgdex/cards-database@$commit). Check index.json's legality filters for a rotation or ban-list change, and the series files for new sets. Tests against the new snapshot already passed."

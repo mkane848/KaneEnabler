@@ -28,14 +28,21 @@ const TOOLS: Tool[] = [
       "A turn tracker built for one Jeskai deck's Suspend, Vanishing, Fading, and Saga cards — plus The Tenth Doctor and Rose Tyler's own time-counter abilities.",
     href: '/time-counters/',
   },
+  {
+    name: 'Pokémon Deck Builder',
+    tagline: 'Pokémon TCG decks',
+    description:
+      'Paste your Pokémon TCG collection and get decks you can build from it — or build around one Pokémon — for Standard, Expanded, Gym Leader Challenge or Unlimited.',
+    href: '/pokemon/',
+  },
 ];
 
 export default function Landing() {
   return (
     <main className="mtg-page-main">
-      <h1 className="mtg-page-title">Magic: The Gathering tools</h1>
+      <h1 className="mtg-page-title">Trading card game tools</h1>
       <p className="mtg-page-subtitle">
-        Pick a tool to get started. One account works across both.
+        Pick a tool to get started. One account works across all of them.
       </p>
 
       <div className="tool-grid">

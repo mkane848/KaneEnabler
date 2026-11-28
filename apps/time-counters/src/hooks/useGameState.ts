@@ -19,7 +19,7 @@ import {
   hasHitTarget,
   newlyTriggeredChapters,
 } from '../utils/counters';
-import { clearState, loadState, saveState } from '../utils/storage';
+import { clearState, loadState, saveState, subscribeToExternalChanges } from '../utils/storage';
 
 const INITIAL_COMMANDERS: Commanders = {
   tenthDoctor: { castCount: 0, onBattlefield: false },
@@ -133,16 +133,21 @@ interface TrackerState {
    * × button (and ChangeSummaryModal's Resolve action, which shares the same
    * function) has a way back. Single-level — a second removal overwrites it. */
   lastRemoved: { card: TrackedCard; index: number } | null;
+  /** Set when another tab's save just replaced this tab's game — `reset`
+   * when that tab started a new game — so the UI can say why the board
+   * changed under the player. Cleared by their next action here. */
+  externalChange: 'updated' | 'reset' | null;
 }
 
 const INITIAL_TRACKER_STATE: TrackerState = {
   game: INITIAL_STATE,
   lastUpkeep: null,
   lastRemoved: null,
+  externalChange: null,
 };
 
 function initTrackerState(): TrackerState {
-  return { game: loadState() ?? INITIAL_STATE, lastUpkeep: null, lastRemoved: null };
+  return { ...INITIAL_TRACKER_STATE, game: loadState() ?? INITIAL_STATE };
 }
 
 type GameAction =
@@ -161,6 +166,43 @@ type GameAction =
   | { type: 'adjustRoseTimeCounters'; delta: number }
   | { type: 'roseAttacks' }
   | { type: 'resetGame' };
+
+type TrackerAction =
+  | GameAction
+  /** Another tab saved (or reset, when `game` is null) — see storage.ts. */
+  | { type: 'externalReplace'; game: GameState | null }
+  | { type: 'dismissExternalChange' };
+
+/**
+ * Layers cross-tab sync over gameReducer, so the fifteen game actions don't
+ * each have to know about it.
+ *
+ * Adopting another tab's game is last-writer-wins: one player tracks one
+ * game, so a second open tab is almost always a stale copy rather than a
+ * concurrent edit worth merging (docs/state-machine-audit.md D9). Both
+ * overlays close, because each describes *this* tab's game: an undo would
+ * splice a card from the old board into the new one, and an upkeep summary
+ * would report a turn the other tab has already moved past.
+ */
+function trackerReducer(state: TrackerState, action: TrackerAction): TrackerState {
+  switch (action.type) {
+    case 'externalReplace':
+      return {
+        game: action.game ?? INITIAL_STATE,
+        lastUpkeep: null,
+        lastRemoved: null,
+        externalChange: action.game ? 'updated' : 'reset',
+      };
+    case 'dismissExternalChange':
+      return state.externalChange ? { ...state, externalChange: null } : state;
+    default: {
+      const next = gameReducer(state, action);
+      // Acting here is the player's acknowledgement that the board is what
+      // they meant; a no-op action (same state back) acknowledges nothing.
+      return next !== state && next.externalChange ? { ...next, externalChange: null } : next;
+    }
+  }
+}
 
 function gameReducer(state: TrackerState, action: GameAction): TrackerState {
   switch (action.type) {
@@ -220,6 +262,7 @@ function gameReducer(state: TrackerState, action: GameAction): TrackerState {
         },
         lastUpkeep: state.lastUpkeep?.filter((c) => c.instanceId !== action.instanceId) ?? null,
         lastRemoved: card ? { card, index } : state.lastRemoved,
+        externalChange: state.externalChange,
       };
     }
 
@@ -600,17 +643,22 @@ function gameReducer(state: TrackerState, action: GameAction): TrackerState {
 }
 
 export function useGameState() {
-  const [tracker, dispatch] = useReducer(gameReducer, null, initTrackerState);
-  const { game, lastUpkeep, lastRemoved } = tracker;
+  const [tracker, dispatch] = useReducer(trackerReducer, null, initTrackerState);
+  const { game, lastUpkeep, lastRemoved, externalChange } = tracker;
 
   useEffect(() => {
     saveState(game);
   }, [game]);
 
-  const addCard = useCallback(
-    (input: AddCardInput) => dispatch({ type: 'addCard', input }),
+  useEffect(
+    () =>
+      subscribeToExternalChanges((incoming) =>
+        dispatch({ type: 'externalReplace', game: incoming }),
+      ),
     [],
   );
+
+  const addCard = useCallback((input: AddCardInput) => dispatch({ type: 'addCard', input }), []);
   /** Drops the card from the board and from any upkeep summary still on screen. */
   const removeCard = useCallback(
     (instanceId: string) => dispatch({ type: 'removeCard', instanceId }),
@@ -705,6 +753,8 @@ export function useGameState() {
    * so the two can't disagree again (docs/state-machine-audit.md B2/B7).
    */
   const roseAttacks = useCallback(() => dispatch({ type: 'roseAttacks' }), []);
+  /** Hides the "changed in another tab" notice. */
+  const dismissExternalChange = useCallback(() => dispatch({ type: 'dismissExternalChange' }), []);
   const resetGame = useCallback(() => {
     clearState();
     dispatch({ type: 'resetGame' });
@@ -714,6 +764,8 @@ export function useGameState() {
     state: game,
     lastUpkeep,
     lastRemoved,
+    externalChange,
+    dismissExternalChange,
     addCard,
     removeCard,
     undoRemove,

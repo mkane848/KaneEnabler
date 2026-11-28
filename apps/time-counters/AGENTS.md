@@ -26,12 +26,10 @@ from the repo root.
 
 - `pnpm run dev` — local dev server (runs `ensure-catalog` first, which
   seeds `public/cards.json` from `scripts/seed-cards.json` if it's missing)
-- `pnpm run build` — `tsc -b && vite build`; treat a failing typecheck as a
-  real error, not noise — `strict`, `noUnusedLocals`, `noUnusedParameters`,
-  and `noUncheckedIndexedAccess` are all on in `tsconfig.json`
-- `pnpm run fetch-cards` — rebuilds the real card catalog from Scryfall
-  (network access required; not available in this environment — see
-  README's "About the decklist scan")
+- `pnpm run build` — `tsc -b && vite build`
+- `pnpm run fetch-cards` — rebuilds the real card catalog from Scryfall's
+  bulk data (network access to `api.scryfall.com`; read
+  `docs/api-policy.md` before changing what it calls)
 - `pnpm run lint` — ESLint (`packages/config/eslint.react.js`; no
   type-aware rules — see that package for why)
 - `pnpm test` — runs the Vitest suite once (`pnpm run test:watch` for watch
@@ -125,11 +123,9 @@ from the repo root.
 
 ## Conventions
 
-- Comments are rare and explain _why_, not _what_ — see existing files for
-  the tone (e.g. `useGameState.ts`'s doc comments on `nextTurn` and
-  `applyTimeTravel` explain the rules distinction between the two, not
-  just what the function does). Match that style; don't add narrating
-  comments.
+- For the tone of _why_ comments (root `AGENTS.md` Conventions), see
+  `useGameState.ts`'s doc comments on `nextTurn` and `applyTimeTravel`,
+  which explain the rules distinction between the two.
 - This app models real Magic rules, not just arbitrary product features —
   when adding or changing a mechanic, check the actual Comprehensive
   Rules wording (or a reliable secondary source) rather than guessing.
@@ -142,12 +138,10 @@ from the repo root.
   full multi-player turn order.
 - Keep `README.md`'s "Project layout" table and "Counter mechanics"
   section in sync with any structural or rules-model changes.
-- **Versioning: this project follows [Semantic Versioning](https://semver.org/)
-  and keeps `CHANGELOG.md` in [Keep a Changelog](https://keepachangelog.com/)
-  format.** `package.json`'s `version` field is the single source of truth —
-  `vite.config.ts` bakes it into `__APP_VERSION__` at build time, which is
-  all `AboutModal.tsx` reads to display it, so bumping `package.json` is
-  the only place the app's own version needs to change.
+- **Versioning** (SemVer + Keep a Changelog, per the root guide) — this
+  app's specifics: `vite.config.ts` bakes `package.json`'s `version` into
+  `__APP_VERSION__`, which is all `AboutModal.tsx` reads, so bumping
+  `package.json` is the only place the version changes.
   - Bump the version and add a dated `CHANGELOG.md` entry for any
     user-visible change: new features/mechanics (minor, e.g. `1.1.0` →
     `1.2.0`) or bug fixes/behavior corrections (patch, e.g. `1.1.0` →
@@ -191,11 +185,12 @@ secondary sources — reuse rather than re-deriving:
 
 ## Verification
 
-Before calling work finished (also see Commands):
+For changes in this directory tree:
 
-1. `pnpm run build` (typecheck) and `pnpm test`.
-2. Exercise the UI in a browser — a clean typecheck and passing tests are
-   necessary, not sufficient.
+1. `pnpm --filter mtg-time-tracker run typecheck` and
+   `pnpm --filter mtg-time-tracker test`
+2. `pnpm turbo run lint typecheck test build` from the repo root (the CI gate)
+3. Exercise the UI in a browser (`pnpm --filter mtg-time-tracker dev`).
 
 ## Working with the user
 

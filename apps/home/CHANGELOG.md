@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-11-27
+
+### Added
+
+- **The Pokémon Deck Builder joins the platform.** A new tool card on the landing page and a
+  "Pokémon Decks" link in the nav lead to `/pokemon/`. The landing page now says "Trading card game
+  tools" rather than "Magic: The Gathering tools", and the page title and description follow.
+
 ## [0.3.3] - 2026-11-24
 
 ### Fixed

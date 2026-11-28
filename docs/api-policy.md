@@ -14,13 +14,14 @@ don't look like network changes. They look like refactors.
 
 ### Scryfall
 
-| Constraint | Detail                                                                                                                                                            |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rate       | ≤10 requests/second sustained (100ms spacing). `/cards/collection` is capped tighter at 2/second.                                                                 |
-| Headers    | A descriptive `User-Agent` **and** an `Accept` header on **every** request. Scryfall answers HTTP 400 without them — this broke a real deploy of the recommender. |
-| Caching    | Cache downloaded data locally for **at least 24 hours**. Prices update once daily; fetching more often gains nothing.                                             |
-| Bulk       | For mass lookups (names, images, prices), use the bulk-data exports. Never loop per-card against the API.                                                         |
-| Backoff    | On 429 or 503, retry with exponential backoff and jitter — or don't retry at all.                                                                                 |
+| Constraint | Detail                                                                                                                                                                                                                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rate       | ≤10 requests/second sustained (100ms spacing). `/cards/collection` is capped tighter at 2/second.                                                                                                                                                                                                                                                       |
+| Headers    | A descriptive `User-Agent` **and** an `Accept` header on **every** request. Scryfall answers HTTP 400 without them — this broke a real deploy of the recommender.                                                                                                                                                                                       |
+| Caching    | Cache downloaded data locally for **at least 24 hours**. Prices update once daily; fetching more often gains nothing.                                                                                                                                                                                                                                   |
+| Bulk       | For mass lookups (names, images, prices), use the bulk-data exports. Never loop per-card against the API.                                                                                                                                                                                                                                               |
+| Backoff    | On 429 or 503, retry with exponential backoff and jitter — or don't retry at all.                                                                                                                                                                                                                                                                       |
+| Images     | Image URLs come from the bulk data (recommender `image_uri`, time-counters `imageSmall` via `@mtg/card-model`'s `frontImageUri`) and the visitor's browser loads them straight from Scryfall's image CDN; nothing is re-hosted. Lazy in the recommender, so only cards on screen are requested. Recorded 2026-11-28; the practice predates this policy. |
 
 **Enforced in:** `packages/scryfall` (`@mtg/scryfall`) — the bulk-data snapshot fetch/cache
 mechanics (`ensureOracleCardsSnapshot`) and the `User-Agent` formatter (`buildUserAgent`) both apps'
@@ -75,6 +76,32 @@ Distribution follows the [WotC Fan Content Policy](https://company.wizards.com/e
 free, carrying the unofficial-content notice, no WotC logos or trademarks. Both apps already ship
 this disclaimer in their About dialogs — keep it there.
 
+### TCGdex (Pokémon card data)
+
+The Pokémon deck recommender (`apps/pokemon-decks`) reads card data from a **vendored snapshot**
+of TCGdex's card database (`github.com/tcgdex/cards-database`, MIT), committed as
+`apps/pokemon-decks/public/data/` and served as the app's own static assets. Runtime never calls
+TCGdex. Source, cadence and trigger confirmed with the repo owner on 2026-11-27, replacing the
+originally planned Pokémon TCG API: that project's own dataset README says the API goes offline on
+**March 1, 2027** and that its data is no longer maintained.
+
+| Constraint | Detail                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Published  | From [tcgdex.dev/faq](https://tcgdex.dev/faq) (read 2026-11-27): _"There are no published hard rate limits, but please be considerate. For bulk data needs, cache responses locally rather than fetching the same data repeatedly."_ A vendored snapshot is the strongest form of that.                                                                                                                       |
+| Source     | One `git clone --depth 1` of the database repo per refresh (`apps/pokemon-decks/scripts/build-snapshot.mjs`), plus one GET of the image manifest `assets.tcgdex.net/datas.json` with an identifying `User-Agent` — the manifest is how TCGdex's own API decides which cards have an image. **No requests to `api.tcgdex.net`.** The repo's files are TypeScript modules; they are parsed, never executed.     |
+| Trigger    | The monthly `pokemon-data-refresh.yml` workflow (opens a PR) plus manual `workflow_dispatch` / local `pnpm --filter pokemon-decks run build-snapshot`. Never at runtime, per build, or per deploy.                                                                                                                                                                                                            |
+| Images     | **Same arrangement as Scryfall's, owner-approved 2026-11-28.** The snapshot stores each card's image base URL (`assets.tcgdex.net/en/<series>/<set>/<number>`, only for cards the manifest lists, plus the two sets TCGdex's compiler exempts); the visitor's browser loads `…/low.webp` straight from TCGdex's CDN, lazily, only for cards on screen. Missing or failed images fall back to the card's text. |
+| Volume     | ~12 refreshes/year, each one clone and one manifest GET.                                                                                                                                                                                                                                                                                                                                                      |
+
+**One-time source, 2026-11-27:** TCGdex doesn't mark Black & White-era ACE SPEC cards. Their ids
+were read once from the frozen `github.com/PokemonTCG/pokemon-tcg-data` (29 Black & White and XY
+set files via `raw.githubusercontent.com`, each card's `subtypes`), confirmed with the repo owner,
+and vendored as ids and names only in `packages/ptcg-rules/src/data/legacy-ace-specs.json`. Those
+sets never change, so there is no refresh and nothing calls that repository again.
+
+Attribution: the app footer credits TCGdex as the card-data source. TCGdex is a fan database, not
+The Pokémon Company — the app also carries an unofficial-content notice.
+
 ### Supabase
 
 Free-tier row, bandwidth, and auth limits apply once user profiles ship. Profile reads should be
@@ -104,8 +131,20 @@ cached client-side via TanStack Query rather than re-queried per navigation.
 
 These belong in CI so the policy survives future refactors:
 
-- A test that fails if any Scryfall or Spellbook request is issued without the shared headers.
-- A test asserting Commander Spellbook is **never** called during page load or route loading.
+- **Landed:** `apiPolicy.test.ts` (`apps/commander-recommender/server/src/`) statically scans the
+  whole workspace and fails if any file issues a request (`fetch`, `http(s).get/request`, XHR,
+  `sendBeacon`) without being on its `ALLOWED_CALL_SITES` list, each entry with the reason it may
+  call out. Every third-party entry must build a `User-Agent`; for `@mtg/scryfall`'s
+  `bulkData.js`, which forwards headers its callers supply, the check moves to every caller.
+  A new call site therefore fails CI until someone adds it to the list — which is the moment to
+  read this policy and confirm the change with the repo owner.
+- **Landed:** `spellbookConsent.test.tsx` (`apps/commander-recommender/client/src/`) renders the
+  whole recommender through the real router, with a list submitted, results on screen, search
+  params in the URL, and the explanation panel open, and asserts that nothing reaches
+  `/api/combos` until "Find combos" is clicked. Exactly one request follows the click.
+  `ComboFinder.test.tsx` pins the component's own click-consent rules. This one catches the
+  regression that looks like a refactor: a combos query moved into a route loader, a prefetch, or
+  an `enabled` default.
 - **Landed:** `.github/workflows/scryfall-fetch-check.yml` runs the real Scryfall fetch (not just
   the import against a file already on disk) weekly, separate from the main CI workflow so a normal
   PR generates no extra Scryfall traffic — confirmed with the repo owner before implementation, per

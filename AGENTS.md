@@ -1,9 +1,9 @@
 # Repository guide
 
-KaneEnabler is the root of a pnpm + Turborepo monorepo of Magic: The Gathering tools. The game's
-rules, card data, mana symbols, and shared UI are modelled once in `packages/` and consumed by
-three apps in `apps/`, so a new tool never re-implements colour identity, commander legality, or
-counter semantics.
+KaneEnabler is the root of a pnpm + Turborepo monorepo of trading card game tools — three for Magic:
+The Gathering and one for the Pokémon TCG. Each game's rules, card data, and the shared UI are
+modelled once in `packages/` and consumed by the apps in `apps/`, so a new tool never re-implements
+colour identity, commander legality, counter semantics, or Pokémon deck legality.
 
 <!-- intent-skills:start -->
 
@@ -39,7 +39,7 @@ directory name).
   [`docs/api-policy.md`](./docs/api-policy.md) before touching them.
 
 Package names: `mtg-recommender-client`, `mtg-recommender-server`, `mtg-time-tracker`,
-`mtg-platform-home`.
+`mtg-platform-home`, `pokemon-decks`.
 
 ## Project layout
 
@@ -49,8 +49,13 @@ Package names: `mtg-recommender-client`, `mtg-recommender-server`, `mtg-time-tra
 - `apps/time-counters/` — in-game counter companion for one Doctor Who deck: static
   `public/cards.json`, `localStorage` state, CSS Modules, no backend.
 - `apps/home/` — platform landing page and `/profile`; ships inside the combined static site.
+- `apps/pokemon-decks/` — Pokémon TCG deck builder: paste a collection for ranked decks, or build
+  around one Pokémon. Client-only; card data is a committed TCGdex snapshot (`public/data/`).
 - `packages/config/` (`@mtg/config`) — shared tsconfig / ESLint / Prettier / Vitest bases.
 - `packages/rules/` (`@mtg/rules`) — CR-cited Magic rules primitives; the one place the rules live.
+- `packages/ptcg-rules/` (`@ptcg/rules`) — the Pokémon TCG counterpart: deck-construction and
+  format-legality rules for `apps/pokemon-decks`, cited to the official rulebook and Gym Leader
+  Challenge's published rules, tested against the app's real card snapshot.
 - `packages/card-model/` (`@mtg/card-model`) — face/DFC-aware Scryfall field readers (plain `.js`
   with JSDoc types, not `.ts`).
 - `packages/scryfall/` (`@mtg/scryfall`) — the single choke point for Scryfall bulk-data
@@ -60,7 +65,7 @@ Package names: `mtg-recommender-client`, `mtg-recommender-server`, `mtg-time-tra
   `theme.css` (the platform theme; the single place a platform colour/font/radius/shadow is
   defined).
 - `packages/profile/` (`@mtg/profile`) — Supabase auth and card/combo preference hooks, shared by
-  all three apps.
+  every app.
 - `docs/` — phase plan, API policy, audits, and per-feature briefs (see Documents below).
 - `scripts/build-platform.mjs` — assembles the combined static site.
 
@@ -69,13 +74,14 @@ working in that app; this file covers only what's shared:
 
 - [`apps/commander-recommender/AGENTS.md`](./apps/commander-recommender/AGENTS.md)
 - [`apps/time-counters/AGENTS.md`](./apps/time-counters/AGENTS.md)
+- [`apps/pokemon-decks/AGENTS.md`](./apps/pokemon-decks/AGENTS.md)
 
 ## Architecture
 
 - **`apps/*` are independently deployable**, each with its own `package.json` name, version, and
   `CHANGELOG.md`; they are not versioned together. Bump the app you changed.
-- **Combined deploy:** production serves `apps/home`, `apps/commander-recommender/client`, and
-  `apps/time-counters` from one Render static site (`kaneenabler-platform`), so the shared
+- **Combined deploy:** production serves `apps/home`, `apps/commander-recommender/client`,
+  `apps/time-counters`, and `apps/pokemon-decks` (at `/pokemon/`) from one Render static site (`kaneenabler-platform`), so the shared
   Supabase session carries across every tool. Each app still builds standalone at `base: '/'`;
   only `scripts/build-platform.mjs` sets `VITE_BASE_PATH` for a subpath. Read asset and fetch URLs
   back through `import.meta.env.BASE_URL` — a hardcoded `/`-rooted path breaks the subpath build.
@@ -103,7 +109,7 @@ working in that app; this file covers only what's shared:
 | [`docs/recommendation-coverage.md`](./docs/recommendation-coverage.md)           | Per-card recommendation coverage plan (shipped)                                                                               |
 | [`docs/color-filter-semantics.md`](./docs/color-filter-semantics.md)             | Colour-pip subset semantics brief (shipped)                                                                                   |
 | [`docs/control-primitives-migration.md`](./docs/control-primitives-migration.md) | Moving bespoke controls onto `@mtg/ui` (shipped)                                                                              |
-| [`docs/state-machine-audit.md`](./docs/state-machine-audit.md)                   | State-machine audit: confirmed defects, product decisions, phased fix plan (shipped; D9 multi-tab sync deferred to issue #92) |
+| [`docs/state-machine-audit.md`](./docs/state-machine-audit.md)                   | State-machine audit: confirmed defects, product decisions, phased fix plan (shipped; D9 multi-tab sync shipped via issue #92) |
 | [`TODO.md`](./TODO.md)                                                           | Remaining manual and dashboard-only tasks                                                                                     |
 
 **Where truth lives:** [`docs/handoff.md`](./docs/handoff.md) is the phase plan and the record of
@@ -123,6 +129,8 @@ nested guides point inward to these rather than restating them.
 2. **Magic rules go in `@mtg/rules`, once.** Every rules primitive cites the Comprehensive Rules
    number it implements and is tested against it. Don't re-derive colour identity, commander
    legality, or counter semantics in an app — if it isn't in the package yet, add it there.
+   Pokémon TCG rules follow the same rule in `@ptcg/rules`, citing the official rulebook or the
+   format's own published rules verbatim (`packages/ptcg-rules/src/official.ts`, `data/glc.json`).
 
 3. **Don't assume the legacy logic is correct.** Comments that cite CR numbers make code easier to
    audit, not automatically right; several documented defects sit directly underneath a comment
@@ -159,6 +167,16 @@ Before calling work finished:
 is the only place the `*.integration.test.ts` suites execute. If a check fails, fix it and rerun;
 don't skip the gate.
 
+## PR expectations
+
+- **Traffic changes are called out.** If a PR changes what any app or script calls, how often, or
+  what triggers it (hard rule 1), its description says so explicitly and names where the owner
+  confirmed it.
+- **Evidence, not claims.** List what was run (the focused checks, the full gate) and, for
+  user-visible changes, what was exercised in a browser.
+- **Changelog and version.** Each app changed in a user-visible way gets a `CHANGELOG.md` entry, and
+  a version bump where that app's guide says so.
+
 ## Safety
 
 - Do not commit secrets or credentials, and never put a private token or host in these docs.
@@ -175,11 +193,11 @@ don't skip the gate.
 
 ## Environment notes
 
-- The remote sandbox's egress allowlist is narrow but not absolute (re-measured 2026-09-04; see
-  [`TODO.md`](./TODO.md) for the full table). `api.scryfall.com`, Supabase, `*.onrender.com`,
-  Google Fonts, `magic.wizards.com`, and `mtgjson.com` resolve; `api.academyruins.com`,
-  `media.wizards.com`, and `cards.scryfall.io` are blocked — so Comprehensive Rules ingestion runs
-  locally or in GitHub Actions, and screenshot card art is absent.
-- A Playwright-launched browser does **not** inherit `$HTTPS_PROXY`; pass it explicitly with
-  `localhost` bypassed, and set `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXY_LOOPBACK=1`.
+- The remote sandbox's network allowlist is narrow and changes over time. Which hosts are
+  reachable is measured, with dates, in [`TODO.md`](./TODO.md)'s "Sandbox egress" table — check
+  there (or test with `curl`) rather than assuming; don't copy the list here.
+- A Playwright-launched browser does **not** inherit `$HTTPS_PROXY`: pass
+  `proxy: { server: process.env.HTTPS_PROXY, bypass: 'localhost,127.0.0.1' }` and
+  `--ignore-certificate-errors`, **and** run with
+  `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1` (see `TODO.md` for why both are needed).
 - Playwright and Chromium are pre-installed; do not run `playwright install`.

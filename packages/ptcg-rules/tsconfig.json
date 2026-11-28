@@ -1,0 +1,9 @@
+{
+  "extends": "@mtg/config/tsconfig.base.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    // Tests read the app's committed snapshot from disk.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

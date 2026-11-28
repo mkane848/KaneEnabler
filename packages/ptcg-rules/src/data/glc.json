@@ -1,0 +1,79 @@
+{
+  "source": {
+    "rules": "https://gymleaderchallenge.com/rules",
+    "faq": "https://gymleaderchallenge.com/faq",
+    "banList": "https://gymleaderchallenge.com/ban-list",
+    "read": "2026-11-27"
+  },
+  "quotes": {
+    "type": "Your deck can only contain one type (color) of Pokémon.",
+    "singleton": "Only one of each card with the same name allowed in a deck, except for Basic Energy.",
+    "ruleBox": "Cards with a Rule Box are not allowed.",
+    "aceSpec": "ACE SPEC cards are not allowed.",
+    "pool": "Legal Cards: Black & White – onwards, and a short ban list",
+    "deckSize": "60 card decks are built & 6 Prize Card games are played with the most current Pokemon TCG rules.",
+    "ruleBoxFaq": "What types of cards have a Rule Box? Cards with a Rule Box cannot be played in GLC format. This includes Pokemon V, EX, GX, BREAK, Radiant Pokémon, ACE SPECs, and Prism Stars (including Prism Star Trainer and Energy cards). Ancient Trait Pokémon do not have a rule box.",
+    "dualTypeFaq": "Dual Type Pokémon are allowed, as long as one of their types matches your deck type. The card must physically be two types in order to play it in either type of deck (e.g., Volcarona STS can be played in a Fire or Grass deck, but Gallade CEC can only be played in a Psychic deck).",
+    "evolutionTypeFaq": "Following GLC’s official rules, cards that are one type and evolve into a different type cannot be played in the same deck, like Eevee.",
+    "basicEnergyFaq": "Can I use more than one type of Basic Energy in my deck? Yes! Any number of any type of Basic Energy may be played in your deck.",
+    "trainerPokemonFaq": "Can I play cards like Robo Substitute, Unidentified Fossil, and Lillie’s Pokédoll in my deck? Yes. These cards are item cards, and are only treated as Pokémon when in play. They are all allowed in any type of deck.",
+    "classicCollectionFaq": "The Classic Collection cards are not permitted in GLC unless they are from Black & White or later and abide by the existing GLC rules. This means that only Reshiram and Zekrom are legal in GLC."
+  },
+  "poolSeries": ["bw", "xy", "sm", "swsh", "sv", "me"],
+  "classicCollection": { "setIds": ["cel25cc"], "allowedNames": ["Reshiram", "Zekrom"] },
+  "banList": [
+    {
+      "printed": "Lysandre’s Trump Card (XY: Phantom Forces, 99/119 and 118/119) Effective Nov. 16, 2021",
+      "ids": ["xy4-99", "xy4-118"]
+    },
+    {
+      "printed": "Oranguru (SM: Ultra Prism, 114/156) Effective Nov. 16, 2021",
+      "ids": ["sm5-114"]
+    },
+    {
+      "printed": "Forest of Giant Plants (XY: Ancient Origins, 74/98) Effective Jan. 10, 2022",
+      "ids": ["xy7-74"]
+    },
+    {
+      "printed": "Chip-Chip Ice Axe (SM: Unbroken Bonds 165/214) Effective Jun. 8, 2022",
+      "ids": ["sm10-165"]
+    },
+    {
+      "printed": "Hiker (SM: Celestial Storm 133/168, Hidden Fates SV85/SV94) Effective Jun. 8, 2022",
+      "ids": ["sm7-133", "sma-SV85"]
+    },
+    {
+      "printed": "Kyogre (Shining Fates 021/072) Effective Nov. 11, 2022",
+      "ids": ["swsh4.5-21"]
+    },
+    {
+      "printed": "Pokémon Research Lab (SM: Unified Minds, 205/236) Effective Nov. 1, 2023",
+      "ids": ["sm11-205"]
+    },
+    {
+      "printed": "Raikou (SWSH: Vivid Voltage 050/185) Effective Sep. 1, 2024",
+      "ids": ["swsh4-50"]
+    },
+    {
+      "printed": "Marshadow (Shining Legends 45/73, Promo SM85) Effective Sep. 1, 2024",
+      "ids": ["sm3.5-45", "smp-SM85"]
+    },
+    {
+      "printed": "Duskull (SM-Cosmic Eclipse 83/236) Effective Sep. 1, 2024",
+      "ids": ["sm12-83"]
+    },
+    {
+      "printed": "Double Colorless Energy (Shining Legends 69/73 and all other versions) Effective Apr. 24, 2025",
+      "ids": ["sm3.5-69"],
+      "allPrintsNamed": "Double Colorless Energy"
+    },
+    {
+      "printed": "Twin Energy (SWSH: Rebel Clash 174/192 and 209/192) Effective Apr. 24, 2025",
+      "ids": ["swsh2-174", "swsh2-209"]
+    },
+    {
+      "printed": "Dimension Valley (XY: Phantom Forces 93/119) Effective Apr. 20, 2026",
+      "ids": ["xy4-93"]
+    }
+  ]
+}
